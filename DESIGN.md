@@ -335,10 +335,31 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
 | Globals (autoloads) | `GameState`, `Stash`, `TraderManager`, `QuestManager`, `HideoutManager`, `SaveSystem` |
 | Saves | JSON / `ConfigFile` in `user://` |
-| Scenes | `scenes/hideout`, `scenes/maps/*`, `scenes/ui/*`, `scenes/actors/*` |
 | Player | `CharacterBody3D`, top-down camera rig, mouse-ray aim |
 | AI | `CharacterBody3D` + `NavigationAgent3D` + state machine node |
 | Naming | snake_case files, PascalCase classes (`class_name`) |
+| Engine version | Godot 4.3+ (Forward+ renderer), 1920×1080 base resolution |
+
+**Folder layout**
+
+| Folder | Contents |
+|---|---|
+| `scenes/` | Gameplay scenes: `actors/` (player, Scavs), `hideout/` |
+| `maps/` | One scene per raid map (Section 5) |
+| `ui/` | Menu, HUD, and inventory scenes (entry scene: `ui/main_menu.tscn`) |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`) plus `autoload/` |
+| `data/` | `.tres` Resources: `items/`, `loot_tables/` |
+| `assets/` | `models/`, `textures/`, `audio/`, `fonts/` |
+
+**Input actions** (defined in `project.godot`)
+
+| Action | Default | Action | Default |
+|---|---|---|---|
+| `move_forward` / `move_back` | W / S | `reload` | R |
+| `move_left` / `move_right` | A / D | `toggle_inventory` | Tab |
+| `shoot` | Left mouse | `interact` | F |
+| `aim` | Right mouse (hold) | `use_item` | E |
+| `hotkey_1` … `hotkey_5` | 1–5 | Facing | Follows mouse cursor (raycast to ground) |
 
 ## 16. Changelog
 
@@ -347,3 +368,4 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | 2026-10-11 | Initial design document |
 | 2026-10-11 | Added rolled loot (6.3): affixes, traits, named Legendaries |
 | 2026-10-11 | Reworked 6.3 for realism: grounded craftsmanship bonuses, gunsmith mods with trade-offs, no damage/pen rolls |
+| 2026-10-11 | Godot project scaffold: folder layout, input actions, main menu |

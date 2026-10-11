@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/hideout/hideout.gd" id="1_hideout"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+size = Vector2(20, 20)
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.25, 0.27, 0.24, 1)
+
+[node name="Hideout" type="Node3D"]
+script = ExtResource("1_hideout")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-60, 30, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 12, 8.4)
+rotation_degrees = Vector3(-55, 0, 0)
+current = true
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_floor")
+surface_material_override/0 = SubResource("Mat_floor")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="HUD"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 600.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 22
+text = "Hideout (placeholder) - press Esc to return to the menu"
