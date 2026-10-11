@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CombatConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/combat_config.gd" id="1_config"]
+
+[resource]
+script = ExtResource("1_config")
+roll_distance = 3.0
+roll_duration = 0.5
+roll_stamina_cost = 20.0
+roll_cooldown = 1.0
+roll_evade_time = 0.3
+roll_evade_height = 0.8
+roll_evade_radius = 0.25
+roll_noise = 25.0
+cover_snap_distance = 1.5
+roll_snap_distance = 1.0
+low_cover_max_height = 1.3
+duck_height = 0.9
+peek_edge_reach = 1.2
+cover_move_speed = 1.6
+wood_min_penetration = 30.0
+wood_damage_kept = 0.6
+wood_penetration_loss = 15.0
+gunshot_noise = 60.0

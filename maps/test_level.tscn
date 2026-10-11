@@ -2,9 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/maps/test_level.gd" id="1_level"]
 [ext_resource type="Texture2D" path="res://assets/textures/prototype_grid.png" id="2_grid"]
-[ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="3_player"]
-[ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="4_camera"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/world/cover_box.gd" id="3_cover"]
+[ext_resource type="PackedScene" path="res://scenes/props/car.tscn" id="4_car"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="5_player"]
+[ext_resource type="PackedScene" path="res://scenes/actors/bot.tscn" id="6_bot"]
+[ext_resource type="Resource" path="res://data/bots/scav.tres" id="7_scav"]
+[ext_resource type="Resource" path="res://data/bots/pmc.tres" id="8_pmc"]
+[ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="9_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="10_hud"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -14,6 +19,16 @@ ambient_light_color = Color(0.75, 0.78, 0.85, 1)
 ambient_light_energy = 0.5
 tonemap_mode = 2
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_level"]
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 1
+cell_size = 0.1
+agent_height = 1.75
+agent_radius = 0.4
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(40, 1, 40)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.55, 0.58, 0.5, 1)
 albedo_texture = ExtResource("2_grid")
@@ -21,19 +36,9 @@ roughness = 0.95
 uv1_triplanar = true
 uv1_world_triplanar = true
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
-albedo_color = Color(0.82, 0.8, 0.74, 1)
-albedo_texture = ExtResource("2_grid")
-roughness = 0.9
-uv1_triplanar = true
-uv1_world_triplanar = true
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_crate"]
-albedo_color = Color(0.62, 0.5, 0.34, 1)
-albedo_texture = ExtResource("2_grid")
-roughness = 0.85
-uv1_triplanar = true
-uv1_world_triplanar = true
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+material = SubResource("StandardMaterial3D_ground")
+size = Vector3(40, 1, 40)
 
 [node name="TestLevel" type="Node3D"]
 script = ExtResource("1_level")
@@ -47,124 +52,175 @@ light_energy = 1.2
 shadow_enabled = true
 directional_shadow_max_distance = 60.0
 
-[node name="Ground" type="CSGBox3D" parent="."]
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_level")
+
+[node name="Ground" type="StaticBody3D" parent="Navigation"]
 position = Vector3(0, -0.5, 0)
-use_collision = true
-size = Vector3(40, 1, 40)
-material = SubResource("StandardMaterial3D_ground")
 
-[node name="Walls" type="Node3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Navigation/Ground"]
+shape = SubResource("BoxShape3D_ground")
 
-[node name="WallNorth" type="CSGBox3D" parent="Walls"]
-position = Vector3(0, 1, -20)
-use_collision = true
-size = Vector3(40.4, 2, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Navigation/Ground"]
+mesh = SubResource("BoxMesh_ground")
 
-[node name="WallSouth" type="CSGBox3D" parent="Walls"]
-position = Vector3(0, 1, 20)
-use_collision = true
-size = Vector3(40.4, 2, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="Cover" type="Node3D" parent="Navigation"]
 
-[node name="WallWest" type="CSGBox3D" parent="Walls"]
-position = Vector3(-20, 1, 0)
-use_collision = true
-size = Vector3(0.4, 2, 40.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="WallNorth" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(0, 1.2, -20)
+script = ExtResource("3_cover")
+size = Vector3(40.4, 2.4, 0.4)
+cover_material = 1
 
-[node name="WallEast" type="CSGBox3D" parent="Walls"]
-position = Vector3(20, 1, 0)
-use_collision = true
-size = Vector3(0.4, 2, 40.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="WallSouth" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(0, 1.2, 20)
+script = ExtResource("3_cover")
+size = Vector3(40.4, 2.4, 0.4)
+cover_material = 1
 
-[node name="RoomNorth" type="CSGBox3D" parent="Walls"]
-position = Vector3(-12, 1, -16)
-use_collision = true
-size = Vector3(8.4, 2, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="WallWest" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-20, 1.2, 0)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 40.4)
+cover_material = 1
 
-[node name="RoomWest" type="CSGBox3D" parent="Walls"]
-position = Vector3(-16, 1, -12)
-use_collision = true
-size = Vector3(0.4, 2, 8)
-material = SubResource("StandardMaterial3D_wall")
+[node name="WallEast" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(20, 1.2, 0)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 40.4)
+cover_material = 1
 
-[node name="RoomEast" type="CSGBox3D" parent="Walls"]
-position = Vector3(-8, 1, -12)
-use_collision = true
-size = Vector3(0.4, 2, 8)
-material = SubResource("StandardMaterial3D_wall")
+[node name="RoomNorth" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-12, 1.2, -16)
+script = ExtResource("3_cover")
+size = Vector3(8.4, 2.4, 0.4)
+cover_material = 1
 
-[node name="RoomSouthLeft" type="CSGBox3D" parent="Walls"]
-position = Vector3(-14.4, 1, -8)
-use_collision = true
-size = Vector3(3.6, 2, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="RoomWest" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-16, 1.2, -12)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 8)
+cover_material = 1
 
-[node name="RoomSouthRight" type="CSGBox3D" parent="Walls"]
-position = Vector3(-9.6, 1, -8)
-use_collision = true
-size = Vector3(3.6, 2, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="RoomEast" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-8, 1.2, -12)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 8)
+cover_material = 1
 
-[node name="LongWall" type="CSGBox3D" parent="Walls"]
-position = Vector3(8, 1, -6)
-use_collision = true
-size = Vector3(10, 2, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+[node name="RoomSouthLeft" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-14.6, 1.2, -8)
+script = ExtResource("3_cover")
+size = Vector3(3.2, 2.4, 0.4)
+cover_material = 1
 
-[node name="ShortWall" type="CSGBox3D" parent="Walls"]
-position = Vector3(3, 1, -1)
-use_collision = true
-size = Vector3(0.4, 2, 5)
-material = SubResource("StandardMaterial3D_wall")
+[node name="RoomSouthRight" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-9.4, 1.2, -8)
+script = ExtResource("3_cover")
+size = Vector3(3.2, 2.4, 0.4)
+cover_material = 1
 
-[node name="Pillar" type="CSGBox3D" parent="Walls"]
-position = Vector3(12, 1, -14)
-use_collision = true
-size = Vector3(1, 2, 1)
-material = SubResource("StandardMaterial3D_wall")
+[node name="LongWall" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(8, 1.2, -6)
+script = ExtResource("3_cover")
+size = Vector3(10, 2.4, 0.4)
+cover_material = 1
 
-[node name="LowWall" type="CSGBox3D" parent="Walls"]
-position = Vector3(-8, 0.5, 12)
-use_collision = true
+[node name="ShortWall" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(3, 1.2, -1)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 5)
+cover_material = 1
+
+[node name="Pillar" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(12, 1.2, -14)
+script = ExtResource("3_cover")
+size = Vector3(1, 2.4, 1)
+cover_material = 1
+
+[node name="WoodFence" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-6, 1.1, 2)
+script = ExtResource("3_cover")
+size = Vector3(6, 2.2, 0.15)
+cover_material = 0
+
+[node name="LowWall" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-1, 0.5, 10)
+script = ExtResource("3_cover")
 size = Vector3(6, 1, 0.4)
-material = SubResource("StandardMaterial3D_wall")
+cover_material = 1
 
-[node name="CrateA" type="CSGBox3D" parent="Walls"]
+[node name="SpawnWall" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-12.9, 1.2, 13)
+script = ExtResource("3_cover")
+size = Vector3(13.8, 2.4, 0.4)
+cover_material = 1
+
+[node name="CrateA" type="StaticBody3D" parent="Navigation/Cover"]
 position = Vector3(6, 0.5, 6)
-use_collision = true
+script = ExtResource("3_cover")
 size = Vector3(1.2, 1, 1.2)
-material = SubResource("StandardMaterial3D_crate")
+cover_material = 0
 
-[node name="CrateB" type="CSGBox3D" parent="Walls"]
+[node name="CrateB" type="StaticBody3D" parent="Navigation/Cover"]
 position = Vector3(7.4, 0.5, 6.2)
-use_collision = true
+script = ExtResource("3_cover")
 size = Vector3(1.2, 1, 1.2)
-material = SubResource("StandardMaterial3D_crate")
+cover_material = 0
 
-[node name="CrateC" type="CSGBox3D" parent="Walls"]
-position = Vector3(-5, 0.5, 5)
-use_collision = true
+[node name="CrateC" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(-3, 0.5, 7)
+script = ExtResource("3_cover")
 size = Vector3(1.2, 1, 1.2)
-material = SubResource("StandardMaterial3D_crate")
+cover_material = 0
 
-[node name="CrateLong" type="CSGBox3D" parent="Walls"]
+[node name="CrateLong" type="StaticBody3D" parent="Navigation/Cover"]
 position = Vector3(12, 0.5, 10)
-use_collision = true
+script = ExtResource("3_cover")
 size = Vector3(2.4, 1, 1.2)
-material = SubResource("StandardMaterial3D_crate")
+cover_material = 0
 
-[node name="Player" parent="." instance=ExtResource("3_player")]
-position = Vector3(0, 0, 10)
+[node name="CarWest" parent="Navigation/Cover" instance=ExtResource("4_car")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -12, 0, -1)
+
+[node name="CarEast" parent="Navigation/Cover" instance=ExtResource("4_car")]
+transform = Transform3D(0.9396926, 0, 0.34202015, 0, 1, 0, -0.34202015, 0, 0.9396926, 11, 0, 1)
+
+[node name="Player" parent="." instance=ExtResource("5_player")]
+position = Vector3(-14, 0, 17)
+
+[node name="ScavPatrol" parent="." instance=ExtResource("6_bot")]
+position = Vector3(9, 0, -11)
+profile = ExtResource("7_scav")
+patrol_points = PackedVector3Array(9, 0, -11, 3, 0, -11)
+
+[node name="ScavEast" parent="." instance=ExtResource("6_bot")]
+position = Vector3(16, 0, -12)
+profile = ExtResource("7_scav")
+patrol_points = PackedVector3Array(16, 0, -12, 16, 0, -2)
+
+[node name="PMC" parent="." instance=ExtResource("6_bot")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -12, 0, -12)
+profile = ExtResource("8_pmc")
 
 [node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 fov = 55.0
 current = true
-script = ExtResource("4_camera")
+script = ExtResource("9_camera")
 target = NodePath("../Player")
 
-[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("5_hud")]
+[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("10_hud")]
 player = NodePath("../Player")
+
+[node name="DebugHelp" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="DebugHelp"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 924.0
+offset_bottom = 46.0
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo PS/BS  ·  F4 AI on/off  ·  Esc menu"

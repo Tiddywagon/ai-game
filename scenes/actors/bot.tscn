@@ -1,0 +1,67 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/bot.gd" id="1_script"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+resource_local_to_scene = true
+radius = 0.35
+height = 1.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hitbox"]
+resource_local_to_scene = true
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.5, 0.5, 0.5, 1)
+roughness = 0.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+material = SubResource("StandardMaterial3D_body")
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gun"]
+albedo_color = Color(0.12, 0.12, 0.12, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_gun"]
+material = SubResource("StandardMaterial3D_gun")
+size = Vector3(0.14, 0.14, 0.9)
+
+[node name="Bot" type="CharacterBody3D" groups=["bots"]]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Hitbox" type="Area3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hitbox"]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_hitbox")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Capsule" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_body")
+
+[node name="Gun" type="MeshInstance3D" parent="Body"]
+position = Vector3(0.14, 1.3, -0.55)
+mesh = SubResource("BoxMesh_gun")
+
+[node name="Muzzle" type="Marker3D" parent="Body/Gun"]
+position = Vector3(0, 0, -0.45)
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.6
+target_desired_distance = 0.3
+path_max_distance = 2.0
+radius = 0.35

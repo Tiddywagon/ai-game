@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/cover_box.gd" id="1_cover"]
+
+[node name="Car" type="Node3D"]
+
+[node name="Body" type="StaticBody3D" parent="."]
+position = Vector3(0, 0.5, 0)
+script = ExtResource("1_cover")
+size = Vector3(4.2, 1, 1.8)
+cover_material = 2
+
+[node name="Cabin" type="StaticBody3D" parent="."]
+position = Vector3(-0.2, 1.275, 0)
+script = ExtResource("1_cover")
+size = Vector3(2.2, 0.55, 1.6)
+cover_material = 2
+provides_cover = false

@@ -57,6 +57,21 @@ Player chooses a PMC faction per character. Both are hostile to Scavs and to the
 
 AI implementation: state machine (Idle → Patrol → Alert → Combat → Search → Loot), `NavigationAgent3D`, hearing + vision cone, faction relation table.
 
+**Combat behaviour (built for Scavs and AI PMCs).** Scavs are friendly to each other; everyone else is hostile.
+
+| Sense / action | Rule |
+|---|---|
+| Vision | Cone in front; anyone within 3 m is noticed regardless. Needs a clear line to the target's chest or head (walls and cover block sight) |
+| Hearing | Hears any noise whose radius reaches it (footsteps, rolls, shots); walks over to investigate, then looks around |
+| Under fire | A bullet passing within 2 m puts the bot in combat with the shooter |
+| Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks |
+| Search | Loses sight for too long → goes to the last known position and looks around |
+
+| Profile | Vision | Reaction | Spread | Hearing | Rolls | Ammo |
+|---|---|---|---|---|---|---|
+| Scav (basic) | 25 m, 120° | 0.8 s | 4.0° | ×1.0 | Never | 5.45 PS |
+| PMC (advanced) | 35 m, 140° | 0.4 s | 1.8° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 5.45 BS |
+
 ## 5. Maps
 
 | Map | Size | Players/AI | Raid time | Extracts | Boss | Theme / key loot |
@@ -203,7 +218,7 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 | Nesting | Rigs, backpacks, cases have their own grids; can't nest a container in a larger copy of itself |
 | Stacking | Ammo, money, some barter items stack (max per type) |
 | Slots | Primary, Secondary, Holster, Melee, Helmet, Earpiece, Face, Armor, Rig, Backpack, Pockets (4×1×1), Secure container |
-| Weight | Over-encumbered → slower move, faster stamina drain |
+| Weight | Over-encumbered → slower move, faster stamina drain. Above 40 kg you're **overweight** and can't combat-roll *(tune)* |
 | Examine | Unknown items must be examined to reveal name/value |
 | Search | Containers/bodies reveal items over time |
 
@@ -307,7 +322,7 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Search | Searching containers | Faster search, rarer loot (+% capped) |
 | Weapon class skills | Using weapon type | Recoil, reload speed |
 
-## 13. Health & Survival
+## 13. Health, Movement & Combat
 
 | System | Detail |
 |---|---|
@@ -316,7 +331,7 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Energy / Hydration | Drain over time; 0 = HP loss |
 | Stamina | Sprint, aim stability |
 
-**Movement** *(tune)*
+### 13.1 Movement *(tune)*
 
 | Move | Speed | Noise radius | Notes |
 |---|---|---|---|
@@ -329,6 +344,50 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 - **Acceleration:** 25 m/s², so there's a short ramp-up and slow-down.
 - **Turning:** the body turns toward the cursor at up to 720°/s.
 - **Noise radius:** how far away AI can hear your footsteps (Section 4).
+
+### 13.2 Combat Roll (Space) *(tune)*
+
+| Rule | Value |
+|---|---|
+| Direction | The way you're moving; toward the cursor if standing still |
+| Distance / time | 3 m in 0.5 s, fast at the start and slowing to a stop. Walls stop it |
+| Stamina | Costs 20; can't roll with less, or while exhausted |
+| Cooldown | 1 s after a roll ends |
+| Blocked by | Overweight (>40 kg), leg fracture. The HUD says why |
+| Harder to hit | For the first 0.3 s the hitbox shrinks to 0.8 m tall, 0.25 m radius (standing: 1.8 m, 0.35 m). Not invincible: low shots still hit |
+| Noise | 25 m, louder than sprinting, so nearby AI hears it |
+| Into cover | A roll toward cover that ends within 1 m of it snaps into that cover |
+
+All of these values live in `data/config/combat.tres`.
+
+### 13.3 Cover
+
+| Rule | Detail |
+|---|---|
+| What counts | Walls, crates, cars and low barriers built from `CoverBox` (concrete, wood or metal) |
+| Take cover | Q within 1.5 m of cover (Q again to leave), or roll into it |
+| Low cover (≤1.3 m) | Duck behind it (body 0.9 m). Hold right-click to stand up and aim over it; release to duck |
+| Tall cover | Lean against it, standing. Hold right-click to step out past its end and aim; release to step back. Only possible within 1.2 m of an end |
+| Moving | A/D (sideways along the cover) slides along it at 1.6 m/s; moving away from it leaves cover |
+| No shooting | While ducked or leaning (not peeking) |
+| HUD | Shield icon with cover type and material; turns amber while peeking |
+| Shared | Player and AI use the same cover points; a spot someone holds (or is heading to) is taken |
+
+### 13.4 Shooting & Bullets
+
+| Rule | Detail |
+|---|---|
+| Model | Hitscan rays from the body's centre line at gun height (1.3 m standing); a short tracer shows each shot |
+| Aim | At whoever is under the cursor, otherwise level with the gun toward the cursor |
+| Wood | Stops rounds with penetration below 30. Rounds with 30+ go through, keeping 60% damage and losing 15 penetration |
+| Concrete, metal | Stop every round |
+| Noise | Every shot is a 60 m noise |
+| Health (for now) | One pool per actor: player 200, Scav 150, PMC 200. Body parts come later (Section 13) |
+
+| Ammo | Damage | Penetration | Wood |
+|---|---|---|---|
+| 5.45x39 PS | 50 | 28 | Stopped |
+| 5.45x39 BS | 40 | 45 | Goes through (24 damage after) |
 
 ## 14. Economy
 
@@ -348,12 +407,17 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Loot tables | `LootTable` Resource with weighted rarity rolls |
 | Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
-| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty; plus stash contents), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
+| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty; plus stash contents), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
 | Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
-| Player | `Player` (`scenes/actors/player.tscn`): `CharacterBody3D` with a capsule placeholder; the gun box shows facing. Movement rules in Section 13 |
+| Actors | `Actor` (`scripts/actors/actor.gd`) is the shared body: movement, stamina, roll, cover, hitbox, health, shooting. `Player` turns input into intents; `Bot` turns AI decisions into the same intents. Each has a separate `Hitbox` (Area3D) that bullets hit and that can shrink independently of the movement collider |
+| Player | `scenes/actors/player.tscn`: capsule placeholder; the gun box shows facing. Rules in Section 13 |
+| AI | `scenes/actors/bot.tscn` + a `BotProfile` (`data/bots/*.tres`). Behaviour in Section 4 |
+| Combat tuning | `CombatConfig` resource, `data/config/combat.tres`: roll, cover and bullet values. The numbers are in the file itself, so it can be edited in the Inspector or a text editor |
+| Cover | `CoverBox` (`scripts/world/`): @tool box with size + material that builds its own mesh and collision. `CoverSystem` autoload generates `CoverPoint`s every 1.2 m along each side and answers "nearest cover" / "best cover against this threat" |
+| Noise | `NoiseSystem` autoload: anything audible calls `emit_noise(position, radius, source)`; bots listen |
 | Camera | `TopDownCamera` (`scripts/camera/`): fixed 60° pitch, 18 m back, never turns; follows the player smoothly at any frame rate |
-| Physics | Jolt Physics at 60 ticks/s with physics interpolation on: move bodies in `_physics_process`. Anything moved in `_process` (like the camera) turns interpolation off for itself |
-| AI | `CharacterBody3D` + `NavigationAgent3D` + state machine node |
+| Physics | Jolt Physics at 60 ticks/s with physics interpolation on: move bodies in `_physics_process`. Anything moved in `_process` (like the camera), or placed once (tracers), turns interpolation off for itself. Layers: 1 world, 2 actors (movement), 3 hitboxes (bullets) |
+| Navigation | The level's `NavigationRegion3D` bakes its navmesh from static colliders when the level loads (0.1 m cells, 0.4 m agent radius); bots steer with `NavigationAgent3D` |
 | Naming | snake_case files, PascalCase classes (`class_name`) |
 | Engine version | Godot 4.7 (current stable 4.7.2), Forward+ renderer, 1920×1080 base resolution. Commit Godot's `.uid` files |
 
@@ -361,11 +425,11 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 
 | Folder | Contents |
 |---|---|
-| `scenes/` | Gameplay scenes: `actors/` (player, Scavs), `hideout/` |
+| `scenes/` | Gameplay scenes: `actors/` (player, bots), `props/` (car), `hideout/` |
 | `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
 | `ui/` | Menu, HUD, and inventory scenes (entry scene: `ui/main_menu.tscn`) |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`), plus `autoload/` (singletons), `data/` (Resource classes) and `camera/` |
-| `data/` | `.tres` Resources: `items/` (one subfolder per category), `loot_tables/` |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets) and `world/` (cover) |
+| `data/` | `.tres` Resources: `items/` (one subfolder per category), `loot_tables/`, `config/` (tuning), `bots/` (AI profiles) |
 | `assets/` | `models/`, `textures/`, `audio/`, `fonts/` |
 
 **Input actions** (defined in `project.godot`)
@@ -375,7 +439,8 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | `move_forward` / `move_back` | W / S | `reload` | R |
 | `move_left` / `move_right` | A / D | `toggle_inventory` | Tab |
 | `shoot` | Left mouse | `interact` | F |
-| `aim` | Right mouse (hold) | `use_item` | E |
+| `aim` | Right mouse (hold): peek from cover | `use_item` | E |
+| `roll` | Space | `take_cover` | Q |
 | `hotkey_1` … `hotkey_5` | 1–5 | `sprint` | Shift (hold) |
 | `crouch` | C (toggle) | Facing | Turns toward where the mouse cursor touches the ground |
 
@@ -392,3 +457,4 @@ WASD is screen-relative: W always moves up the screen.
 | 2026-10-11 | Project targets Godot 4.7 (was 4.3) |
 | 2026-10-11 | Autoloads `GameState`, `ItemDB`, `SaveManager` (replace planned `Stash`/`SaveSystem`); `ItemData` resource, 5 example items, starting money |
 | 2026-10-11 | Player movement (walk, sprint, crouch, stamina, noise radius), top-down follow camera, stamina HUD, test level; Play opens the test level until the hideout exists |
+| 2026-10-11 | Combat roll, cover system (low/tall, peek, slide, shared cover points), hitscan bullets with wood/concrete/metal penetration, Scav and PMC AI (vision, hearing, cover, peeking, PMC dodge rolls), `combat.tres` tuning file, 5.45 BS ammo |

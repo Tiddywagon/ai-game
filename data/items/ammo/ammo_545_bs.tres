@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_xpxwg"]
+
+[resource]
+script = ExtResource("1_xpxwg")
+id = "ammo_545_bs"
+display_name = "5.45x39 BS"
+description = "Armor-piercing 5.45 round with a tool-steel core."
+category = 1
+rarity = 4
+weight_kg = 0.01
+base_value = 1500
+max_stack = 60
+stats = {
+"caliber": "5.45x39",
+"damage": 40,
+"penetration": 45
+}

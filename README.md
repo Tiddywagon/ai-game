@@ -11,15 +11,23 @@ Top-down 3D survival extraction looter shooter built in Godot 4 with GDScript. T
 
 ## Controls
 
-Play opens a test level for now.
+Play opens a test level for now, with two Scavs and a PMC. You start behind a wall in the south-west corner.
 
 | Key | Action |
 |---|---|
 | W A S D | Move (relative to the screen) |
 | Mouse | Turn to face the cursor |
+| Left click | Shoot |
+| Right click (hold) | Peek out of cover to aim |
+| Space | Combat roll |
+| Q | Take / leave cover |
 | Shift (hold) | Sprint; uses stamina |
 | C | Crouch / stand: slower and quieter |
 | Esc | Back to the main menu |
+
+Test-level debug keys: **F1** leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off.
+
+Roll, cover and bullet numbers live in `data/config/combat.tres`.
 
 ## Notes
 
