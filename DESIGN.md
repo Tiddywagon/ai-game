@@ -316,6 +316,20 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Energy / Hydration | Drain over time; 0 = HP loss |
 | Stamina | Sprint, aim stability |
 
+**Movement** *(tune)*
+
+| Move | Speed | Noise radius | Notes |
+|---|---|---|---|
+| Walk | 3.5 m/s | 10 m | Default |
+| Sprint (Shift) | 6.0 m/s | 20 m | Costs 15 stamina/s; standing still with Shift held costs nothing; sprinting while crouched stands you up |
+| Crouch (C, toggle) | 1.6 m/s | 4 m | Body 1.1 m tall instead of 1.8 m |
+| Standing still | 0 | 0 | — |
+
+- **Stamina:** 100 max. Recovers 12/s, starting 1 s after you stop sprinting. If it hits 0 you're **exhausted**: sprint stays locked until stamina is back to 25.
+- **Acceleration:** 25 m/s², so there's a short ramp-up and slow-down.
+- **Turning:** the body turns toward the cursor at up to 720°/s.
+- **Noise radius:** how far away AI can hear your footsteps (Section 4).
+
 ## 14. Economy
 
 | Item | Value |
@@ -336,7 +350,9 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
 | Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty; plus stash contents), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
 | Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
-| Player | `CharacterBody3D`, top-down camera rig, mouse-ray aim |
+| Player | `Player` (`scenes/actors/player.tscn`): `CharacterBody3D` with a capsule placeholder; the gun box shows facing. Movement rules in Section 13 |
+| Camera | `TopDownCamera` (`scripts/camera/`): fixed 60° pitch, 18 m back, never turns; follows the player smoothly at any frame rate |
+| Physics | Jolt Physics at 60 ticks/s with physics interpolation on: move bodies in `_physics_process`. Anything moved in `_process` (like the camera) turns interpolation off for itself |
 | AI | `CharacterBody3D` + `NavigationAgent3D` + state machine node |
 | Naming | snake_case files, PascalCase classes (`class_name`) |
 | Engine version | Godot 4.7 (current stable 4.7.2), Forward+ renderer, 1920×1080 base resolution. Commit Godot's `.uid` files |
@@ -346,9 +362,9 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Folder | Contents |
 |---|---|
 | `scenes/` | Gameplay scenes: `actors/` (player, Scavs), `hideout/` |
-| `maps/` | One scene per raid map (Section 5) |
+| `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
 | `ui/` | Menu, HUD, and inventory scenes (entry scene: `ui/main_menu.tscn`) |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`), plus `autoload/` (singletons) and `data/` (Resource classes) |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`), plus `autoload/` (singletons), `data/` (Resource classes) and `camera/` |
 | `data/` | `.tres` Resources: `items/` (one subfolder per category), `loot_tables/` |
 | `assets/` | `models/`, `textures/`, `audio/`, `fonts/` |
 
@@ -360,7 +376,10 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | `move_left` / `move_right` | A / D | `toggle_inventory` | Tab |
 | `shoot` | Left mouse | `interact` | F |
 | `aim` | Right mouse (hold) | `use_item` | E |
-| `hotkey_1` … `hotkey_5` | 1–5 | Facing | Follows mouse cursor (raycast to ground) |
+| `hotkey_1` … `hotkey_5` | 1–5 | `sprint` | Shift (hold) |
+| `crouch` | C (toggle) | Facing | Turns toward where the mouse cursor touches the ground |
+
+WASD is screen-relative: W always moves up the screen.
 
 ## 16. Changelog
 
@@ -372,3 +391,4 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | 2026-10-11 | Godot project scaffold: folder layout, input actions, main menu |
 | 2026-10-11 | Project targets Godot 4.7 (was 4.3) |
 | 2026-10-11 | Autoloads `GameState`, `ItemDB`, `SaveManager` (replace planned `Stash`/`SaveSystem`); `ItemData` resource, 5 example items, starting money |
+| 2026-10-11 | Player movement (walk, sprint, crouch, stamina, noise radius), top-down follow camera, stamina HUD, test level; Play opens the test level until the hideout exists |

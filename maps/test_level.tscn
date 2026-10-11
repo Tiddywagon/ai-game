@@ -1,0 +1,170 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/test_level.gd" id="1_level"]
+[ext_resource type="Texture2D" path="res://assets/textures/prototype_grid.png" id="2_grid"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="4_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="5_hud"]
+
+[sub_resource type="Environment" id="Environment_level"]
+background_mode = 1
+background_color = Color(0.1, 0.11, 0.1, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.75, 0.78, 0.85, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.55, 0.58, 0.5, 1)
+albedo_texture = ExtResource("2_grid")
+roughness = 0.95
+uv1_triplanar = true
+uv1_world_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wall"]
+albedo_color = Color(0.82, 0.8, 0.74, 1)
+albedo_texture = ExtResource("2_grid")
+roughness = 0.9
+uv1_triplanar = true
+uv1_world_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_crate"]
+albedo_color = Color(0.62, 0.5, 0.34, 1)
+albedo_texture = ExtResource("2_grid")
+roughness = 0.85
+uv1_triplanar = true
+uv1_world_triplanar = true
+
+[node name="TestLevel" type="Node3D"]
+script = ExtResource("1_level")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_level")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-50, -30, 0)
+light_energy = 1.2
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+
+[node name="Ground" type="CSGBox3D" parent="."]
+position = Vector3(0, -0.5, 0)
+use_collision = true
+size = Vector3(40, 1, 40)
+material = SubResource("StandardMaterial3D_ground")
+
+[node name="Walls" type="Node3D" parent="."]
+
+[node name="WallNorth" type="CSGBox3D" parent="Walls"]
+position = Vector3(0, 1, -20)
+use_collision = true
+size = Vector3(40.4, 2, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="WallSouth" type="CSGBox3D" parent="Walls"]
+position = Vector3(0, 1, 20)
+use_collision = true
+size = Vector3(40.4, 2, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="WallWest" type="CSGBox3D" parent="Walls"]
+position = Vector3(-20, 1, 0)
+use_collision = true
+size = Vector3(0.4, 2, 40.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="WallEast" type="CSGBox3D" parent="Walls"]
+position = Vector3(20, 1, 0)
+use_collision = true
+size = Vector3(0.4, 2, 40.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="RoomNorth" type="CSGBox3D" parent="Walls"]
+position = Vector3(-12, 1, -16)
+use_collision = true
+size = Vector3(8.4, 2, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="RoomWest" type="CSGBox3D" parent="Walls"]
+position = Vector3(-16, 1, -12)
+use_collision = true
+size = Vector3(0.4, 2, 8)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="RoomEast" type="CSGBox3D" parent="Walls"]
+position = Vector3(-8, 1, -12)
+use_collision = true
+size = Vector3(0.4, 2, 8)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="RoomSouthLeft" type="CSGBox3D" parent="Walls"]
+position = Vector3(-14.4, 1, -8)
+use_collision = true
+size = Vector3(3.6, 2, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="RoomSouthRight" type="CSGBox3D" parent="Walls"]
+position = Vector3(-9.6, 1, -8)
+use_collision = true
+size = Vector3(3.6, 2, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="LongWall" type="CSGBox3D" parent="Walls"]
+position = Vector3(8, 1, -6)
+use_collision = true
+size = Vector3(10, 2, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="ShortWall" type="CSGBox3D" parent="Walls"]
+position = Vector3(3, 1, -1)
+use_collision = true
+size = Vector3(0.4, 2, 5)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="Pillar" type="CSGBox3D" parent="Walls"]
+position = Vector3(12, 1, -14)
+use_collision = true
+size = Vector3(1, 2, 1)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="LowWall" type="CSGBox3D" parent="Walls"]
+position = Vector3(-8, 0.5, 12)
+use_collision = true
+size = Vector3(6, 1, 0.4)
+material = SubResource("StandardMaterial3D_wall")
+
+[node name="CrateA" type="CSGBox3D" parent="Walls"]
+position = Vector3(6, 0.5, 6)
+use_collision = true
+size = Vector3(1.2, 1, 1.2)
+material = SubResource("StandardMaterial3D_crate")
+
+[node name="CrateB" type="CSGBox3D" parent="Walls"]
+position = Vector3(7.4, 0.5, 6.2)
+use_collision = true
+size = Vector3(1.2, 1, 1.2)
+material = SubResource("StandardMaterial3D_crate")
+
+[node name="CrateC" type="CSGBox3D" parent="Walls"]
+position = Vector3(-5, 0.5, 5)
+use_collision = true
+size = Vector3(1.2, 1, 1.2)
+material = SubResource("StandardMaterial3D_crate")
+
+[node name="CrateLong" type="CSGBox3D" parent="Walls"]
+position = Vector3(12, 0.5, 10)
+use_collision = true
+size = Vector3(2.4, 1, 1.2)
+material = SubResource("StandardMaterial3D_crate")
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+position = Vector3(0, 0, 10)
+
+[node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
+fov = 55.0
+current = true
+script = ExtResource("4_camera")
+target = NodePath("../Player")
+
+[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("5_hud")]
+player = NodePath("../Player")

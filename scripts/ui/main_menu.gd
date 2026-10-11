@@ -1,7 +1,8 @@
 extends Control
-## Main menu. Play leads to the hideout, the start of the core loop (DESIGN.md §2).
+## Main menu. Play will lead to the hideout, the start of the core loop (DESIGN.md §2).
+## Until the hideout exists, Play opens the movement test level.
 
-const PLAY_SCENE := "res://scenes/hideout/hideout.tscn"
+const PLAY_SCENE := "res://maps/test_level.tscn"
 
 @onready var play_button: Button = %PlayButton
 

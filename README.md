@@ -9,6 +9,18 @@ Top-down 3D survival extraction looter shooter built in Godot 4 with GDScript. T
 3. In Godot's Project Manager, click **Import**, select this folder's `project.godot`, then **Import & Edit**.
 4. Press **F5** (or the ▶ button, top right) to run. The game starts at the main menu.
 
+## Controls
+
+Play opens a test level for now.
+
+| Key | Action |
+|---|---|
+| W A S D | Move (relative to the screen) |
+| Mouse | Turn to face the cursor |
+| Shift (hold) | Sprint; uses stamina |
+| C | Crouch / stand: slower and quieter |
+| Esc | Back to the main menu |
+
 ## Notes
 
 - Commit the `.uid` files Godot creates next to scripts and scenes; they keep references stable.
