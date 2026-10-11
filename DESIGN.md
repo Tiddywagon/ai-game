@@ -103,91 +103,95 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 - Rates are per-roll weights for generic loot spawns; sum = 100%.
 - **Modifiers:** container type (safe/jacket/weapon box), map tier (Labs ×2 for Epic+), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
 
-### 6.3 Rolled Loot (Affixes & Traits)
+### 6.3 Gear Variance (Rolled Loot)
 
-Borderlands-style randomized gear on top of the base items. Each dropped **weapon, attachment, armor, helmet, rig, or backpack** is an *instance* of a base item and rolls bonus stats based on its rarity. Meds, food, ammo, valuables, junk, and keys never roll.
+Borderlands-style variety with Tarkov-style realism. Each dropped **weapon, attachment, armor, helmet, rig, or backpack** is an *instance* of a base item. Depending on rarity, it can roll **craftsmanship bonuses** based on real differences in manufacturing quality, wear, and gunsmith work. Meds, food, ammo, valuables, junk, and keys never roll.
+
+**Realism rules (always apply)**
+
+| Rule | Detail |
+|---|---|
+| Ballistics decide fights | Ammo sets damage and penetration; armor class sets protection. Rolls never add damage or penetration and never raise armor class |
+| Small numbers | Bonuses are a few percent, with hard caps. A Legendary is better, never overpowered |
+| Real-world cause | Every bonus has a believable source: match barrel, hand-fitted parts, newer production run, gunsmith work |
+| No sci-fi | No elemental damage, lifesteal, stacking buffs, or loot beams |
+| Trade-offs | Most gunsmith mods have a downside |
+| Condition matters | Below 50% durability, all roll bonuses are halved |
 
 **Rolls by rarity** *(tune)*
 
-| Rarity | Affixes | Roll quality | Unique trait |
+| Rarity | Bonuses | Roll quality | Gunsmith mod |
 |---|---|---|---|
 | Common | 0 | — | — |
 | Uncommon | 1 | Low | — |
 | Rare | 2 | Low–Mid | — |
-| Ultra Rare | 2–3 | Mid | 10% chance (minor trait) |
-| Epic | 3 | Mid–High | 35% chance (minor trait) |
-| Legendary | 3–4 | High | Always: named item with a fixed signature trait |
+| Ultra Rare | 2–3 | Mid | 10% chance |
+| Epic | 3 | Mid–High | 35% chance |
+| Legendary | 3–4 | High | Always: a named item with a fixed mod |
 
-- **Roll quality** sets where each affix lands in its range (Low = bottom third, High = top third).
-- **Naming:** `[Prefix] Base Item [of Suffix]`, for example *Steady AK-74N of Rending*. A named Legendary uses its own name instead.
+- **Roll quality** sets where each bonus lands in its range (Low = bottom third, High = top third).
+- **Naming:** `[Quality] Base Item`, for example *Match-grade AK-74N* or *Hand-fitted M4A1*. Named Legendaries use their own name.
 - **Map bonus:** Labs and boss loot tables roll quality one step higher.
 
-**Affix pool (weapons)**
+**Weapon bonuses**
 
-| Affix | Range | Name part |
-|---|---|---|
-| Damage | +3–12% | Brutal |
-| Armor penetration | +2–8 | of Rending |
-| Recoil | −4–15% | Steady |
-| Ergonomics | +3–10 | Balanced |
-| Accuracy | +5–15% | Precise |
-| Fire rate | +3–10% | Rapid |
-| Magazine reload speed | +5–20% | of Haste |
-| Durability loss | −10–30% | Hardened |
-| Malfunction chance | −20–50% | Reliable |
-| Noise radius | −10–25% | Silent |
-| Bleed chance on hit | +3–10% | Serrated |
-
-**Affix pool (armor, helmets, rigs, backpacks)**
-
-| Affix | Range | Applies to |
-|---|---|---|
-| Max durability | +5–20% | Armor, helmets |
-| Blunt damage taken | −5–15% | Armor, helmets |
-| Ricochet chance | +5–15% | Helmets |
-| Movement penalty | −10–40% | Armor, helmets |
-| Weight | −10–30% | All |
-| Stamina regen | +3–10% | Armor, rigs |
-| Search speed | +5–15% | Backpacks, rigs |
-| Bonus grid space | +1 column | Backpacks (Epic+ only) |
-
-Attachments roll from the weapon pool at half the range, with at most 2 affixes.
-
-**Minor traits (Ultra Rare / Epic)**
-
-| Trait | Effect |
-|---|---|
-| Overpressure | +15% damage, +10% durability loss |
-| Featherweight | −50% weapon weight |
-| Quick Draw | +40% weapon swap speed |
-| Tracer Lock | First shot after aiming has +25% accuracy |
-| Adrenal Plates | Taking a thorax hit gives +20% stamina regen for 10 s |
-| Deep Pockets | Rig gains one extra 1×1 slot |
-
-**Legendary examples** (named, fixed trait + rolled affixes)
-
-| Name | Base | Signature trait | Source |
+| Bonus | Range | Real-world cause | Name |
 |---|---|---|---|
-| *Reshala's Gift* | TT pistol | Kills restore 10 HP to the thorax | Reshala |
-| *Woodcutter* | SKS | Every 5th round has double penetration | Shturman |
-| *The Butcher's Hammer* | Sledgehammer | Hits cause a heavy bleed and fracture | Tagilla |
-| *Hippocrates* | Medical rig | Meds use 30% less time | Sanitar |
-| *Firestarter* | MP-153 shotgun | Pellets apply burn (2 HP/s for 4 s) | Any Legendary roll |
-| *Ghost Protocol* | Armored rig | Scavs detect you at −30% range while you crouch | Labs |
-| *Overclock* | M4A1 | Fire rate +3% per consecutive hit (max +30%), resets on reload | Any Legendary roll |
+| Muzzle velocity | +1–4% (flatter trajectory, slightly more range) | Match barrel | Match-grade |
+| Accuracy (MOA) | −5–15% | Free-floated or lapped barrel | Precision |
+| Recoil | −2–8% | Tuned gas system | Tuned |
+| Ergonomics | +2–6 | Hand-fitted parts | Hand-fitted |
+| Malfunction chance | −10–40% | Polished feed ramp | Reliable |
+| Durability loss | −10–25% | Chrome-lined barrel | Chrome-lined |
+| Weight | −3–10% | Lightened parts | Lightened |
+
+**Gear bonuses**
+
+| Bonus | Range | Real-world cause | Applies to |
+|---|---|---|---|
+| Max durability | +5–15% | Newer production run | Armor, helmets |
+| Blunt damage taken | −3–10% | Better trauma pad | Armor, helmets |
+| Movement penalty | −5–20% | Better fit and cut | Armor, helmets |
+| Ricochet chance | +3–10% | Better shell geometry | Helmets |
+| Weight | −5–15% | Lighter materials | All |
+| Stamina drain while loaded | −3–8% | Better harness | Rigs, backpacks |
+
+Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
+
+**Gunsmith mods (Ultra Rare / Epic chance)**
+
+| Mod | Upside | Downside |
+|---|---|---|
+| Lightened bolt carrier | +8% fire rate | +5% recoil |
+| Ported barrel | −8% vertical recoil | +15% noise radius |
+| Match trigger | +10% accuracy in semi-auto | — |
+| Cerakote finish | −20% durability loss | — |
+| Ceramic-composite plates | −20% armor weight | −15% max durability |
+| Extra sewn pouch | Rig +1 slot (1×1) | +0.3 kg |
+
+**Named Legendaries** (fixed mod + rolled bonuses)
+
+| Name | Base | Fixed mod | Source |
+|---|---|---|---|
+| *Reshala's TT* | Gold-plated TT pistol | Hand-fitted: −40% malfunction chance; very high sell value | Reshala |
+| *Woodcutter* | SKS | Match barrel, lapped bore: −20% MOA | Shturman |
+| *Tagilla's Rig* | Plate carrier | Reinforced: −10% blunt damage, +15% durability | Tagilla |
+| *Sanitar's Kit* | Medical rig | Extra sewn pouches: +2 slots (1×1); meds taken from the rig apply 15% faster | Sanitar |
+| *Prototype AK-12* | AK-12 | Tuned gas + lightened bolt: −10% recoil, +5% fire rate | Labs |
+| *Three-Gun* | M4A1 | Competition build: match trigger + tuned gas | Any Legendary roll |
 
 **Systems interaction**
 
 | System | Rule |
 |---|---|
-| Examine | An unexamined item hides its rarity, affixes, and trait |
-| Inventory | Rarity color shows as the cell border; tooltip lists affixes and the trait |
-| Modding | Affixes stack additively with attachment stats; caps: recoil −60%, ergo +40 |
-| Repair | Keeps affixes; a Legendary's max durability loss per repair is halved |
+| Examine | An unexamined item hides its rarity, bonuses, and mod |
+| UI | Only a subtle rarity-colored cell border; the tooltip lists bonuses and mod. No in-world glow |
+| Caps (rolls + mods) | Recoil −15%, ergonomics +10, accuracy −20%, fire rate +10%. These stack with attachment stats |
+| Repair | Keeps rolls. A Legendary loses half as much max durability per repair |
 | Insurance | Insured items come back with the same rolls |
-| Traders | Sell value ×(1 + 0.15 × affix count); ×2 more for a trait. Traders never sell rolled items above Rare |
+| Traders | Sell value ×(1 + 0.15 × bonus count); ×2 more for a gunsmith mod. Traders never sell rolled items above Rare |
 | Quests | Any rolled variant of the base item counts for a hand-in (FIR still required) |
-| Workbench lvl 3 | **Reroll** one affix: costs roubles plus barter items, scaled by rarity. Traits and Legendaries can't be rerolled |
+| Workbench lvl 3 | **Gunsmithing:** add or replace one gunsmith mod using parts and roubles. Can't change Legendaries or reroll bonuses |
 | Scavs / AI PMCs | Their gear rolls too, using their gear tier (Section 4) |
 
 ## 7. Grid Inventory
@@ -327,7 +331,7 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 |---|---|
 | Item data | `ItemData` custom `Resource` (`.tres`): id, name, size, rarity, weight, value, category, stats |
 | Loot tables | `LootTable` Resource with weighted rarity rolls |
-| Rolled items | `ItemInstance` (base `ItemData` + rarity + affixes + trait + durability + FIR flag); saved per instance. Affixes and traits are `AffixData` / `TraitData` Resources |
+| Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
 | Globals (autoloads) | `GameState`, `Stash`, `TraderManager`, `QuestManager`, `HideoutManager`, `SaveSystem` |
 | Saves | JSON / `ConfigFile` in `user://` |
@@ -342,3 +346,4 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 |---|---|
 | 2026-10-11 | Initial design document |
 | 2026-10-11 | Added rolled loot (6.3): affixes, traits, named Legendaries |
+| 2026-10-11 | Reworked 6.3 for realism: grounded craftsmanship bonuses, gunsmith mods with trade-offs, no damage/pen rolls |
