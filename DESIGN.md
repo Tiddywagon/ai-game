@@ -338,7 +338,7 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Player | `CharacterBody3D`, top-down camera rig, mouse-ray aim |
 | AI | `CharacterBody3D` + `NavigationAgent3D` + state machine node |
 | Naming | snake_case files, PascalCase classes (`class_name`) |
-| Engine version | Godot 4.3+ (Forward+ renderer), 1920×1080 base resolution |
+| Engine version | Godot 4.7 (current stable 4.7.2), Forward+ renderer, 1920×1080 base resolution. Commit Godot's `.uid` files |
 
 **Folder layout**
 
@@ -369,3 +369,4 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | 2026-10-11 | Added rolled loot (6.3): affixes, traits, named Legendaries |
 | 2026-10-11 | Reworked 6.3 for realism: grounded craftsmanship bonuses, gunsmith mods with trade-offs, no damage/pen rolls |
 | 2026-10-11 | Godot project scaffold: folder layout, input actions, main menu |
+| 2026-10-11 | Project targets Godot 4.7 (was 4.3) |
