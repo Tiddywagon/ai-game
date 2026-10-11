@@ -2,7 +2,7 @@ class_name Player
 extends Actor
 ## The player (DESIGN.md §13). Turns input into Actor intents: WASD moves relative to the screen,
 ## the body faces the in-raid reticle, Shift sprints, C crouches, Space rolls, Q takes or leaves cover,
-## right-click peeks out of cover, and left-click fires.
+## right-click peeks out of cover, left-click fires and R reloads.
 ## In a raid the mouse is captured and moves the reticle (`cursor_position`) at the sensitivity set in
 ## Settings; a controller's right stick moves it too. Sprint, crouch and aim can hold or toggle.
 
@@ -12,8 +12,7 @@ signal hit_landed(target: Actor, damage: float, position: Vector3)
 ## Right stick: how far from the player it puts the reticle, and how fast the reticle gets there.
 const STICK_AIM_RADIUS := 360.0
 const STICK_AIM_SPEED := 2600.0
-## Camera shake strength per shot fired and per hit taken (0-1, scaled by Settings).
-const FIRE_SHAKE := 0.12
+## Camera shake strength per hit taken (0-1, scaled by Settings). Each gun sets its own kick per shot.
 const HIT_SHAKE := 0.45
 
 ## Where the reticle is, in viewport pixels.
@@ -23,7 +22,7 @@ var _roll_requested := false
 var _cover_requested := false
 var _sprint_toggled := false
 var _aim_toggled := false
-var _recoil := 0.0
+var _reload_requested := false
 
 
 func _ready() -> void:
@@ -51,10 +50,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_roll_requested = true
 	elif event.is_action_pressed("take_cover"):
 		_cover_requested = true
+	elif event.is_action_pressed("reload"):
+		_reload_requested = true
 
 
 func _process(delta: float) -> void:
-	_recoil = maxf(_recoil - delta * 2.5, 0.0)
 	if not Settings.get_value("controls", "controller_enabled"):
 		return
 	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
@@ -77,6 +77,10 @@ func _think(_delta: float) -> void:
 	if not Settings.is_toggle("crouch_mode") and cover == null:
 		set_crouching(Input.is_action_pressed("crouch") and not (sprint_input and moving))
 	fire_input = Input.is_action_pressed("shoot")
+	auto_reload = Settings.get_value("gameplay", "auto_reload")
+	if _reload_requested:
+		_reload_requested = false
+		try_reload()
 	peek_input = _aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")
 	_update_aim()
 	if _roll_requested:
@@ -106,14 +110,8 @@ func take_hit(damage: float, from: Actor) -> void:
 	_shake_camera(HIT_SHAKE)
 
 
-## How much the bloom reticle opens up: 0 when still, toward 1 when moving fast or firing.
-func aim_spread() -> float:
-	return clampf(Vector2(velocity.x, velocity.z).length() / sprint_speed * 0.7 + _recoil, 0.0, 1.0)
-
-
 func _on_fired() -> void:
-	_recoil = minf(_recoil + 0.15, 0.6)
-	_shake_camera(FIRE_SHAKE)
+	_shake_camera(weapon.data.camera_kick)
 
 
 ## A roll that ends right next to cover, heading into it, snaps into that cover.

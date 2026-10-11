@@ -2,6 +2,7 @@ class_name Actor
 extends CharacterBody3D
 ## Shared body of the player and the AI (DESIGN.md §4, §13): movement, stamina, combat roll, cover,
 ## hitbox, health and shooting. Subclasses decide what to do in _think(); Actor carries it out.
+## The gun is a Weapon node ($Body/Gun) whose stats come from the gun item's WeaponData.
 
 signal died
 ## A roll just ended. `direction` is the way it went.
@@ -31,11 +32,13 @@ const DEFAULT_MAX_HEALTH := 200.0
 ## Roll, cover and bullet tuning shared by everyone.
 @export var config: CombatConfig = preload("res://data/config/combat.tres")
 @export var max_health := DEFAULT_MAX_HEALTH
-## Weapon and ammo item ids from ItemDB.
+## Gun and ammo item ids from ItemDB. The gun item's WeaponData sets fire rate, magazine, recoil.
 @export var weapon_id := "ak_74n"
 @export var ammo_id := "ammo_545_ps"
-## Random spread of each shot, in degrees.
-@export var spread_degrees := 0.5
+## Spare rounds carried besides the loaded magazine, or -1 for unlimited.
+@export var spare_rounds := 90
+## The shooter's own aim error in degrees, added to the gun's spread (bots get it from their profile).
+@export var spread_degrees := 0.0
 
 @export_group("Speed")
 ## Metres per second.
@@ -103,30 +106,29 @@ var is_peeking := false
 ## Actors that attacked this one: hostile even if they'd normally be friendly (a player Scav who
 ## shoots an AI Scav).
 var enemies: Array[Actor] = []
+## Start a reload when the trigger is pulled on an empty magazine.
+var auto_reload := true
 
 var _roll_direction := Vector3.ZERO
 var _roll_time := 0.0
 var _roll_cooldown := 0.0
 var _regen_cooldown := 0.0
-var _fire_cooldown := 0.0
 var _footstep_timer := 0.0
 var _height := 0.0
-var _weapon: ItemData
-var _ammo: ItemData
 
 @onready var _collision: CollisionShape3D = $CollisionShape3D
 @onready var _hitbox: Area3D = $Hitbox
 @onready var _hitbox_shape: CollisionShape3D = $Hitbox/CollisionShape3D
 @onready var _body: Node3D = $Body
-@onready var _muzzle: Node3D = $Body/Gun/Muzzle
+@onready var weapon: Weapon = $Body/Gun
 
 
 func _ready() -> void:
 	add_to_group("actors")
 	health = max_health
 	stamina = max_stamina
-	_weapon = ItemDB.get_item(weapon_id)
-	set_ammo(ammo_id)
+	weapon.dry_fired.connect(_on_dry_fire)
+	equip_weapon(weapon_id, ammo_id, spare_rounds)
 	_set_height(stand_height)
 	_update_hitbox()
 
@@ -162,7 +164,6 @@ func _physics_process(delta: float) -> void:
 		return
 	_think(delta)
 	_roll_cooldown = maxf(_roll_cooldown - delta, 0.0)
-	_fire_cooldown = maxf(_fire_cooldown - delta, 0.0)
 	if is_rolling:
 		_step_roll(delta)
 	elif cover:
@@ -238,16 +239,49 @@ func exit_cover() -> void:
 	CoverSystem.release(self)
 
 
+## Puts the gun `gun_id` in hand ("" for none) with a full magazine of `ammo` and `spare` rounds
+## besides (-1 for unlimited).
+func equip_weapon(gun_id: String, ammo: String, spare: int) -> void:
+	weapon_id = gun_id
+	ammo_id = ammo
+	spare_rounds = spare
+	weapon.equip(ItemDB.get_item(gun_id) if gun_id != "" else null, ItemDB.get_item(ammo) if ammo != "" else null, spare)
+
+
+## Swaps the loaded round type, keeping the round counts (debug key F3 in the test level).
 func set_ammo(id: String) -> void:
 	ammo_id = id
-	_ammo = ItemDB.get_item(id)
+	weapon.set_ammo(ItemDB.get_item(id))
 
 
 ## Short ammo description for the HUD, e.g. "5.45x39 PS (pen 28)".
 func ammo_label() -> String:
-	if _ammo == null:
+	if weapon.ammo == null:
 		return "no ammo"
-	return "%s (pen %d)" % [_ammo.display_name, int(_ammo.stats.get("penetration", 0))]
+	return "%s (pen %d)" % [weapon.ammo.display_name, int(weapon.ammo.stats.get("penetration", 0))]
+
+
+## Starts a reload, or emits action_blocked with the reason it can't.
+func try_reload() -> bool:
+	if is_dead:
+		return false
+	var reason := weapon.reload_block_reason()
+	if reason == "already reloading":
+		return false
+	if reason != "":
+		action_blocked.emit("Magazine full" if reason == "magazine full" else "Can't reload: " + reason)
+		return false
+	return weapon.reload()
+
+
+## How fast the actor is moving, 1 = sprint speed.
+func speed_ratio() -> float:
+	return Vector2(velocity.x, velocity.z).length() / sprint_speed
+
+
+## Spread of the next shot right now, in degrees: the gun's (base, movement, recoil) plus aim error.
+func current_spread() -> float:
+	return weapon.spread(speed_ratio()) + spread_degrees
 
 
 func take_hit(damage: float, from: Actor) -> void:
@@ -265,6 +299,7 @@ func die() -> void:
 		return
 	is_dead = true
 	is_rolling = false
+	weapon.cancel_reload()
 	exit_cover()
 	CoverSystem.release(self)  # Also frees a spot it was only heading to.
 	velocity = Vector3.ZERO
@@ -437,19 +472,29 @@ func _update_facing(delta: float) -> void:
 
 
 func _update_firing() -> void:
-	if not fire_input or not has_aim or _fire_cooldown > 0.0 or _ammo == null or _weapon == null:
+	if not fire_input:
+		weapon.release_trigger()
 		return
-	if is_rolling or (cover and not is_peeking):
+	if not has_aim or is_rolling or (cover and not is_peeking):
 		return  # Can't shoot mid-roll or while hidden behind cover.
 	var to_aim := aim_point - global_position
 	if absf(angle_difference(rotation.y, _yaw_toward(to_aim))) > deg_to_rad(MAX_AIM_ERROR_DEGREES):
 		return  # Still turning toward the target.
-	_fire_cooldown = 60.0 / float(_weapon.stats.get("fire_rate", 600))
 	# Bullets start at the body's centre line, so a gun poking into a wall can't shoot through it.
 	var origin := global_position + Vector3.UP * gun_height()
-	var direction := (aim_point - origin).normalized()
-	Ballistics.fire(self, origin, _spread(direction), _ammo, _muzzle.global_position)
-	_on_fired()
+	if weapon.pull_trigger(self, origin, aim_point, spread_degrees, speed_ratio()):
+		_on_fired()
+
+
+## The trigger was pulled on an empty magazine: reload if allowed, otherwise say why nothing happens.
+func _on_dry_fire() -> void:
+	if auto_reload and weapon.reload():
+		return
+	var reason := weapon.reload_block_reason()
+	if reason == "no spare ammo":
+		action_blocked.emit("Out of ammo")
+	elif reason == "":
+		action_blocked.emit("Magazine empty: press %s to reload" % Settings.key_label("reload"))
 
 
 func _update_footsteps(delta: float) -> void:
@@ -489,18 +534,6 @@ func _update_hitbox() -> void:
 
 func _hitbox_height() -> float:
 	return (_hitbox_shape.shape as CapsuleShape3D).height
-
-
-func _spread(direction: Vector3) -> Vector3:
-	if spread_degrees <= 0.0:
-		return direction
-	var side_axis := direction.cross(Vector3.UP).normalized()
-	if side_axis.is_zero_approx():
-		side_axis = Vector3.RIGHT
-	var up_axis := side_axis.cross(direction).normalized()
-	var angle := deg_to_rad(spread_degrees) * sqrt(randf())
-	var around := randf() * TAU
-	return direction.rotated(side_axis, angle * sin(around)).rotated(up_axis, angle * cos(around)).normalized()
 
 
 static func _ease_out(t: float) -> float:

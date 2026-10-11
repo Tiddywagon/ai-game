@@ -2,7 +2,8 @@ class_name Ballistics
 extends RefCounted
 ## Hitscan bullets (DESIGN.md §13.4). A round stops at concrete and metal, goes through wood if its
 ## penetration is high enough, damages the first hitbox it reaches, and warns everyone it passes
-## close to that they're under fire. Every shot is also a loud noise for AI.
+## close to that they're under fire. Every shot is also a loud noise for AI. Each surface or body a
+## round hits gets a small impact burst (ImpactEffects). Guns call this through Weapon.
 
 const MAX_RANGE := 150.0
 ## Actors this close to a bullet's path are told they're under fire.
@@ -38,8 +39,11 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 			target.take_hit(damage, shooter)
 			shooter.on_hit_landed(target, damage, hit.position)
 			result.hit = target
+			ImpactEffects.spawn(shooter.get_tree(), hit.position, hit.normal, ImpactEffects.Kind.FLESH)
 			break
-		if material_of(hit.collider) == CoverBox.CoverMaterial.WOOD and penetration >= config.wood_min_penetration:
+		var material := material_of(hit.collider)
+		ImpactEffects.spawn(shooter.get_tree(), hit.position, hit.normal, ImpactEffects.kind_for(material))
+		if material == CoverBox.CoverMaterial.WOOD and penetration >= config.wood_min_penetration:
 			exclude.append(hit.rid)
 			damage *= config.wood_damage_kept
 			penetration -= config.wood_penetration_loss

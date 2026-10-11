@@ -25,7 +25,7 @@ extends Resource
 @export_range(0.5, 30.0, 0.5, "suffix:s") var give_up_time: float
 
 @export_group("Shooting")
-## Random spread of each shot.
+## Aim error: random spread added to the gun's own spread and recoil.
 @export_range(0.0, 15.0, 0.1, "suffix:°") var spread_degrees: float
 ## Fires for burst_time, then pauses for burst_pause.
 @export_range(0.05, 3.0, 0.05, "suffix:s") var burst_time: float

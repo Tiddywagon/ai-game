@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/weapon.gd" id="1_weapon"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gun"]
+albedo_color = Color(0.12, 0.12, 0.12, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_gun"]
+material = SubResource("StandardMaterial3D_gun")
+size = Vector3(0.14, 0.14, 0.9)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_flash_outer"]
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(1, 0.62, 0.22, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_flash_outer"]
+material = SubResource("StandardMaterial3D_flash_outer")
+radius = 0.16
+height = 0.32
+radial_segments = 12
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_flash_core"]
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(1, 0.93, 0.7, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_flash_core"]
+material = SubResource("StandardMaterial3D_flash_core")
+radius = 0.08
+height = 0.16
+radial_segments = 12
+rings = 6
+
+[node name="Weapon" type="Node3D"]
+script = ExtResource("1_weapon")
+
+[node name="Model" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_gun")
+
+[node name="Muzzle" type="Marker3D" parent="."]
+position = Vector3(0, 0, -0.45)
+
+[node name="Flash" type="Node3D" parent="Muzzle"]
+visible = false
+
+[node name="Outer" type="MeshInstance3D" parent="Muzzle/Flash"]
+transform = Transform3D(1, 0, 0, 0, 0.7, 0, 0, 0, 2.2, 0, 0, -0.3)
+cast_shadow = 0
+mesh = SubResource("SphereMesh_flash_outer")
+
+[node name="Core" type="MeshInstance3D" parent="Muzzle/Flash"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 2.6, 0, 0, -0.17)
+cast_shadow = 0
+mesh = SubResource("SphereMesh_flash_core")
+
+[node name="FlashLight" type="OmniLight3D" parent="Muzzle"]
+visible = false
+light_color = Color(1, 0.72, 0.4, 1)
+light_energy = 3.0
+omni_range = 4.5

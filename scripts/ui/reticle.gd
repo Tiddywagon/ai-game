@@ -1,10 +1,13 @@
 extends Control
 ## In-raid aiming reticle (DESIGN.md §17): drawn at the player's reticle position in the style and
-## colour chosen in Settings > Interface. The "bloom" style opens up while moving or firing.
-## Hit markers show here too.
+## colour chosen in Settings > Interface. The "bloom" style opens to the real cone the next shot can
+## land in (gun spread, movement, recoil). A ring fills up while reloading. Hit markers show here too.
 
 const HIT_MARKER_TIME := 0.25
 const KILL_COLOR := Color(1.0, 0.3, 0.25)
+const RELOAD_RING_RADIUS := 22.0
+## Largest gap the bloom reticle opens to, in pixels.
+const MAX_BLOOM := 160.0
 
 var player: Player
 
@@ -44,7 +47,12 @@ func _draw() -> void:
 		"cross":
 			_draw_cross(center, 5.0, color, shadow)
 		_:
-			_draw_cross(center, 5.0 + player.aim_spread() * 22.0, color, shadow)
+			_draw_cross(center, clampf(_spread_radius(), 4.0, MAX_BLOOM) + 1.0, color, shadow)
+	if player.weapon.is_reloading:
+		var start := -PI / 2.0
+		var end := start + TAU * player.weapon.reload_progress()
+		draw_arc(center, RELOAD_RING_RADIUS, start, end, 40, shadow, 4.0)
+		draw_arc(center, RELOAD_RING_RADIUS, start, end, 40, color, 2.0)
 	if _hit_time > 0.0:
 		var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
 		var t := _hit_time / HIT_MARKER_TIME
@@ -53,6 +61,20 @@ func _draw() -> void:
 		var size := 10.0 if reduced else 10.0 + 6.0 * t
 		for corner in [Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
 			draw_line(center + corner * 5.0, center + corner * size, marker, 2.5)
+
+
+## Radius in pixels of the cone the next shot can land in, measured at the aim point.
+func _spread_radius() -> float:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or not player.has_aim:
+		return 0.0
+	var origin := player.global_position + Vector3.UP * player.gun_height()
+	var to_aim := player.aim_point - origin
+	var side := to_aim.cross(Vector3.UP).normalized()
+	if to_aim.length() < 0.5 or side.is_zero_approx():
+		return 0.0
+	var edge := player.aim_point + side * to_aim.length() * tan(deg_to_rad(player.current_spread()))
+	return camera.unproject_position(edge).distance_to(camera.unproject_position(player.aim_point))
 
 
 func _draw_cross(center: Vector2, gap: float, color: Color, shadow: Color) -> void:

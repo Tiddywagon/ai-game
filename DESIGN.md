@@ -66,11 +66,13 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 | Under fire | A bullet passing within 2 m puts the bot in combat with the shooter |
 | Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks |
 | Search | Loses sight for too long → goes to the last known position and looks around |
+| Shooting | Same guns as the player (Section 13.4): fires in bursts, so recoil builds and settles. Aim error is added on top of the gun's spread. From cover it waits until it has stopped stepping out before firing |
+| Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Bots carry 90 spare rounds |
 
-| Profile | Vision | Reaction | Spread | Hearing | Rolls | Ammo |
+| Profile | Vision | Reaction | Aim error | Hearing | Rolls | Ammo |
 |---|---|---|---|---|---|---|
-| Scav (basic) | 25 m, 120° | 0.8 s | 4.0° | ×1.0 | Never | 5.45 PS |
-| PMC (advanced) | 35 m, 140° | 0.4 s | 1.8° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 5.45 BS |
+| Scav (basic) | 25 m, 120° | 0.8 s | 2.8° | ×1.0 | Never | 5.45 PS |
+| PMC (advanced) | 35 m, 140° | 0.4 s | 0.3° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 5.45 BS |
 
 ## 5. Maps
 
@@ -383,11 +385,25 @@ All of these values live in `data/config/combat.tres`.
 | Concrete, metal | Stop every round |
 | Noise | Every shot is a 60 m noise |
 | Health (for now) | One pool per actor: player 200, Scav 150, PMC 200. Body parts come later (Section 13) |
+| Guns | Each gun's handling is a `WeaponData` file (Section 15). Damage and penetration always come from the ammo |
+| Fire rate | Rounds per minute. Automatic guns fire while the trigger is held; semi-auto guns fire once per click |
+| Magazine | Each shot uses a round. Can't fire while reloading |
+| Reload (R) | Tactical reload (rounds left) or a slower empty reload (a round has to be chambered). Tops the magazine up from spare rounds of the loaded type. You can move, roll and use cover while reloading |
+| Spare ammo | In a raid: the pocket rounds matching the loaded ammo. Rounds used aren't taken out of your profile yet |
+| Auto-reload | On by default (Settings > Gameplay): pulling the trigger on an empty magazine reloads. Off: the HUD says "Magazine empty: press R to reload". No spare rounds: "Out of ammo" |
+| Spread | Each shot lands at random inside a cone: base spread + movement spread (scaled by speed, full at sprint speed) + recoil + the shooter's aim error (bots only) |
+| Recoil | Every shot adds spread up to a cap. It starts wearing off a moment after the last shot, so short bursts and tap fire stay accurate and long sprays don't |
+| Feedback | Muzzle flash with a brief light, a small kick of the gun model and camera shake. A burst of particles where a round hits: grey dust (concrete), sparks (metal), splinters (wood), red (a body). The bloom reticle opens to the real spread cone; a ring fills around it while reloading |
+| HUD | Bottom right: gun name, rounds in the magazine (amber at a third or less, red when empty), magazine size, spare rounds, loaded ammo and penetration, auto/semi, and a reload bar |
 
 | Ammo | Damage | Penetration | Wood |
 |---|---|---|---|
 | 5.45x39 PS | 50 | 28 | Stopped |
 | 5.45x39 BS | 40 | 45 | Goes through (24 damage after) |
+
+| Gun *(tune)* | Fire rate | Mode | Magazine | Reload / empty | Base spread | Moving (sprint) | Recoil per shot / cap / recovery |
+|---|---|---|---|---|---|---|---|
+| AK-74N | 650 rpm | Auto | 30 | 2.3 s / 2.9 s | 0.5° | +3.0° | +0.5° / 5° / 10°/s after 0.15 s |
 
 ## 14. Economy
 
@@ -403,7 +419,8 @@ All of these values live in `data/config/combat.tres`.
 
 | Area | Approach |
 |---|---|
-| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category, rarity, size, weight, base value, max stack, stats. One `.tres` per item in `data/items/<category>/<id>.tres`; enums are saved as numbers, so only append new values |
+| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category, rarity, size, weight, base value, max stack, stats, and for guns a `weapon` (`WeaponData`). One `.tres` per item in `data/items/<category>/<id>.tres`; enums are saved as numbers, so only append new values |
+| Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, fire rate, auto/semi, magazine, reload and empty-reload time, base and movement spread, recoil per shot, recoil cap, recovery rate and delay, camera kick. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
 | Loot tables | `LootTable` Resource with weighted rarity rolls |
 | Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
@@ -412,7 +429,7 @@ All of these values live in `data/config/combat.tres`.
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
 | Audio | Buses: Master, Music, Effects, Voice, UI, Ambient (`default_bus_layout.tres`). Placeholder music and UI sounds are generated by `tools/make_placeholder_audio.py` |
-| Actors | `Actor` (`scripts/actors/actor.gd`) is the shared body: movement, stamina, roll, cover, hitbox, health, shooting. `Player` turns input into intents; `Bot` turns AI decisions into the same intents. Each has a separate `Hitbox` (Area3D) that bullets hit and that can shrink independently of the movement collider |
+| Actors | `Actor` (`scripts/actors/actor.gd`) is the shared body: movement, stamina, roll, cover, hitbox, health, shooting (through its `Weapon`, `$Body/Gun`). `Player` turns input into intents; `Bot` turns AI decisions into the same intents. Each has a separate `Hitbox` (Area3D) that bullets hit and that can shrink independently of the movement collider |
 | Player | `scenes/actors/player.tscn`: capsule placeholder; the gun box shows facing. Rules in Section 13 |
 | AI | `scenes/actors/bot.tscn` + a `BotProfile` (`data/bots/*.tres`). Behaviour in Section 4 |
 | Combat tuning | `CombatConfig` resource, `data/config/combat.tres`: roll, cover and bullet values. The numbers are in the file itself, so it can be edited in the Inspector or a text editor |
@@ -428,11 +445,11 @@ All of these values live in `data/config/combat.tres`.
 
 | Folder | Contents |
 |---|---|
-| `scenes/` | Gameplay scenes: `actors/` (player, bots), `props/` (car), `menu/` (main menu background), `hideout/` |
+| `scenes/` | Gameplay scenes: `actors/` (player, bots), `weapons/` (the shared gun scene), `props/` (car), `menu/` (main menu background), `hideout/` |
 | `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
 | `ui/` | Main menu (entry scene), settings, raid setup, loading, character, traders, pause menu, HUD; `theme/` |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets) and `world/` (cover) |
-| `data/` | `.tres` Resources: `items/` (one subfolder per category), `loot_tables/`, `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info) |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets, guns, impact effects) and `world/` (cover) |
+| `data/` | `.tres` Resources: `items/` (one subfolder per category), `weapons/` (gun handling), `loot_tables/`, `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info) |
 | `assets/` | `models/`, `textures/`, `audio/` (`music/`, `ui/`), `shaders/`, `fonts/` |
 | `tools/` | Helper scripts run outside Godot (placeholder audio generator) |
 
@@ -506,16 +523,16 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | Graphics | Display mode (Windowed / Borderless / Fullscreen), resolution (windowed only), monitor, V-Sync (on), FPS limit (30/60/120/144/240/Unlimited), render scale (100%), quality preset (Low/Medium/High/Ultra, High) which sets: shadows, textures, anti-aliasing (Off/FXAA/MSAA/TAA), ambient occlusion, view distance, depth of field quality. Also bloom, motion blur, brightness and gamma |
 | Audio | Master (80%), music (50%), effects, voice, interface (70%), ambient volume; output device; mute when the window loses focus (on) |
 | Controls | Mouse sensitivity (1.0), aim (optics) sensitivity (0.6), invert mouse; hold or toggle for sprint (hold), crouch (toggle) and aim (hold); key remapping for every action with conflict warnings and per-key reset; controller on/off, sensitivity and stick dead zone (20%) |
-| Gameplay | Camera shake (100%), damage numbers (off), hit markers (on), auto-reload, auto-equip on pickup, confirm before selling valuables, language, units (metric / imperial) |
+| Gameplay | Camera shake (100%), damage numbers (off), hit markers (on), auto-reload (on, Section 13.4), auto-equip on pickup, confirm before selling valuables, language, units (metric / imperial) |
 | Interface | HUD scale, HUD opacity, FPS counter, reticle style (dot / cross / circle / bloom) and color, colorblind mode (protanopia / deuteranopia / tritanopia), subtitles and subtitle size |
-| Accessibility | Reduce flashing effects (dimmer tracers, steady hit markers), turn off screen shake, high-contrast outlines on enemies (red; neutral bots cyan), press instead of hold (sprint, crouch and aim become toggles) |
+| Accessibility | Reduce flashing effects (dimmer tracers, smaller muzzle flash without light, steady hit markers), turn off screen shake, high-contrast outlines on enemies (red; neutral bots cyan), press instead of hold (sprint, crouch and aim become toggles) |
 
 | Rule | Detail |
 |---|---|
 | In-raid aiming | The mouse is captured during a raid and moves an on-screen reticle, so mouse sensitivity, aim sensitivity (while aiming/peeking) and invert apply. A controller's right stick points the reticle out from the player |
 | Colorblind modes | A screen-wide correction filter, plus a rarity palette that stays distinct for that type of color blindness (Section 6.2). Rarity letters (C, U, R, UR, E, L) are shown next to colors, so color is never the only cue |
 | Controller bindings | Left stick move, right stick aim, RT shoot, LT aim/peek, A roll, B crouch, X reload, Y interact, LB take cover, RB use item, L3 sprint, Back inventory, Start pause, D-pad hotkeys 1–4, R3 hotkey 5. Not remappable yet |
-| Not active yet | Motion blur (Godot has no built-in motion blur), auto-reload, auto-equip, confirm selling, extra languages and subtitles: stored, and shown as "takes effect once..." in the menu |
+| Not active yet | Motion blur (Godot has no built-in motion blur), auto-equip, confirm selling, extra languages and subtitles: stored, and shown as "takes effect once..." in the menu |
 
 ## 18. Changelog
 
@@ -530,3 +547,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-11 | Player movement (walk, sprint, crouch, stamina, noise radius), top-down follow camera, stamina HUD, test level; Play opens the test level until the hideout exists |
 | 2026-10-11 | Combat roll, cover system (low/tall, peek, slide, shared cover points), hitscan bullets with wood/concrete/metal penetration, Scav and PMC AI (vision, hearing, cover, peeking, PMC dodge rolls), `combat.tres` tuning file, 5.45 BS ammo |
 | 2026-10-11 | New main menu (dusk backdrop, music, profile, quit confirm, faction pick), Enter Raid flow (map, PMC/Scav, loadout check, loading), Character and Traders screens, Settings (six tabs, `user://settings.cfg`), in-raid pause menu and reticle, controller support, starter kit, save version 2 |
+| 2026-10-11 | Guns: `WeaponData` resource + shared `Weapon` node (fire rate, auto/semi, magazine, R reload with tactical/empty times, spread from movement and recoil), muzzle flash, hit sparks, HUD ammo panel, reload ring, auto-reload setting active. Bots use the same guns and reload behind cover; their spread is now aim error on top of the gun (Scav 2.8°, PMC 0.3°) |

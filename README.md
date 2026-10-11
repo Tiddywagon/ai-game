@@ -24,7 +24,8 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 |---|---|---|
 | W A S D | Left stick | Move (relative to the screen) |
 | Mouse | Right stick | Aim (the mouse is captured in a raid and moves the reticle) |
-| Left click | RT | Shoot |
+| Left click | RT | Shoot (hold for full-auto) |
+| R | X | Reload |
 | Right click | LT | Aim; in cover, peek out |
 | Space | A | Combat roll |
 | Q | LB | Take / leave cover |
@@ -36,7 +37,9 @@ Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with 
 
 Test Yard debug keys: **F1** leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off.
 
-Roll, cover and bullet numbers live in `data/config/combat.tres`. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
+The ammo count, spare rounds and reload progress are in the bottom-right corner. With **Auto-reload** on (Settings > Gameplay), pulling the trigger on an empty magazine reloads.
+
+Roll, cover and bullet numbers live in `data/config/combat.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
 
 ## Notes
 

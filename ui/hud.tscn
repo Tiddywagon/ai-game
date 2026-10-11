@@ -18,6 +18,9 @@ bg_color = Color(1, 1, 1, 0.15)
 resource_local_to_scene = true
 bg_color = Color(0.85, 0.85, 0.75, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reload"]
+bg_color = Color(0.95, 0.7, 0.3, 1)
+
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
 
@@ -139,6 +142,87 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.8)
 theme_override_font_sizes/font_size = 14
+
+[node name="BottomRight" type="PanelContainer" parent="HudRoot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -304.0
+offset_top = -150.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="HudRoot/BottomRight"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="WeaponName" type="Label" parent="HudRoot/BottomRight/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 1)
+theme_override_font_sizes/font_size = 16
+text = "AK-74N"
+
+[node name="Count" type="HBoxContainer" parent="HudRoot/BottomRight/Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Rounds" type="Label" parent="HudRoot/BottomRight/Rows/Count"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 1)
+theme_override_font_sizes/font_size = 44
+text = "30"
+
+[node name="MagSize" type="Label" parent="HudRoot/BottomRight/Rows/Count"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.6)
+theme_override_font_sizes/font_size = 20
+text = "/ 30"
+
+[node name="Spacer" type="Control" parent="HudRoot/BottomRight/Rows/Count"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Spare" type="Label" parent="HudRoot/BottomRight/Rows/Count"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 8
+tooltip_text = "Spare rounds"
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.8)
+theme_override_font_sizes/font_size = 20
+text = "+60"
+
+[node name="AmmoType" type="Label" parent="HudRoot/BottomRight/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.8)
+theme_override_font_sizes/font_size = 14
+text = "5.45x39 PS  ·  pen 28  ·  auto"
+
+[node name="ReloadBar" type="ProgressBar" parent="HudRoot/BottomRight/Rows"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_reload")
+max_value = 1.0
+show_percentage = false
 
 [node name="Reticle" type="Control" parent="."]
 unique_name_in_owner = true

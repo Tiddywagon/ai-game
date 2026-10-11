@@ -16,6 +16,8 @@ const LOOK_AROUND_TIME := 4.0
 const HOSTILE_OUTLINE := Color(1.0, 0.3, 0.15)
 const NEUTRAL_OUTLINE := Color(0.3, 0.85, 1.0)
 const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
+## In cover, the bot only opens fire once it has nearly stopped moving (share of sprint speed).
+const PEEK_SETTLE_SPEED := 0.15
 ## When no cover is found, wait this long before searching again.
 const COVER_RETRY_TIME := 0.5
 
@@ -260,6 +262,7 @@ func _move_to_cover(delta: float, threat: Vector3) -> void:
 
 
 ## Duck, peek and shoot, duck again; move to new cover when flanked or after a few peeks.
+## Reloads happen ducked.
 func _fight_from_cover(delta: float, threat: Vector3) -> void:
 	if not CoverSystem.protects(cover, threat):
 		_reposition(threat)  # Flanked: this cover no longer hides us.
@@ -278,7 +281,10 @@ func _fight_from_cover(delta: float, threat: Vector3) -> void:
 		else:
 			_reposition(threat)  # Blind spot: nothing to shoot from here.
 			return
-	peek_input = _wants_peek
+	# Reload behind cover, never while exposed; top the magazine up while ducked if it's below half.
+	peek_input = _wants_peek and not weapon.is_reloading
+	if not peek_input and weapon.has_gun() and weapon.rounds * 2 < weapon.data.magazine_size:
+		weapon.reload()
 	if is_peeking:
 		_shoot_when_ready(delta)
 
@@ -287,6 +293,8 @@ func _shoot_when_ready(delta: float) -> void:
 	if not _sees_target or _seen_time < profile.reaction_time:
 		_burst_clock = 0.0
 		return
+	if cover and speed_ratio() > PEEK_SETTLE_SPEED:
+		return  # Still stepping out to peek: wait until steady, as moving adds spread.
 	_burst_clock += delta
 	fire_input = fmod(_burst_clock, profile.burst_time + profile.burst_pause) < profile.burst_time
 

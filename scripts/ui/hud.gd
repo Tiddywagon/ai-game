@@ -1,12 +1,16 @@
 extends CanvasLayer
-## In-raid HUD (DESIGN.md §13, §17): stamina bar, movement state, health and ammo, a shield icon in
-## cover, short messages such as "Can't roll: overweight", the raid name, the aiming reticle and hit
-## markers. HUD scale, opacity, units and reticle come from Settings.
+## In-raid HUD (DESIGN.md §13, §17): stamina bar, movement state, health, a shield icon in cover,
+## short messages such as "Can't roll: overweight", the raid name, the ammo panel (rounds in the
+## magazine, spare rounds, loaded ammo, reload progress), the aiming reticle and hit markers.
+## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
 const EXHAUSTED_COLOR := Color(0.85, 0.3, 0.25)
 ## Shield colour while peeking, i.e. exposed.
 const PEEK_COLOR := Color(0.95, 0.7, 0.3)
+## Round count colours: a third of a magazine or less, and empty.
+const LOW_AMMO_COLOR := Color(0.95, 0.7, 0.3)
+const EMPTY_COLOR := Color(0.85, 0.3, 0.25)
 const MESSAGE_TIME := 2.0
 ## Indexed by CoverBox.CoverMaterial.
 const MATERIAL_NAMES := ["wood", "concrete", "metal"]
@@ -53,7 +57,7 @@ func show_message(text: String, duration := MESSAGE_TIME) -> void:
 func _apply_settings() -> void:
 	_root.modulate.a = Settings.get_value("interface", "hud_opacity")
 	var hud_scale: float = Settings.get_value("interface", "hud_scale")
-	for control: Control in [_bottom_left, %TopRight]:
+	for control: Control in [_bottom_left, %TopRight, %BottomRight]:
 		control.scale = Vector2.ONE * hud_scale
 
 
@@ -61,6 +65,7 @@ func _process(delta: float) -> void:
 	# Scale the panels from the corner they're anchored to.
 	_bottom_left.pivot_offset = Vector2(0.0, _bottom_left.size.y)
 	%TopRight.pivot_offset = Vector2(%TopRight.size.x, 0.0)
+	%BottomRight.pivot_offset = %BottomRight.size
 	_message_time -= delta
 	_message.visible = _message_time > 0.0
 	if player == null:
@@ -72,7 +77,8 @@ func _process(delta: float) -> void:
 	if player.is_exhausted:
 		text += "  ·  exhausted"
 	_state.text = text
-	_status.text = "HP %d / %d  ·  %s" % [ceili(player.health), roundi(player.max_health), player.ammo_label()]
+	_status.text = "HP %d / %d" % [ceili(player.health), roundi(player.max_health)]
+	_update_ammo()
 
 	var cover := player.cover
 	_cover_panel.visible = cover != null
@@ -84,6 +90,28 @@ func _process(delta: float) -> void:
 			cover_text += " · no peek here"
 		_cover_label.text = cover_text
 		_cover_icon.color = PEEK_COLOR if player.is_peeking else NORMAL_COLOR
+
+
+func _update_ammo() -> void:
+	var weapon := player.weapon
+	%BottomRight.visible = weapon.has_gun()
+	if not weapon.has_gun():
+		return
+	var magazine := weapon.data.magazine_size
+	%WeaponName.text = weapon.display_name().to_upper()
+	%Rounds.text = str(weapon.rounds)
+	var color := NORMAL_COLOR
+	if weapon.rounds == 0:
+		color = EMPTY_COLOR
+	elif weapon.rounds * 3 <= magazine:
+		color = LOW_AMMO_COLOR
+	%Rounds.add_theme_color_override("font_color", color if not weapon.is_reloading else Color(color, 0.45))
+	%MagSize.text = "/ %d" % magazine
+	%Spare.text = "+%d" % weapon.spare_rounds if weapon.spare_rounds >= 0 else ""
+	%Spare.add_theme_color_override("font_color", EMPTY_COLOR if weapon.spare_rounds == 0 else Color(NORMAL_COLOR, 0.8))
+	%AmmoType.text = "RELOADING" if weapon.is_reloading else "%s  ·  %s" % [player.ammo_label(), "auto" if weapon.data.automatic else "semi"]
+	%ReloadBar.visible = weapon.is_reloading
+	%ReloadBar.value = weapon.reload_progress()
 
 
 func _move_text() -> String:

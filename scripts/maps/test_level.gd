@@ -20,14 +20,21 @@ func _ready() -> void:
 	_player.died.connect(_on_player_died)
 
 
-## Plays as the side picked in ENTER RAID, with that loadout's weapon ammo.
+## Plays as the side picked in ENTER RAID with that loadout's gun, loaded ammo, and the matching
+## rounds from the pockets as spare ammo. Run on its own, the player keeps the default AK-74N.
 func _apply_raid() -> void:
 	var raid := GameState.raid
 	if raid.get("side") == "scav":
 		_player.side = Actor.Side.SCAV
 	var loadout: Dictionary = raid.get("loadout", {})
-	if loadout.get("weapon_ammo", "") != "":
-		_player.set_ammo(loadout.weapon_ammo)
+	if loadout.is_empty():
+		return
+	var ammo: String = loadout.get("weapon_ammo", "")
+	var spare := 0
+	for pocket: Dictionary in loadout.get("pockets", []):
+		if ammo != "" and pocket.get("id", "") == ammo:
+			spare += int(pocket.get("count", 0))
+	_player.equip_weapon(loadout.get("equipment", {}).get("primary", ""), ammo, spare)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -106,7 +106,7 @@ const SCHEMA := {
 		{"key": "damage_numbers", "label": "Show damage numbers", "type": "toggle", "default": false},
 		{"key": "hit_markers", "label": "Hit markers", "type": "toggle", "default": true},
 		{"key": "auto_reload", "label": "Auto-reload", "type": "toggle", "default": true,
-			"note": "Takes effect once magazines and reloading are in the game."},
+			"note": "Reload by pulling the trigger on an empty magazine."},
 		{"key": "auto_equip", "label": "Auto-equip on pickup", "type": "toggle", "default": true,
 			"note": "Takes effect once looting is in the game."},
 		{"key": "confirm_sell_valuables", "label": "Confirm before selling valuables", "type": "toggle", "default": true,
@@ -134,7 +134,7 @@ const SCHEMA := {
 	],
 	"accessibility": [
 		{"key": "reduce_flashing", "label": "Reduce flashing effects", "type": "toggle", "default": false,
-			"note": "Dimmer tracers and no flashing hit markers."},
+			"note": "Dimmer tracers, a smaller muzzle flash without light, and no flashing hit markers."},
 		{"key": "screen_shake_off", "label": "Turn off screen shake", "type": "toggle", "default": false,
 			"note": "Overrides the Camera shake slider."},
 		{"key": "high_contrast_outlines", "label": "High-contrast outlines", "type": "toggle", "default": false,
@@ -328,6 +328,11 @@ func binding_label(code: String) -> String:
 	if DisplayServer.get_name() != "headless":
 		on_layout = DisplayServer.keyboard_get_keycode_from_physical(physical)
 	return OS.get_keycode_string(on_layout if on_layout != KEY_NONE else physical)
+
+
+## Readable name of the key currently bound to `action`, e.g. "R" for reload (for on-screen hints).
+func key_label(action: String) -> String:
+	return binding_label(binding_of(action, values.keybinds))
 
 
 # --- Saving and applying ------------------------------------------------------------------

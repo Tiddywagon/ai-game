@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "5.45x39"
+fire_rate = 650
+automatic = true
+magazine_size = 30
+reload_time = 2.3
+empty_reload_time = 2.9
+base_spread = 0.5
+move_spread = 3.0
+recoil_per_shot = 0.5
+max_recoil = 5.0
+recoil_recovery = 10.0
+recovery_delay = 0.15
+camera_kick = 0.12

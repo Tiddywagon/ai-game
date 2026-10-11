@@ -21,5 +21,7 @@ enum Rarity { COMMON, UNCOMMON, RARE, ULTRA_RARE, EPIC, LEGENDARY }
 @export var base_value: int = 0
 ## How many fit in one stack; 1 means the item doesn't stack (DESIGN.md §7).
 @export_range(1, 9999) var max_stack: int = 1
-## Category-specific stats, e.g. {"caliber": "5.45x39", "fire_rate": 650} for a weapon.
+## Category-specific stats, e.g. {"caliber": "5.45x39", "damage": 50, "penetration": 28} for ammo.
 @export var stats: Dictionary = {}
+## Weapons only: how the gun handles (fire rate, magazine, reload, recoil). See WeaponData.
+@export var weapon: WeaponData
