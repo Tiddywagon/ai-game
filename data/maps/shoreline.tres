@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MapInfo" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_info.gd" id="1_map"]
+
+[resource]
+script = ExtResource("1_map")
+id = "shoreline"
+display_name = "Shoreline Resort"
+description = "Coastal resort and village. High-value keys and medical loot."
+order = 4
+size = "Large"
+raid_minutes = 45
+players = "8 PMCs · 20 Scavs"
+extracts = "5"
+boss = "Sanitar"
+scene_path = ""

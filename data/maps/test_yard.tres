@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MapInfo" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_info.gd" id="1_map"]
+
+[resource]
+script = ExtResource("1_map")
+id = "test_yard"
+display_name = "Test Yard"
+description = "A walled practice yard with concrete, wood and metal cover, two Scavs and an AI PMC. The only map you can play for now."
+order = 0
+size = "Small"
+raid_minutes = 15
+players = "1 PMC · 2 Scavs"
+extracts = "1 (walk out the way you came)"
+boss = "None"
+scene_path = "res://maps/test_level.tscn"

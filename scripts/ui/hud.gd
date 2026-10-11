@@ -1,6 +1,7 @@
 extends CanvasLayer
-## In-raid HUD (DESIGN.md §13): stamina bar, movement state, health and ammo, a shield icon while
-## in cover, and short messages such as "Can't roll: overweight".
+## In-raid HUD (DESIGN.md §13, §17): stamina bar, movement state, health and ammo, a shield icon in
+## cover, short messages such as "Can't roll: overweight", the raid name, the aiming reticle and hit
+## markers. HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
 const EXHAUSTED_COLOR := Color(0.85, 0.3, 0.25)
@@ -15,6 +16,8 @@ const MATERIAL_NAMES := ["wood", "concrete", "metal"]
 
 var _message_time := 0.0
 
+@onready var _root: Control = %HudRoot
+@onready var _bottom_left: Control = %BottomLeft
 @onready var _bar: ProgressBar = %StaminaBar
 @onready var _fill: StyleBoxFlat = _bar.get_theme_stylebox("fill")
 @onready var _state: Label = %MoveState
@@ -23,12 +26,22 @@ var _message_time := 0.0
 @onready var _cover_panel: Control = %CoverPanel
 @onready var _cover_icon = %CoverIcon  # cover_icon.gd
 @onready var _cover_label: Label = %CoverLabel
+@onready var _reticle = %Reticle  # reticle.gd
 
 
 func _ready() -> void:
+	_reticle.player = player
 	if player:
 		player.action_blocked.connect(show_message)
 		player.died.connect(show_message.bind("KILLED IN ACTION", 10.0))
+		player.hit_landed.connect(func(target: Actor, _damage: float, _at: Vector3) -> void:
+			if Settings.get_value("gameplay", "hit_markers"):
+				_reticle.show_hit_marker(target.is_dead))
+	var raid := GameState.raid
+	var map := MapInfo.find(raid.get("map", ""))
+	%RaidInfo.text = "%s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD", "SCAV" if raid.get("side") == "scav" else "PMC"]
+	Settings.applied.connect(_apply_settings)
+	_apply_settings()
 
 
 ## Shows `text` above the stamina panel for `duration` seconds.
@@ -37,7 +50,17 @@ func show_message(text: String, duration := MESSAGE_TIME) -> void:
 	_message_time = duration
 
 
+func _apply_settings() -> void:
+	_root.modulate.a = Settings.get_value("interface", "hud_opacity")
+	var hud_scale: float = Settings.get_value("interface", "hud_scale")
+	for control: Control in [_bottom_left, %TopRight]:
+		control.scale = Vector2.ONE * hud_scale
+
+
 func _process(delta: float) -> void:
+	# Scale the panels from the corner they're anchored to.
+	_bottom_left.pivot_offset = Vector2(0.0, _bottom_left.size.y)
+	%TopRight.pivot_offset = Vector2(%TopRight.size.x, 0.0)
 	_message_time -= delta
 	_message.visible = _message_time > 0.0
 	if player == null:
@@ -45,7 +68,7 @@ func _process(delta: float) -> void:
 	_bar.max_value = player.max_stamina
 	_bar.value = player.stamina
 	_fill.bg_color = EXHAUSTED_COLOR if player.is_exhausted else NORMAL_COLOR
-	var text := "%s  ·  noise %d m" % [_move_text(), roundi(player.noise_radius)]
+	var text := "%s  ·  noise %s" % [_move_text(), Settings.format_distance(player.noise_radius)]
 	if player.is_exhausted:
 		text += "  ·  exhausted"
 	_state.text = text

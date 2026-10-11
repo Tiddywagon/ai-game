@@ -1,26 +1,228 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" path="res://scenes/menu/menu_backdrop.tscn" id="2_backdrop"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/menu_ambient.ogg" id="3_music"]
+[ext_resource type="Script" path="res://scripts/ui/menu_entry_button.gd" id="4_entry"]
+[ext_resource type="Script" path="res://scripts/ui/gear_button.gd" id="5_gear"]
 
-[node name="MainMenu" type="Control"]
+[sub_resource type="Gradient" id="Gradient_side"]
+offsets = PackedFloat32Array(0, 0.32, 0.62)
+colors = PackedColorArray(0, 0, 0, 0.88, 0, 0, 0, 0.55, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_side"]
+gradient = SubResource("Gradient_side")
+width = 256
+height = 4
+
+[sub_resource type="Gradient" id="Gradient_vignette"]
+offsets = PackedFloat32Array(0, 0.22, 0.72, 1)
+colors = PackedColorArray(0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.8)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_vignette"]
+gradient = SubResource("Gradient_vignette")
+width = 4
+height = 256
+fill_to = Vector2(0, 1)
+
+[node name="MainMenu" type="Node"]
+script = ExtResource("1_menu")
+
+[node name="Backdrop" parent="." instance=ExtResource("2_backdrop")]
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_music")
+bus = &"Music"
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="SideShade" type="TextureRect" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_side")
+expand_mode = 1
+
+[node name="Vignette" type="TextureRect" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_vignette")
+expand_mode = 1
+
+[node name="Menu" type="Control" parent="UI"]
+unique_name_in_owner = true
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_menu")
+mouse_filter = 2
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Title" type="VBoxContainer" parent="UI/Menu"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 56.0
+offset_right = 872.0
+offset_bottom = 200.0
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Name" type="Label" parent="UI/Menu/Title"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 76
+text = "AI GAME"
+
+[node name="Tagline" type="Label" parent="UI/Menu/Title"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 18
+text = "SURVIVE  ·  LOOT  ·  EXTRACT"
+
+[node name="Profile" type="VBoxContainer" parent="UI/Menu"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -672.0
+offset_top = 60.0
+offset_right = -72.0
+offset_bottom = 180.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="FactionLabel" type="Label" parent="UI/Menu/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+theme_override_constants/outline_size = 6
+theme_type_variation = &"AccentLabel"
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 2
+
+[node name="LevelLabel" type="Label" parent="UI/Menu/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+theme_override_constants/outline_size = 6
+theme_override_colors/font_color = Color(0.85, 0.84, 0.78, 0.85)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 2
+
+[node name="MoneyLabel" type="Label" parent="UI/Menu/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 2
+
+[node name="Buttons" type="VBoxContainer" parent="UI/Menu"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 52.0
+offset_top = 400.0
+offset_right = 652.0
+offset_bottom = -64.0
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="EnterRaidButton" type="Button" parent="UI/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "ENTER RAID"
+script = ExtResource("4_entry")
+primary = true
+font_size = 50
+
+[node name="CharacterButton" type="Button" parent="UI/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "CHARACTER"
+script = ExtResource("4_entry")
+
+[node name="TradersButton" type="Button" parent="UI/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "TRADERS"
+script = ExtResource("4_entry")
+
+[node name="Gap" type="Control" parent="UI/Menu/Buttons"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="QuitButton" type="Button" parent="UI/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+focus_neighbor_right = NodePath("../../SettingsButton")
+focus_neighbor_bottom = NodePath("../../SettingsButton")
+text = "QUIT"
+script = ExtResource("4_entry")
+
+[node name="SettingsButton" type="Button" parent="UI/Menu"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -148.0
+offset_top = -148.0
+offset_right = -64.0
+offset_bottom = -64.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_neighbor_left = NodePath("../Buttons/QuitButton")
+focus_neighbor_top = NodePath("../Buttons/QuitButton")
+tooltip_text = "Settings"
+script = ExtResource("5_gear")
+
+[node name="ScreenHost" type="Control" parent="UI"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="FactionPicker" type="Control" parent="UI"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="UI/FactionPicker"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.09, 0.08, 1)
+color = Color(0, 0, 0, 0.6)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="Center" type="CenterContainer" parent="UI/FactionPicker"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,34 +230,54 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="UI/FactionPicker/Center"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="UI/FactionPicker/Center/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="CenterContainer/VBox"]
+[node name="Title" type="Label" parent="UI/FactionPicker/Center/Panel/Rows"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 56
-text = "AI GAME"
+theme_type_variation = &"HeadingLabel"
+text = "CHOOSE YOUR FACTION"
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="CenterContainer/VBox"]
-custom_minimum_size = Vector2(0, 24)
+[node name="Hint" type="Label" parent="UI/FactionPicker/Center/Panel/Rows"]
 layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Your PMC fights for one of two private military companies. Both are hostile to Scavs and to each other."
+horizontal_alignment = 1
 
-[node name="PlayButton" type="Button" parent="CenterContainer/VBox"]
+[node name="Choices" type="HBoxContainer" parent="UI/FactionPicker/Center/Panel/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BearButton" type="Button" parent="UI/FactionPicker/Center/Panel/Rows/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 52)
+custom_minimum_size = Vector2(420, 170)
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 22
-text = "Play"
+theme_override_font_sizes/font_size = 20
+text = "BEAR
+Russian-backed PMC
+AK platform, Eastern armor
+Starts with +0.05 reputation with Prapor"
 
-[node name="QuitButton" type="Button" parent="CenterContainer/VBox"]
-custom_minimum_size = Vector2(260, 52)
+[node name="UsecButton" type="Button" parent="UI/FactionPicker/Center/Panel/Rows/Choices"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(420, 170)
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 22
-text = "Quit"
+theme_override_font_sizes/font_size = 20
+text = "USEC
+Western private military contractor
+AR platform, Western armor
+Starts with +0.05 reputation with Peacekeeper"
 
-[connection signal="pressed" from="CenterContainer/VBox/PlayButton" to="." method="_on_play_pressed"]
-[connection signal="pressed" from="CenterContainer/VBox/QuitButton" to="." method="_on_quit_pressed"]
+[node name="QuitDialog" type="ConfirmationDialog" parent="UI"]
+unique_name_in_owner = true
+title = "Quit"
+size = Vector2i(420, 140)
+ok_button_text = "Quit"
+dialog_text = "Are you sure you want to quit?"
+cancel_button_text = "Cancel"

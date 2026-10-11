@@ -1,0 +1,165 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/character_screen.gd" id="1_character"]
+[ext_resource type="Script" path="res://scripts/ui/stash_grid.gd" id="2_stash"]
+
+[node name="CharacterScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_character")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.025, 0.02, 0.8)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 72
+theme_override_constants/margin_top = 56
+theme_override_constants/margin_right = 72
+theme_override_constants/margin_bottom = 48
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Layout/Header"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "CHARACTER"
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 48)
+layout_mode = 2
+text = "BACK"
+
+[node name="Columns" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="Gear" type="PanelContainer" parent="Margin/Layout/Columns"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/Gear"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Margin/Layout/Columns/Gear/Rows"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "GEAR"
+
+[node name="GearGrid" type="GridContainer" parent="Margin/Layout/Columns/Gear/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="GearWeight" type="Label" parent="Margin/Layout/Columns/Gear/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+
+[node name="Middle" type="VBoxContainer" parent="Margin/Layout/Columns"]
+custom_minimum_size = Vector2(470, 0)
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Stats" type="PanelContainer" parent="Margin/Layout/Columns/Middle"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/Middle/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Margin/Layout/Columns/Middle/Stats/Rows"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "STATS"
+
+[node name="StatsGrid" type="GridContainer" parent="Margin/Layout/Columns/Middle/Stats/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="Skills" type="PanelContainer" parent="Margin/Layout/Columns/Middle"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/Middle/Skills"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Margin/Layout/Columns/Middle/Skills/Rows"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "SKILLS"
+
+[node name="SkillsGrid" type="GridContainer" parent="Margin/Layout/Columns/Middle/Skills/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="SkillsHint" type="Label" parent="Margin/Layout/Columns/Middle/Skills/Rows"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Skills level up from what you do in raids."
+autowrap_mode = 3
+
+[node name="Stash" type="PanelContainer" parent="Margin/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/Stash"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/Stash/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/Stash/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StashGrid" type="Control" parent="Margin/Layout/Columns/Stash/Rows/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_stash")
+
+[node name="StashHint" type="Label" parent="Margin/Layout/Columns/Stash/Rows"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Hover an item for details. Moving items comes with the inventory."
+autowrap_mode = 3

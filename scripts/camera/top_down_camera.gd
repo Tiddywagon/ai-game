@@ -13,6 +13,12 @@ extends Camera3D
 @export var focus_height := 1.0
 ## Higher follows more tightly, lower trails further behind.
 @export var follow_speed := 6.0
+## How far the camera moves at full shake, in metres.
+@export var shake_distance := 0.35
+
+var _follow_position := Vector3.ZERO
+var _shake := 0.0
+var _time := 0.0
 
 
 func _ready() -> void:
@@ -20,15 +26,29 @@ func _ready() -> void:
 	# This camera moves every frame using the target's already-smoothed position,
 	# so Godot's physics interpolation must not smooth it a second time.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_follow_position = global_position
 	if target:
-		global_position = _goal_position()
+		_follow_position = _goal_position()
+		global_position = _follow_position
+
+
+## Shakes the camera. `amount` is 0-1 and adds up; Settings scales it (or turns it off).
+func add_shake(amount: float) -> void:
+	_shake = clampf(_shake + amount * Settings.camera_shake_scale(), 0.0, 1.0)
 
 
 func _process(delta: float) -> void:
 	if target == null:
 		return
+	_time += delta
 	# Exponential smoothing: the same feel at any frame rate.
-	global_position = global_position.lerp(_goal_position(), 1.0 - exp(-follow_speed * delta))
+	_follow_position = _follow_position.lerp(_goal_position(), 1.0 - exp(-follow_speed * delta))
+	var offset := Vector3.ZERO
+	if _shake > 0.0:
+		var strength := _shake * _shake * shake_distance
+		offset = (global_basis.x * sin(_time * 53.0) + global_basis.y * cos(_time * 47.0)) * strength
+		_shake = maxf(_shake - delta * 1.8, 0.0)
+	global_position = _follow_position + offset
 
 
 func _goal_position() -> Vector3:

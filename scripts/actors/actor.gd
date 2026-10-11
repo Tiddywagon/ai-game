@@ -24,11 +24,13 @@ const COVER_SNAP_SPEED := 5.0
 ## Shots only go off when the body faces within this angle of the aim point.
 const MAX_AIM_ERROR_DEGREES := 25.0
 const FOOTSTEP_INTERVAL := 0.4
+## Health of a player character (DESIGN.md §13.4).
+const DEFAULT_MAX_HEALTH := 200.0
 
 @export var side := Side.PMC
 ## Roll, cover and bullet tuning shared by everyone.
 @export var config: CombatConfig = preload("res://data/config/combat.tres")
-@export var max_health := 200.0
+@export var max_health := DEFAULT_MAX_HEALTH
 ## Weapon and ammo item ids from ItemDB.
 @export var weapon_id := "ak_74n"
 @export var ammo_id := "ammo_545_ps"
@@ -98,6 +100,9 @@ var noise_radius := 0.0
 ## The cover spot in use, or null.
 var cover: CoverPoint
 var is_peeking := false
+## Actors that attacked this one: hostile even if they'd normally be friendly (a player Scav who
+## shoots an AI Scav).
+var enemies: Array[Actor] = []
 
 var _roll_direction := Vector3.ZERO
 var _roll_time := 0.0
@@ -138,6 +143,16 @@ func _think(_delta: float) -> void:
 
 ## Called when a bullet passes within a couple of metres (or hits). Override to react.
 func on_bullet_near(_shooter: Actor) -> void:
+	pass
+
+
+## Called when one of this actor's bullets hits someone. Override for hit markers and the like.
+func on_hit_landed(_target: Actor, _damage: float, _position: Vector3) -> void:
+	pass
+
+
+## Called after each shot this actor fires. Override for recoil, camera shake and the like.
+func _on_fired() -> void:
 	pass
 
 
@@ -235,9 +250,11 @@ func ammo_label() -> String:
 	return "%s (pen %d)" % [_ammo.display_name, int(_ammo.stats.get("penetration", 0))]
 
 
-func take_hit(damage: float, _from: Actor) -> void:
+func take_hit(damage: float, from: Actor) -> void:
 	if is_dead:
 		return
+	if from and from != self and not is_hostile(from):
+		enemies.append(from)  # Provoked: whoever shot us is an enemy from now on.
 	health = maxf(health - damage, 0.0)
 	if health == 0.0:
 		die()
@@ -264,7 +281,9 @@ func die() -> void:
 
 
 func is_hostile(other: Actor) -> bool:
-	return other != self and not (side == Side.SCAV and other.side == Side.SCAV)
+	if other == self:
+		return false
+	return other in enemies or not (side == Side.SCAV and other.side == Side.SCAV)
 
 
 # --- Body points ----------------------------------------------------------------------------
@@ -430,6 +449,7 @@ func _update_firing() -> void:
 	var origin := global_position + Vector3.UP * gun_height()
 	var direction := (aim_point - origin).normalized()
 	Ballistics.fire(self, origin, _spread(direction), _ammo, _muzzle.global_position)
+	_on_fired()
 
 
 func _update_footsteps(delta: float) -> void:

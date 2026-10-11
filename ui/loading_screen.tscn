@@ -1,0 +1,76 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/loading_screen.gd" id="1_loading"]
+
+[sub_resource type="Gradient" id="Gradient_bg"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.09, 0.08, 0.07, 1, 0.02, 0.02, 0.02, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_bg"]
+gradient = SubResource("Gradient_bg")
+fill = 1
+fill_from = Vector2(0.75, 0.3)
+fill_to = Vector2(0, 1)
+
+[node name="LoadingScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_loading")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_bg")
+expand_mode = 1
+
+[node name="Bottom" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 96.0
+offset_top = -330.0
+offset_right = -96.0
+offset_bottom = -72.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 14
+alignment = 2
+
+[node name="Loading" type="Label" parent="Bottom"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "LOADING"
+
+[node name="MapName" type="Label" parent="Bottom"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 64
+
+[node name="Details" type="Label" parent="Bottom"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+
+[node name="Progress" type="ProgressBar" parent="Bottom"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+show_percentage = false
+
+[node name="Tip" type="Label" parent="Bottom"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 3

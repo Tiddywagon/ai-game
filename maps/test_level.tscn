@@ -10,6 +10,7 @@
 [ext_resource type="Resource" path="res://data/bots/pmc.tres" id="8_pmc"]
 [ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="9_camera"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="10_hud"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="11_pause"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -223,4 +224,6 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
-text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo PS/BS  ·  F4 AI on/off  ·  Esc menu"
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo PS/BS  ·  F4 AI on/off  ·  Esc pause"
+
+[node name="PauseMenu" parent="." instance=ExtResource("11_pause")]

@@ -1,12 +1,13 @@
 extends Node
 ## Autoload "SaveManager": saves and loads GameState (profile + stash) as JSON (DESIGN.md §15).
-## Nothing loads or saves automatically yet; menus will call these functions.
+## The main menu loads the save at start-up and saves when a new profile is created.
 ## The file lives in Godot's user folder, e.g. on Windows:
 ## %APPDATA%\Godot\app_userdata\AI Game\savegame.json
 
 const SAVE_PATH := "user://savegame.json"
 ## Increase when the save format changes, and convert old saves in load_game().
-const SAVE_VERSION := 1
+## Version 2 added equipment, pockets and skills; version 1 saves get the starter kit equipped.
+const SAVE_VERSION := 2
 
 
 func has_save() -> bool:

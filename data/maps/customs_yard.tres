@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MapInfo" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_info.gd" id="1_map"]
+
+[resource]
+script = ExtResource("1_map")
+id = "customs_yard"
+display_name = "Customs Yard"
+description = "Industrial customs terminal: warehouses, rail lines and a dormitory. Home of the starter quests."
+order = 1
+size = "Medium"
+raid_minutes = 35
+players = "6 PMCs · 15 Scavs"
+extracts = "4 (1 paid, 1 conditional)"
+boss = "Reshala"
+scene_path = ""

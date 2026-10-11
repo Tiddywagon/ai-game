@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MapInfo" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_info.gd" id="1_map"]
+
+[resource]
+script = ExtResource("1_map")
+id = "woodland"
+display_name = "Woodland"
+description = "Dense forest around an old sawmill. Long sightlines, good rifles."
+order = 2
+size = "Large"
+raid_minutes = 45
+players = "8 PMCs · 18 Scavs"
+extracts = "5"
+boss = "Shturman"
+scene_path = ""

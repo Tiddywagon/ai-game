@@ -12,6 +12,10 @@ const ARRIVE_DISTANCE := 0.3
 const SPRINT_DISTANCE := 3.0
 ## Seconds spent looking around at a noise or the target's last known position.
 const LOOK_AROUND_TIME := 4.0
+## High-contrast outline colours (Settings > Accessibility): hostile to the player, or not.
+const HOSTILE_OUTLINE := Color(1.0, 0.3, 0.15)
+const NEUTRAL_OUTLINE := Color(0.3, 0.85, 1.0)
+const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
 ## When no cover is found, wait this long before searching again.
 const COVER_RETRY_TIME := 0.5
 
@@ -39,6 +43,7 @@ var _cover_timer := 0.0
 var _wants_peek := false
 var _peeks_left := 0
 var _burst_clock := 0.0
+var _outline: ShaderMaterial
 
 @onready var _agent: NavigationAgent3D = $NavigationAgent3D
 
@@ -57,6 +62,32 @@ func _ready() -> void:
 		material.albedo_color = profile.body_color
 		($Body/Capsule as MeshInstance3D).material_override = material
 	NoiseSystem.noise_emitted.connect(_on_noise)
+	Settings.applied.connect(_update_outline)
+	_update_outline.call_deferred()  # After the player is in the tree.
+
+
+func take_hit(damage: float, from: Actor) -> void:
+	super(damage, from)
+	_update_outline()  # A friendly bot shot by the player turns hostile.
+
+
+func die() -> void:
+	super()
+	_update_outline()
+
+
+## Bright outline for high-contrast mode: hostile bots in red-orange, neutral ones in cyan.
+func _update_outline() -> void:
+	var capsule := $Body/Capsule as MeshInstance3D
+	if is_dead or not Settings.get_value("accessibility", "high_contrast_outlines"):
+		capsule.material_overlay = null
+		return
+	if _outline == null:
+		_outline = ShaderMaterial.new()
+		_outline.shader = OUTLINE_SHADER
+	var player := get_tree().get_first_node_in_group("player") as Actor
+	_outline.set_shader_parameter("outline_color", HOSTILE_OUTLINE if player == null or is_hostile(player) else NEUTRAL_OUTLINE)
+	capsule.material_overlay = _outline
 
 
 func _think(delta: float) -> void:

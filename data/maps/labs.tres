@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MapInfo" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_info.gd" id="1_map"]
+
+[resource]
+script = ExtResource("1_map")
+id = "labs"
+display_name = "Labs"
+description = "Underground research lab. Needs a keycard; Raiders guard Epic and Legendary loot."
+order = 5
+size = "Medium"
+raid_minutes = 35
+players = "6 PMCs · 12 Raiders"
+extracts = "3 (all conditional)"
+boss = "None"
+scene_path = ""

@@ -12,6 +12,7 @@ const MAX_SURFACES := 4
 const TRACER_TIME := 0.08
 
 static var _tracer_material: StandardMaterial3D
+static var _dim_tracer_material: StandardMaterial3D
 
 
 ## Fires one round from `origin` along `direction`. `muzzle` is only where the tracer starts.
@@ -35,6 +36,7 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 		var target: Actor = (hit.collider as Node).get_parent() as Actor if hit.collider is Area3D else null
 		if target:
 			target.take_hit(damage, shooter)
+			shooter.on_hit_landed(target, damage, hit.position)
 			result.hit = target
 			break
 		if material_of(hit.collider) == CoverBox.CoverMaterial.WOOD and penetration >= config.wood_min_penetration:
@@ -74,14 +76,16 @@ static func _spawn_tracer(shooter: Actor, from: Vector3, to: Vector3) -> void:
 	if length < 0.1:
 		return
 	if _tracer_material == null:
-		_tracer_material = StandardMaterial3D.new()
-		_tracer_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		_tracer_material.albedo_color = Color(1.0, 0.9, 0.55)
+		_tracer_material = _make_tracer_material(Color(1.0, 0.9, 0.55))
+		_dim_tracer_material = _make_tracer_material(Color(0.62, 0.56, 0.42))
+	# "Reduce flashing effects" draws thinner, dimmer tracers.
+	var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
+	var width := 0.035 if reduced else 0.06
 	var mesh := BoxMesh.new()
-	mesh.size = Vector3(0.06, 0.06, length)
+	mesh.size = Vector3(width, width, length)
 	var tracer := MeshInstance3D.new()
 	tracer.mesh = mesh
-	tracer.material_override = _tracer_material
+	tracer.material_override = _dim_tracer_material if reduced else _tracer_material
 	tracer.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# Placed once and never moved: don't let physics interpolation slide it in from the origin.
 	tracer.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -89,3 +93,10 @@ static func _spawn_tracer(shooter: Actor, from: Vector3, to: Vector3) -> void:
 	var direction := (to - from) / length
 	tracer.look_at_from_position((from + to) / 2.0, to, Vector3.FORWARD if absf(direction.y) > 0.99 else Vector3.UP)
 	shooter.get_tree().create_timer(TRACER_TIME).timeout.connect(tracer.queue_free)
+
+
+static func _make_tracer_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+	return material

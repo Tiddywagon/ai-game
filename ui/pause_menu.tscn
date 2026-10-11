@@ -1,0 +1,99 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pause"]
+[ext_resource type="Script" path="res://scripts/ui/menu_entry_button.gd" id="2_entry"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 50
+script = ExtResource("1_pause")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.025, 0.02, 0.7)
+
+[node name="Panel" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 72.0
+offset_top = -220.0
+offset_right = 672.0
+offset_bottom = 220.0
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Panel"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 52
+text = "PAUSED"
+
+[node name="Hint" type="Label" parent="Panel"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "The raid is paused. Esc or Start to resume."
+
+[node name="Gap" type="Control" parent="Panel"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+
+[node name="ResumeButton" type="Button" parent="Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "RESUME"
+script = ExtResource("2_entry")
+primary = true
+font_size = 40
+
+[node name="SettingsButton" type="Button" parent="Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "SETTINGS"
+script = ExtResource("2_entry")
+
+[node name="LeaveButton" type="Button" parent="Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "LEAVE RAID"
+script = ExtResource("2_entry")
+
+[node name="QuitButton" type="Button" parent="Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "QUIT GAME"
+script = ExtResource("2_entry")
+
+[node name="ScreenHost" type="Control" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="LeaveDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Leave raid"
+size = Vector2i(480, 150)
+ok_button_text = "Leave"
+dialog_text = "Leave the raid and go back to the main menu?"
+cancel_button_text = "Stay"
+
+[node name="QuitDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "Quit"
+size = Vector2i(420, 140)
+ok_button_text = "Quit"
+dialog_text = "Are you sure you want to quit?"
+cancel_button_text = "Cancel"

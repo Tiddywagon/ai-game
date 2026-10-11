@@ -1,0 +1,99 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/traders_screen.gd" id="1_traders"]
+
+[node name="TradersScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_traders")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.025, 0.02, 0.75)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 96
+theme_override_constants/margin_top = 64
+theme_override_constants/margin_right = 96
+theme_override_constants/margin_bottom = 56
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Layout/Header"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "TRADERS"
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 48)
+layout_mode = 2
+text = "BACK"
+
+[node name="Columns" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 32
+
+[node name="TraderList" type="VBoxContainer" parent="Margin/Layout/Columns"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Details" type="PanelContainer" parent="Margin/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/Details"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TraderName" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+
+[node name="TraderInfo" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Loyalty" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+autowrap_mode = 3
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Columns/Details/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Note" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "Buying, selling and bartering open in a later update."
