@@ -1,0 +1,54 @@
+extends Node
+## Autoload "SaveManager": saves and loads GameState (profile + stash) as JSON (DESIGN.md §15).
+## Nothing loads or saves automatically yet; menus will call these functions.
+## The file lives in Godot's user folder, e.g. on Windows:
+## %APPDATA%\Godot\app_userdata\AI Game\savegame.json
+
+const SAVE_PATH := "user://savegame.json"
+## Increase when the save format changes, and convert old saves in load_game().
+const SAVE_VERSION := 1
+
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+## Writes GameState to disk. Returns true on success.
+func save_game() -> bool:
+	var data := GameState.to_dict()
+	data["version"] = SAVE_VERSION
+	# Write a temporary file first, so a crash while saving can't corrupt the existing save.
+	var temp_path := SAVE_PATH + ".tmp"
+	var file := FileAccess.open(temp_path, FileAccess.WRITE)
+	if file == null:
+		push_error("SaveManager: can't write %s (%s)" % [temp_path, error_string(FileAccess.get_open_error())])
+		return false
+	file.store_string(JSON.stringify(data, "\t"))
+	file.close()
+	var err := DirAccess.rename_absolute(temp_path, SAVE_PATH)
+	if err != OK:
+		push_error("SaveManager: can't replace %s (%s)" % [SAVE_PATH, error_string(err)])
+		return false
+	return true
+
+
+## Loads the save into GameState. Returns false if there is no usable save;
+## GameState is left unchanged in that case.
+func load_game() -> bool:
+	if not has_save():
+		return false
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	if not data is Dictionary:
+		push_error("SaveManager: %s is not valid save data" % SAVE_PATH)
+		return false
+	if int(data.get("version", 0)) > SAVE_VERSION:
+		push_error("SaveManager: the save was made by a newer version of the game")
+		return false
+	GameState.from_dict(data)
+	return true
+
+
+## Deletes the save file, e.g. when starting a new character.
+func delete_save() -> void:
+	if has_save():
+		DirAccess.remove_absolute(SAVE_PATH)

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_uy5nk"]
+
+[resource]
+script = ExtResource("1_uy5nk")
+id = "bolts"
+display_name = "Bolts"
+description = "A pack of bolts. Used in barters and hideout upgrades."
+weight_kg = 0.2
+base_value = 8000

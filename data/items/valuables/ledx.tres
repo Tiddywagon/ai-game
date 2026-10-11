@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/item_data.gd" id="1_s4k67"]
+
+[resource]
+script = ExtResource("1_s4k67")
+id = "ledx"
+display_name = "LEDX Skin Transilluminator"
+description = "Rare medical device. Worth a fortune to the right trader."
+category = 9
+rarity = 5
+weight_kg = 0.03
+base_value = 900000

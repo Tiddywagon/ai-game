@@ -324,17 +324,18 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Sources | Trader sells, quest rewards, crafting, Bitcoin farm |
 | Sinks | Trader buys, insurance, repairs, hideout upgrades, paid extracts |
 | FIR | Required for most quest hand-ins and hideout upgrades |
+| Starting money | 500,000 ₽ and 0 $ for a new character *(tune)* |
 
 ## 15. Technical Notes (Godot 4 / GDScript)
 
 | Area | Approach |
 |---|---|
-| Item data | `ItemData` custom `Resource` (`.tres`): id, name, size, rarity, weight, value, category, stats |
+| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category, rarity, size, weight, base value, max stack, stats. One `.tres` per item in `data/items/<category>/<id>.tres`; enums are saved as numbers, so only append new values |
 | Loot tables | `LootTable` Resource with weighted rarity rolls |
 | Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
-| Globals (autoloads) | `GameState`, `Stash`, `TraderManager`, `QuestManager`, `HideoutManager`, `SaveSystem` |
-| Saves | JSON / `ConfigFile` in `user://` |
+| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty; plus stash contents), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
+| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
 | Player | `CharacterBody3D`, top-down camera rig, mouse-ray aim |
 | AI | `CharacterBody3D` + `NavigationAgent3D` + state machine node |
 | Naming | snake_case files, PascalCase classes (`class_name`) |
@@ -347,8 +348,8 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | `scenes/` | Gameplay scenes: `actors/` (player, Scavs), `hideout/` |
 | `maps/` | One scene per raid map (Section 5) |
 | `ui/` | Menu, HUD, and inventory scenes (entry scene: `ui/main_menu.tscn`) |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`) plus `autoload/` |
-| `data/` | `.tres` Resources: `items/`, `loot_tables/` |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`), plus `autoload/` (singletons) and `data/` (Resource classes) |
+| `data/` | `.tres` Resources: `items/` (one subfolder per category), `loot_tables/` |
 | `assets/` | `models/`, `textures/`, `audio/`, `fonts/` |
 
 **Input actions** (defined in `project.godot`)
@@ -370,3 +371,4 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | 2026-10-11 | Reworked 6.3 for realism: grounded craftsmanship bonuses, gunsmith mods with trade-offs, no damage/pen rolls |
 | 2026-10-11 | Godot project scaffold: folder layout, input actions, main menu |
 | 2026-10-11 | Project targets Godot 4.7 (was 4.3) |
+| 2026-10-11 | Autoloads `GameState`, `ItemDB`, `SaveManager` (replace planned `Stash`/`SaveSystem`); `ItemData` resource, 5 example items, starting money |
