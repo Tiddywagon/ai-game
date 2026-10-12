@@ -21,6 +21,7 @@ var box := Vector2.ZERO:
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 
