@@ -68,7 +68,7 @@ func _ready() -> void:
 	%SoundMarkers.player = player
 	_prompt = _add_center_label(-210.0, 22, NORMAL_COLOR)
 	_extract = _add_center_label(-470.0, 40, EXTRACT_COLOR)
-	_trick_ready = _add_center_label(-560.0, 34, Player.TRICK_COLOR)
+	_trick_ready = _add_center_label(-330.0, 34, Player.TRICK_COLOR)  # Below the player, above the F prompt.
 	_trick_ready.name = "TrickReady"
 	_sting = AudioStreamPlayer.new()
 	_sting.stream = TRICK_STING
