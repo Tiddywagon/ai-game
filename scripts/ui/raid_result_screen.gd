@@ -7,7 +7,7 @@ const MAIN_MENU := "res://ui/main_menu.tscn"
 const FADE_TIME := 0.5
 const COLORS := [Color(0.45, 0.9, 0.5), Color(0.95, 0.75, 0.3), Color(0.88, 0.26, 0.2), Color(0.88, 0.26, 0.2)]
 ## Item cells in the found-in-raid list are drawn at this size per grid cell.
-const CELL := 40.0
+const CELL := 52.0
 
 
 func _ready() -> void:
