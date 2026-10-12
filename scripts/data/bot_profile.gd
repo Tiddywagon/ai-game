@@ -26,6 +26,8 @@ extends Resource
 @export_group("Shooting")
 ## Aim error: random spread added to the gun's own spread and recoil.
 @export_range(0.0, 15.0, 0.1, "suffix:°") var spread_degrees: float
+## Share of each recoil kick the bot fights off (0: none, 1: all of it).
+@export_range(0.0, 1.0, 0.05) var recoil_control: float
 ## Fires for burst_time, then pauses for burst_pause.
 @export_range(0.05, 3.0, 0.05, "suffix:s") var burst_time: float
 @export_range(0.0, 3.0, 0.05, "suffix:s") var burst_pause: float

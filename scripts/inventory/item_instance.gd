@@ -116,9 +116,11 @@ func weight() -> float:
 	return total
 
 
-## Weight without the rounds loaded (what the modding screen shows for a gun).
+## Weight without the rounds loaded (what the modding screen shows for a gun). A weapon part weighs
+## its item weight changed by its rarity (WeaponStats).
 func weight_without_rounds() -> float:
-	var total := data.weight_kg * count + (contents.weight() if contents else 0.0)
+	var unit := data.weight_kg * (WeaponStats.part_weight_multiplier(data) if WeaponMods.is_mod(data) else 1.0)
+	var total := unit * count + (contents.weight() if contents else 0.0)
 	for mod: ItemInstance in mods.values():
 		total += mod.weight()
 	return total

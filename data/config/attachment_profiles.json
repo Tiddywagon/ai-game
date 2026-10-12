@@ -1,0 +1,16 @@
+{
+  "_comment": "Default effects of each attachment kind on the 10 handling stats (DESIGN.md §12.1). A positive value is a bonus: that many times the part's rarity strength (handling.tres rarity_bonus_percent, Common 4% ... Legendary 23%; ergonomics in points via ergonomics_points_per_percent; weight makes the part itself lighter). A negative value is a fixed downside that doesn't grow with rarity: that many percent worse (ergonomics: points; weight: percent heavier). A part's own \"handling\" in its item file replaces single entries; standard (stock) parts have no effects.",
+  "stats": ["vertical_recoil", "horizontal_recoil", "recoil_recovery", "base_spread", "bloom_per_shot", "max_bloom", "bloom_recovery", "hip_spread", "ergonomics", "weight"],
+  "kinds": {
+    "muzzle":      {"vertical_recoil": 1.0, "horizontal_recoil": 0.6, "recoil_recovery": 0.3, "bloom_per_shot": 0.4, "ergonomics": -1, "weight": 0.4},
+    "barrel":      {"base_spread": 1.0, "bloom_per_shot": 0.3, "max_bloom": 0.3, "ergonomics": -1, "weight": 0.4},
+    "handguard":   {"horizontal_recoil": 0.4, "bloom_recovery": 0.6, "hip_spread": 0.4, "ergonomics": 0.8, "weight": 0.5},
+    "foregrip":    {"vertical_recoil": 0.5, "horizontal_recoil": 1.0, "recoil_recovery": 0.4, "max_bloom": 0.4, "hip_spread": 0.4, "ergonomics": 0.4, "weight": 0.5},
+    "stock":       {"vertical_recoil": 1.0, "horizontal_recoil": 0.7, "recoil_recovery": 1.0, "bloom_per_shot": 0.6, "max_bloom": 0.6, "bloom_recovery": 0.4, "ergonomics": -1, "weight": 0.4},
+    "pistol_grip": {"horizontal_recoil": 0.3, "recoil_recovery": 0.3, "bloom_recovery": 0.5, "hip_spread": 0.3, "ergonomics": 1.0, "weight": 0.5},
+    "receiver":    {"base_spread": 0.4, "max_bloom": 0.3, "weight": 0.5},
+    "sight":       {"base_spread": 0.4, "ergonomics": -1, "weight": 0.5},
+    "tactical":    {"hip_spread": 1.2, "bloom_recovery": 0.3, "ergonomics": -1, "weight": 0.5},
+    "magazine":    {"weight": 0.5}
+  }
+}

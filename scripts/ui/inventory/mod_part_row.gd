@@ -117,8 +117,8 @@ func _get_tooltip(_at: Vector2) -> String:
 		lines.append(item.data.description)
 	for line in WeaponStats.modifier_lines(item.data):
 		lines.append("%s %s" % [line[0], line[1]])
-	if item.data.rarity > 0:
-		lines.append("Bonuses ×%s for its rarity" % str(WeaponStats.RARITY_SCALE[item.data.rarity]))
+	if not WeaponStats.profile_of(item.data).is_empty():
+		lines.append("%s: bonuses at %d%% strength" % [Palette.RARITY_NAMES[item.data.rarity], roundi(WeaponStats.rarity_strength(item.data.rarity))])
 	lines.append("Drag onto a slot, or double-click to fit it")
 	return "\n".join(lines)
 

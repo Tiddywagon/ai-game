@@ -8,12 +8,13 @@ extends GridContainer
 const BETTER_COLOR := Color(0.45, 0.85, 0.45)
 const WORSE_COLOR := Color(0.95, 0.42, 0.36)
 const BAR_SIZE := Vector2(150, 8)
+const FONT_SIZE := 15
 
 
 func _ready() -> void:
 	columns = 4
 	add_theme_constant_override("h_separation", 16)
-	add_theme_constant_override("v_separation", 6)
+	add_theme_constant_override("v_separation", 0)
 
 
 ## Shows `rows`; with `preview` (rows for the changed gun), the changes too.
@@ -28,6 +29,7 @@ func show_rows(rows: Array[Dictionary], preview: Array[Dictionary] = []) -> void
 		if not preview.is_empty() and WeaponStats.format_delta(row.key, after.value - row.value) != "":
 			change = int(signf(after.value - row.value)) * int(row.better)
 		var label := Label.new()
+		label.add_theme_font_size_override("font_size", FONT_SIZE)
 		label.theme_type_variation = &"DimLabel"
 		label.text = row.name
 		add_child(label)
@@ -37,6 +39,7 @@ func show_rows(rows: Array[Dictionary], preview: Array[Dictionary] = []) -> void
 		bar.visible_bar = row.bar >= 0.0
 		add_child(bar)
 		var value := Label.new()
+		value.add_theme_font_size_override("font_size", FONT_SIZE)
 		value.name = "Value_" + str(row.key)
 		value.text = after.text
 		value.custom_minimum_size.x = 150
@@ -44,6 +47,7 @@ func show_rows(rows: Array[Dictionary], preview: Array[Dictionary] = []) -> void
 			value.add_theme_color_override("font_color", BETTER_COLOR if change > 0 else WORSE_COLOR)
 		add_child(value)
 		var delta := Label.new()
+		delta.add_theme_font_size_override("font_size", FONT_SIZE)
 		delta.name = "Delta_" + str(row.key)
 		delta.custom_minimum_size.x = 110
 		if not preview.is_empty():

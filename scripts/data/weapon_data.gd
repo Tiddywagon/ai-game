@@ -8,6 +8,8 @@ extends Resource
 
 ## Ammo with the same `caliber` stat fits, e.g. "5.45x39".
 @export var caliber := ""
+## The weapon skill that trains with it and lowers its recoil (GameState.SKILLS), e.g. "assault_rifles".
+@export var skill := ""
 
 @export_group("Firing")
 ## Rounds per minute.
@@ -20,24 +22,40 @@ extends Resource
 ## Seconds to reload an empty magazine: slower, because a round has to be chambered too.
 @export_range(0.2, 10.0, 0.05, "suffix:s") var empty_reload_time := 2.8
 
-@export_group("Accuracy")
-## Spread of a single shot fired standing still, after recoil has settled.
-@export_range(0.0, 10.0, 0.05, "suffix:°") var base_spread := 0.5
-## Extra spread while moving at sprint speed; slower movement adds proportionally less.
-@export_range(0.0, 15.0, 0.1, "suffix:°") var move_spread := 3.0
-
 @export_group("Recoil")
-## Spread added by every shot.
-@export_range(0.0, 5.0, 0.05, "suffix:°") var recoil_per_shot := 0.5
-## The most spread recoil can add.
-@export_range(0.0, 20.0, 0.1, "suffix:°") var max_recoil := 5.0
-## How fast recoil spread wears off once you stop firing.
-@export_range(0.0, 60.0, 0.5, "suffix:°/s") var recoil_recovery := 10.0
-## Pause after each shot before recoil starts wearing off, so full-auto keeps building it.
-@export_range(0.0, 1.0, 0.01, "suffix:s") var recovery_delay := 0.15
-## Camera shake per shot when the player fires (0-1, scaled by Settings).
+## Muzzle climb per shot, in degrees: the aim kicks out along the aim direction and rounds fly higher,
+## so long bursts at range go over the target.
+@export_range(0.0, 5.0, 0.01, "suffix:°") var vertical_recoil := 0.55
+## The most side kick per shot, in degrees, left or right at random.
+@export_range(0.0, 5.0, 0.01, "suffix:°") var horizontal_recoil := 0.35
+## How fast the kick pulls back to where you aim once it starts recovering: the share of what's left
+## that comes back per second (exponential; 7 brings it most of the way back in about 0.3 s).
+@export_range(0.0, 40.0, 0.1, "suffix:/s") var recoil_recovery := 7.0
+## Pause after each shot before the kick starts to recover, so full-auto keeps building it.
+@export_range(0.0, 1.0, 0.01, "suffix:s") var recovery_delay := 0.06
+## Camera shake per shot when the player fires (0-1, scaled by Settings), scaled with vertical recoil.
 @export_range(0.0, 1.0, 0.01) var camera_kick := 0.12
 
+@export_group("Spread and bloom")
+## Spread of a single aimed shot standing still, once bloom has settled.
+@export_range(0.0, 10.0, 0.05, "suffix:°") var base_spread := 0.5
+## Bloom: spread added by every shot, up to `max_bloom`.
+@export_range(0.0, 5.0, 0.01, "suffix:°") var bloom_per_shot := 0.35
+@export_range(0.0, 20.0, 0.1, "suffix:°") var max_bloom := 4.5
+## How fast bloom shrinks back when you stop shooting (and from moving, once you stop).
+@export_range(0.1, 60.0, 0.1, "suffix:°/s") var bloom_recovery := 9.0
+## Pause after each shot before bloom from shooting starts to shrink: longer than the time between
+## shots, so a held trigger keeps building it.
+@export_range(0.0, 2.0, 0.01, "suffix:s") var bloom_delay := 0.2
+## Extra spread hip-firing, gone once the sight is up (aim time decides how fast).
+@export_range(0.0, 10.0, 0.05, "suffix:°") var hip_spread := 1.8
+## Extra spread while moving at sprint speed; slower movement adds proportionally less.
+@export_range(0.0, 15.0, 0.1, "suffix:°") var move_spread := 3.0
+## Extra on top of that while sprinting, and while rolling.
+@export_range(0.0, 15.0, 0.1, "suffix:°") var sprint_spread := 2.0
+@export_range(0.0, 20.0, 0.1, "suffix:°") var roll_spread := 6.0
+## How far the aim drifts side to side with the default parts, in degrees. Heavier builds sway more.
+@export_range(0.0, 5.0, 0.01, "suffix:°") var sway := 0.2
 
 @export_group("Modding")
 ## Which mods fit: a mod's "fits" list names platforms, e.g. "ak".
@@ -78,6 +96,11 @@ extends Resource
 @export var velocity_multiplier := 1.0
 @export var malfunction_multiplier := 1.0
 @export var wear_multiplier := 1.0
+## The build's weight (kg, without rounds), and how much more than the gun with its default parts.
+@export var weight := 0.0
+@export var extra_weight := 0.0
+## How much less recoil the holder's skills give (0.03: 3% less).
+@export var skill_recoil_reduction := 0.0
 
 
 ## Seconds between shots.

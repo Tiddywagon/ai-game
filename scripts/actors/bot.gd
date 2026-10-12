@@ -70,6 +70,7 @@ func _ready() -> void:
 	add_to_group("vision_hideable")
 	if profile:
 		weapon.optic = profile.optic
+		weapon.recoil_control = profile.recoil_control
 		var material := StandardMaterial3D.new()
 		material.albedo_color = profile.body_color
 		($Body/Capsule as MeshInstance3D).material_override = material

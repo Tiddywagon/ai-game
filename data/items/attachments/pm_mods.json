@@ -1,17 +1,12 @@
 [
-  {"id": "pm_grip_std", "name": "PM grip", "description": "Standard bakelite grip panels.",
-   "category": "attachment", "rarity": "common", "weight": 0.03, "value": 400, "loot_weight": 0.5,
-   "stats": {"mod": {"kind": "pistol_grip", "fits": ["pm"], "modifiers": {}}}},
-  {"id": "pm_grip_rubber", "name": "PM rubber grip", "description": "Wrap-around rubber grip. Easier to hold on target.",
-   "category": "attachment", "rarity": "uncommon", "weight": 0.04, "value": 2500,
-   "stats": {"mod": {"kind": "pistol_grip", "fits": ["pm"], "modifiers": {"ergonomics": 4, "recoil": -3}}}},
-  {"id": "pm_mag_8", "name": "PM 8-round magazine", "description": "Standard single-stack magazine.",
-   "category": "attachment", "rarity": "common", "weight": 0.06, "value": 800, "loot_weight": 0.6,
-   "stats": {"mod": {"kind": "magazine", "fits": ["pm"], "capacity": 8, "modifiers": {}}}},
-  {"id": "pm_mag_12", "name": "PM 12-round extended magazine", "description": "Sticks out of the grip. More rounds, more feed trouble.",
-   "category": "attachment", "rarity": "uncommon", "weight": 0.09, "value": 4500,
-   "stats": {"mod": {"kind": "magazine", "fits": ["pm"], "capacity": 12, "modifiers": {"ergonomics": -2, "malfunction": 10}}}},
-  {"id": "pm_suppressor", "name": "PM suppressor", "description": "Threaded-barrel can for the Makarov. Much quieter, a little slower.",
-   "category": "attachment", "rarity": "rare", "weight": 0.12, "value": 22000,
-   "stats": {"mod": {"kind": "muzzle", "fits": ["pm"], "modifiers": {"noise": -40, "recoil": -3, "velocity": -4, "ergonomics": -4}}}}
+  {"id": "pm_grip_std", "name": "PM grip", "description": "Standard bakelite grip panels.", "category": "attachment", "rarity": "common", "weight": 0.03, "value": 400, "loot_weight": 0.5,
+   "stats": {"mod": {"kind": "pistol_grip", "fits": ["pm"], "standard": true}}},
+  {"id": "pm_grip_rubber", "name": "PM rubber grip", "description": "Wrap-around rubber grip. Easier to hold on target.", "category": "attachment", "rarity": "uncommon", "weight": 0.04, "value": 2500,
+   "stats": {"mod": {"kind": "pistol_grip", "fits": ["pm"], "handling": {"vertical_recoil": 0.5, "horizontal_recoil": 0.5, "recoil_recovery": 0.5, "ergonomics": 1.2}}}},
+  {"id": "pm_mag_8", "name": "PM 8-round magazine", "description": "Standard single-stack magazine.", "category": "attachment", "rarity": "common", "weight": 0.06, "value": 800, "loot_weight": 0.6,
+   "stats": {"mod": {"kind": "magazine", "fits": ["pm"], "capacity": 8, "standard": true}}},
+  {"id": "pm_mag_12", "name": "PM 12-round extended magazine", "description": "Sticks out of the grip. More rounds, more feed trouble.", "category": "attachment", "rarity": "uncommon", "weight": 0.09, "value": 4500,
+   "stats": {"mod": {"kind": "magazine", "fits": ["pm"], "capacity": 12, "handling": {"ergonomics": -2}, "modifiers": {"malfunction": 10}}}},
+  {"id": "pm_suppressor", "name": "PM suppressor", "description": "Threaded-barrel can for the Makarov. Much quieter, a little slower.", "category": "attachment", "rarity": "rare", "weight": 0.12, "value": 22000,
+   "stats": {"mod": {"kind": "muzzle", "fits": ["pm"], "handling": {"vertical_recoil": 0.6, "horizontal_recoil": 0.5, "ergonomics": -4}, "modifiers": {"noise": -40, "velocity": -4}}}}
 ]

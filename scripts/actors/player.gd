@@ -201,6 +201,38 @@ func set_binoculars(on: bool) -> void:
 		action_blocked.emit("Binoculars: hold %s to look through them" % Settings.key_label("aim"))
 
 
+## How far the sight is up (0 hip-firing, 1 aimed): it rises over the gun's aim time while you hold
+## the aim button.
+func aim_blend() -> float:
+	return 0.0 if using_binoculars else optic_blend
+
+
+## The gun's sway: its build's (DESIGN.md §12.1), less with the sight up.
+func weapon_sway() -> float:
+	if weapon.data == null:
+		return 0.0
+	return weapon.data.sway * lerpf(1.0, WeaponStats.CONFIG.aimed_sway_multiplier, aim_blend())
+
+
+## Where the reticle is drawn: where the next shot goes before spread, i.e. the cursor moved by the
+## gun's recoil kick (out along the aim for the climb, sideways for the side kick) and by sway.
+func reticle_position() -> Vector2:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or not has_aim or weapon.data == null:
+		return cursor_position
+	var origin := global_position + Vector3.UP * gun_height()
+	var to_aim := aim_point - origin
+	if Vector2(to_aim.x, to_aim.z).length() < 0.5:
+		return cursor_position
+	var yaw := -deg_to_rad(weapon.recoil_kick.x - aim_sway_degrees())
+	var turned := origin + to_aim.rotated(Vector3.UP, yaw)
+	var from_screen := camera.unproject_position(origin)
+	var at := camera.unproject_position(turned)
+	var along := (at - from_screen).normalized()
+	var climb := from_screen.distance_to(at) * tan(deg_to_rad(weapon.recoil_kick.y))
+	return cursor_position + (at - camera.unproject_position(aim_point)) + along * climb
+
+
 ## The sight you look through when aiming: binoculars if they're out, else the gun's (VisionConfig.Optic).
 func current_optic() -> int:
 	return VisionConfig.Optic.BINOCULARS if using_binoculars else weapon.optic
@@ -267,7 +299,7 @@ func _sync_weapon(force := false) -> void:
 			# A gun without a round type yet takes the first matching ammo you carry.
 			if item.loaded_ammo == "":
 				item.loaded_ammo = _carried_ammo_for(item.data.weapon.caliber)
-			var stats := WeaponStats.build(item)
+			var stats := WeaponStats.build(item, GameState.skills)
 			equip_weapon(item.data.id, item.loaded_ammo, inventory.count_of(item.loaded_ammo), stats)
 			weapon.optic = stats.optic
 			weapon.durability = item.durability

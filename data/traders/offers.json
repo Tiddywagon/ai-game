@@ -32,6 +32,7 @@
     "buy": [
       {"item": "red_dot", "price": 18000, "currency": "RUB"},
       {"item": "foregrip", "price": 9500, "currency": "RUB"},
+      {"item": "foregrip_polymer", "price": 4200, "currency": "RUB"},
       {"item": "angled_foregrip", "price": 19000, "currency": "RUB"},
       {"item": "ak_flash_hider", "price": 5000, "currency": "RUB"},
       {"item": "ak_grip_tactical", "price": 11500, "currency": "RUB"},
@@ -58,6 +59,7 @@
       {"item": "ak_compensator", "price": 7500, "currency": "RUB"},
       {"item": "ak_barrel_short", "price": 11500, "currency": "RUB"},
       {"item": "ak_handguard_rail", "price": 10000, "currency": "RUB"},
+      {"item": "ak_grip_rubber", "price": 2400, "currency": "RUB"},
       {"item": "ak_grip_ergo", "price": 5000, "currency": "RUB"},
       {"item": "ak_stock_adjustable", "price": 21000, "currency": "RUB"},
       {"item": "ak_dust_cover_rail", "price": 9000, "currency": "RUB"},

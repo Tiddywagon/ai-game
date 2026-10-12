@@ -5,9 +5,11 @@ extends Control
 ## foregrip and a tactical slot), shown under it. Right: every part you own (stash, pockets, rig,
 ## backpack, and inside containers) that fits somewhere on this gun; click a slot to list only the
 ## parts for it. Drag a part onto a slot to fit it (what was there goes to the stash), drag a part off
-## the gun onto the list or double-click it to take it off. In the middle the gun's stats, with a live
-## preview while you hover a part or drag one over a slot: the new values, better in green, worse in
-## red. Durability shows there too, with REPAIR (roubles; each repair lowers the max durability).
+## the gun onto the list or double-click it to take it off. In the middle the gun's recoil pattern,
+## its spread circles and its stats, with a live preview while you hover a part or drag one over a
+## slot: the new pattern and circles over the old, the new values, better in green, worse in red.
+## Durability shows there too, with REPAIR (roubles; each repair lowers the max durability). Stats
+## include the character's skills (GameState.skills).
 ## Esc or CLOSE goes back to the inventory.
 
 signal closed
@@ -22,6 +24,8 @@ var _slots: VBoxContainer
 var _parts: VBoxContainer
 var _parts_title: Label
 var _stats: WeaponStatList
+var _pattern: RecoilPatternView
+var _spread: SpreadCircleView
 var _icon: TextureRect
 var _title: Label
 var _subtitle: Label
@@ -202,11 +206,21 @@ func preview(path: String, part: ItemInstance, from_path := "") -> void:
 		if from_path != "":
 			WeaponMods.uninstall(copy, from_path)
 		WeaponMods.install(copy, path, part.duplicate_deep())
-	_show_stats(WeaponStats.rows(copy))
+	_show_stats(copy)
 
 
-func _show_stats(preview_rows: Array[Dictionary] = []) -> void:
-	_stats.show_rows(WeaponStats.rows(gun), preview_rows)
+## The stats, recoil pattern and spread circles of the gun, and with `changed` (a copy with the
+## change being previewed) the change too.
+func _show_stats(changed: ItemInstance = null) -> void:
+	var skills := GameState.skills
+	var now := WeaponStats.build(gun, skills)
+	var then := WeaponStats.build(changed, skills) if changed else null
+	var preview_rows: Array[Dictionary] = []
+	if changed:
+		preview_rows = WeaponStats.rows(changed, skills)
+	_stats.show_rows(WeaponStats.rows(gun, skills), preview_rows)
+	_pattern.show_builds(now, then)
+	_spread.show_builds(now, then, gun.durability)
 
 
 func _on_slot_preview(path: String, part: ItemInstance) -> void:
@@ -258,6 +272,12 @@ func _build_header(parent: Control) -> void:
 	var titles := VBoxContainer.new()
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(titles)
+	_icon = TextureRect.new()
+	_icon.custom_minimum_size = Vector2(150, 60)
+	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	header.add_child(_icon)
+	header.move_child(_icon, 0)
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", 28)
 	titles.add_child(_title)
@@ -280,7 +300,7 @@ func _build_header(parent: Control) -> void:
 
 func _build_slot_column(parent: Control) -> void:
 	var column := VBoxContainer.new()
-	column.custom_minimum_size.x = 600
+	column.custom_minimum_size.x = 560
 	column.add_theme_constant_override("separation", 8)
 	parent.add_child(column)
 	var heading := Label.new()
@@ -300,14 +320,20 @@ func _build_slot_column(parent: Control) -> void:
 
 func _build_stats_column(parent: Control) -> void:
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(column)
-	_icon = TextureRect.new()
-	_icon.custom_minimum_size = Vector2(0, 170)
-	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	column.add_child(_icon)
+	var previews := HBoxContainer.new()
+	previews.add_theme_constant_override("separation", 16)
+	column.add_child(previews)
+	_pattern = RecoilPatternView.new()
+	_pattern.name = "RecoilPattern"
+	_pattern.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	previews.add_child(_pattern)
+	_spread = SpreadCircleView.new()
+	_spread.name = "SpreadCircles"
+	_spread.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	previews.add_child(_spread)
 	var heading := Label.new()
 	heading.theme_type_variation = &"AccentLabel"
 	heading.text = "STATS"
@@ -325,7 +351,7 @@ func _build_stats_column(parent: Control) -> void:
 
 func _build_parts_column(parent: Control) -> void:
 	var column := VBoxContainer.new()
-	column.custom_minimum_size.x = 560
+	column.custom_minimum_size.x = 540
 	column.add_theme_constant_override("separation", 8)
 	parent.add_child(column)
 	_parts_title = Label.new()
@@ -432,7 +458,7 @@ func _build_parts() -> void:
 		var note := Label.new()
 		note.theme_type_variation = &"DimLabel"
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		note.custom_minimum_size.x = 520
+		note.custom_minimum_size.x = 500
 		note.text = "No parts you own fit %s. Mechanic and Skier sell them; weapon boxes and duffle bags hold them, and guns you find carry theirs." \
 			% ("this slot" if _selected_path != "" else "this gun")
 		_parts.add_child(note)
@@ -445,11 +471,10 @@ func _update_repair() -> void:
 		_repair.disabled = true
 		_repair.tooltip_text = ""
 		return
-	var restored := gun.max_durability - gun.durability
 	_repair.text = "REPAIR  ·  %s" % UiFormat.money(price)
 	_repair.disabled = GameState.roubles < price
 	_repair.tooltip_text = "Back to %.1f durability. Max durability drops to %.1f (each repair wears the gun a little)." \
-		% [gun.max_durability, maxf(gun.max_durability - restored * WeaponStats.REPAIR_WEAR, 1.0)]
+		% [gun.max_durability, WeaponStats.max_after_repair(gun)]
 
 
 func _fit_row(row: ModPartRow) -> void:

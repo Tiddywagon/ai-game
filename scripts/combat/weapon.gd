@@ -1,9 +1,15 @@
 class_name Weapon
 extends Node3D
-## A gun in someone's hands (DESIGN.md §13.4): fire rate, magazine, reload, recoil spread, muzzle flash
+## A gun in someone's hands (DESIGN.md §13.4): fire rate, magazine, reload, recoil, bloom, muzzle flash
 ## and a small kick of the model. The numbers come from a WeaponData resource, so every gun uses this
 ## script and scene (scenes/weapons/weapon.tscn). The actor holding it decides when to pull the
 ## trigger; each shot is a hitscan ray fired through Ballistics.
+##
+## Recoil kicks the aim: each shot climbs (vertical recoil: the aim moves out along the aim direction
+## and rounds fly higher) and kicks left or right at random (horizontal recoil); recovery pulls it back.
+## Bloom widens the cone shots land in: every shot adds to it (up to max bloom), and so do moving,
+## sprinting, rolling and hip-firing (the holder reports these with set_stance()); it shrinks back at
+## the gun's bloom recovery. A worn gun adds spread too.
 ##
 ## A gun from the inventory fires with its modded stats (WeaponStats.build()) and wears with every
 ## shot (DESIGN.md §12.1): below its malfunction threshold it can jam, and won't fire again until the
@@ -38,8 +44,14 @@ var rounds := 0
 ## Spare rounds of the loaded type, or -1 for unlimited.
 var spare_rounds := 0
 var is_reloading := false
-## Extra spread from recoil right now, in degrees.
-var recoil := 0.0
+## Where recoil has kicked the aim right now, in degrees: x sideways (+ right), y climb (+ up). The next
+## shot goes there; it recovers toward zero.
+var recoil_kick := Vector2.ZERO
+## Bloom right now, in degrees: from shooting, and from moving, sprinting, rolling and hip-firing.
+var shot_bloom := 0.0
+var stance_bloom := 0.0
+## Share of each kick the holder fights off (AI skill; 0 for the player).
+var recoil_control := 0.0
 ## The sight on this gun (VisionConfig.Optic): for the player, the sight fitted to it (WeaponStats);
 ## for AI, BotProfile.optic.
 var optic := 0
@@ -59,6 +71,9 @@ var _trigger_reset := true
 ## True once this pull has reported an empty magazine.
 var _dry_this_pull := false
 var _flash_left := 0.0
+## What stance bloom is heading for (set_stance()).
+var _stance_target := 0.0
+var _rng := RandomNumberGenerator.new()
 
 @onready var muzzle: Marker3D = $Muzzle
 @onready var _model: Node3D = $Model
@@ -85,7 +100,9 @@ func equip(gun: ItemData, ammo_item: ItemData, spare: int, stats: WeaponData = n
 	set_ammo(ammo_item)
 	rounds = data.magazine_size if data and ammo else 0
 	spare_rounds = spare
-	recoil = 0.0
+	recoil_kick = Vector2.ZERO
+	shot_bloom = 0.0
+	stance_bloom = 0.0
 	_cooldown = 0.0
 	visible = data != null
 
@@ -105,17 +122,32 @@ func display_name() -> String:
 	return item.display_name if item else ""
 
 
-## Total spread of the next shot in degrees. `speed_ratio` is how fast the shooter moves, 1 = sprinting.
-func spread(speed_ratio: float) -> float:
+## The spread cone of the next shot in degrees: base spread, wear, and bloom (shooting, moving,
+## hip-firing).
+func spread() -> float:
 	if data == null:
 		return 0.0
-	return data.base_spread + data.move_spread * clampf(speed_ratio, 0.0, 1.0) + recoil
+	return data.base_spread + WeaponStats.wear_spread(durability) + shot_bloom + stance_bloom
+
+
+## How the holder is moving and aiming, every tick: `speed_ratio` 1 = sprint speed, `aim_blend` 1 =
+## the sight is up (0 = hip-firing). Bloom heads for what these add.
+func set_stance(speed_ratio: float, sprinting: bool, rolling: bool, aim_blend: float) -> void:
+	if data == null:
+		_stance_target = 0.0
+		return
+	_stance_target = data.move_spread * clampf(speed_ratio, 0.0, 1.0) + data.hip_spread * clampf(1.0 - aim_blend, 0.0, 1.0)
+	if sprinting:
+		_stance_target += data.sprint_spread
+	if rolling:
+		_stance_target += data.roll_spread
+
 
 
 ## Fires one round at `target` if the gun is ready: not reloading, the fire-rate delay has passed,
 ## there's a round in the magazine and (for semi-auto) the trigger was released since the last shot.
 ## `extra_spread` is the shooter's own aim error in degrees. Returns true if a round went off.
-func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread: float, speed_ratio: float) -> bool:
+func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread: float) -> bool:
 	if not has_gun() or is_reloading or is_clearing or _cooldown > 0.0:
 		return false
 	if not (data.automatic or _trigger_reset):
@@ -129,9 +161,10 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 	_cooldown = (_cooldown if _cooldown > -get_physics_process_delta_time() else 0.0) + data.shot_interval()
 	_trigger_reset = false
 	rounds -= 1
-	var direction := cone((target - origin).normalized(), spread(speed_ratio) + extra_spread)
+	var direction := cone(kicked((target - origin).normalized()), spread() + extra_spread)
 	Ballistics.fire(shooter, origin, direction, ammo, muzzle.global_position, data)
-	recoil = minf(recoil + data.recoil_per_shot, data.max_recoil)
+	recoil_kick += WeaponStats.kick(data, _rng) * (1.0 - clampf(recoil_control, 0.0, 1.0))
+	shot_bloom = minf(shot_bloom + data.bloom_per_shot, data.max_bloom)
 	_since_shot = 0.0
 	_show_flash()
 	_model.position.z = KICK_DISTANCE
@@ -143,6 +176,17 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 		is_jammed = true
 		jammed.emit()
 	return true
+
+
+## `direction` turned by the recoil kick: sideways, and up by the climb.
+func kicked(direction: Vector3) -> Vector3:
+	if recoil_kick.is_zero_approx():
+		return direction
+	var turned := direction.rotated(Vector3.UP, -deg_to_rad(recoil_kick.x))
+	var side := turned.cross(Vector3.UP).normalized()
+	if side.is_zero_approx():
+		return turned
+	return turned.rotated(side, deg_to_rad(recoil_kick.y)).normalized()
 
 
 ## Call every tick the trigger isn't held.
@@ -206,8 +250,15 @@ func reload_progress() -> float:
 func _physics_process(delta: float) -> void:
 	_cooldown = maxf(_cooldown - delta, -1.0)
 	_since_shot += delta
-	if data and _since_shot >= data.recovery_delay:
-		recoil = maxf(recoil - data.recoil_recovery * delta, 0.0)
+	if data:
+		if _since_shot >= data.recovery_delay:
+			recoil_kick = WeaponStats.recover(recoil_kick, data, delta)
+		if _since_shot >= data.bloom_delay:
+			shot_bloom = maxf(shot_bloom - data.bloom_recovery * delta, 0.0)
+		if stance_bloom < _stance_target:
+			stance_bloom = minf(stance_bloom + WeaponStats.CONFIG.stance_bloom_rise * delta, _stance_target)
+		else:
+			stance_bloom = maxf(stance_bloom - data.bloom_recovery * delta, _stance_target)
 	if is_reloading:
 		_reload_left -= delta
 		if _reload_left <= 0.0:

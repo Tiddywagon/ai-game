@@ -16,7 +16,7 @@ const START_DOLLARS := 0
 ## Player skills (DESIGN.md §12.3), with their names.
 const SKILLS := [
 	["strength", "Strength"], ["endurance", "Endurance"], ["vitality", "Vitality"],
-	["metabolism", "Metabolism"], ["search", "Search"], ["assault_rifles", "Assault rifles"],
+	["metabolism", "Metabolism"], ["search", "Search"], ["assault_rifles", "Assault rifles"], ["pistols", "Pistols"],
 ]
 ## What a new character has in the stash (DESIGN.md §16.4). The worn kit is Inventory.starter().
 const STARTER_STASH := [

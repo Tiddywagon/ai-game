@@ -10,13 +10,22 @@ automatic = false
 magazine_size = 8
 reload_time = 1.8
 empty_reload_time = 2.3
-base_spread = 0.8
-move_spread = 3.5
-recoil_per_shot = 1.2
-max_recoil = 6.0
-recoil_recovery = 14.0
-recovery_delay = 0.12
+skill = "pistols"
+vertical_recoil = 1.0
+horizontal_recoil = 0.55
+recoil_recovery = 9.0
+recovery_delay = 0.05
 camera_kick = 0.08
+base_spread = 0.8
+bloom_per_shot = 0.8
+max_bloom = 5.0
+bloom_recovery = 12.0
+bloom_delay = 0.2
+hip_spread = 1.2
+move_spread = 3.5
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.12
 platform = "pm"
 ergonomics = 70
 muzzle_velocity = 315
@@ -27,7 +36,8 @@ slots = Array[Dictionary]([{
 }, {
 "empty": {
 "ergonomics": -12,
-"recoil": 6
+"horizontal_recoil": 6,
+"vertical_recoil": 6
 },
 "id": "pistol_grip",
 "kinds": ["pistol_grip"],

@@ -121,7 +121,7 @@ const SCHEMA := {
 		{"key": "hud_opacity", "label": "HUD opacity", "type": "slider", "default": 1.0, "min": 0.3, "max": 1.0, "step": 0.05, "format": "percent"},
 		{"key": "show_fps", "label": "Show FPS counter", "type": "toggle", "default": false},
 		{"key": "reticle_style", "label": "Reticle", "type": "choice", "default": "bloom",
-			"options": [["dot", "Dot"], ["cross", "Cross"], ["circle", "Circle"], ["bloom", "Bloom (spreads while moving)"]]},
+			"options": [["dot", "Dot"], ["cross", "Cross"], ["circle", "Circle"], ["bloom", "Bloom (circle shows your spread)"]]},
 		{"key": "reticle_color", "label": "Reticle color", "type": "choice", "default": "white",
 			"options": [["white", "White"], ["green", "Green"], ["yellow", "Yellow"], ["cyan", "Cyan"], ["red", "Red"], ["magenta", "Magenta"]]},
 		{"key": "colorblind_mode", "label": "Colorblind mode", "type": "choice", "default": "none",

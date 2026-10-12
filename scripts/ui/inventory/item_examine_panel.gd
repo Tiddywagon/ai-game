@@ -172,13 +172,15 @@ static func stat_lines(examined: ItemInstance) -> Array:
 	if data.max_stack > 1:
 		lines.append(["Stack", "%d / %d" % [examined.count, data.max_stack]])
 	if data.weapon:
-		var gun := WeaponStats.build(examined)
+		var gun := WeaponStats.build(examined, GameState.skills)
 		lines.append(["Caliber", gun.caliber])
 		lines.append(["Fire rate", "%d rpm, %s" % [gun.fire_rate, "automatic" if gun.automatic else "semi-automatic"]])
 		lines.append(["Magazine", "%d rounds" % gun.magazine_size if gun.magazine_size > 0 else "none fitted"])
 		lines.append(["Reload", "%.1f s (empty %.1f s)" % [gun.reload_time, gun.empty_reload_time]])
-		var recoil := 100.0 * gun.recoil_per_shot / data.weapon.recoil_per_shot if data.weapon.recoil_per_shot > 0.0 else 100.0
-		lines.append(["Handling", "ergonomics %d, recoil %d%%, spread %.2f°" % [gun.ergonomics, roundi(recoil), gun.base_spread]])
+		lines.append(["Recoil", "%.2f° climb, ±%.2f° side a shot, recovers %.1f / s" % [gun.vertical_recoil, gun.horizontal_recoil, gun.recoil_recovery]])
+		lines.append(["Spread", "%.2f° aimed, +%.2f° from the hip, +%.2f° a shot up to +%.1f°" % [gun.base_spread, gun.hip_spread,
+			gun.bloom_per_shot, gun.max_bloom]])
+		lines.append(["Handling", "ergonomics %d, sway %.2f°" % [gun.ergonomics, gun.sway]])
 		lines.append(["Muzzle velocity", "%d m/s" % gun.muzzle_velocity])
 		lines.append(["Parts", "%d fitted" % WeaponMods.installed(examined).size()])
 		if gun.missing_part != "":
@@ -234,8 +236,10 @@ static func stat_lines(examined: ItemInstance) -> Array:
 			lines.append(["Holds", "%d rounds" % WeaponMods.capacity_of(data)])
 		for line in WeaponStats.modifier_lines(data):
 			lines.append([line[0], line[1]])
-		if data.rarity > 0 and not WeaponStats.modifier_lines(data).is_empty():
-			lines.append(["Rarity", "bonuses ×%s" % str(WeaponStats.RARITY_SCALE[data.rarity])])
+		if not WeaponStats.profile_of(data).is_empty():
+			lines.append(["Rarity strength", "%d%% per bonus (%s)" % [roundi(WeaponStats.rarity_strength(data.rarity)), Palette.RARITY_NAMES[data.rarity]]])
+		elif mod_info.get("standard", false):
+			lines.append(["Standard part", "the gun's stats are measured with it"])
 		var slots: Array = mod_info.get("slots", [])
 		if not slots.is_empty():
 			lines.append(["Adds slots", ", ".join(slots.map(func(slot: Dictionary) -> String: return str(slot.name)))])

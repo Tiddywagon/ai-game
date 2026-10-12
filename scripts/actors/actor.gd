@@ -185,6 +185,7 @@ func _physics_process(delta: float) -> void:
 		_step_free(delta)
 	_update_hitbox()
 	_update_facing(delta)
+	weapon.set_stance(speed_ratio(), move_state == Move.SPRINT, is_rolling, aim_blend())
 	_update_firing()
 	_update_footsteps(delta)
 
@@ -301,9 +302,15 @@ func speed_ratio() -> float:
 	return Vector2(velocity.x, velocity.z).length() / sprint_speed
 
 
-## Spread of the next shot right now, in degrees: the gun's (base, movement, recoil) plus aim error.
+## Spread of the next shot right now, in degrees: the gun's (base spread, bloom, wear) plus aim error.
 func current_spread() -> float:
-	return weapon.spread(speed_ratio()) + spread_degrees
+	return weapon.spread() + spread_degrees
+
+
+## How far the sight is up, 0 (hip-firing) to 1 (aimed): hip-firing adds the gun's hip-fire spread.
+## AI always fires aimed; the player raises the sight with the aim button (Player).
+func aim_blend() -> float:
+	return 1.0
 
 
 ## A bullet from `from` hit this actor at `hit_position`, which decides the body part.
@@ -349,14 +356,21 @@ func display_name() -> String:
 	return "Scav" if side == Side.SCAV else "PMC"
 
 
-## Current weapon sway in degrees (left/right): from fractured or blacked arms and pain.
+## Current weapon sway in degrees (left/right): from fractured or blacked arms, pain, and the gun
+## itself (weapon_sway()).
 func aim_sway_degrees() -> float:
-	var amount := health.injured_arms() * health_config.arm_sway
+	var amount := health.injured_arms() * health_config.arm_sway + weapon_sway()
 	if health.has_pain():
 		amount += health_config.pain_sway
 	if amount <= 0.0:
 		return 0.0
 	return amount * (0.7 * sin(_sway_time * 1.6) + 0.3 * sin(_sway_time * 3.7 + 1.0))
+
+
+## How far the gun drifts in this actor's hands, in degrees (heavier builds more). None for AI: their
+## aim error (BotProfile.spread_degrees) covers it.
+func weapon_sway() -> float:
+	return 0.0
 
 
 func die() -> void:
@@ -624,7 +638,7 @@ func _update_firing() -> void:
 	# Bullets start at the body's centre line, so a gun poking into a wall can't shoot through it.
 	var origin := global_position + Vector3.UP * gun_height()
 	var target := origin + (aim_point - origin).rotated(Vector3.UP, deg_to_rad(aim_sway_degrees()))
-	if weapon.pull_trigger(self, origin, target, spread_degrees, speed_ratio()):
+	if weapon.pull_trigger(self, origin, target, spread_degrees):
 		_on_fired()
 
 

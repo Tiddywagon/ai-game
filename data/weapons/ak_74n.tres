@@ -10,19 +10,29 @@ automatic = true
 magazine_size = 30
 reload_time = 2.3
 empty_reload_time = 2.9
-base_spread = 0.5
-move_spread = 3.0
-recoil_per_shot = 0.5
-max_recoil = 5.0
-recoil_recovery = 10.0
-recovery_delay = 0.15
+skill = "assault_rifles"
+vertical_recoil = 0.55
+horizontal_recoil = 0.35
+recoil_recovery = 7.0
+recovery_delay = 0.06
 camera_kick = 0.12
+base_spread = 0.5
+bloom_per_shot = 0.35
+max_bloom = 4.5
+bloom_recovery = 9.0
+bloom_delay = 0.2
+hip_spread = 1.8
+move_spread = 3.0
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.2
 platform = "ak"
 ergonomics = 50
 muzzle_velocity = 880
 slots = Array[Dictionary]([{
 "empty": {
-"recoil": 8
+"horizontal_recoil": 4,
+"vertical_recoil": 8
 },
 "id": "muzzle",
 "kinds": ["muzzle"],
@@ -34,7 +44,8 @@ slots = Array[Dictionary]([{
 "required": true
 }, {
 "empty": {
-"ergonomics": -10
+"ergonomics": -10,
+"hip_spread": 10
 },
 "id": "handguard",
 "kinds": ["handguard"],
@@ -42,7 +53,9 @@ slots = Array[Dictionary]([{
 }, {
 "empty": {
 "ergonomics": -15,
-"recoil": 8
+"hip_spread": 15,
+"horizontal_recoil": 10,
+"recoil_recovery": -10
 },
 "id": "pistol_grip",
 "kinds": ["pistol_grip"],
@@ -50,7 +63,10 @@ slots = Array[Dictionary]([{
 }, {
 "empty": {
 "ergonomics": 8,
-"recoil": 45
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
 },
 "id": "stock",
 "kinds": ["stock"],

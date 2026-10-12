@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="HandlingConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/handling_config.gd" id="1_handling"]
+
+[resource]
+script = ExtResource("1_handling")
+rarity_bonus_percent = Array[float]([4.0, 8.0, 12.0, 16.0, 20.0, 23.0])
+ergonomics_points_per_percent = 0.25
+special_rarity_scale = Array[float]([1.0, 1.15, 1.3, 1.5, 1.75, 2.0])
+profiles_path = "res://data/config/attachment_profiles.json"
+handling_per_ergonomics_point = 0.01
+sway_per_extra_kg = 0.35
+bloom_recovery_loss_per_kg = 0.15
+aimed_sway_multiplier = 0.6
+stance_bloom_rise = 25.0
+wear_spread_threshold = 70.0
+wear_spread_max = 1.5
+vertical_jitter = 0.15
+pattern_shots = 30
+weapon_skill_recoil_per_level = 0.005
+strength_recoil_per_level = 0.0025
+max_skill_recoil_reduction = 0.15
+recoil_multiplier_range = Vector2(0.3, 2.5)
+spread_multiplier_range = Vector2(0.3, 3)
+recovery_multiplier_range = Vector2(0.3, 3)
+repair_wear = 0.15
+repair_price_share = 0.004
