@@ -21,6 +21,9 @@ var fir_pending := false
 ## In a raid only: part of the kit you brought in, so taking it back from a container never makes it
 ## found in raid. Not saved.
 var brought_in := false
+## In a raid only: in a container or on a body you haven't searched yet. Drawn as an unknown item; can't
+## be moved or examined until a search reveals it (LootSearch). Not saved.
+var hidden := false
 ## Rigs, backpacks, secure containers: what's inside. Null for everything else.
 var contents: InventoryGrid
 ## Guns: the round type a reload uses, and the rounds in the magazine, bottom first. Each entry is an
@@ -68,7 +71,8 @@ func same_status(other: ItemInstance) -> bool:
 
 ## Same item type that stacks, with room to spare, and the same Found-in-Raid status.
 func can_stack_with(other: ItemInstance) -> bool:
-	return other != self and other.data == data and data.max_stack > 1 and count < data.max_stack and same_status(other)
+	return other != self and other.data == data and data.max_stack > 1 and count < data.max_stack and same_status(other) \
+		and not hidden and not other.hidden
 
 
 ## A new stack of `amount` taken off this one's status (the caller takes the count off this one).

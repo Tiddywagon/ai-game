@@ -45,6 +45,7 @@ func open(loot: Variant = null, title := "", source: Node3D = null) -> void:
 	_screen.inventory = player.inventory
 	_screen.loot = loot
 	_screen.loot_title = title
+	_screen.loot_search = source.get("search") if source else null
 	_loot_source = source
 	_screen.closed.connect(_on_closed)
 	add_child(_screen)

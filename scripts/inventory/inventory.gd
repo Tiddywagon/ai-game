@@ -239,21 +239,25 @@ static func starter() -> Inventory:
 	return inventory
 
 
-## A random Scav kit (DESIGN.md §16.3): an AK-74N with PS, a Scav vest with spare rounds, sometimes a
-## sling bag, and odds and ends in the pockets. Nothing from the stash.
+## A random Scav kit (DESIGN.md §4, §16.3): an AK-74N with PS, a Scav vest with 90 spare rounds,
+## sometimes a helmet, a hatchet or a sling bag of junk, and odds and ends in the pockets. Nothing from
+## the stash. Also what AI Scavs carry (and drop).
 static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 	var inventory := Inventory.new()
 	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_ps"))
 	var vest := ItemInstance.create("scav_vest")
-	vest.contents.add(ItemInstance.create("ammo_545_ps", rng.randi_range(20, 60)))
-	if rng.randf() < 0.5:
-		vest.contents.add(ItemInstance.create("ammo_545_ps", rng.randi_range(10, 30)))
+	vest.contents.add(ItemInstance.create("ammo_545_ps", 60))
+	vest.contents.add(ItemInstance.create("ammo_545_ps", 30))
 	inventory.equip("rig", vest)
+	if rng.randf() < 0.25:
+		inventory.equip("helmet", ItemInstance.create("ssh68_helmet"))
+	if rng.randf() < 0.2:
+		inventory.equip("melee", ItemInstance.create("hatchet"))
 	if rng.randf() < 0.4:
 		var bag := ItemInstance.create("sling_bag")
-		for id in ["crackers", "bolts", "duct_tape"].slice(0, rng.randi_range(1, 3)):
+		for id in ["crackers", "bolts", "duct_tape", "screwdriver"].slice(0, rng.randi_range(1, 4)):
 			bag.contents.add(ItemInstance.create(id))
 		inventory.equip("backpack", bag)
 	for id in ["bandage", "bolts", "matches", "screws"]:
@@ -271,8 +275,9 @@ static func loaded_gun(id: String, ammo: String) -> ItemInstance:
 	return gun
 
 
-## An AI PMC's kit (DESIGN.md §4): an AK-74N with BS, armor, a helmet, a tactical rig with spare BS
-## and a pack with a few finds. What you can take off the body.
+## An AI PMC's kit (DESIGN.md §4): an AK-74N with BS, sometimes a PM pistol, armor, a helmet, a
+## tactical rig with 90 spare BS rounds and a bandage, a pack with a few finds and meds in the pockets.
+## What you can take off the body.
 static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
@@ -280,11 +285,16 @@ static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
 	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_bs"))
 	inventory.equip("armor", ItemInstance.create("armor_6b23" if rng.randf() < 0.5 else "paca_armor"))
 	inventory.equip("helmet", ItemInstance.create("zsh_helmet" if rng.randf() < 0.3 else "ssh68_helmet"))
+	if rng.randf() < 0.4:
+		inventory.equip("pistol", loaded_gun("pm_pistol", "ammo_9x18_pst"))
 	var rig := ItemInstance.create("tactical_rig")
 	rig.contents.add(ItemInstance.create("ammo_545_bs", 60))
-	rig.contents.add(ItemInstance.create("ammo_545_bs", rng.randi_range(15, 45)))
+	rig.contents.add(ItemInstance.create("ammo_545_bs", 30))
 	rig.contents.add(ItemInstance.create("bandage"))
 	inventory.equip("rig", rig)
+	inventory.pockets.add(ItemInstance.create("painkillers"))
+	if rng.randf() < 0.5:
+		inventory.pockets.add(ItemInstance.create("tourniquet"))
 	var pack := ItemInstance.create("tourist_pack")
 	for id in ["ai2_medkit", "canned_beef", "water_bottle", "gold_chain", "electric_motor", "weapon_parts"]:
 		if rng.randf() < 0.5:

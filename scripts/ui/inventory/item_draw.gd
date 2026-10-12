@@ -46,6 +46,22 @@ static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bo
 		canvas.draw_circle(rect.position + Vector2(rect.size.x - 8, NAME_STRIP + 10), 3.5, Color(TEXT_COLOR, 0.8 * alpha))
 
 
+## An item not searched yet: a dark cell with a question mark. With `progress` 0-1, it's the one being
+## searched: a ring fills up around the mark.
+static func draw_unknown(canvas: CanvasItem, rect: Rect2, progress := -1.0) -> void:
+	canvas.draw_rect(rect, Color(0.07, 0.075, 0.08, 0.95))
+	canvas.draw_rect(rect, Color(1, 1, 1, 0.35 if progress >= 0.0 else 0.15), false, 1.0)
+	var font := ThemeDB.fallback_font
+	if canvas is Control:
+		font = canvas.get_theme_default_font()
+	var centre := rect.get_center()
+	var radius := minf(minf(rect.size.x, rect.size.y) * 0.32, 16.0)
+	canvas.draw_string(font, centre + Vector2(-radius, radius * 0.55), "?", HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, int(radius * 1.5), Color(1, 1, 1, 0.45))
+	if progress >= 0.0:
+		canvas.draw_arc(centre, radius + 3.0, 0.0, TAU, 32, Color(1, 1, 1, 0.12), 3.0, true)
+		canvas.draw_arc(centre, radius + 3.0, -PI / 2.0, -PI / 2.0 + TAU * progress, 32, Color(0.95, 0.78, 0.35), 3.0, true)
+
+
 ## Hover text for an item.
 static func tooltip(item: ItemInstance) -> String:
 	var lines := [item.data.display_name + (" ×%d" % item.count if item.count > 1 else ""),

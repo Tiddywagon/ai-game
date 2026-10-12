@@ -62,7 +62,7 @@ func plan_grid(grid: InventoryGrid, mouse_cell: Vector2i, top_left: Vector2i) ->
 	var under := grid.item_at(mouse_cell)
 	if under == item and not splitting and from_grid == grid and top_left == item.cell and rotated == item.rotated:
 		return {"action": "stay"}
-	if under and under != item:
+	if under and under != item and not under.hidden:
 		if under.data == item.data and item.data.max_stack > 1 and under.count < under.data.max_stack and under.same_status(item):
 			return {"action": "merge", "target": under}
 		if can_insert(under):

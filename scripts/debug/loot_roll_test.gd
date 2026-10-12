@@ -1,7 +1,7 @@
 extends Control
-## Loot rate check (DESIGN.md §6.2). Rolls ROLLS times for the base table, every container type, Labs,
-## and a safe on Labs, then prints expected vs rolled rarity rates to the Output panel and shows them
-## here, with a few sample items. Open scenes/debug/loot_roll_test.tscn and press F6, or run:
+## Loot rate check (DESIGN.md §6.2). Rolls ROLLS times for the base table, every container type's own
+## table, loose loot on Labs and a safe on Labs, then prints expected vs rolled rarity rates to the
+## Output panel and shows them here, with a few sample items. Open scenes/debug/loot_roll_test.tscn and press F6, or run:
 ##   godot --path . res://scenes/debug/loot_roll_test.tscn -- --quit [--seed=123]
 ## A rate is marked "ok" when it's within 3 standard deviations of the expected one (normal noise).
 
@@ -9,7 +9,8 @@ const ROLLS := 10000
 const SAMPLE_ITEMS := 12
 const CONTAINERS_DIR := "res://data/loot_tables/containers"
 
-var table: LootTable = preload("res://data/loot_tables/default.tres")
+var base_table: LootTable = preload("res://data/loot_tables/default.tres")
+var loose_table: LootTable = preload("res://data/loot_tables/loose_loot.tres")
 
 @onready var _results: VBoxContainer = %Results
 @onready var _seed_label: Label = %SeedLabel
@@ -36,35 +37,36 @@ func run(seed_value: int) -> void:
 	rng.seed = seed_value
 	var test_yard := MapInfo.find("test_yard")
 	var labs := MapInfo.find("labs")
-	_scenario(rng, "Base table (no container, no map modifier)", null, null)
+	_scenario(rng, "Base table (no container, no map modifier)", base_table, null)
 	for container in _containers():
-		_scenario(rng, "%s on Test Yard" % container.display_name, container, test_yard)
-	_scenario(rng, "Loose loot on Labs (Epic and Legendary x2)", _container("loose_loot"), labs)
-	_scenario(rng, "Safe on Labs", _container("safe"), labs)
+		_scenario(rng, "%s on Test Yard" % container.display_name, container.loot_table, test_yard)
+	_scenario(rng, "Loose loot on Labs (Epic and Legendary x2)", loose_table, labs)
+	_scenario(rng, "Safe on Labs", _container("safe").loot_table, labs)
 
 
-func _scenario(rng: RandomNumberGenerator, title: String, container: LootContainer, map: MapInfo) -> void:
-	var categories: Array = container.categories if container else []
-	var expected := table.chances(container, map, categories)
+func _scenario(rng: RandomNumberGenerator, title: String, table: LootTable, map: MapInfo) -> void:
+	var expected := table.chances(map)
 	var counts := PackedInt32Array()
 	counts.resize(LootTable.RARITY_COUNT)
 	for i in ROLLS:
-		var rarity := table.roll_rarity(rng, container, map, categories)
+		var rarity := table.roll_rarity(rng, map)
 		if rarity >= 0:
 			counts[rarity] += 1
 	var samples: Array[ItemData] = []
 	for i in SAMPLE_ITEMS:
-		var item := table.roll_item(rng, container, map)
+		var item := table.roll_item(rng, map)
 		if item:
 			samples.append(item)
-	_print_scenario(title, expected, counts, container)
+	_print_scenario(title, expected, counts, table)
 	_show_scenario(title, expected, counts, samples)
 
 
-func _print_scenario(title: String, expected: PackedFloat32Array, counts: PackedInt32Array, container: LootContainer) -> void:
+func _print_scenario(title: String, expected: PackedFloat32Array, counts: PackedInt32Array, table: LootTable) -> void:
 	print("\n%s" % title)
-	if container and not container.categories.is_empty():
-		print("  holds: %s" % ", ".join(container.categories.map(func(c: int) -> String: return ItemData.CATEGORY_NAMES[c])))
+	if not table.items.is_empty():
+		print("  holds: %s" % ", ".join(table.items))
+	elif not table.categories.is_empty():
+		print("  holds: %s" % ", ".join(table.categories.map(func(c: int) -> String: return ItemData.CATEGORY_NAMES[c])))
 	print("  %s %s %s %s %s" % ["Rarity".rpad(12), "Expected".lpad(9), "Rolled".lpad(8), "Rolled %".lpad(9), ""])
 	for rarity in LootTable.RARITY_COUNT:
 		var rolled := counts[rarity] * 100.0 / ROLLS

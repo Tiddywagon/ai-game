@@ -46,10 +46,12 @@ static func mark_brought_in(inventory: Inventory) -> void:
 
 
 ## In a raid, after the inventory changes: anything in it that wasn't brought in and isn't FIR yet is
-## loot, so it becomes pending (found in raid if you extract). Returns the newly claimed items.
+## loot, so it becomes pending (found in raid if you extract). Anything you carry is also known, even
+## if it came in an unsearched bag. Returns the newly claimed items.
 static func claim(inventory: Inventory) -> Array[ItemInstance]:
 	var claimed: Array[ItemInstance] = []
 	for item in inventory.all_items():
+		item.hidden = false
 		if not item.brought_in and not item.fir and not item.fir_pending:
 			item.fir_pending = true
 			claimed.append(item)

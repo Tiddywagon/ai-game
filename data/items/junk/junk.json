@@ -14,5 +14,15 @@
   {"id": "fuel_can", "name": "Fuel can", "description": "Powers the hideout generator.", "category": "junk",
    "rarity": "uncommon", "size": [2, 2], "weight": 4.0, "value": 30000},
   {"id": "electric_motor", "name": "Electric motor", "description": "Wanted for hideout upgrades.", "category": "junk",
-   "rarity": "rare", "size": [2, 2], "weight": 2.3, "value": 55000}
+   "rarity": "rare", "size": [2, 2], "weight": 2.3, "value": 55000},
+  {"id": "pliers", "name": "Pliers", "description": "From a toolbox. Wanted for hideout upgrades.", "category": "junk",
+   "rarity": "common", "weight": 0.2, "value": 5000},
+  {"id": "screwdriver", "name": "Screwdriver", "description": "Flat-head. Barter and crafting material.", "category": "junk",
+   "rarity": "common", "weight": 0.15, "value": 3500},
+  {"id": "nails", "name": "Pack of nails", "description": "Wanted for the Security station.", "category": "junk",
+   "rarity": "common", "weight": 0.2, "value": 4000},
+  {"id": "hose", "name": "Corrugated hose", "description": "Wanted for the Water collector and Nutrition unit.", "category": "junk",
+   "rarity": "uncommon", "size": [2, 1], "weight": 0.6, "value": 14000},
+  {"id": "medical_tools", "name": "Medical tools", "description": "Scalpels and clamps in a roll. Barter item for medical crafts.", "category": "junk",
+   "rarity": "uncommon", "weight": 0.3, "value": 19000}
 ]

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/filing_cabinet.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "filing_cabinet"
+display_name = "Filing cabinet"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(4, 4)
+search_time = 1.2
+look = 6
+box_size = Vector3(0.55, 1.3, 0.6)
+color = Color(0.42, 0.45, 0.48, 1)
+solid = true
+cover_material = 2

@@ -1,34 +1,55 @@
 class_name LootTable
 extends Resource
-## Rolls loot (DESIGN.md §6.2): first a rarity by weight, then an item of that rarity from ItemDB.
-## The base weights live here (data/loot_tables/default.tres); a LootContainer (the kind of spot: a
-## jacket, a weapon box, a safe) and the MapInfo (Labs) multiply them, so high-tier spots drop rarer
-## loot. Pass a RandomNumberGenerator to get repeatable results.
+## Rolls loot for one kind of spot (DESIGN.md §6.2). Every container type has its own table in
+## data/loot_tables/ (crate.tres, medical_bag.tres, safe.tres...), plus loose_loot.tres for items on
+## the ground and default.tres, the plain base table.
+##
+## A roll picks a rarity by weight: the base weights × this table's rarity multipliers × the map's (Labs
+## doubles Epic and Legendary). Then it picks an item of that rarity the table allows (its item list, or
+## its categories, or anything), weighted by each item's loot_weight × the table's item_weights.
+## Rarities with nothing allowed in them get no weight, so the others share their chance. Pass a
+## RandomNumberGenerator for repeatable results.
 
 const RARITY_COUNT := 6
 
 @export var display_name := "Default"
-## Weight of each rarity, indexed by ItemData.Rarity. They don't have to add up to 100.
+## Base weight of each rarity, indexed by ItemData.Rarity. They don't have to add up to 100.
 @export var rarity_weights: PackedFloat32Array = [55.0, 25.0, 12.0, 5.0, 2.5, 0.5]
+## This table's boost (or cut) per rarity: a safe drops rarer loot than a crate. Missing entries are 1.
+@export var rarity_multipliers: PackedFloat32Array = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+## Item categories it can roll (ItemData.Category). Empty: any category.
+@export var categories: Array[ItemData.Category] = []
+## Only these item ids, when not empty (instead of the categories): a toolbox holds tools.
+@export var items: PackedStringArray = []
+## Extra weight for some items among their rarity, by id (default 1): {"intel_folder": 2.0}.
+@export var item_weights: Dictionary = {}
+## How many items one roll() gives: a random number from x to y.
+@export var item_count := Vector2i(1, 1)
 
 
-## Weight of each rarity in `container` on `map` (either can be null): base × container × map.
-## With `categories`, rarities that have no lootable item in them get 0.
-func weights(container: LootContainer = null, map: MapInfo = null, categories: Array = []) -> PackedFloat32Array:
+## Items of `rarity` this table can roll (loot_weight above 0).
+func candidates(rarity: int) -> Array[ItemData]:
+	var result := ItemDB.lootable(rarity, categories if items.is_empty() else [])
+	if not items.is_empty():
+		result = result.filter(func(item: ItemData) -> bool: return item.id in items)
+	return result
+
+
+## Weight of each rarity on `map` (null for no map): base × table × map, 0 where nothing can drop.
+func weights(map: MapInfo = null) -> PackedFloat32Array:
 	var result := rarity_weights.duplicate()
 	for rarity in RARITY_COUNT:
-		if container:
-			result[rarity] *= _multiplier(container.rarity_multipliers, rarity)
+		result[rarity] *= _multiplier(rarity_multipliers, rarity)
 		if map:
 			result[rarity] *= _multiplier(map.loot_multipliers, rarity)
-		if not categories.is_empty() and ItemDB.lootable(rarity, categories).is_empty():
+		if candidates(rarity).is_empty():
 			result[rarity] = 0.0
 	return result
 
 
 ## Chance of each rarity (0-1) for a single roll, as weights() but adding up to 1.
-func chances(container: LootContainer = null, map: MapInfo = null, categories: Array = []) -> PackedFloat32Array:
-	var result := weights(container, map, categories)
+func chances(map: MapInfo = null) -> PackedFloat32Array:
+	var result := weights(map)
 	var total := 0.0
 	for weight in result:
 		total += weight
@@ -37,38 +58,56 @@ func chances(container: LootContainer = null, map: MapInfo = null, categories: A
 	return result
 
 
-## Rolls a rarity (ItemData.Rarity) for `container` on `map`.
-func roll_rarity(rng: RandomNumberGenerator, container: LootContainer = null, map: MapInfo = null, categories: Array = []) -> int:
-	return _pick(rng, weights(container, map, categories))
+## Rolls a rarity (ItemData.Rarity), or -1 if nothing can drop.
+func roll_rarity(rng: RandomNumberGenerator, map: MapInfo = null) -> int:
+	return _pick(rng, weights(map))
 
 
-## Rolls one item: a rarity, then an item of that rarity the container allows (weighted by each
-## item's loot_weight). Null if nothing can drop.
-func roll_item(rng: RandomNumberGenerator, container: LootContainer = null, map: MapInfo = null) -> ItemData:
-	var categories: Array = container.categories if container else []
-	var rarity := roll_rarity(rng, container, map, categories)
+## Rolls one item: a rarity, then an item of that rarity. Null if nothing can drop.
+func roll_item(rng: RandomNumberGenerator, map: MapInfo = null) -> ItemData:
+	var rarity := roll_rarity(rng, map)
 	if rarity < 0:
 		return null
-	var candidates := ItemDB.lootable(rarity, categories)
-	var item_weights := PackedFloat32Array()
-	for item in candidates:
-		item_weights.append(item.loot_weight)
-	var index := _pick(rng, item_weights)
-	return candidates[index] if index >= 0 else null
+	var pool := candidates(rarity)
+	var pool_weights := PackedFloat32Array()
+	for item in pool:
+		pool_weights.append(item.loot_weight * float(item_weights.get(item.id, 1.0)))
+	var index := _pick(rng, pool_weights)
+	return pool[index] if index >= 0 else null
 
 
-## Fills one container: between its item_count.x and item_count.y items, each {"id", "count"}.
-## Stackable items (ammo) come as a partial stack.
-func roll_container(rng: RandomNumberGenerator, container: LootContainer, map: MapInfo = null) -> Array[Dictionary]:
+## Fills one container: item_count.x to item_count.y items, each {"id", "count"}. Stackable items
+## (ammo) come as a partial stack: a fifth to a half of a full one.
+func roll(rng: RandomNumberGenerator, map: MapInfo = null) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for i in rng.randi_range(container.item_count.x, container.item_count.y):
-		var item := roll_item(rng, container, map)
+	for i in rng.randi_range(item_count.x, item_count.y):
+		var item := roll_item(rng, map)
 		if item:
 			var count := 1
 			if item.max_stack > 1:
 				count = rng.randi_range(maxi(item.max_stack / 5, 1), maxi(item.max_stack / 2, 1))
 			result.append({"id": item.id, "count": count})
 	return result
+
+
+## roll() as ready-made items: guns come loaded with a matching round. Null entries are skipped.
+func roll_items(rng: RandomNumberGenerator, map: MapInfo = null) -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	for entry in roll(rng, map):
+		var item := ItemInstance.create(entry.id, entry.count)
+		if item and item.data.weapon:
+			item = Inventory.loaded_gun(entry.id, ammo_for(item.data.weapon.caliber))
+		if item:
+			result.append(item)
+	return result
+
+
+## The first ammo item for `caliber`, or "".
+static func ammo_for(caliber: String) -> String:
+	for item in ItemDB.all_items():
+		if item.category == ItemData.Category.AMMO and item.stats.get("caliber", "") == caliber:
+			return item.id
+	return ""
 
 
 static func _multiplier(multipliers: PackedFloat32Array, rarity: int) -> float:
@@ -82,9 +121,9 @@ static func _pick(rng: RandomNumberGenerator, weights: PackedFloat32Array) -> in
 		total += weight
 	if total <= 0.0:
 		return -1
-	var roll := rng.randf() * total
+	var roll_at := rng.randf() * total
 	for index in weights.size():
-		roll -= weights[index]
-		if roll < 0.0:
+		roll_at -= weights[index]
+		if roll_at < 0.0:
 			return index
 	return weights.size() - 1

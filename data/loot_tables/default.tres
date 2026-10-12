@@ -6,3 +6,8 @@
 script = ExtResource("1_table")
 display_name = "Default"
 rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
+rarity_multipliers = PackedFloat32Array(1, 1, 1, 1, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray()
+item_weights = {}
+item_count = Vector2i(1, 1)

@@ -5,7 +5,8 @@ extends Control
 ## the item light up green where it fits, amber when it would stack or go inside a container, red when
 ## it can't go there. Right-click examines an item; double-click opens a rig, backpack or container.
 ## Hovering an item's checkmark says "Found in raid". With `fir_only`, items that aren't found in raid
-## are dimmed (the stash filter).
+## are dimmed (the stash filter). Items not searched yet (in a container or on a body) are drawn as
+## unknown and can't be moved; the one being searched shows a ring filling up (`search`).
 
 signal examine_requested(item: ItemInstance)
 signal open_requested(item: ItemInstance)
@@ -28,6 +29,8 @@ var grid: InventoryGrid:
 		queue_redraw()
 ## The character's inventory, so items can be dragged from here onto equipment slots.
 var inventory: Inventory
+## The search going on in this grid, if any: its current item gets the progress ring.
+var search: LootSearch
 ## Dims everything that isn't found in raid.
 var fir_only := false:
 	set(value):
@@ -47,7 +50,7 @@ func cell_at(at: Vector2) -> Vector2i:
 
 func _get_drag_data(at: Vector2) -> Variant:
 	var item := grid.item_at(cell_at(at))
-	if item == null:
+	if item == null or item.hidden:
 		return null
 	var drag := InventoryDrag.new(item, grid, "", inventory, Input.is_key_pressed(KEY_SHIFT))
 	set_drag_preview(InventoryDragPreview.create(drag))
@@ -84,7 +87,7 @@ func _gui_input(event: InputEvent) -> void:
 	if click == null or not click.pressed:
 		return
 	var item := grid.item_at(cell_at(click.position))
-	if item == null:
+	if item == null or item.hidden:
 		return
 	if click.button_index == MOUSE_BUTTON_RIGHT:
 		examine_requested.emit(item)
@@ -96,6 +99,8 @@ func _gui_input(event: InputEvent) -> void:
 
 func _get_tooltip(at: Vector2) -> String:
 	var item := grid.item_at(cell_at(at)) if grid else null
+	if item and item.hidden:
+		return "Searching..." if search and search.current == item else "Not searched yet"
 	return ItemDraw.tooltip_at(item, _rect_of(item), at) if item else ""
 
 
@@ -119,7 +124,10 @@ func _draw() -> void:
 			alpha = 0.3
 		elif fir_only and not item.fir:
 			alpha = 0.18
-		ItemDraw.draw(self, item, _rect_of(item), item.rotated, alpha)
+		if item.hidden:
+			ItemDraw.draw_unknown(self, _rect_of(item), search.progress() if search and search.current == item else -1.0)
+		else:
+			ItemDraw.draw(self, item, _rect_of(item), item.rotated, alpha)
 	if _hover.is_empty():
 		return
 	var plan: Dictionary = _hover.plan

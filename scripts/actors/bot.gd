@@ -28,8 +28,11 @@ const COVER_RETRY_TIME := 0.5
 ## Untick to freeze the bot in place (it still takes damage).
 @export var ai_enabled := true
 
-## What the bot carries (DESIGN.md §4): a Scav or PMC kit to match its gun. Lootable once it's dead.
+## What the bot carries (DESIGN.md §4): a Scav or PMC kit to match its gun. Its spare rounds are the
+## ones in its rig and pockets, used up as it reloads. Lootable once it's dead, with all its gear.
 var inventory: Inventory
+## Searching the body's pockets, rig and backpack (its equipment is in plain sight).
+var search: LootSearch
 
 var state := State.IDLE
 ## The hostile actor being fought, if any.
@@ -73,6 +76,9 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	inventory = Inventory.pmc_bot(rng) if side == Side.PMC else Inventory.scav(rng)
+	spare_rounds = inventory.count_of(ammo_id)
+	weapon.spare_rounds = spare_rounds
+	weapon.reload_finished.connect(_on_reload_finished)
 	NoiseSystem.noise_emitted.connect(_on_noise)
 	Settings.applied.connect(_update_outline)
 	_update_outline.call_deferred()  # After the player is in the tree.
@@ -95,11 +101,20 @@ func die() -> void:
 	if gun and gun.data.weapon:
 		gun.magazine.clear()
 		gun.load_rounds(ItemInstance.full_rounds(ammo_id, weapon.rounds))
+	search = LootSearch.new(func() -> Array[InventoryGrid]: return inventory.grids())
+	search.hide_all()
 	add_to_group("interactables")
 
 
+## The rounds a reload used come out of the rig and pockets, so the body has what's left.
+func _on_reload_finished() -> void:
+	var used := inventory.count_of(ammo_id) - weapon.spare_rounds
+	if used > 0:
+		inventory.take(ammo_id, used)
+
+
 func interact_text() -> String:
-	return "Search body (%s)" % display_name()
+	return ("Search body (%s)" if search == null or not search.is_done() else "Loot body (%s)") % display_name()
 
 
 func can_interact(_player: Player) -> bool:

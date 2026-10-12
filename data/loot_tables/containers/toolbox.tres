@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/toolbox.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "toolbox"
+display_name = "Toolbox"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(4, 2)
+search_time = 1.0
+look = 2
+box_size = Vector3(0.55, 0.28, 0.28)
+color = Color(0.62, 0.14, 0.11, 1)
+solid = false
+cover_material = 2

@@ -20,12 +20,14 @@
 [ext_resource type="Script" path="res://scripts/world/extract_zone.gd" id="18_extract"]
 [ext_resource type="Script" path="res://scripts/world/loot_box.gd" id="19_box"]
 [ext_resource type="Script" path="res://scripts/world/loot_pickup.gd" id="20_pickup"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="21_duffle"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/weapon_box.tres" id="22_weapons"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_case.tres" id="23_medical"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/jacket.tres" id="24_jacket"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="25_safe"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/loose_loot.tres" id="26_loose"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/crate.tres" id="21_crate"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/toolbox.tres" id="22_toolbox"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/jacket.tres" id="23_jacket"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/weapon_box.tres" id="24_weapons"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_bag.tres" id="25_medical"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="26_safe"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/filing_cabinet.tres" id="27_cabinet"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="28_duffle"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -243,72 +245,87 @@ position = Vector3(17, 0, -17)
 script = ExtResource("18_extract")
 extract_name = "North-east gate"
 
-[node name="Loot" type="Node3D" parent="."]
+[node name="Loot" type="Node3D" parent="Navigation"]
 
-[node name="DuffleBag" type="Node3D" parent="Loot"]
-position = Vector3(-18.6, 0, 14.3)
+[node name="Crate" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -18.4, 0, 14.6)
 script = ExtResource("19_box")
-container = ExtResource("21_duffle")
-grid_size = Vector2i(4, 3)
-box_size = Vector3(1, 0.45, 0.55)
-color = Color(0.22, 0.27, 0.2, 1)
+container = ExtResource("21_crate")
 
-[node name="WeaponBox" type="Node3D" parent="Loot"]
-position = Vector3(-15, 0, -15)
+[node name="Toolbox" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0.921061, 0, 0.389418, 0, 1, 0, -0.389418, 0, 0.921061, 2.5, 0, 8.5)
 script = ExtResource("19_box")
-container = ExtResource("22_weapons")
-grid_size = Vector2i(5, 3)
-box_size = Vector3(1.4, 0.5, 0.6)
-color = Color(0.25, 0.3, 0.22, 1)
+container = ExtResource("22_toolbox")
 
-[node name="MedicalCase" type="Node3D" parent="Loot"]
-position = Vector3(4.5, 0, 7.5)
+[node name="Jacket" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0.825336, 0, -0.564642, 0, 1, 0, 0.564642, 0, 0.825336, 14.5, 0, 12.5)
 script = ExtResource("19_box")
-container = ExtResource("23_medical")
-grid_size = Vector2i(3, 3)
-box_size = Vector3(0.6, 0.35, 0.45)
-color = Color(0.75, 0.75, 0.72, 1)
+container = ExtResource("23_jacket")
 
-[node name="Jacket" type="Node3D" parent="Loot"]
-position = Vector3(14.5, 0, 12.5)
+[node name="WeaponBox" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -14.8, 0, -15.25)
 script = ExtResource("19_box")
-container = ExtResource("24_jacket")
-grid_size = Vector2i(2, 2)
-box_size = Vector3(0.7, 0.12, 0.5)
-color = Color(0.3, 0.32, 0.25, 1)
+container = ExtResource("24_weapons")
 
-[node name="Safe" type="Node3D" parent="Loot"]
-position = Vector3(18.6, 0, -9)
+[node name="MedicalBag" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0.955336, 0, 0.29552, 0, 1, 0, -0.29552, 0, 0.955336, 4.5, 0, 7.5)
 script = ExtResource("19_box")
-container = ExtResource("25_safe")
-grid_size = Vector2i(3, 3)
-box_size = Vector3(0.7, 0.9, 0.7)
-color = Color(0.2, 0.21, 0.23, 1)
+container = ExtResource("25_medical")
 
-[node name="LooseNearSpawn" type="Node3D" parent="Loot"]
-position = Vector3(-6, 0, 15)
+[node name="Safe" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(-3.67321e-06, 0, -1, 0, 1, 0, 1, 0, -3.67321e-06, 18.6, 0, -9)
+script = ExtResource("19_box")
+container = ExtResource("26_safe")
+
+[node name="FilingCabinet" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, -0, 0, 1, -8.9, 0, -15.2)
+script = ExtResource("19_box")
+container = ExtResource("27_cabinet")
+
+[node name="DuffleBag" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0.980067, 0, 0.198669, 0, 1, 0, -0.198669, 0, 0.980067, -2.5, 0, -14)
+script = ExtResource("19_box")
+container = ExtResource("28_duffle")
+
+[node name="LooseNearSpawn" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-6, 0, 15.3)
 script = ExtResource("20_pickup")
-container = ExtResource("26_loose")
+spawn_chance = 0.7
 
-[node name="LooseYard" type="Node3D" parent="Loot"]
+[node name="LooseYard" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(2, 0, -9)
 script = ExtResource("20_pickup")
-container = ExtResource("26_loose")
+spawn_chance = 0.7
 
-[node name="LooseEast" type="Node3D" parent="Loot"]
+[node name="LooseEast" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(15, 0, 3)
 script = ExtResource("20_pickup")
-container = ExtResource("26_loose")
+spawn_chance = 0.7
 
-[node name="LooseWest" type="Node3D" parent="Loot"]
+[node name="LooseWest" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-17, 0, 0)
 script = ExtResource("20_pickup")
-container = ExtResource("26_loose")
+spawn_chance = 0.7
 
-[node name="LooseNorth" type="Node3D" parent="Loot"]
+[node name="LooseNorth" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(9, 0, -17)
 script = ExtResource("20_pickup")
-container = ExtResource("26_loose")
+spawn_chance = 0.7
+
+[node name="LooseDarkRoom" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-10.5, 0, -10.5)
+script = ExtResource("20_pickup")
+spawn_chance = 0.7
+
+[node name="LoosePillar" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(12, 0, -8.5)
+script = ExtResource("20_pickup")
+spawn_chance = 0.7
+
+[node name="LooseLowWall" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-4, 0, 11.6)
+script = ExtResource("20_pickup")
+spawn_chance = 0.7
 
 [node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 fov = 55.0

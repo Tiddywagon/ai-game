@@ -62,10 +62,13 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 	return result
 
 
-## Cover material of whatever a bullet hit. Anything that isn't a CoverBox counts as concrete.
+## Cover material of whatever a bullet hit: a CoverBox's, a "cover_material" meta (solid loot
+## containers), or concrete for anything else.
 static func material_of(collider: Object) -> CoverBox.CoverMaterial:
 	if collider is CoverBox:
 		return collider.cover_material
+	if collider.has_meta("cover_material"):
+		return collider.get_meta("cover_material")
 	return CoverBox.CoverMaterial.CONCRETE
 
 

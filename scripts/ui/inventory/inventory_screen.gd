@@ -6,7 +6,7 @@ extends MenuScreen
 ## changes how many); right-click examines; double-click opens a container in its own window. The header
 ## shows the weight you carry and what it does to you. Tab, Esc or CLOSE closes it. In a raid the game
 ## keeps running while it's open, and searching a container or body shows it on the right instead of
-## the stash. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
+## the stash: its items turn up one by one while it's open (LootSearch), and the title counts them. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
 ## of the stash. Guns can be unloaded from the examine panel: the rounds keep their status.
 
 ## Equipment slot layout: two columns of [slot, size in cells].
@@ -27,11 +27,14 @@ var stash: InventoryGrid
 ## its title.
 var loot: Variant
 var loot_title := ""
+## Searching `loot` (its unsearched items are revealed while this screen is open), or null.
+var loot_search: LootSearch
 
 var _config: InventoryConfig = preload("res://data/config/inventory.tres")
 var _examine: ItemExaminePanel
 var _shown_grids: Array[InventoryGrid] = []
 var _loot_grids: Array[InventoryGrid] = []
+var _loot_views: Array[InventoryGridView] = []
 var _windows := {}
 
 
@@ -48,10 +51,10 @@ func _ready() -> void:
 	_hook_view(%StashView)
 	%StashView.inventory = inventory
 	if loot is InventoryGrid:
-		%StashTitle.text = loot_title
 		%StashView.grid = loot
+		%StashView.search = loot_search
+		_loot_views = [%StashView]
 	elif loot is Inventory:
-		%StashTitle.text = loot_title
 		%StashView.hide()
 		%LootBody.show()
 		_build_loot_body()
@@ -61,6 +64,33 @@ func _ready() -> void:
 		%StashView.grid = stash
 	inventory.changed.connect(_on_inventory_changed)
 	_update_header()
+	_update_loot_title()
+
+
+func _process(delta: float) -> void:
+	if loot_search == null or get_tree().paused:
+		return
+	var was_done := loot_search.is_done()
+	var found := loot_search.step(delta)
+	for view in _loot_views:
+		if is_instance_valid(view):
+			view.queue_redraw()
+	if not found.is_empty() or was_done != loot_search.is_done():
+		_update_loot_title()
+
+
+## "DUFFLE BAG  ·  SEARCHING 2 / 5", then "·  SEARCHED".
+func _update_loot_title() -> void:
+	if loot == null:
+		return
+	if loot_search == null:
+		%StashTitle.text = loot_title
+		return
+	var counts := loot_search.counts()
+	if loot_search.is_done():
+		%StashTitle.text = "%s  ·  SEARCHED" % loot_title if counts[1] > 0 else "%s  ·  EMPTY" % loot_title
+	else:
+		%StashTitle.text = "%s  ·  SEARCHING  %d / %d" % [loot_title, counts[0], counts[1]]
 
 
 func _input(event: InputEvent) -> void:
@@ -170,6 +200,9 @@ func _add_section(title: String, grid: InventoryGrid, parent: Control = null, ow
 	view.grid = grid
 	view.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	parent.add_child(view)
+	if owner_inventory and owner_inventory == loot:
+		view.search = loot_search
+		_loot_views.append(view)
 
 
 ## A body being searched: its equipment slots, then its pockets, rig and backpack.
@@ -178,6 +211,7 @@ func _build_loot_body() -> void:
 	for child in %LootBody.get_children():
 		%LootBody.remove_child(child)
 		child.queue_free()
+	_loot_views.clear()
 	_loot_grids = body.grids()
 	var slots := HFlowContainer.new()
 	slots.add_theme_constant_override("h_separation", 12)
