@@ -17,3 +17,29 @@ max_recoil = 6.0
 recoil_recovery = 14.0
 recovery_delay = 0.12
 camera_kick = 0.08
+platform = "pm"
+ergonomics = 70
+muzzle_velocity = 315
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"empty": {
+"ergonomics": -12,
+"recoil": 6
+},
+"id": "pistol_grip",
+"kinds": ["pistol_grip"],
+"name": "Grip"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"magazine": "pm_mag_8",
+"pistol_grip": "pm_grip_std"
+}
+durability_per_shot = 0.04

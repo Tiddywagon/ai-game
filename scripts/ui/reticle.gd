@@ -48,7 +48,7 @@ func _draw() -> void:
 			_draw_cross(center, 5.0, color, shadow)
 		_:
 			_draw_cross(center, clampf(_spread_radius(), 4.0, MAX_BLOOM) + 1.0, color, shadow)
-	if player.weapon.is_reloading:
+	if player.weapon.is_reloading or player.weapon.is_clearing:
 		var start := -PI / 2.0
 		var end := start + TAU * player.weapon.reload_progress()
 		draw_arc(center, RELOAD_RING_RADIUS, start, end, 40, shadow, 4.0)

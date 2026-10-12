@@ -219,9 +219,25 @@ func _update_ammo() -> void:
 	%MagSize.text = "/ %d" % magazine
 	%Spare.text = "+%d" % weapon.spare_rounds if weapon.spare_rounds >= 0 else ""
 	%Spare.add_theme_color_override("font_color", EMPTY_COLOR if weapon.spare_rounds == 0 else Color(NORMAL_COLOR, 0.8))
-	%AmmoType.text = "RELOADING" if weapon.is_reloading else "%s  ·  %s" % [player.ammo_label(), "auto" if weapon.data.automatic else "semi"]
-	%ReloadBar.visible = weapon.is_reloading
+	%AmmoType.text = _weapon_state_text()
+	%AmmoType.add_theme_color_override("font_color", EMPTY_COLOR if weapon.is_jammed or weapon.data.missing_part != "" \
+		else Color(NORMAL_COLOR, 0.8))
+	%ReloadBar.visible = weapon.is_reloading or weapon.is_clearing
 	%ReloadBar.value = weapon.reload_progress()
+
+
+## Under the round count: reloading, a jam, a missing part, or the loaded ammo and fire mode.
+func _weapon_state_text() -> String:
+	var weapon := player.weapon
+	if weapon.is_clearing:
+		return "CLEARING JAM"
+	if weapon.is_jammed:
+		return "JAMMED  ·  %s to clear" % Settings.key_label("reload")
+	if weapon.data.missing_part != "":
+		return "NO %s" % weapon.data.missing_part.to_upper()
+	if weapon.is_reloading:
+		return "RELOADING"
+	return "%s  ·  %s" % [player.ammo_label(), "auto" if weapon.data.automatic else "semi"]
 
 
 func _move_text() -> String:

@@ -32,10 +32,16 @@
     "buy": [
       {"item": "red_dot", "price": 18000, "currency": "RUB"},
       {"item": "foregrip", "price": 9500, "currency": "RUB"},
+      {"item": "angled_foregrip", "price": 19000, "currency": "RUB"},
+      {"item": "ak_flash_hider", "price": 5000, "currency": "RUB"},
+      {"item": "ak_grip_tactical", "price": 11500, "currency": "RUB"},
+      {"item": "ak_stock_skeleton", "price": 9000, "currency": "RUB"},
+      {"item": "ak_handguard_quad", "price": 23000, "currency": "RUB"},
       {"item": "dorm_key", "price": 45000, "currency": "RUB"}
     ],
     "barters": [
       {"give": [{"item": "gpu", "count": 1, "fir": true}], "get": {"item": "holo_sight"}},
+      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "duct_tape", "count": 2}], "get": {"item": "pm_suppressor"}},
       {"give": [{"item": "matches", "count": 2}, {"item": "crackers", "count": 1}], "get": {"item": "ammo_9x18_pst", "count": 50}}
     ]
   },
@@ -48,10 +54,24 @@
   "mechanic": {
     "buy": [
       {"item": "weapon_parts", "price": 26000, "currency": "RUB"},
-      {"item": "wires", "price": 6000, "currency": "RUB"}
+      {"item": "wires", "price": 6000, "currency": "RUB"},
+      {"item": "ak_compensator", "price": 7500, "currency": "RUB"},
+      {"item": "ak_barrel_short", "price": 11500, "currency": "RUB"},
+      {"item": "ak_handguard_rail", "price": 10000, "currency": "RUB"},
+      {"item": "ak_grip_ergo", "price": 5000, "currency": "RUB"},
+      {"item": "ak_stock_adjustable", "price": 21000, "currency": "RUB"},
+      {"item": "ak_dust_cover_rail", "price": 9000, "currency": "RUB"},
+      {"item": "ak_mag_30", "price": 2000, "currency": "RUB"},
+      {"item": "ak_mag_20", "price": 3800, "currency": "RUB"},
+      {"item": "ak_mag_45", "price": 12000, "currency": "RUB"},
+      {"item": "tactical_laser", "price": 15000, "currency": "RUB"},
+      {"item": "pm_grip_rubber", "price": 3200, "currency": "RUB"},
+      {"item": "pm_mag_12", "price": 5800, "currency": "RUB"}
     ],
     "barters": [
-      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 2, "fir": true}], "get": {"item": "scope_2_4"}}
+      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 2, "fir": true}], "get": {"item": "scope_2_4"}},
+      {"give": [{"item": "weapon_parts", "count": 2}, {"item": "bolts", "count": 3, "fir": true}], "get": {"item": "ak_barrel_match"}},
+      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 2, "fir": true}], "get": {"item": "ak_suppressor"}}
     ]
   },
   "ragman": {

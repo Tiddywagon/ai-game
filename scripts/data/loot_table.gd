@@ -90,13 +90,14 @@ func roll(rng: RandomNumberGenerator, map: MapInfo = null) -> Array[Dictionary]:
 	return result
 
 
-## roll() as ready-made items: guns come loaded with a matching round. Null entries are skipped.
+## roll() as ready-made items: guns come loaded with a matching round, somewhat worn (60-95
+## durability). Null entries are skipped.
 func roll_items(rng: RandomNumberGenerator, map: MapInfo = null) -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []
 	for entry in roll(rng, map):
 		var item := ItemInstance.create(entry.id, entry.count)
 		if item and item.data.weapon:
-			item = Inventory.loaded_gun(entry.id, ammo_for(item.data.weapon.caliber))
+			item = Inventory.loaded_gun(entry.id, ammo_for(item.data.weapon.caliber), rng.randf_range(60.0, 95.0))
 		if item:
 			result.append(item)
 	return result

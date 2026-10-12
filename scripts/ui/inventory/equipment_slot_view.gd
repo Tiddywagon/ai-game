@@ -2,8 +2,9 @@ class_name EquipmentSlotView
 extends Control
 ## One equipment slot on screen (DESIGN.md §7): the item in it, or the slot's name when empty. Drop an
 ## item that belongs there to equip it (the slot lights up green, or red if it doesn't fit there); drag
-## it out to unequip. Dropping something on an equipped rig or backpack puts it inside. Right-click
-## examines; double-click opens a rig, backpack or container.
+## it out to unequip. Dropping something on an equipped rig or backpack puts it inside, and (out of
+## raid) a weapon part on an equipped gun fits it to a free slot. Right-click examines; double-click
+## opens a rig, backpack or container.
 
 signal examine_requested(item: ItemInstance)
 signal open_requested(item: ItemInstance)
@@ -49,7 +50,7 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 	var drag: InventoryDrag = data
 	if drag.can_equip(inventory, slot):
 		_hover = 1
-	elif item() and drag.can_insert(item()):
+	elif item() and (drag.can_insert(item()) or drag.install_path(item()) != ""):
 		_hover = 2
 	else:
 		_hover = -1
@@ -59,8 +60,8 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at: Vector2, data: Variant) -> void:
 	var drag: InventoryDrag = data
-	if not drag.drop_on_slot(inventory, slot) and item():
-		drag.insert(item())
+	if not drag.drop_on_slot(inventory, slot) and item() and not drag.insert(item()):
+		drag.install(item())
 	_hover = 0
 	queue_redraw()
 

@@ -215,7 +215,7 @@ static func from_v2(slots: Dictionary, weapon_ammo: String, pocket_list: Array) 
 		if item and inventory.equipment.has(target):
 			if item.data.category == ItemData.Category.WEAPON and item.data.weapon:
 				item.loaded_ammo = weapon_ammo
-				item.load_rounds(ItemInstance.full_rounds(weapon_ammo, item.data.weapon.magazine_size))
+				item.load_rounds(ItemInstance.full_rounds(weapon_ammo, WeaponMods.capacity(item)))
 			inventory.equip(target, item)
 	for entry in pocket_list:
 		var item := ItemInstance.create(str(entry.get("id", "")), int(entry.get("count", 1)))
@@ -246,7 +246,7 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 	var inventory := Inventory.new()
-	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_ps"))
+	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_ps", rng.randf_range(50.0, 85.0)))
 	var vest := ItemInstance.create("scav_vest")
 	vest.contents.add(ItemInstance.create("ammo_545_ps", 60))
 	vest.contents.add(ItemInstance.create("ammo_545_ps", 30))
@@ -266,12 +266,13 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	return inventory
 
 
-## A gun with a full magazine of `ammo` (not found in raid).
-static func loaded_gun(id: String, ammo: String) -> ItemInstance:
+## A gun with its default parts and a full magazine of `ammo` (not found in raid), at `durability`.
+static func loaded_gun(id: String, ammo: String, durability := 100.0) -> ItemInstance:
 	var gun := ItemInstance.create(id)
 	gun.loaded_ammo = ammo
 	if gun.data.weapon:
-		gun.load_rounds(ItemInstance.full_rounds(ammo, gun.data.weapon.magazine_size))
+		gun.load_rounds(ItemInstance.full_rounds(ammo, WeaponMods.capacity(gun)))
+		gun.durability = clampf(durability, 0.0, gun.max_durability)
 	return gun
 
 
@@ -282,11 +283,11 @@ static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 	var inventory := Inventory.new()
-	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_bs"))
+	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_bs", rng.randf_range(75.0, 95.0)))
 	inventory.equip("armor", ItemInstance.create("armor_6b23" if rng.randf() < 0.5 else "paca_armor"))
 	inventory.equip("helmet", ItemInstance.create("zsh_helmet" if rng.randf() < 0.3 else "ssh68_helmet"))
 	if rng.randf() < 0.4:
-		inventory.equip("pistol", loaded_gun("pm_pistol", "ammo_9x18_pst"))
+		inventory.equip("pistol", loaded_gun("pm_pistol", "ammo_9x18_pst", rng.randf_range(75.0, 95.0)))
 	var rig := ItemInstance.create("tactical_rig")
 	rig.contents.add(ItemInstance.create("ammo_545_bs", 60))
 	rig.contents.add(ItemInstance.create("ammo_545_bs", 30))

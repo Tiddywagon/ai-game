@@ -46,10 +46,7 @@ static func _draw_icon(item: ItemData, color: Color) -> Image:
 				glyph.box(x, 0.4, x + 0.16, 0.95)
 				glyph.box(x + 0.03, 0.12, x + 0.13, 0.4)
 		ItemData.Category.ATTACHMENT:
-			glyph.box(0.1, 0.42, 0.9, 0.58)  # Tube.
-			glyph.box(0.05, 0.3, 0.25, 0.7)  # Lenses.
-			glyph.box(0.75, 0.25, 0.95, 0.75)
-			glyph.box(0.4, 0.58, 0.6, 0.78)  # Mount.
+			_draw_part(glyph, WeaponMods.kind_of(item))
 		ItemData.Category.ARMOR:
 			glyph.box(0.2, 0.15, 0.8, 0.95)
 			glyph.clear(0.38, 0.15, 0.62, 0.35)  # Neck.
@@ -91,6 +88,51 @@ static func _draw_icon(item: ItemData, color: Color) -> Image:
 			glyph.clear(0.1, 0.42, 0.9, 0.46)
 			glyph.box(0.4, 0.12, 0.6, 0.25)  # Handle.
 	return image
+
+
+## A weapon part's symbol, by its kind (a sight for anything that isn't a part).
+static func _draw_part(glyph: Glyph, kind: String) -> void:
+	match kind:
+		"muzzle":
+			glyph.box(0.05, 0.36, 0.95, 0.64)  # Body.
+			for x in [0.3, 0.5, 0.7]:
+				glyph.clear(x, 0.36, x + 0.08, 0.48)  # Ports.
+		"barrel":
+			glyph.box(0.0, 0.42, 1.0, 0.58)
+			glyph.box(0.0, 0.34, 0.16, 0.66)  # Chamber end.
+			glyph.box(0.62, 0.3, 0.7, 0.42)  # Front sight base.
+		"handguard":
+			glyph.box(0.05, 0.3, 0.95, 0.7)
+			for x in [0.12, 0.3, 0.48, 0.66, 0.84]:
+				glyph.clear(x, 0.3, x + 0.06, 0.38)  # Rail slots or vents.
+		"foregrip":
+			glyph.box(0.2, 0.08, 0.8, 0.22)  # Rail clamp.
+			glyph.box(0.36, 0.22, 0.64, 0.95)
+		"stock":
+			glyph.box(0.0, 0.3, 0.55, 0.45)  # Comb.
+			glyph.box(0.5, 0.2, 0.95, 0.85)  # Butt.
+			glyph.box(0.0, 0.45, 0.25, 0.6)
+		"pistol_grip":
+			glyph.box(0.2, 0.05, 0.75, 0.25)
+			glyph.box(0.3, 0.25, 0.62, 0.95)
+			glyph.clear(0.3, 0.25, 0.4, 0.45)  # The rake.
+		"receiver":
+			glyph.box(0.02, 0.35, 0.98, 0.62)
+			glyph.box(0.02, 0.28, 0.98, 0.35)  # Rib.
+			glyph.clear(0.75, 0.42, 0.95, 0.55)  # Ejection port.
+		"tactical":
+			glyph.box(0.15, 0.3, 0.85, 0.7)
+			glyph.disc(0.78, 0.5, 0.18, false)  # Lens.
+			glyph.box(0.35, 0.15, 0.65, 0.3)  # Mount.
+		"magazine":
+			glyph.box(0.25, 0.0, 0.7, 0.35)
+			glyph.box(0.3, 0.35, 0.78, 0.7)  # The curve.
+			glyph.box(0.38, 0.7, 0.88, 1.0)
+		_:
+			glyph.box(0.1, 0.42, 0.9, 0.58)  # Tube.
+			glyph.box(0.05, 0.3, 0.25, 0.7)  # Lenses.
+			glyph.box(0.75, 0.25, 0.95, 0.75)
+			glyph.box(0.4, 0.58, 0.6, 0.78)  # Mount.
 
 
 ## Draws simple shapes into part of an image, in coordinates from 0 to 1 across that part.

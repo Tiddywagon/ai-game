@@ -3,8 +3,8 @@ extends RefCounted
 ## One actual item or stack the player owns (DESIGN.md §7, §15): which ItemData it is, how many,
 ## where it sits in a grid and whether it's turned. Rigs, backpacks and secure containers carry their
 ## own InventoryGrid (`contents`, sized by the item's "grid" stat). Guns carry the rounds loaded, as
-## ammo instances, so each round keeps its Found-in-Raid status. Saved as plain data through
-## to_dict() / from_dict().
+## ammo instances, so each round keeps its Found-in-Raid status, their mods (and the mods' own mods)
+## and their durability. Saved as plain data through to_dict() / from_dict().
 
 var data: ItemData
 var count := 1
@@ -30,6 +30,13 @@ var contents: InventoryGrid
 ## ammo ItemInstance (a run of rounds with the same status); the last one is fired first.
 var loaded_ammo := ""
 var magazine: Array[ItemInstance] = []
+## Guns and weapon mods: the mods installed, by slot id. Each keeps its own Found-in-Raid status and
+## can carry mods of its own. See WeaponMods.
+var mods: Dictionary = {}
+## Guns: condition out of 100. Every shot wears it a little; worn guns jam (WeaponData). A repair
+## restores it to `max_durability`, which drops a little each time (WeaponStats.repair()).
+var durability := 100.0
+var max_durability := 100.0
 
 
 ## A new instance of item `id` (null if there's no such item), `count` of it (capped to a stack).
@@ -44,6 +51,7 @@ static func create(id: String, amount := 1) -> ItemInstance:
 	var grid: Array = item_data.stats.get("grid", [])
 	if grid.size() == 2:
 		instance.contents = InventoryGrid.new(Vector2i(int(grid[0]), int(grid[1])), _grid_kind(item_data), instance)
+	WeaponMods.install_defaults(instance)
 	return instance
 
 
@@ -88,29 +96,47 @@ func copy_status(from: ItemInstance) -> void:
 	brought_in = from.brought_in
 
 
-## This item and everything in it: grid contents (at any depth) and the rounds in its magazine.
+## This item and everything in it: grid contents (at any depth), the rounds in its magazine and its
+## mods (with theirs).
 func all_items() -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = [self]
 	result.append_array(magazine)
+	for mod: ItemInstance in mods.values():
+		result.append_array(mod.all_items())
 	if contents:
 		result.append_array(contents.all_items())
 	return result
 
 
-## Weight of the stack, plus whatever is inside and the rounds loaded.
+## Weight of the stack, plus whatever is inside, the rounds loaded and the mods.
 func weight() -> float:
-	var total := data.weight_kg * count + (contents.weight() if contents else 0.0)
+	var total := weight_without_rounds()
 	for rounds in magazine:
 		total += rounds.weight()
 	return total
 
 
-## Base value of the stack, plus whatever is inside and the rounds loaded.
+## Weight without the rounds loaded (what the modding screen shows for a gun).
+func weight_without_rounds() -> float:
+	var total := data.weight_kg * count + (contents.weight() if contents else 0.0)
+	for mod: ItemInstance in mods.values():
+		total += mod.weight()
+	return total
+
+
+## Base value of the stack, plus whatever is inside, the rounds loaded and the mods.
 func value() -> int:
 	var total := data.base_value * count + (contents.value() if contents else 0)
 	for rounds in magazine:
 		total += rounds.value()
+	for mod: ItemInstance in mods.values():
+		total += mod.value()
 	return total
+
+
+## A gun (with durability and mods).
+func is_gun() -> bool:
+	return data.weapon != null
 
 
 # --- Magazine ---------------------------------------------------------------------------------
@@ -170,6 +196,31 @@ func unload() -> Array[ItemInstance]:
 	return stacks
 
 
+## Takes rounds off the top until no more than `capacity` are loaded (a smaller magazine, or none).
+## Returns them, merged into stacks by status.
+func trim_magazine(capacity: int) -> Array[ItemInstance]:
+	var removed: Array[ItemInstance] = []
+	var excess := rounds_loaded() - maxi(capacity, 0)
+	while excess > 0 and not magazine.is_empty():
+		var top: ItemInstance = magazine.back()
+		var taken := mini(top.count, excess)
+		var piece := ItemInstance.full_rounds(top.data.id, taken)
+		piece.copy_status(top)
+		top.count -= taken
+		if top.count <= 0:
+			magazine.pop_back()
+		excess -= taken
+		var merged := false
+		for stack in removed:
+			if stack.data == piece.data and stack.same_status(piece):
+				stack.count += piece.count
+				merged = true
+				break
+		if not merged:
+			removed.append(piece)
+	return removed
+
+
 ## Debug: the loaded rounds become `ammo_id` rounds, keeping counts and status.
 func convert_magazine(ammo_id: String) -> void:
 	var ammo := ItemDB.get_item(ammo_id)
@@ -187,11 +238,20 @@ func to_dict() -> Dictionary:
 	if not magazine.is_empty():
 		result.magazine = magazine.map(func(rounds: ItemInstance) -> Dictionary:
 			return {"id": rounds.data.id, "count": rounds.count, "fir": rounds.fir})
+	if not mods.is_empty() or is_gun():
+		var saved := {}
+		for slot: String in mods:
+			saved[slot] = (mods[slot] as ItemInstance).to_dict()
+		result.mods = saved
+	if is_gun():
+		result.durability = snappedf(durability, 0.001)
+		result.max_durability = snappedf(max_durability, 0.001)
 	return result
 
 
 ## Rebuilds an instance from to_dict() data (also reads older entries: version 3 guns saved
-## "loaded_rounds", -1 for a full magazine). Null if the item no longer exists.
+## "loaded_rounds", -1 for a full magazine; guns from before version 5 get their default parts and
+## full durability). Null if the item no longer exists.
 static func from_dict(entry: Dictionary) -> ItemInstance:
 	var instance := create(str(entry.get("id", "")), int(entry.get("count", 1)))
 	if instance == null:
@@ -200,6 +260,15 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 	instance.rotated = bool(entry.get("rotated", false))
 	instance.fir = bool(entry.get("fir", false))
 	instance.loaded_ammo = str(entry.get("loaded_ammo", ""))
+	if entry.has("mods"):
+		instance.mods.clear()
+		var saved_mods: Dictionary = entry.mods
+		for slot: String in saved_mods:
+			var mod := from_dict(saved_mods[slot])
+			if mod and not WeaponMods.slot_on(instance, slot).is_empty():
+				instance.mods[slot] = mod
+	instance.max_durability = clampf(float(entry.get("max_durability", 100.0)), 1.0, 100.0)
+	instance.durability = clampf(float(entry.get("durability", instance.max_durability)), 0.0, instance.max_durability)
 	for saved in entry.get("magazine", []):
 		var rounds := ItemInstance.new()
 		rounds.data = ItemDB.get_item(str(saved.get("id", "")))
@@ -209,7 +278,7 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 			instance.load_rounds(rounds)
 	if entry.has("loaded_rounds") and not entry.has("magazine") and instance.loaded_ammo != "" and instance.data.weapon:
 		var loaded := int(entry.loaded_rounds)
-		instance.load_rounds(full_rounds(instance.loaded_ammo, instance.data.weapon.magazine_size if loaded < 0 else loaded))
+		instance.load_rounds(full_rounds(instance.loaded_ammo, WeaponMods.capacity(instance) if loaded < 0 else loaded))
 	if instance.contents:
 		instance.contents.load_array(entry.get("contents", []))
 	return instance

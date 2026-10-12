@@ -17,3 +17,66 @@ max_recoil = 5.0
 recoil_recovery = 10.0
 recovery_delay = 0.15
 camera_kick = 0.12
+platform = "ak"
+ergonomics = 50
+muzzle_velocity = 880
+slots = Array[Dictionary]([{
+"empty": {
+"recoil": 8
+},
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"empty": {
+"ergonomics": -10
+},
+"id": "handguard",
+"kinds": ["handguard"],
+"name": "Handguard"
+}, {
+"empty": {
+"ergonomics": -15,
+"recoil": 8
+},
+"id": "pistol_grip",
+"kinds": ["pistol_grip"],
+"name": "Pistol grip"
+}, {
+"empty": {
+"ergonomics": 8,
+"recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "receiver",
+"kinds": ["receiver"],
+"name": "Dust cover",
+"required": true
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Side mount"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"barrel": "ak_barrel_415",
+"handguard": "ak_handguard_wood",
+"magazine": "ak_mag_30",
+"muzzle": "ak_muzzle_brake",
+"pistol_grip": "ak_grip_std",
+"receiver": "ak_dust_cover",
+"stock": "ak_stock_std"
+}
+durability_per_shot = 0.03

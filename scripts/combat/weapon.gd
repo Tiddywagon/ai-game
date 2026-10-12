@@ -4,11 +4,20 @@ extends Node3D
 ## and a small kick of the model. The numbers come from a WeaponData resource, so every gun uses this
 ## script and scene (scenes/weapons/weapon.tscn). The actor holding it decides when to pull the
 ## trigger; each shot is a hitscan ray fired through Ballistics.
+##
+## A gun from the inventory fires with its modded stats (WeaponStats.build()) and wears with every
+## shot (DESIGN.md §12.1): below its malfunction threshold it can jam, and won't fire again until the
+## jam is cleared (clear_jam(), on R), which throws the stuck round out.
 
 ## A round was fired.
 signal fired
-## The trigger was pulled on an empty magazine (once per pull).
+## The trigger was pulled and nothing happened (once per pull): an empty magazine, a jam or a missing
+## part.
 signal dry_fired
+## The gun jammed after a shot.
+signal jammed
+## A jam was cleared; `ejected` is true if the stuck round was thrown out.
+signal jam_cleared(ejected: bool)
 signal reload_started(duration: float)
 signal reload_finished
 
@@ -31,14 +40,20 @@ var spare_rounds := 0
 var is_reloading := false
 ## Extra spread from recoil right now, in degrees.
 var recoil := 0.0
-## The sight mounted on this gun (VisionConfig.Optic). Attachments will set it; for now the loadout
-## (player) or BotProfile (AI) does.
+## The sight on this gun (VisionConfig.Optic): for the player, the sight fitted to it (WeaponStats);
+## for AI, BotProfile.optic.
 var optic := 0
+## Condition of the gun (0-100), worn by every shot. Below 0 it never wears or jams (AI guns, guns that
+## aren't inventory items).
+var durability := -1.0
+var is_jammed := false
+var is_clearing := false
 
 var _cooldown := 0.0
 var _since_shot := 0.0
 var _reload_left := 0.0
 var _reload_duration := 0.0
+var _clear_left := 0.0
 ## False after a shot until the trigger is released (semi-auto guns need a new click).
 var _trigger_reset := true
 ## True once this pull has reported an empty magazine.
@@ -58,11 +73,15 @@ func _ready() -> void:
 
 
 ## Puts `gun` (an ItemData with weapon stats, or null for empty hands) in hand with a full magazine of
-## `ammo_item`, plus `spare` rounds of it (-1 for unlimited).
-func equip(gun: ItemData, ammo_item: ItemData, spare: int) -> void:
+## `ammo_item`, plus `spare` rounds of it (-1 for unlimited). `stats` are its modded stats, if it has
+## any (else its .tres). Starts unworn (durability -1): the holder sets `durability` if it wears.
+func equip(gun: ItemData, ammo_item: ItemData, spare: int, stats: WeaponData = null) -> void:
 	item = gun
-	data = gun.weapon if gun else null
+	data = stats if stats else (gun.weapon if gun else null)
 	cancel_reload()
+	is_jammed = false
+	is_clearing = false
+	durability = -1.0
 	set_ammo(ammo_item)
 	rounds = data.magazine_size if data and ammo else 0
 	spare_rounds = spare
@@ -97,11 +116,11 @@ func spread(speed_ratio: float) -> float:
 ## there's a round in the magazine and (for semi-auto) the trigger was released since the last shot.
 ## `extra_spread` is the shooter's own aim error in degrees. Returns true if a round went off.
 func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread: float, speed_ratio: float) -> bool:
-	if not has_gun() or is_reloading or _cooldown > 0.0:
+	if not has_gun() or is_reloading or is_clearing or _cooldown > 0.0:
 		return false
 	if not (data.automatic or _trigger_reset):
 		return false
-	if rounds == 0:
+	if rounds == 0 or is_jammed or data.missing_part != "":
 		if not _dry_this_pull:
 			_dry_this_pull = true
 			dry_fired.emit()
@@ -111,12 +130,18 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 	_trigger_reset = false
 	rounds -= 1
 	var direction := cone((target - origin).normalized(), spread(speed_ratio) + extra_spread)
-	Ballistics.fire(shooter, origin, direction, ammo, muzzle.global_position)
+	Ballistics.fire(shooter, origin, direction, ammo, muzzle.global_position, data)
 	recoil = minf(recoil + data.recoil_per_shot, data.max_recoil)
 	_since_shot = 0.0
 	_show_flash()
 	_model.position.z = KICK_DISTANCE
+	if durability >= 0.0:
+		durability = maxf(durability - data.wear_per_shot(), 0.0)
 	fired.emit()
+	# The next round fails to feed.
+	if rounds > 0 and randf() < data.malfunction_chance(durability):
+		is_jammed = true
+		jammed.emit()
 	return true
 
 
@@ -132,6 +157,10 @@ func reload_block_reason() -> String:
 		return "no weapon"
 	if is_reloading:
 		return "already reloading"
+	if is_jammed:
+		return "jammed"
+	if data.magazine_size <= 0:
+		return "no magazine"
 	if rounds >= data.magazine_size:
 		return "magazine full"
 	if spare_rounds == 0:
@@ -155,8 +184,20 @@ func cancel_reload() -> void:
 	_reload_left = 0.0
 
 
-## 0 to 1 through the current reload; 0 when not reloading.
+## Starts clearing a jam (data.clear_time). Returns false if the gun isn't jammed or is already being
+## cleared.
+func clear_jam() -> bool:
+	if not is_jammed or is_clearing:
+		return false
+	is_clearing = true
+	_clear_left = data.clear_time
+	return true
+
+
+## 0 to 1 through the current reload or jam clearing; 0 when doing neither.
 func reload_progress() -> float:
+	if is_clearing and data.clear_time > 0.0:
+		return 1.0 - _clear_left / data.clear_time
 	if not is_reloading or _reload_duration <= 0.0:
 		return 0.0
 	return 1.0 - _reload_left / _reload_duration
@@ -171,6 +212,10 @@ func _physics_process(delta: float) -> void:
 		_reload_left -= delta
 		if _reload_left <= 0.0:
 			_finish_reload()
+	if is_clearing:
+		_clear_left -= delta
+		if _clear_left <= 0.0:
+			_finish_clearing()
 	_model.position.z = move_toward(_model.position.z, 0.0, KICK_RETURN * delta)
 	if _flash_left > 0.0:
 		_flash_left -= delta
@@ -188,6 +233,16 @@ func _finish_reload() -> void:
 	if spare_rounds > 0:
 		spare_rounds -= taken
 	reload_finished.emit()
+
+
+## The stuck round is thrown out (if there is one) and the gun can fire again.
+func _finish_clearing() -> void:
+	is_clearing = false
+	is_jammed = false
+	var ejected := rounds > 0
+	if ejected:
+		rounds -= 1
+	jam_cleared.emit(ejected)
 
 
 func _show_flash() -> void:

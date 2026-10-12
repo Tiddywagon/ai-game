@@ -4,10 +4,14 @@ extends RefCounted
 ## are moving (a Shift-drag split takes half; the mouse wheel changes it) and whether it's been turned
 ## with R. It also decides what dropping it somewhere would do, and does it. Nothing moves until the
 ## drop succeeds, so letting go anywhere else simply cancels. Stacks only merge with the same
-## Found-in-Raid status, and a split keeps the status of its stack.
+## Found-in-Raid status, and a split keeps the status of its stack. Out of raid, a weapon part dropped
+## on a gun is fitted to a free slot it fits (DESIGN.md §12.1); in the modding screen parts are also
+## dragged off a gun's slots.
 
 ## The drag in progress, if any (for R and the mouse wheel).
 static var current: InventoryDrag
+## Weapon parts can be fitted to guns (out of raid only: the inventory screen sets it).
+static var mods_allowed := false
 
 ## Turned or the amount changed: the preview redraws.
 signal updated
@@ -17,6 +21,9 @@ var item: ItemInstance
 var from_grid: InventoryGrid
 var from_slot := ""
 var inventory: Inventory
+## Or a slot on a gun (the modding screen): the gun and the slot path.
+var from_gun: ItemInstance
+var from_path := ""
 ## How many are moving; less than item.count for a split.
 var amount := 1
 var rotated := false
@@ -32,6 +39,14 @@ func _init(dragged: ItemInstance, source_grid: InventoryGrid, source_slot: Strin
 	splitting = split and dragged.count > 1
 	amount = ceili(dragged.count / 2.0) if splitting else dragged.count
 	current = self
+
+
+## A part being dragged off slot `path` of `gun`.
+static func from_mod_slot(gun: ItemInstance, path: String, owner: Inventory) -> InventoryDrag:
+	var drag := InventoryDrag.new(WeaponMods.mod_at(gun, path), null, "", owner, false)
+	drag.from_gun = gun
+	drag.from_path = path
+	return drag
 
 
 func footprint() -> Vector2i:
@@ -67,6 +82,8 @@ func plan_grid(grid: InventoryGrid, mouse_cell: Vector2i, top_left: Vector2i) ->
 			return {"action": "merge", "target": under}
 		if can_insert(under):
 			return {"action": "insert", "target": under}
+		if install_path(under) != "":
+			return {"action": "install", "target": under}
 	var fits := grid.accepts(item) and grid.in_bounds(top_left, footprint())
 	fits = fits and grid.is_free(top_left, footprint(), null if splitting else item)
 	return {"action": "place", "cell": top_left} if fits else {}
@@ -86,6 +103,8 @@ func drop_on_grid(grid: InventoryGrid, plan: Dictionary) -> bool:
 			return true
 		"insert":
 			return insert(plan.target)
+		"install":
+			return install(plan.target)
 		"place":
 			if splitting:
 				var piece := item.split_off(amount)
@@ -116,6 +135,32 @@ func insert(target: ItemInstance) -> bool:
 	elif moved > 0:
 		_take_from_source(moved)
 	return moved > 0
+
+
+## The free slot on `gun` the dragged part would be fitted to, or "" if it's not a part, there's no
+## free slot it fits, or modding isn't allowed here.
+func install_path(gun: ItemInstance) -> String:
+	if not mods_allowed or splitting or gun == null or not gun.is_gun() or gun == item or gun == from_gun:
+		return ""
+	return WeaponMods.slot_for(gun, item, true)
+
+
+## Fits the dragged part to a free slot on `gun`. Returns true if it went on.
+func install(gun: ItemInstance) -> bool:
+	var path := install_path(gun)
+	if path == "":
+		return false
+	take()
+	WeaponMods.install(gun, path, item)
+	if inventory:
+		inventory.changed.emit()
+	return true
+
+
+## Takes the item out of where it came from (the caller puts it somewhere) and returns it.
+func take() -> ItemInstance:
+	_remove_from_source()
+	return item
 
 
 ## True if dropping on equipment `slot` of `target` (yours, or a body's) would work (whole items only).
@@ -178,7 +223,9 @@ func _take_from_source(count: int) -> void:
 
 
 func _remove_from_source() -> void:
-	if from_grid:
+	if from_gun:
+		WeaponMods.uninstall(from_gun, from_path)
+	elif from_grid:
 		from_grid.remove(item)
 	elif inventory and from_slot != "":
 		inventory.unequip(from_slot)

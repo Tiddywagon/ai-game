@@ -88,6 +88,7 @@ func _ready() -> void:
 	add_child(_flashlight)
 	weapon.fired.connect(_on_round_fired)
 	weapon.reload_finished.connect(_on_reload_finished)
+	weapon.jam_cleared.connect(_on_jam_cleared)
 	set_inventory(Inventory.starter())
 
 
@@ -155,6 +156,8 @@ func _think(delta: float) -> void:
 	peek_input = (_aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")) and not ui_open
 	_update_aim()
 	var transition := VisionSystem.config.optic_transition_time
+	if weapon.data and not using_binoculars:
+		transition *= weapon.data.aim_time_multiplier  # Ergonomics and sights.
 	var raise := 1.0 if is_using_optic() else 0.0
 	optic_blend = move_toward(optic_blend, raise, delta / transition) if transition > 0.0 else raise
 	_flashlight.position.y = gun_height()
@@ -207,7 +210,7 @@ func current_optic() -> int:
 func is_using_optic() -> bool:
 	if is_dead or is_rolling or not peek_input:
 		return false
-	return using_binoculars or (weapon.has_gun() and not weapon.is_reloading)
+	return using_binoculars or (weapon.has_gun() and not weapon.is_reloading and not weapon.is_clearing)
 
 
 ## Opens `loot` (a container's InventoryGrid or a body's Inventory) from `source` beside the inventory.
@@ -249,8 +252,8 @@ func _update_weight() -> void:
 	carried_weight_kg = (inventory.total_weight() if inventory else 0.0) + debug_extra_weight
 
 
-## Puts the inventory's gun in hand if it changed (or `force`); the rounds come from its magazine and
-## the spare rounds are recounted.
+## Puts the inventory's gun in hand if it changed (or `force`), with its modded stats, sight and
+## durability; the rounds come from its magazine and the spare rounds are recounted.
 func _sync_weapon(force := false) -> void:
 	if _loading_rounds:
 		return
@@ -264,7 +267,10 @@ func _sync_weapon(force := false) -> void:
 			# A gun without a round type yet takes the first matching ammo you carry.
 			if item.loaded_ammo == "":
 				item.loaded_ammo = _carried_ammo_for(item.data.weapon.caliber)
-			equip_weapon(item.data.id, item.loaded_ammo, inventory.count_of(item.loaded_ammo))
+			var stats := WeaponStats.build(item)
+			equip_weapon(item.data.id, item.loaded_ammo, inventory.count_of(item.loaded_ammo), stats)
+			weapon.optic = stats.optic
+			weapon.durability = item.durability
 		weapon.visible = weapon.has_gun() and not using_binoculars
 	if weapon.has_gun() and _weapon_item:
 		weapon.rounds = mini(_weapon_item.rounds_loaded(), weapon.data.magazine_size)
@@ -289,6 +295,13 @@ func set_ammo(id: String) -> void:
 
 func _on_round_fired() -> void:
 	if _weapon_item:
+		_weapon_item.fire_round()
+		_weapon_item.durability = maxf(weapon.durability, 0.0)
+
+
+## Clearing a jam throws the stuck round out of the gun.
+func _on_jam_cleared(ejected: bool) -> void:
+	if _weapon_item and ejected:
 		_weapon_item.fire_round()
 
 

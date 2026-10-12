@@ -66,6 +66,10 @@ static func draw_unknown(canvas: CanvasItem, rect: Rect2, progress := -1.0) -> v
 static func tooltip(item: ItemInstance) -> String:
 	var lines := [item.data.display_name + (" ×%d" % item.count if item.count > 1 else ""),
 		"%s  ·  %s  ·  %s" % [Palette.RARITY_NAMES[item.data.rarity], Settings.format_weight(item.weight()), UiFormat.money(item.value())]]
+	if item.is_gun():
+		lines.append("Durability %.1f / %.1f" % [item.durability, item.max_durability])
+	elif WeaponMods.is_mod(item.data):
+		lines.append(ModPartRow.summary(item.data))
 	if has_fir_mark(item):
 		lines.append(FoundInRaid.status_text(item))
 	lines.append("Right-click: examine" + ("  ·  Double-click: open" if item.contents else ""))

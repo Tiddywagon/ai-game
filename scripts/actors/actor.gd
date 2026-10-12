@@ -134,6 +134,7 @@ func _ready() -> void:
 	health = BodyHealth.new(health_config)
 	stamina = max_stamina
 	weapon.dry_fired.connect(_on_dry_fire)
+	weapon.jammed.connect(_on_jammed)
 	equip_weapon(weapon_id, ammo_id, spare_rounds)
 	_set_height(stand_height)
 	_update_hitbox()
@@ -259,12 +260,12 @@ func exit_cover() -> void:
 
 
 ## Puts the gun `gun_id` in hand ("" for none) with a full magazine of `ammo` and `spare` rounds
-## besides (-1 for unlimited).
-func equip_weapon(gun_id: String, ammo: String, spare: int) -> void:
+## besides (-1 for unlimited). `stats`: its modded stats, if it has mods (WeaponStats.build()).
+func equip_weapon(gun_id: String, ammo: String, spare: int, stats: WeaponData = null) -> void:
 	weapon_id = gun_id
 	ammo_id = ammo
 	spare_rounds = spare
-	weapon.equip(ItemDB.get_item(gun_id) if gun_id != "" else null, ItemDB.get_item(ammo) if ammo != "" else null, spare)
+	weapon.equip(ItemDB.get_item(gun_id) if gun_id != "" else null, ItemDB.get_item(ammo) if ammo != "" else null, spare, stats)
 
 
 ## Swaps the loaded round type, keeping the round counts (debug key F3 in the test level).
@@ -280,10 +281,12 @@ func ammo_label() -> String:
 	return "%s (pen %d)" % [weapon.ammo.display_name, int(weapon.ammo.stats.get("penetration", 0))]
 
 
-## Starts a reload, or emits action_blocked with the reason it can't.
+## Starts a reload (or clears a jam), or emits action_blocked with the reason it can't.
 func try_reload() -> bool:
 	if is_dead:
 		return false
+	if weapon.is_jammed:
+		return weapon.clear_jam()
 	var reason := weapon.reload_block_reason()
 	if reason == "already reloading":
 		return false
@@ -625,8 +628,15 @@ func _update_firing() -> void:
 		_on_fired()
 
 
-## The trigger was pulled on an empty magazine: reload if allowed, otherwise say why nothing happens.
+## The trigger was pulled and nothing happened: a jam or a missing part says so; an empty magazine
+## reloads if allowed, otherwise says why nothing happens.
 func _on_dry_fire() -> void:
+	if weapon.is_jammed:
+		action_blocked.emit("Weapon jammed: press %s to clear it" % Settings.key_label("reload"))
+		return
+	if weapon.data.missing_part != "":
+		action_blocked.emit("Can't fire: no %s" % weapon.data.missing_part.to_lower())
+		return
 	if auto_reload and weapon.reload():
 		return
 	var reason := weapon.reload_block_reason()
@@ -634,6 +644,10 @@ func _on_dry_fire() -> void:
 		action_blocked.emit("Out of ammo")
 	elif reason == "":
 		action_blocked.emit("Magazine empty: press %s to reload" % Settings.key_label("reload"))
+
+
+func _on_jammed() -> void:
+	action_blocked.emit("Jammed! Press %s to clear it" % Settings.key_label("reload"))
 
 
 func _update_footsteps(delta: float) -> void:

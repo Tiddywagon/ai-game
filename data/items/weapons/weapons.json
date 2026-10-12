@@ -6,8 +6,8 @@
     "category": "weapon",
     "rarity": "uncommon",
     "size": [2, 1],
-    "weight": 0.73,
-    "value": 9000,
+    "weight": 0.64,
+    "value": 7800,
     "stats": {"class": "pistol"},
     "weapon": "res://data/weapons/pm.tres"
   }

@@ -11,7 +11,8 @@ const SAVE_PATH := "user://savegame.json"
 ## rounds); version 2 equipment and pockets are converted, and get the Alpha secure container.
 ## Version 4 keeps each gun's rounds with their Found-in-Raid status (version 3 rounds load as not
 ## found in raid), and adds quests and hideout station levels.
-const SAVE_VERSION := 4
+## Version 5 adds weapon mods and durability (older guns load with their default parts, as new).
+const SAVE_VERSION := 5
 
 
 func has_save() -> bool:

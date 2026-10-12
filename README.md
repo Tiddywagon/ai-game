@@ -42,6 +42,8 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 
 **Raids and found in raid.** Search containers (crates, toolboxes, jackets, weapon boxes, medical bags, safes, filing cabinets) and bodies with **F**: they open beside your inventory and their contents turn up one item at a time while open (small items faster; closing pauses). Drag what you want across, or drag gear straight off a body's slots, and pick up loose items on the ground. To get out, stand in the green ring in the north-east corner for 7 seconds before the clock (top right) runs out. Anything you looted gets a faded checkmark; if you extract it turns solid: the item is **found in raid** (FIR). Dying, running out of time, LEAVE RAID, or a **Run Through** (extracting within 7 minutes with under 200 raid experience) gives nothing FIR, and as a PMC dying or leaving loses everything except your secure container. Bought, bartered and reward items are never FIR; hideout crafts always are; what you bring in keeps its status. Quests, hideout upgrades and some barters only take FIR items where the requirement shows the checkmark. Hover a checkmark for "Found in raid"; the stash's **FIR only** filter dims the rest; examine a gun to see (or UNLOAD) its rounds by status.
 
+**Weapon modding** (out of raid): right-click a gun in the inventory and press **MODIFY**. Drag parts from the list on the right onto the gun's slots (a rail handguard adds slots for a foregrip, a laser and a sight); drag a part off, or double-click it, to take it off. Hover a part to see what it would do: the stats in the middle show the new values, green if better, red if worse. Rarer parts have bigger bonuses. You can also drop a part straight onto a gun in the inventory to fit it to a free slot. Guns wear with every shot; below 85 durability they start to jam (**R** clears a jam, "JAMMED" on the HUD). **REPAIR** in the modding screen fixes a gun for roubles, but lowers its max durability a little each time. Mechanic and Skier sell parts.
+
 Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
 
 Test Yard debug keys: **F1** left leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off, **F5** heal everything, **F6** cycle the gun's sight (iron, red dot, holo, 2-4x, 6-8x), **F7** time of day, **F8** weather, **F9** flashbang at the reticle, **F10** fog of war off.
@@ -52,7 +54,7 @@ Health works per body part, as in Tarkov: head or thorax at 0 kills, any other p
 
 The ammo count, spare rounds and reload progress are in the bottom-right corner. With **Auto-reload** on (Settings > Gameplay), pulling the trigger on an empty magazine reloads.
 
-Trader offers live in `data/traders/offers.json`, quests in `data/quests/quests.json`, hideout stations and crafts in `data/hideout/stations.json` (requirements are `{"item", "count", "fir"}`), and extraction, Run Through and raid experience in `data/config/raid.tres`. Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`; every vision angle, range and multiplier (cones, light, weather, optics, AI) in `data/config/vision.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
+Trader offers live in `data/traders/offers.json`, quests in `data/quests/quests.json`, hideout stations and crafts in `data/hideout/stations.json` (requirements are `{"item", "count", "fir"}`), and extraction, Run Through and raid experience in `data/config/raid.tres`. Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`; every vision angle, range and multiplier (cones, light, weather, optics, AI) in `data/config/vision.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil), its mod slots and default parts, and how it wears and jams are a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
 
 ## Adding items
 
@@ -75,6 +77,15 @@ Every item lives in `data/items/` (any subfolder). No code needed: either make a
 ```
 
 Only `id`, `name`, `category` and `rarity` are required. Categories: weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container, melee. Rarities: common, uncommon, rare, ultra_rare (or "Ultra Rare"), epic, legendary. Guns add `"weapon": "res://data/weapons/<gun>.tres"`; `"icon": "res://..."` replaces the placeholder icon; `"loot_weight": 0` keeps an item out of random loot. Rigs, backpacks and cases get their own grid with `"stats": {"grid": [4, 2]}` (add `"secure": true` for a secure container); pistols need `"stats": {"class": "pistol"}` to go in the pistol slot. Mistakes show up in the Output panel with the file name.
+
+Weapon parts are attachments with a `"mod"` stat (see `data/items/attachments/`):
+
+```json
+{"id": "ak_compensator", "name": "AK compensator", "category": "attachment", "rarity": "uncommon", "weight": 0.15, "value": 6000,
+ "stats": {"mod": {"kind": "muzzle", "fits": ["ak"], "modifiers": {"recoil": -8, "ergonomics": -1, "noise": 10}}}}
+```
+
+`kind` is one of muzzle, barrel, handguard, foregrip, stock, pistol_grip, receiver, sight, tactical, magazine; `fits` lists gun platforms (`WeaponData.platform`; leave it out for rail parts that fit any gun); `modifiers` can have recoil, accuracy, velocity, aim_speed, noise, malfunction and durability_loss (percent; negative recoil, accuracy, noise, malfunction and durability_loss are better) and ergonomics (points). Magazines add `"capacity": 30`; sights add `"optic"` at the top of `stats`; parts with rails add `"slots": [{"id": "foregrip", "name": "Foregrip", "kinds": ["foregrip"]}]`. Bonuses are scaled up by the part's rarity.
 
 ## Loot
 

@@ -141,6 +141,13 @@ func _show_loadout() -> void:
 			checks.append("Overweight: you can't sprint or roll.")
 		elif weight > config.encumbered_kg:
 			checks.append("Heavy load: you'll move slower and tire faster.")
+		if gun and gun.is_gun():
+			var missing := WeaponMods.missing_part(gun)
+			if missing != "":
+				checks.append("Your %s can't fire: no %s. Fit one in the modding screen." % [gun.data.display_name, missing.to_lower()])
+			elif gun.durability < gun.data.weapon.malfunction_threshold:
+				checks.append("Your %s is worn (%d / %d): it may jam. Repair it in the modding screen." % [gun.data.display_name,
+					roundi(gun.durability), roundi(gun.max_durability)])
 		checks.append("If you die, everything you bring is lost.")
 	%Checks.text = "\n".join(checks.map(func(line: String) -> String: return "•  " + line))
 	%Checks.add_theme_color_override("font_color", WARNING_COLOR if _side == "pmc" else MenuEntryButton.TEXT)

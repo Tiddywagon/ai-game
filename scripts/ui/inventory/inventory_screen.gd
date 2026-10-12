@@ -7,7 +7,9 @@ extends MenuScreen
 ## shows the weight you carry and what it does to you. Tab, Esc or CLOSE closes it. In a raid the game
 ## keeps running while it's open, and searching a container or body shows it on the right instead of
 ## the stash: its items turn up one by one while it's open (LootSearch), and the title counts them. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
-## of the stash. Guns can be unloaded from the examine panel: the rounds keep their status.
+## of the stash. Guns can be unloaded from the examine panel: the rounds keep their status. Out of raid,
+## MODIFY there opens the modding screen (WeaponModScreen), and dropping a weapon part on a gun fits it
+## to a free slot.
 
 ## Equipment slot layout: two columns of [slot, size in cells].
 const SLOT_COLUMNS := [
@@ -42,6 +44,9 @@ func _ready() -> void:
 	%CloseButton.pressed.connect(close)
 	_examine = ItemExaminePanel.new()
 	_examine.unload_requested.connect(unload)
+	_examine.modify_requested.connect(open_modding)
+	_examine.can_modify = stash != null
+	InventoryDrag.mods_allowed = stash != null
 	%Overlay.add_child(_examine)
 	_build_equipment()
 	_build_containers()
@@ -258,6 +263,28 @@ func unload(gun: ItemInstance) -> void:
 		stash.changed.emit()
 	if _examine.visible and _examine.item == gun:
 		_examine.show_item(gun)
+
+
+## Opens the modding screen for `gun` over the inventory (out of raid only).
+func open_modding(gun: ItemInstance) -> WeaponModScreen:
+	if stash == null or gun == null or not gun.is_gun():
+		return null
+	_examine.close()
+	var screen := WeaponModScreen.new()
+	screen.name = "WeaponModScreen"
+	screen.gun = gun
+	screen.inventory = inventory
+	screen.stash = stash
+	screen.closed.connect(_on_modding_closed)
+	add_child(screen)
+	return screen
+
+
+func _on_modding_closed() -> void:
+	for grid in inventory.grids():
+		grid.changed.emit()
+	stash.changed.emit()
+	inventory.changed.emit()
 
 
 func _hook_view(view: InventoryGridView) -> void:

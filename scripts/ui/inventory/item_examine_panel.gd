@@ -3,17 +3,23 @@ extends PanelContainer
 ## Examining an item (DESIGN.md §7): its icon, name in its rarity colour, rarity and category, size,
 ## weight, value and stack, the stats that matter for its kind (a gun's fire rate and magazine, ammo
 ## damage and penetration, armor class, what meds treat, a container's grid and what's in it) and its
-## description, and whether it's found in raid (with the checkmark). Guns with rounds loaded can be
-## unloaded from here. Right-click any item in the inventory to open it; Esc or CLOSE hides it.
+## description, and whether it's found in raid (with the checkmark). Guns show their stats with their
+## parts fitted and their durability; weapon parts what they change and which guns they fit. Guns with
+## rounds loaded can be unloaded from here, and out of raid MODIFY opens the modding screen.
+## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
 ## UNLOAD pressed for a gun.
 signal unload_requested(item: ItemInstance)
+## MODIFY pressed for a gun.
+signal modify_requested(item: ItemInstance)
 
 const TREATMENTS := {"light_bleed": "light bleed", "heavy_bleed": "heavy bleed", "fracture": "fracture",
 	"pain": "pain", "blacked": "blacked limb"}
 
 var item: ItemInstance
+## Guns can be modded from here (out of raid).
+var can_modify := false
 
 var _icon: TextureRect
 var _name: Label
@@ -21,6 +27,7 @@ var _subtitle: Label
 var _stats: GridContainer
 var _description: Label
 var _unload: Button
+var _modify: Button
 
 
 func _ready() -> void:
@@ -76,6 +83,13 @@ func _ready() -> void:
 	_unload.tooltip_text = "Take the rounds out; each keeps its found-in-raid status"
 	_unload.pressed.connect(func() -> void: unload_requested.emit(item))
 	buttons.add_child(_unload)
+	_modify = Button.new()
+	_modify.name = "ModifyButton"
+	_modify.text = "MODIFY"
+	_modify.custom_minimum_size = Vector2(120, 36)
+	_modify.tooltip_text = "Fit and swap parts, see the stats change, repair"
+	_modify.pressed.connect(func() -> void: modify_requested.emit(item))
+	buttons.add_child(_modify)
 	var close_button := Button.new()
 	close_button.text = "CLOSE"
 	close_button.custom_minimum_size = Vector2(120, 36)
@@ -112,6 +126,7 @@ func show_item(examined: ItemInstance) -> void:
 		else:
 			_stats.add_child(value)
 	_unload.visible = item.rounds_loaded() > 0
+	_modify.visible = can_modify and item.is_gun()
 	_description.text = data.description
 	_description.visible = data.description != ""
 	show()
@@ -129,6 +144,19 @@ func close() -> void:
 	closed.emit()
 
 
+## Which guns weapon part `data` fits: their names, or any gun with a slot for it.
+static func fits_text(data: ItemData) -> String:
+	var platforms: Array = WeaponMods.info(data).get("fits", [])
+	if platforms.is_empty():
+		return "Any gun with a slot for it"
+	var names: Array[String] = []
+	for each in ItemDB.all_items():
+		if each.weapon and each.weapon.platform in platforms:
+			names.append(each.display_name)
+	names.sort()
+	return ", ".join(names) if not names.is_empty() else ", ".join(platforms)
+
+
 ## [label, value] pairs describing `examined`.
 static func stat_lines(examined: ItemInstance) -> Array:
 	var data := examined.data
@@ -144,11 +172,20 @@ static func stat_lines(examined: ItemInstance) -> Array:
 	if data.max_stack > 1:
 		lines.append(["Stack", "%d / %d" % [examined.count, data.max_stack]])
 	if data.weapon:
-		var gun := data.weapon
+		var gun := WeaponStats.build(examined)
 		lines.append(["Caliber", gun.caliber])
 		lines.append(["Fire rate", "%d rpm, %s" % [gun.fire_rate, "automatic" if gun.automatic else "semi-automatic"]])
-		lines.append(["Magazine", "%d rounds" % gun.magazine_size])
+		lines.append(["Magazine", "%d rounds" % gun.magazine_size if gun.magazine_size > 0 else "none fitted"])
 		lines.append(["Reload", "%.1f s (empty %.1f s)" % [gun.reload_time, gun.empty_reload_time]])
+		var recoil := 100.0 * gun.recoil_per_shot / data.weapon.recoil_per_shot if data.weapon.recoil_per_shot > 0.0 else 100.0
+		lines.append(["Handling", "ergonomics %d, recoil %d%%, spread %.2f°" % [gun.ergonomics, roundi(recoil), gun.base_spread]])
+		lines.append(["Muzzle velocity", "%d m/s" % gun.muzzle_velocity])
+		lines.append(["Parts", "%d fitted" % WeaponMods.installed(examined).size()])
+		if gun.missing_part != "":
+			lines.append(["Can't fire", "no %s" % gun.missing_part.to_lower()])
+		var jam := gun.malfunction_chance(examined.durability) * 100.0
+		lines.append(["Durability", "%.1f / %.1f%s" % [examined.durability, examined.max_durability,
+			", jams %.2f%% of shots" % jam if jam > 0.0 else ""]])
 		var rounds := examined.rounds_loaded()
 		if rounds > 0:
 			var text := "%d × %s" % [rounds, examined.magazine.back().data.display_name]
@@ -189,8 +226,21 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		var optic := VisionSystem.config.optic(int(stats.optic))
 		if optic:
 			lines.append(["Sight", "%s: %d° cone, ×%s range" % [optic.display_name, roundi(optic.cone_degrees), str(optic.range_multiplier)]])
-	if stats.has("ergonomics"):
-		lines.append(["Ergonomics", "+%d" % int(stats.ergonomics)])
+	var mod_info := WeaponMods.info(data)
+	if not mod_info.is_empty():
+		lines.append(["Part", WeaponMods.KIND_NAMES.get(WeaponMods.kind_of(data), "Part")])
+		lines.append(["Fits", fits_text(data)])
+		if WeaponMods.capacity_of(data) > 0:
+			lines.append(["Holds", "%d rounds" % WeaponMods.capacity_of(data)])
+		for line in WeaponStats.modifier_lines(data):
+			lines.append([line[0], line[1]])
+		if data.rarity > 0 and not WeaponStats.modifier_lines(data).is_empty():
+			lines.append(["Rarity", "bonuses ×%s" % str(WeaponStats.RARITY_SCALE[data.rarity])])
+		var slots: Array = mod_info.get("slots", [])
+		if not slots.is_empty():
+			lines.append(["Adds slots", ", ".join(slots.map(func(slot: Dictionary) -> String: return str(slot.name)))])
+		if not examined.mods.is_empty():
+			lines.append(["Fitted", ", ".join(examined.mods.values().map(func(mod: ItemInstance) -> String: return mod.data.display_name))])
 	if examined.contents:
 		var inside := examined.contents
 		lines.append(["Holds", "%d × %d grid" % [inside.size.x, inside.size.y]])
