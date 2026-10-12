@@ -17,6 +17,8 @@ const HIT_SHAKE := 0.45
 
 ## Where the reticle is, in viewport pixels.
 var cursor_position := Vector2.ZERO
+## Enemies killed this raid.
+var kills := 0
 
 var _roll_requested := false
 var _cover_requested := false
@@ -100,13 +102,15 @@ func _think(_delta: float) -> void:
 
 
 func on_hit_landed(target: Actor, damage: float, hit_position: Vector3) -> void:
+	if target.is_dead:
+		kills += 1  # Corpses can't be hit, so this hit was the kill.
 	hit_landed.emit(target, damage, hit_position)
 	if Settings.get_value("gameplay", "damage_numbers"):
 		_spawn_damage_number(hit_position, damage)
 
 
-func take_hit(damage: float, from: Actor) -> void:
-	super(damage, from)
+func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
+	super(damage, from, hit_position)
 	_shake_camera(HIT_SHAKE)
 
 
@@ -138,7 +142,8 @@ func _input_direction() -> Vector3:
 	return right * input.x - screen_up * input.y
 
 
-## Aims at whoever is under the reticle, or else level with the gun at the ground point under it.
+## Aims at the chest of whoever is under the reticle, or else level with the gun at the ground point
+## under it.
 func _update_aim() -> void:
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
@@ -150,8 +155,10 @@ func _update_aim() -> void:
 	query.collide_with_areas = true
 	query.collide_with_bodies = false
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		aim_point = hit.position
+	var target := (hit.collider as Node).get_parent() as Actor if not hit.is_empty() else null
+	if target:
+		# Centre mass: the reticle picks who, spread and sway decide which body part gets hit.
+		aim_point = target.chest_point()
 		has_aim = true
 		return
 	var ground: Variant = Plane(Vector3.UP, global_position.y).intersects_ray(from, direction)

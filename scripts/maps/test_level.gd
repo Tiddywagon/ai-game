@@ -1,15 +1,17 @@
 extends Node3D
 ## Test level for movement, cover and combat (DESIGN.md §13). Esc / Start opens the pause menu.
 ## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC.
-## Debug keys: F1 leg fracture, F2 overweight, F3 swap ammo (PS / BS), F4 AI on/off.
+## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS), F4 AI on/off, F5 heal.
 
-const MAIN_MENU_SCENE := "res://ui/main_menu.tscn"
-## Seconds on "KILLED IN ACTION" before going back to the main menu.
-const DEATH_DELAY := 4.0
+const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
+## Seconds between dying and the death screen.
+const DEATH_DELAY := 1.5
 const AMMO_TYPES: Array[String] = ["ammo_545_ps", "ammo_545_bs"]
 
 @onready var _player: Player = $Player
 @onready var _hud := $HUD
+
+var _start_msec := 0
 
 
 func _ready() -> void:
@@ -17,6 +19,7 @@ func _ready() -> void:
 	($Navigation as NavigationRegion3D).bake_navigation_mesh(false)
 	CoverSystem.mark_dirty()
 	_apply_raid()
+	_start_msec = Time.get_ticks_msec()
 	_player.died.connect(_on_player_died)
 
 
@@ -43,8 +46,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	match key.keycode:
 		KEY_F1:
-			_player.has_leg_fracture = not _player.has_leg_fracture
-			_hud.show_message("Leg fracture: %s" % ("on" if _player.has_leg_fracture else "off"))
+			var leg := BodyHealth.Part.LEFT_LEG
+			_player.health.set_fracture(leg, not _player.health.fractures[leg])
+			_hud.show_message("Left leg fracture: %s" % ("on" if _player.health.fractures[leg] else "off"))
 		KEY_F2:
 			_player.carried_weight_kg = 0.0 if _player.is_overweight() else _player.overweight_kg + 10.0
 			_hud.show_message("Carrying %s%s" % [Settings.format_weight(_player.carried_weight_kg), " (overweight)" if _player.is_overweight() else ""])
@@ -57,10 +61,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			for bot: Bot in bots:
 				bot.ai_enabled = enable
 			_hud.show_message("AI " + ("on" if enable else "off"))
+		KEY_F5:
+			if not _player.is_dead:
+				_player.health.heal_all()
+				_hud.show_message("Healed")
 
 
+## A moment after dying, the death screen says what killed you (DESIGN.md §16.5).
 func _on_player_died() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var raid_seconds := (Time.get_ticks_msec() - _start_msec) / 1000.0
 	get_tree().create_timer(DEATH_DELAY).timeout.connect(func() -> void:
-		GameState.raid = {}
-		get_tree().change_scene_to_file(MAIN_MENU_SCENE))
+		_hud.visible = false
+		var screen := DEATH_SCREEN.instantiate()
+		add_child(screen)
+		screen.show_death(_player, raid_seconds))

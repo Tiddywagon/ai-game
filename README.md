@@ -35,11 +35,13 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 
 Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
 
-Test Yard debug keys: **F1** leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off.
+Test Yard debug keys: **F1** left leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off, **F5** heal everything.
+
+Health works per body part, as in Tarkov: head or thorax at 0 kills, any other part at 0 is "blacked" and passes further damage on to the rest of the body. Hits can cause bleeds and fractures. The silhouette in the bottom-left corner shows each part's health and effects. There are no meds yet, so bleeds don't stop (F5 heals while testing). When you die, the death screen says what killed you.
 
 The ammo count, spare rounds and reload progress are in the bottom-right corner. With **Auto-reload** on (Settings > Gameplay), pulling the trigger on an empty magazine reloads.
 
-Roll, cover and bullet numbers live in `data/config/combat.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
+Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
 
 ## Notes
 

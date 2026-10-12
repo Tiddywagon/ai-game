@@ -35,8 +35,12 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 			break
 		result.end = hit.position
 		var target: Actor = (hit.collider as Node).get_parent() as Actor if hit.collider is Area3D else null
+		if target and target.body_part_at(hit.position, origin) < 0:
+			exclude.append(hit.rid)  # Beside the head, over the shoulder: a near miss.
+			from = hit.position
+			continue
 		if target:
-			target.take_hit(damage, shooter)
+			target.take_hit(damage, shooter, hit.position)
 			shooter.on_hit_landed(target, damage, hit.position)
 			result.hit = target
 			ImpactEffects.spawn(shooter.get_tree(), hit.position, hit.normal, ImpactEffects.Kind.FLESH)

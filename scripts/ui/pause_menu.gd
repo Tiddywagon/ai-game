@@ -27,6 +27,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	var back := event.is_action_pressed("ui_cancel") and visible
 	if not (toggle or back) or _host.get_child_count() > 0:
 		return
+	var player := get_tree().get_first_node_in_group("player") as Actor
+	if player and player.is_dead and not visible:
+		return  # The death screen is up instead.
 	if visible:
 		close()
 	else:

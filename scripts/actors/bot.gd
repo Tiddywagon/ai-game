@@ -53,7 +53,6 @@ var _outline: ShaderMaterial
 func _ready() -> void:
 	if profile:
 		side = profile.side
-		max_health = profile.max_health
 		ammo_id = profile.ammo_id
 		walk_speed = profile.walk_speed
 		sprint_speed = profile.sprint_speed
@@ -68,9 +67,13 @@ func _ready() -> void:
 	_update_outline.call_deferred()  # After the player is in the tree.
 
 
-func take_hit(damage: float, from: Actor) -> void:
-	super(damage, from)
+func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
+	super(damage, from, hit_position)
 	_update_outline()  # A friendly bot shot by the player turns hostile.
+
+
+func display_name() -> String:
+	return profile.display_name if profile else super()
 
 
 func die() -> void:

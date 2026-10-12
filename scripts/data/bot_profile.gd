@@ -5,7 +5,6 @@ extends Resource
 @export var display_name: String
 @export var side: Actor.Side
 @export var body_color: Color
-@export var max_health: float
 ## Ammo item id from ItemDB.
 @export var ammo_id: String
 

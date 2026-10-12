@@ -1,0 +1,118 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/death_screen.gd" id="1_death"]
+[ext_resource type="Script" path="res://scripts/ui/body_silhouette.gd" id="2_body"]
+[ext_resource type="Script" path="res://scripts/ui/menu_entry_button.gd" id="3_button"]
+
+[node name="DeathScreen" type="CanvasLayer"]
+layer = 60
+script = ExtResource("1_death")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Backdrop" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.01, 0.01, 0.86)
+
+[node name="Center" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="VBoxContainer" parent="Root/Center"]
+custom_minimum_size = Vector2(820, 0)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Root/Center/Panel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.26, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 60
+text = "KILLED IN ACTION"
+
+[node name="Cause" type="Label" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Shot in the head by a Scav"
+autowrap_mode = 3
+
+[node name="Detail" type="Label" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 18
+text = "AK-74N  ·  5.45x39 PS  ·  50 damage  ·  23 m"
+autowrap_mode = 3
+
+[node name="Separator" type="HSeparator" parent="Root/Center/Panel"]
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="Root/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 48
+
+[node name="Silhouette" type="Control" parent="Root/Center/Panel/Body"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 276)
+layout_mode = 2
+script = ExtResource("2_body")
+
+[node name="Info" type="VBoxContainer" parent="Root/Center/Panel/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="StatusTitle" type="Label" parent="Root/Center/Panel/Body/Info"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 18
+text = "AT TIME OF DEATH"
+
+[node name="Statuses" type="Label" parent="Root/Center/Panel/Body/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.7, 0.3, 1)
+text = "Pain"
+
+[node name="StatsTitle" type="Label" parent="Root/Center/Panel/Body/Info"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 18
+text = "RAID"
+
+[node name="Stats" type="GridContainer" parent="Root/Center/Panel/Body/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Center/Panel"]
+layout_mode = 2
+alignment = 2
+
+[node name="MenuButton" type="Button" parent="Root/Center/Panel/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "BACK TO MENU"
+script = ExtResource("3_button")
+primary = true

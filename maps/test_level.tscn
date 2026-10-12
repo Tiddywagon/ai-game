@@ -224,6 +224,6 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
-text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo PS/BS  ·  F4 AI on/off  ·  Esc pause"
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo PS/BS  ·  F4 AI on/off  ·  F5 heal  ·  Esc pause"
 
 [node name="PauseMenu" parent="." instance=ExtResource("11_pause")]

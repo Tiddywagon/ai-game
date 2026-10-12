@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="HealthConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/health_config.gd" id="1_health"]
+
+[resource]
+script = ExtResource("1_health")
+head_hp = 35.0
+thorax_hp = 85.0
+stomach_hp = 70.0
+arm_hp = 60.0
+leg_hp = 65.0
+stomach_spread = 1.5
+arm_spread = 0.7
+leg_spread = 1.0
+head_from = 0.86
+head_half_width = 0.13
+thorax_from = 0.6
+stomach_from = 0.47
+arm_offset = 0.22
+reference_damage = 50.0
+light_bleed_chance = 0.35
+heavy_bleed_chance = 0.12
+fracture_chance = 0.25
+light_bleed_rate = 0.5
+heavy_bleed_rate = 1.5
+injured_leg_speed = 0.7
+arm_sway = 2.0
+pain_sway = 1.0

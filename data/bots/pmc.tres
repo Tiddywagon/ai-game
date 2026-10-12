@@ -7,7 +7,6 @@ script = ExtResource("1_profile")
 display_name = "PMC"
 side = 0
 body_color = Color(0.22, 0.26, 0.32, 1)
-max_health = 200.0
 ammo_id = "ammo_545_bs"
 walk_speed = 3.5
 sprint_speed = 6.0

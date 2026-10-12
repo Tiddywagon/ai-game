@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/ui/cover_icon.gd" id="2_icon"]
 [ext_resource type="Script" path="res://scripts/ui/reticle.gd" id="3_reticle"]
+[ext_resource type="Script" path="res://scripts/ui/body_silhouette.gd" id="4_body"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 14.0
@@ -17,6 +18,18 @@ bg_color = Color(1, 1, 1, 0.15)
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
 resource_local_to_scene = true
 bg_color = Color(0.85, 0.85, 0.75, 1)
+
+[sub_resource type="Gradient" id="Gradient_pain"]
+offsets = PackedFloat32Array(0.7, 1)
+colors = PackedColorArray(0.3, 0, 0, 0, 0.3, 0, 0, 0.5)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pain"]
+gradient = SubResource("Gradient_pain")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reload"]
 bg_color = Color(0.95, 0.7, 0.3, 1)
@@ -33,6 +46,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="PainVignette" type="TextureRect" parent="HudRoot"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_pain")
+expand_mode = 1
 
 [node name="TopRight" type="PanelContainer" parent="HudRoot"]
 unique_name_in_owner = true
@@ -61,7 +87,7 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = -220.0
+offset_top = -380.0
 offset_right = 404.0
 offset_bottom = -24.0
 grow_vertical = 0
@@ -105,6 +131,42 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 1)
 theme_override_font_sizes/font_size = 16
 
+[node name="HealthPanel" type="PanelContainer" parent="HudRoot/BottomLeft"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Row" type="HBoxContainer" parent="HudRoot/BottomLeft/HealthPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Silhouette" type="Control" parent="HudRoot/BottomLeft/HealthPanel/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(76, 160)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("4_body")
+
+[node name="Info" type="VBoxContainer" parent="HudRoot/BottomLeft/HealthPanel/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="HealthTotal" type="Label" parent="HudRoot/BottomLeft/HealthPanel/Row/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 1)
+theme_override_font_sizes/font_size = 16
+text = "HP 440 / 440"
+
+[node name="StatusList" type="Label" parent="HudRoot/BottomLeft/HealthPanel/Row/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.7, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+
 [node name="StaminaPanel" type="PanelContainer" parent="HudRoot/BottomLeft"]
 layout_mode = 2
 mouse_filter = 2
@@ -132,12 +194,6 @@ value = 100.0
 show_percentage = false
 
 [node name="MoveState" type="Label" parent="HudRoot/BottomLeft/StaminaPanel/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.8)
-theme_override_font_sizes/font_size = 14
-
-[node name="Status" type="Label" parent="HudRoot/BottomLeft/StaminaPanel/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.8)

@@ -2,7 +2,8 @@ class_name Actor
 extends CharacterBody3D
 ## Shared body of the player and the AI (DESIGN.md §4, §13): movement, stamina, combat roll, cover,
 ## hitbox, health and shooting. Subclasses decide what to do in _think(); Actor carries it out.
-## The gun is a Weapon node ($Body/Gun) whose stats come from the gun item's WeaponData.
+## The gun is a Weapon node ($Body/Gun) whose stats come from the gun item's WeaponData. Health is a
+## BodyHealth (seven body parts, bleeds, fractures, pain); bullets hit the part where they land.
 
 signal died
 ## A roll just ended. `direction` is the way it went.
@@ -25,13 +26,14 @@ const COVER_SNAP_SPEED := 5.0
 ## Shots only go off when the body faces within this angle of the aim point.
 const MAX_AIM_ERROR_DEGREES := 25.0
 const FOOTSTEP_INTERVAL := 0.4
-## Health of a player character (DESIGN.md §13.4).
-const DEFAULT_MAX_HEALTH := 200.0
+## Chest height as a share of hitbox height: the middle of the thorax.
+const CHEST_HEIGHT_RATIO := 0.72
 
 @export var side := Side.PMC
 ## Roll, cover and bullet tuning shared by everyone.
 @export var config: CombatConfig = preload("res://data/config/combat.tres")
-@export var max_health := DEFAULT_MAX_HEALTH
+## Body-part HP and status effect tuning.
+@export var health_config: HealthConfig = preload("res://data/config/health.tres")
 ## Gun and ammo item ids from ItemDB. The gun item's WeaponData sets fire rate, magazine, recoil.
 @export var weapon_id := "ak_74n"
 @export var ammo_id := "ammo_545_ps"
@@ -86,10 +88,9 @@ var peek_input := false
 var aim_point := Vector3.ZERO
 var has_aim := false
 
-var health := 0.0
+## Body parts, bleeds, fractures and pain (DESIGN.md §13.5).
+var health: BodyHealth
 var is_dead := false
-## Set by the health system once body parts exist (DESIGN.md §13). Blocks rolling.
-var has_leg_fracture := false
 ## Set by the inventory once it exists.
 var carried_weight_kg := 0.0
 var stamina := 0.0
@@ -115,6 +116,7 @@ var _roll_cooldown := 0.0
 var _regen_cooldown := 0.0
 var _footstep_timer := 0.0
 var _height := 0.0
+var _sway_time := 0.0
 
 @onready var _collision: CollisionShape3D = $CollisionShape3D
 @onready var _hitbox: Area3D = $Hitbox
@@ -125,7 +127,7 @@ var _height := 0.0
 
 func _ready() -> void:
 	add_to_group("actors")
-	health = max_health
+	health = BodyHealth.new(health_config)
 	stamina = max_stamina
 	weapon.dry_fired.connect(_on_dry_fire)
 	equip_weapon(weapon_id, ammo_id, spare_rounds)
@@ -162,6 +164,11 @@ func _physics_process(delta: float) -> void:
 	if is_dead:
 		_step_dead(delta)
 		return
+	health.tick(delta)
+	if health.is_dead:
+		die()
+		return
+	_sway_time += delta
 	_think(delta)
 	_roll_cooldown = maxf(_roll_cooldown - delta, 0.0)
 	if is_rolling:
@@ -191,8 +198,9 @@ func is_overweight() -> bool:
 func roll_block_reason() -> String:
 	if is_dead or is_rolling:
 		return "busy"
-	if has_leg_fracture:
-		return "leg fracture"
+	var legs := health.leg_problem()
+	if legs != "":
+		return legs
 	if is_overweight():
 		return "overweight"
 	if _roll_cooldown > 0.0:
@@ -284,14 +292,57 @@ func current_spread() -> float:
 	return weapon.spread(speed_ratio()) + spread_degrees
 
 
-func take_hit(damage: float, from: Actor) -> void:
+## A bullet from `from` hit this actor at `hit_position`, which decides the body part.
+func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
 	if is_dead:
 		return
 	if from and from != self and not is_hostile(from):
 		enemies.append(from)  # Provoked: whoever shot us is an enemy from now on.
-	health = maxf(health - damage, 0.0)
-	if health == 0.0:
+	var part := body_part_at(hit_position, from.global_position if from else hit_position)
+	if part < 0:
+		return
+	var cause := {"kind": "shot", "part": part, "damage": damage}
+	if from:
+		cause.attacker = from.display_name()
+		cause.weapon = from.weapon.display_name()
+		cause.ammo = from.weapon.ammo.display_name if from.weapon.ammo else ""
+		cause.distance = from.global_position.distance_to(global_position)
+	health.hit(part, damage, cause)
+	if health.is_dead:
 		die()
+
+
+## Which body part (a BodyHealth.Part) a bullet fired from `shot_from` and landing at `point` hits,
+## from its height on the hitbox and how far to the side of the body's centre line it is; -1 if it
+## passes beside the head, over a shoulder.
+func body_part_at(point: Vector3, shot_from: Vector3) -> int:
+	var local := global_transform.affine_inverse() * point
+	var height := clampf(local.y / _hitbox_height(), 0.0, 1.0)
+	if height >= health_config.head_from:
+		# How far the bullet's path passes from the centre line, seen from above (any facing).
+		var path := Vector2(point.x - shot_from.x, point.z - shot_from.z).normalized()
+		var to_centre := Vector2(global_position.x - point.x, global_position.z - point.z)
+		return BodyHealth.Part.HEAD if absf(path.cross(to_centre)) <= health_config.head_half_width else -1
+	if height < health_config.stomach_from:
+		return BodyHealth.Part.RIGHT_LEG if local.x >= 0.0 else BodyHealth.Part.LEFT_LEG
+	if absf(local.x) > health_config.arm_offset:
+		return BodyHealth.Part.RIGHT_ARM if local.x > 0.0 else BodyHealth.Part.LEFT_ARM
+	return BodyHealth.Part.THORAX if height >= health_config.thorax_from else BodyHealth.Part.STOMACH
+
+
+## Name used in death messages, e.g. "Scav".
+func display_name() -> String:
+	return "Scav" if side == Side.SCAV else "PMC"
+
+
+## Current weapon sway in degrees (left/right): from fractured or blacked arms and pain.
+func aim_sway_degrees() -> float:
+	var amount := health.injured_arms() * health_config.arm_sway
+	if health.has_pain():
+		amount += health_config.pain_sway
+	if amount <= 0.0:
+		return 0.0
+	return amount * (0.7 * sin(_sway_time * 1.6) + 0.3 * sin(_sway_time * 3.7 + 1.0))
 
 
 func die() -> void:
@@ -299,6 +350,8 @@ func die() -> void:
 		return
 	is_dead = true
 	is_rolling = false
+	if not health.is_dead:
+		health.is_dead = true  # Killed some other way than by damage.
 	weapon.cancel_reload()
 	exit_cover()
 	CoverSystem.release(self)  # Also frees a spot it was only heading to.
@@ -332,7 +385,7 @@ func eye_point() -> Vector3:
 
 
 func chest_point() -> Vector3:
-	return global_position + Vector3.UP * _hitbox_height() * 0.65
+	return global_position + Vector3.UP * _hitbox_height() * CHEST_HEIGHT_RATIO
 
 
 func head_point() -> Vector3:
@@ -357,8 +410,9 @@ func visible_point_of(other: Actor) -> Variant:
 
 func _step_free(delta: float) -> void:
 	var moving := not move_input.is_zero_approx()
-	# Shooting stops a sprint; sprinting from a crouch stands you up.
-	var sprint_held := moving and sprint_input and not fire_input
+	var injured_legs := health.injured_legs() > 0
+	# Shooting stops a sprint, and so does a fractured or blacked leg; sprinting from a crouch stands you up.
+	var sprint_held := moving and sprint_input and not fire_input and not injured_legs
 	if sprint_held and is_crouching:
 		is_crouching = false
 	var sprinting := sprint_held and not is_exhausted
@@ -381,6 +435,8 @@ func _step_free(delta: float) -> void:
 		speed = walk_speed
 		noise_radius = walk_noise
 
+	if injured_legs:
+		speed *= health_config.injured_leg_speed
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(move_input * speed, acceleration * delta)
 	velocity = Vector3(horizontal.x, velocity.y, horizontal.z)
 	_apply_gravity(delta)
@@ -482,7 +538,8 @@ func _update_firing() -> void:
 		return  # Still turning toward the target.
 	# Bullets start at the body's centre line, so a gun poking into a wall can't shoot through it.
 	var origin := global_position + Vector3.UP * gun_height()
-	if weapon.pull_trigger(self, origin, aim_point, spread_degrees, speed_ratio()):
+	var target := origin + (aim_point - origin).rotated(Vector3.UP, deg_to_rad(aim_sway_degrees()))
+	if weapon.pull_trigger(self, origin, target, spread_degrees, speed_ratio()):
 		_on_fired()
 
 

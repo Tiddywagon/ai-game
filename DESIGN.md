@@ -66,6 +66,7 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 | Under fire | A bullet passing within 2 m puts the bot in combat with the shooter |
 | Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks |
 | Search | Loses sight for too long → goes to the last known position and looks around |
+| Health | Same body parts, bleeds and fractures as the player (Section 13.5): a leg hit slows a bot, an arm hit makes it sway |
 | Shooting | Same guns as the player (Section 13.4): fires in bursts, so recoil builds and settles. Aim error is added on top of the gun's spread. From cover it waits until it has stopped stepping out before firing |
 | Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Bots carry 90 spare rounds |
 
@@ -328,8 +329,8 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 
 | System | Detail |
 |---|---|
-| Body parts | Head, Thorax (death at 0), Stomach, L/R Arm, L/R Leg |
-| Conditions | Light bleed, heavy bleed, fracture, pain, dehydration, exhaustion |
+| Body parts | Head, Thorax (death at 0), Stomach, L/R Arm, L/R Leg (Section 13.5) |
+| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); dehydration, exhaustion later |
 | Energy / Hydration | Drain over time; 0 = HP loss |
 | Stamina | Sprint, aim stability |
 
@@ -355,7 +356,7 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Distance / time | 3 m in 0.5 s, fast at the start and slowing to a stop. Walls stop it |
 | Stamina | Costs 20; can't roll with less, or while exhausted |
 | Cooldown | 1 s after a roll ends |
-| Blocked by | Overweight (>40 kg), leg fracture. The HUD says why |
+| Blocked by | Overweight (>40 kg), a fractured or blacked leg. The HUD says why |
 | Harder to hit | For the first 0.3 s the hitbox shrinks to 0.8 m tall, 0.25 m radius (standing: 1.8 m, 0.35 m). Not invincible: low shots still hit |
 | Noise | 25 m, louder than sprinting, so nearby AI hears it |
 | Into cover | A roll toward cover that ends within 1 m of it snaps into that cover |
@@ -384,7 +385,7 @@ All of these values live in `data/config/combat.tres`.
 | Wood | Stops rounds with penetration below 30. Rounds with 30+ go through, keeping 60% damage and losing 15 penetration |
 | Concrete, metal | Stop every round |
 | Noise | Every shot is a 60 m noise |
-| Health (for now) | One pool per actor: player 200, Scav 150, PMC 200. Body parts come later (Section 13) |
+| Health | Body parts for everyone, player and AI (Section 13.5). A round damages the part it lands on |
 | Guns | Each gun's handling is a `WeaponData` file (Section 15). Damage and penetration always come from the ammo |
 | Fire rate | Rounds per minute. Automatic guns fire while the trigger is held; semi-auto guns fire once per click |
 | Magazine | Each shot uses a round. Can't fire while reloading |
@@ -404,6 +405,35 @@ All of these values live in `data/config/combat.tres`.
 | Gun *(tune)* | Fire rate | Mode | Magazine | Reload / empty | Base spread | Moving (sprint) | Recoil per shot / cap / recovery |
 |---|---|---|---|---|---|---|---|
 | AK-74N | 650 rpm | Auto | 30 | 2.3 s / 2.9 s | 0.5° | +3.0° | +0.5° / 5° / 10°/s after 0.15 s |
+
+### 13.5 Health & Status Effects *(tune)*
+
+Every actor, player and AI, has the same body. There's no armor or meds yet.
+
+| Part | HP | At 0 HP | Damage spread when blacked |
+|---|---|---|---|
+| Head | 35 | Death | — |
+| Thorax | 85 | Death | — |
+| Stomach | 70 | Blacked | ×1.5 |
+| Left / right arm | 60 each | Blacked | ×0.7 |
+| Left / right leg | 65 each | Blacked | ×1.0 |
+| **Total** | **440** | | |
+
+| Rule | Detail |
+|---|---|
+| Hit zones | Where a round lands on the hitbox decides the part, by height (head from 86%, thorax from 60%, stomach from 47%, legs below) and by side (in the torso band, more than 0.22 m off the centre line is an arm; legs split left/right). The head is narrower than the hitbox: a round passing more than 0.13 m beside the centre line at head height misses, over the shoulder. Shots from the side tend to hit an arm first |
+| Aiming | With the reticle over someone, the player aims at their chest (the middle of the thorax), as bots do. Spread, sway and their movement decide where rounds land |
+| Blacked parts | A part at 0 is blacked. Damage it takes from then on, and any damage beyond a part's remaining HP, is multiplied (table) and shared evenly by every part that still has HP, head and thorax included. So limb hits can still kill |
+| Light bleed | 35% chance per hit (at 50 damage; scaled by damage, up to ×1.5). Loses 0.5 HP/s from that part |
+| Heavy bleed | 12% chance per hit (same scaling); replaces a light bleed on that part. Loses 1.5 HP/s |
+| Bleeding | Doesn't stop on its own. On a blacked part, bleed damage spreads like any other damage. Treatment comes with meds |
+| Fracture | 25% chance per hit to an arm or leg (same scaling). Leg (fractured or blacked): 70% speed, no sprinting, no rolling. Arm (fractured or blacked): +2° weapon sway each |
+| Pain | While any part is fractured or blacked. +1° weapon sway; for the player, dark red tunnel vision at the screen edges (pulsing; steady with "reduce flashing") |
+| Weapon sway | The aim drifts slowly left and right by up to the total sway, on top of spread. The player sees it as the bloom reticle shifting |
+| HUD | Bottom left: body silhouette (seen from behind), each part filled green → amber → red by its HP, black with a red outline when blacked; drops for bleeds (two for heavy), a crack for fractures, a flash on the part that was hit. Next to it, total HP and a list of active effects |
+| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
+
+All of these values live in `data/config/health.tres`.
 
 ## 14. Economy
 
@@ -429,9 +459,10 @@ All of these values live in `data/config/combat.tres`.
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
 | Audio | Buses: Master, Music, Effects, Voice, UI, Ambient (`default_bus_layout.tres`). Placeholder music and UI sounds are generated by `tools/make_placeholder_audio.py` |
-| Actors | `Actor` (`scripts/actors/actor.gd`) is the shared body: movement, stamina, roll, cover, hitbox, health, shooting (through its `Weapon`, `$Body/Gun`). `Player` turns input into intents; `Bot` turns AI decisions into the same intents. Each has a separate `Hitbox` (Area3D) that bullets hit and that can shrink independently of the movement collider |
+| Actors | `Actor` (`scripts/actors/actor.gd`) is the shared body: movement, stamina, roll, cover, hitbox, health (a `BodyHealth`), shooting (through its `Weapon`, `$Body/Gun`). `Player` turns input into intents; `Bot` turns AI decisions into the same intents. Each has a separate `Hitbox` (Area3D) that bullets hit and that can shrink independently of the movement collider |
 | Player | `scenes/actors/player.tscn`: capsule placeholder; the gun box shows facing. Rules in Section 13 |
 | AI | `scenes/actors/bot.tscn` + a `BotProfile` (`data/bots/*.tres`). Behaviour in Section 4 |
+| Health | `BodyHealth` (`scripts/actors/body_health.gd`, RefCounted): part HP, blacked-damage spreading, bleeds, fractures, pain, and the death cause. Tuning is a `HealthConfig` resource, `data/config/health.tres`. HUD and death screen draw it with `BodySilhouette` (`scripts/ui/body_silhouette.gd`); the death screen is `ui/death_screen.tscn` |
 | Combat tuning | `CombatConfig` resource, `data/config/combat.tres`: roll, cover and bullet values. The numbers are in the file itself, so it can be edited in the Inspector or a text editor |
 | Cover | `CoverBox` (`scripts/world/`): @tool box with size + material that builds its own mesh and collision. `CoverSystem` autoload generates `CoverPoint`s every 1.2 m along each side and answers "nearest cover" / "best cover against this threat" |
 | Noise | `NoiseSystem` autoload: anything audible calls `emit_noise(position, radius, source)`; bots listen |
@@ -512,7 +543,7 @@ On first launch the player picks **BEAR** or **USEC** (Section 3); that creates 
 
 ### 16.5 Pause Menu (in raid)
 
-Esc or Start pauses the raid and frees the mouse: **RESUME**, **SETTINGS**, **LEAVE RAID** (asks first), **QUIT GAME** (asks first). Esc / Start / B closes it. Dying shows "KILLED IN ACTION" and returns to the main menu after 4 s.
+Esc or Start pauses the raid and frees the mouse: **RESUME**, **SETTINGS**, **LEAVE RAID** (asks first), **QUIT GAME** (asks first). Esc / Start / B closes it. It can't be opened once you're dead. Dying shows the death screen (Section 13.5) with **BACK TO MENU**.
 
 ## 17. Settings
 
@@ -548,3 +579,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-11 | Combat roll, cover system (low/tall, peek, slide, shared cover points), hitscan bullets with wood/concrete/metal penetration, Scav and PMC AI (vision, hearing, cover, peeking, PMC dodge rolls), `combat.tres` tuning file, 5.45 BS ammo |
 | 2026-10-11 | New main menu (dusk backdrop, music, profile, quit confirm, faction pick), Enter Raid flow (map, PMC/Scav, loadout check, loading), Character and Traders screens, Settings (six tabs, `user://settings.cfg`), in-raid pause menu and reticle, controller support, starter kit, save version 2 |
 | 2026-10-11 | Guns: `WeaponData` resource + shared `Weapon` node (fire rate, auto/semi, magazine, R reload with tactical/empty times, spread from movement and recoil), muzzle flash, hit sparks, HUD ammo panel, reload ring, auto-reload setting active. Bots use the same guns and reload behind cover; their spread is now aim error on top of the gun (Scav 2.8°, PMC 0.3°) |
+| 2026-10-12 | Body-part health (head, thorax, stomach, arms, legs; blacked parts spread damage), light/heavy bleeds, fractures, pain, weapon sway, HUD silhouette and pain vignette, death screen with cause of death, `health.tres`. Replaces single health pools; player aims at the chest of whoever is under the reticle |

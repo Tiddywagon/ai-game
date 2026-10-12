@@ -1,5 +1,6 @@
 extends CanvasLayer
-## In-raid HUD (DESIGN.md §13, §17): stamina bar, movement state, health, a shield icon in cover,
+## In-raid HUD (DESIGN.md §13, §17): body silhouette with status effects, a red vignette while in
+## pain, stamina bar, movement state, a shield icon in cover,
 ## short messages such as "Can't roll: overweight", the raid name, the ammo panel (rounds in the
 ## magazine, spare rounds, loaded ammo, reload progress), the aiming reticle and hit markers.
 ## HUD scale, opacity, units and reticle come from Settings.
@@ -25,7 +26,6 @@ var _message_time := 0.0
 @onready var _bar: ProgressBar = %StaminaBar
 @onready var _fill: StyleBoxFlat = _bar.get_theme_stylebox("fill")
 @onready var _state: Label = %MoveState
-@onready var _status: Label = %Status
 @onready var _message: Label = %Message
 @onready var _cover_panel: Control = %CoverPanel
 @onready var _cover_icon = %CoverIcon  # cover_icon.gd
@@ -36,6 +36,7 @@ var _message_time := 0.0
 func _ready() -> void:
 	_reticle.player = player
 	if player:
+		%Silhouette.health = player.health
 		player.action_blocked.connect(show_message)
 		player.died.connect(show_message.bind("KILLED IN ACTION", 10.0))
 		player.hit_landed.connect(func(target: Actor, _damage: float, _at: Vector3) -> void:
@@ -77,7 +78,7 @@ func _process(delta: float) -> void:
 	if player.is_exhausted:
 		text += "  ·  exhausted"
 	_state.text = text
-	_status.text = "HP %d / %d" % [ceili(player.health), roundi(player.max_health)]
+	_update_health(delta)
 	_update_ammo()
 
 	var cover := player.cover
@@ -90,6 +91,19 @@ func _process(delta: float) -> void:
 			cover_text += " · no peek here"
 		_cover_label.text = cover_text
 		_cover_icon.color = PEEK_COLOR if player.is_peeking else NORMAL_COLOR
+
+
+func _update_health(delta: float) -> void:
+	var health := player.health
+	%HealthTotal.text = "HP %d / %d" % [ceili(health.total()), roundi(health.max_total())]
+	var lines := health.status_lines()
+	%StatusList.text = "\n".join(lines)
+	%StatusList.visible = not lines.is_empty()
+	# Pain: dark red edges, slowly pulsing (steady with "reduce flashing").
+	var target := 0.0
+	if health.has_pain() and not player.is_dead:
+		target = 1.0 if Settings.get_value("accessibility", "reduce_flashing") else 0.8 + 0.2 * sin(Time.get_ticks_msec() / 400.0)
+	%PainVignette.modulate.a = move_toward(%PainVignette.modulate.a, target, delta * 2.0)
 
 
 func _update_ammo() -> void:
