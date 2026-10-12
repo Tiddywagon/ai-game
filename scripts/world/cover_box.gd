@@ -4,6 +4,7 @@ extends StaticBody3D
 ## A box-shaped obstacle that counts as cover: walls, crates, car bodies, low barriers (DESIGN.md §13.3).
 ## Set its size and material in the Inspector; the mesh and collision are built from them.
 ## Its origin is its centre, like a CSG box. Only rotate it around Y.
+## It also blocks sight (DESIGN.md §13.6): it joins the "vision" physics layer and VisionSystem.
 
 ## Decides what bullets can go through (DESIGN.md §13.4). Only add new values at the end.
 enum CoverMaterial { WOOD, CONCRETE, METAL }
@@ -34,12 +35,30 @@ var _shape: CollisionShape3D
 func _ready() -> void:
 	_rebuild()
 	if not Engine.is_editor_hint():
+		collision_layer |= VisionSystem.VISION_MASK
 		CoverSystem.register(self)
+		VisionSystem.register_occluder(self)
 
 
 func _exit_tree() -> void:
 	if not Engine.is_editor_hint():
 		CoverSystem.unregister(self)
+		VisionSystem.unregister_occluder(self)
+
+
+## Footprint corners on the ground (x, z), for vision shadows.
+func vision_corners() -> PackedVector2Array:
+	return BoxFootprint.corners(global_transform, size)
+
+
+## Bottom and top height of the box.
+func vision_height_span() -> Vector2:
+	return Vector2(global_position.y - size.y / 2.0, global_position.y + size.y / 2.0)
+
+
+## Thickness of the box behind the face whose outward normal is `normal`.
+func vision_depth(normal: Vector3) -> float:
+	return BoxFootprint.depth(global_basis, size, normal)
 
 
 ## One upright side of the box: 0 = +X, 1 = -X, 2 = +Z, 3 = -Z (local axes). Returns

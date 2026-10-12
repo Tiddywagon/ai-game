@@ -1,6 +1,7 @@
 class_name Bot
 extends Actor
-## AI Scav or PMC (DESIGN.md §4). Sees and hears hostile actors, fights from the same cover points
+## AI Scav or PMC (DESIGN.md §4). Sees (by the same vision rules as the player, DESIGN.md §13.6:
+## its own cone, shorter at night, farther through a scope) and hears hostile actors, fights from the same cover points
 ## the player uses (duck, peek, shoot, move on), and — with an advanced profile — combat-rolls to
 ## dodge or to reach new cover when under fire.
 
@@ -46,6 +47,8 @@ var _wants_peek := false
 var _peeks_left := 0
 var _burst_clock := 0.0
 var _outline: ShaderMaterial
+## What the bot sees this perception tick.
+var _view: VisionView
 
 @onready var _agent: NavigationAgent3D = $NavigationAgent3D
 
@@ -58,7 +61,9 @@ func _ready() -> void:
 		sprint_speed = profile.sprint_speed
 		spread_degrees = profile.spread_degrees
 	super()
+	add_to_group("vision_hideable")
 	if profile:
+		weapon.optic = profile.optic
 		var material := StandardMaterial3D.new()
 		material.albedo_color = profile.body_color
 		($Body/Capsule as MeshInstance3D).material_override = material
@@ -136,6 +141,7 @@ func on_bullet_near(shooter: Actor) -> void:
 # --- Senses ---------------------------------------------------------------------------------
 
 func _perceive() -> void:
+	_view = VisionSystem.view_for(self)
 	var seen: Actor = null
 	if target and not target.is_dead and _can_see(target):
 		seen = target
@@ -162,21 +168,27 @@ func _perceive() -> void:
 		_sees_target = false
 
 
+## Seen by the shared vision rules. In combat the bot keeps turning toward its target, so only the first
+## sighting needs the cone; range, light and sight lines always apply.
 func _can_see(other: Actor) -> bool:
-	var to_other := other.global_position - global_position
-	var distance := to_other.length()
-	if distance > profile.vision_range:
-		return false
-	# In combat the bot keeps turning toward its target, so only the first sighting needs the cone.
-	if distance > 3.0 and state != State.COMBAT:
-		var forward := -global_basis.z
-		var angle := Vector2(forward.x, forward.z).angle_to(Vector2(to_other.x, to_other.z))
-		if absf(rad_to_deg(angle)) > profile.vision_angle / 2.0:
-			return false
-	return visible_point_of(other) != null
+	return VisionSystem.can_see(_view, other, state == State.COMBAT)
 
 
-func _on_noise(noise_position: Vector3, radius: float, source: Node) -> void:
+## Its profile's cone (from vision.tres: Scav or PMC), narrowed by pain or a head injury, plus a long
+## narrow cone through a magnified optic, which it scans with.
+func vision_cones() -> Array[Vector3]:
+	var vision := VisionSystem.config
+	var scav := side == Side.SCAV
+	var half := deg_to_rad(vision.scav_cone_degrees if scav else vision.pmc_cone_degrees) / 2.0
+	var reach := vision.scav_range if scav else vision.pmc_range
+	var cones: Array[Vector3] = [Vector3(half * status_cone_multiplier(), reach, 0.0)]
+	var optic := vision.optic(weapon.optic)
+	if optic and optic.range_multiplier > 1.0:
+		cones.append(Vector3(deg_to_rad(optic.cone_degrees) / 2.0, reach * optic.range_multiplier, 0.0))
+	return cones
+
+
+func _on_noise(noise_position: Vector3, radius: float, source: Node, _kind: StringName) -> void:
 	if is_dead or not ai_enabled or source == self:
 		return
 	var other := source as Actor

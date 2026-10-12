@@ -17,7 +17,7 @@ const REBINDABLE := [
 	["take_cover", "Take cover"], ["aim", "Aim / peek"], ["shoot", "Shoot"], ["reload", "Reload"],
 	["interact", "Interact"], ["use_item", "Use item"], ["toggle_inventory", "Inventory"],
 	["hotkey_1", "Hotkey 1"], ["hotkey_2", "Hotkey 2"], ["hotkey_3", "Hotkey 3"], ["hotkey_4", "Hotkey 4"],
-	["hotkey_5", "Hotkey 5"],
+	["hotkey_5", "Hotkey 5"], ["flashlight", "Flashlight"], ["binoculars", "Binoculars"],
 ]
 
 ## What each graphics quality preset sets.

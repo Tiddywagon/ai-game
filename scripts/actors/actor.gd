@@ -4,6 +4,8 @@ extends CharacterBody3D
 ## hitbox, health and shooting. Subclasses decide what to do in _think(); Actor carries it out.
 ## The gun is a Weapon node ($Body/Gun) whose stats come from the gun item's WeaponData. Health is a
 ## BodyHealth (seven body parts, bleeds, fractures, pain); bullets hit the part where they land.
+## Vision (DESIGN.md §13.6): subclasses say which cones they see with (vision_cones()); VisionSystem
+## applies light and weather and traces the sight lines.
 
 signal died
 ## A roll just ended. `direction` is the way it went.
@@ -117,6 +119,9 @@ var _regen_cooldown := 0.0
 var _footstep_timer := 0.0
 var _height := 0.0
 var _sway_time := 0.0
+## Seconds left blinded (flashbang), and how long the blindness was when it started.
+var blind_time := 0.0
+var _blind_length := 0.0
 
 @onready var _collision: CollisionShape3D = $CollisionShape3D
 @onready var _hitbox: Area3D = $Hitbox
@@ -169,6 +174,7 @@ func _physics_process(delta: float) -> void:
 		die()
 		return
 	_sway_time += delta
+	blind_time = maxf(blind_time - delta, 0.0)
 	_think(delta)
 	_roll_cooldown = maxf(_roll_cooldown - delta, 0.0)
 	if is_rolling:
@@ -227,7 +233,7 @@ func try_roll(direction: Vector3) -> bool:
 	stamina -= config.roll_stamina_cost
 	_regen_cooldown = regen_delay
 	rotation.y = _yaw_toward(_roll_direction)
-	NoiseSystem.emit_noise(global_position, config.roll_noise, self)
+	NoiseSystem.emit_noise(global_position, config.roll_noise, self, &"roll")
 	return true
 
 
@@ -374,6 +380,76 @@ func is_hostile(other: Actor) -> bool:
 	return other in enemies or not (side == Side.SCAV and other.side == Side.SCAV)
 
 
+# --- Vision ---------------------------------------------------------------------------------
+
+## The cones this actor sees with, before light and weather: Vector3(half angle in radians, range,
+## 1 if the cone brings its own light). Player and Bot override this.
+func vision_cones() -> Array[Vector3]:
+	return []
+
+
+## Flat direction the vision cones point in: where the body faces. The player overrides it.
+func vision_facing() -> Vector2:
+	var forward := -global_basis.z
+	return Vector2(forward.x, forward.z).normalized()
+
+
+## Seen in every direction up to this distance.
+func awareness_radius() -> float:
+	return VisionSystem.config.ai_awareness_radius
+
+
+## Crouched, ducked behind low cover, mid-roll or dead: sight lines to or from this actor run below
+## low cover.
+func is_low_profile() -> bool:
+	return is_dead or _height <= config.low_cover_max_height
+
+
+## True while a flashlight is on, which makes this actor easy to spot in the dark.
+func has_light_on() -> bool:
+	return false
+
+
+## Pain and head injuries narrow the vision cone (DESIGN.md §13.6).
+func status_cone_multiplier() -> float:
+	var multiplier := 1.0
+	if health.has_pain():
+		multiplier *= VisionSystem.config.pain_cone_multiplier
+	if health.fraction(BodyHealth.Part.HEAD) < VisionSystem.config.head_injury_threshold:
+		multiplier *= VisionSystem.config.head_injury_cone_multiplier
+	return multiplier
+
+
+## Blinds this actor (a flashbang) for `seconds`, or longer if already blinder.
+func blind(seconds: float) -> void:
+	if seconds > blind_time:
+		blind_time = seconds
+		_blind_length = seconds
+
+
+func is_blind() -> bool:
+	return blind_time > 0.0
+
+
+## 1 just after being blinded, falling to 0 as sight returns.
+func blind_fraction() -> float:
+	return blind_time / _blind_length if _blind_length > 0.0 else 0.0
+
+
+## Movement speed multiplier, e.g. slower while looking through a scope.
+func _move_multiplier() -> float:
+	return 1.0
+
+
+func _can_sprint() -> bool:
+	return true
+
+
+## Called by PlayerVision when the player starts or stops seeing this actor.
+func set_seen(seen: bool) -> void:
+	_body.visible = seen
+
+
 # --- Body points ----------------------------------------------------------------------------
 
 func gun_height() -> float:
@@ -412,7 +488,7 @@ func _step_free(delta: float) -> void:
 	var moving := not move_input.is_zero_approx()
 	var injured_legs := health.injured_legs() > 0
 	# Shooting stops a sprint, and so does a fractured or blacked leg; sprinting from a crouch stands you up.
-	var sprint_held := moving and sprint_input and not fire_input and not injured_legs
+	var sprint_held := moving and sprint_input and not fire_input and not injured_legs and _can_sprint()
 	if sprint_held and is_crouching:
 		is_crouching = false
 	var sprinting := sprint_held and not is_exhausted
@@ -437,6 +513,7 @@ func _step_free(delta: float) -> void:
 
 	if injured_legs:
 		speed *= health_config.injured_leg_speed
+	speed *= _move_multiplier()
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(move_input * speed, acceleration * delta)
 	velocity = Vector3(horizontal.x, velocity.y, horizontal.z)
 	_apply_gravity(delta)
@@ -561,7 +638,7 @@ func _update_footsteps(delta: float) -> void:
 	_footstep_timer -= delta
 	if _footstep_timer <= 0.0:
 		_footstep_timer = FOOTSTEP_INTERVAL
-		NoiseSystem.emit_noise(global_position, noise_radius, self)
+		NoiseSystem.emit_noise(global_position, noise_radius, self, &"footstep")
 
 
 ## Sizes the body collision and squashes the placeholder model to `height`.

@@ -11,6 +11,10 @@
 [ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="9_camera"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="10_hud"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="11_pause"]
+[ext_resource type="Script" path="res://scripts/world/player_vision.gd" id="12_vision"]
+[ext_resource type="Script" path="res://scripts/world/raid_environment.gd" id="13_environment"]
+[ext_resource type="Script" path="res://scripts/world/dark_zone.gd" id="14_dark"]
+[ext_resource type="Script" path="res://scripts/world/vision_occluder.gd" id="15_occluder"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -52,6 +56,11 @@ rotation_degrees = Vector3(-50, -30, 0)
 light_energy = 1.2
 shadow_enabled = true
 directional_shadow_max_distance = 60.0
+
+[node name="RaidEnvironment" type="Node" parent="." node_paths=PackedStringArray("sun", "world_environment")]
+script = ExtResource("13_environment")
+sun = NodePath("../Sun")
+world_environment = NodePath("../WorldEnvironment")
 
 [node name="Navigation" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_level")
@@ -187,6 +196,16 @@ transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -12,
 [node name="CarEast" parent="Navigation/Cover" instance=ExtResource("4_car")]
 transform = Transform3D(0.9396926, 0, 0.34202015, 0, 1, 0, -0.34202015, 0, 0.9396926, 11, 0, 1)
 
+[node name="Hedge" type="StaticBody3D" parent="."]
+position = Vector3(8, 0.9, 15)
+script = ExtResource("15_occluder")
+size = Vector3(6, 1.8, 0.8)
+
+[node name="DarkRoom" type="Node3D" parent="."]
+position = Vector3(-12, 1.2, -12)
+script = ExtResource("14_dark")
+size = Vector3(8, 2.4, 8)
+
 [node name="Player" parent="." instance=ExtResource("5_player")]
 position = Vector3(-14, 0, 17)
 
@@ -218,12 +237,16 @@ player = NodePath("../Player")
 [node name="Label" type="Label" parent="DebugHelp"]
 offset_left = 24.0
 offset_top = 20.0
-offset_right = 924.0
+offset_right = 1500.0
 offset_bottom = 46.0
 theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
-text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo PS/BS  ·  F4 AI on/off  ·  F5 heal  ·  Esc pause"
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Esc pause"
+
+[node name="PlayerVision" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("12_vision")
+player = NodePath("../Player")
 
 [node name="PauseMenu" parent="." instance=ExtResource("11_pause")]

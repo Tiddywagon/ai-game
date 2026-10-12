@@ -1,0 +1,89 @@
+[gd_resource type="Resource" script_class="VisionConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/vision_config.gd" id="1_vision"]
+[ext_resource type="Script" path="res://scripts/data/optic_profile.gd" id="2_optic"]
+
+[sub_resource type="Resource" id="Optic_iron"]
+script = ExtResource("2_optic")
+display_name = "Iron sights"
+cone_degrees = 110.0
+
+[sub_resource type="Resource" id="Optic_red_dot"]
+script = ExtResource("2_optic")
+display_name = "Red dot"
+cone_degrees = 120.0
+move_multiplier = 0.85
+
+[sub_resource type="Resource" id="Optic_holo"]
+script = ExtResource("2_optic")
+display_name = "Holographic sight"
+cone_degrees = 120.0
+move_multiplier = 0.85
+
+[sub_resource type="Resource" id="Optic_scope_2_4"]
+script = ExtResource("2_optic")
+display_name = "2-4x scope"
+cone_degrees = 40.0
+range_multiplier = 2.0
+move_multiplier = 0.6
+camera_zoom = 1.25
+camera_lead = 0.45
+camera_max_lead = 20.0
+
+[sub_resource type="Resource" id="Optic_scope_6_8"]
+script = ExtResource("2_optic")
+display_name = "6-8x scope"
+cone_degrees = 25.0
+range_multiplier = 3.0
+move_multiplier = 0.5
+camera_zoom = 1.5
+camera_lead = 0.5
+camera_max_lead = 35.0
+
+[sub_resource type="Resource" id="Optic_binoculars"]
+script = ExtResource("2_optic")
+display_name = "Binoculars"
+cone_degrees = 15.0
+range_multiplier = 4.0
+move_multiplier = 0.5
+camera_zoom = 1.7
+camera_lead = 0.55
+camera_max_lead = 50.0
+can_shoot = false
+
+[resource]
+script = ExtResource("1_vision")
+player_cone_degrees = 110.0
+player_range = 30.0
+awareness_radius = 2.0
+scav_cone_degrees = 120.0
+scav_range = 25.0
+pmc_cone_degrees = 140.0
+pmc_range = 35.0
+ai_awareness_radius = 3.0
+standing_eye_height = 1.45
+crouched_eye_height = 0.5
+time_light = PackedFloat32Array(1, 0.6, 0.15)
+dark_room_light = 0.1
+darkness_range_multiplier = 0.25
+flashlight_cone_degrees = 30.0
+flashlight_range = 22.0
+flashlight_conspicuity = 1.5
+weather_range = PackedFloat32Array(1, 0.5, 0.75)
+pain_cone_multiplier = 0.8
+head_injury_threshold = 0.7
+head_injury_cone_multiplier = 0.7
+flashbang_radius = 15.0
+flashbang_max_blind = 4.0
+flashbang_facing_away = 0.35
+optics = Array[ExtResource("2_optic")]([SubResource("Optic_iron"), SubResource("Optic_red_dot"), SubResource("Optic_holo"), SubResource("Optic_scope_2_4"), SubResource("Optic_scope_6_8"), SubResource("Optic_binoculars")])
+optic_transition_time = 0.3
+camera_follow_speed = 6.0
+update_rate = 30.0
+arc_step_degrees = 2.0
+memory_brightness = 0.3
+memory_saturation = 0.15
+unseen_brightness = 0.03
+dark_room_shading = 0.6
+mask_resolution = 1024
+sound_marker_time = 1.5

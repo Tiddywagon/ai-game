@@ -61,7 +61,7 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 
 | Sense / action | Rule |
 |---|---|
-| Vision | Cone in front; anyone within 3 m is noticed regardless. Needs a clear line to the target's chest or head (walls and cover block sight) |
+| Vision | Same rules as the player (Section 13.6): a cone in front, anyone within 3 m noticed regardless, a clear sight line (walls, cars, crates, hedges block; low cover only if either side is crouched). Shorter at night, in dark rooms, fog and rain; someone with a flashlight on is spotted from 1.5× farther. A magnified scope adds a long narrow cone it scans with. Blinded by flashbangs. Once in combat it tracks its target outside the cone |
 | Hearing | Hears any noise whose radius reaches it (footsteps, rolls, shots); walks over to investigate, then looks around |
 | Under fire | A bullet passing within 2 m puts the bot in combat with the shooter |
 | Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks |
@@ -70,10 +70,10 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 | Shooting | Same guns as the player (Section 13.4): fires in bursts, so recoil builds and settles. Aim error is added on top of the gun's spread. From cover it waits until it has stopped stepping out before firing |
 | Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Bots carry 90 spare rounds |
 
-| Profile | Vision | Reaction | Aim error | Hearing | Rolls | Ammo |
-|---|---|---|---|---|---|---|
-| Scav (basic) | 25 m, 120° | 0.8 s | 2.8° | ×1.0 | Never | 5.45 PS |
-| PMC (advanced) | 35 m, 140° | 0.4 s | 0.3° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 5.45 BS |
+| Profile | Vision (daylight) | Sight | Reaction | Aim error | Hearing | Rolls | Ammo |
+|---|---|---|---|---|---|---|---|
+| Scav (basic) | 25 m, 120° | Iron sights | 0.8 s | 2.8° | ×1.0 | Never | 5.45 PS |
+| PMC (advanced) | 35 m, 140° | 2-4x scope (+70 m, 40° cone) | 0.4 s | 0.3° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 5.45 BS |
 
 ## 5. Maps
 
@@ -435,6 +435,40 @@ Every actor, player and AI, has the same body. There's no armor or meds yet.
 
 All of these values live in `data/config/health.tres`.
 
+### 13.6 Vision *(tune)*
+
+Project Zomboid-style: you only see what your character can see.
+
+| Rule | Detail |
+|---|---|
+| Vision cone | 110°, pointed at the reticle (not the body), 30 m in daylight |
+| Awareness circle | 2 m all around, so you sense things right behind you. Walls still block it |
+| What's hidden | Outside the cone and circle, or behind an occluder: enemies (and later loot and bodies' contents) aren't drawn; the area is darkened and desaturated. Places you've seen this raid stay as a dim grey "memory" of the layout; places never seen are near black |
+| Occluders | Walls, cars, crates and other cover (`CoverBox`), plus sight-only `VisionOccluder`s such as the hedge in the test yard (blocks sight, not bullets or movement) and, later, doors |
+| Low cover | Blocks your view only when you're crouched (or ducked). An enemy crouched behind low cover is hidden too |
+| Shadows | 2D shadow casting from your position 30 times a second: rays along the cone's edge, around the awareness circle and either side of every occluder corner in reach. Wall tops you're looking at are lit |
+| Light | Range × (0.25 + 0.75 × light). Light: day 1.0, dusk 0.6, night 0.15; dark rooms (`DarkZone`) 0.1, and they look darker. Day: 30 m; night: 10.9 m; dark room: 9.75 m |
+| Flashlight (L) | A 30°, 22 m cone that brings its own light (not shortened by darkness); lights dark rooms. AI spots you from 1.5× farther while it's on |
+| Weather | Fog ×0.5, rain ×0.75 (cones only, not the awareness circle) |
+| Status effects | Pain: cone ×0.8. Head below 70% HP: cone ×0.7. Flashbang: blinded for up to 4 s (within 15 m with a clear line; less with distance, ×0.35 facing away): only the awareness circle, and a white-out on screen (a dark fade with "reduce flashing effects") |
+| Sounds | Gunshots, footsteps, rolls and flashbangs you can hear but whose source you can't see show as a marker at the screen edge pointing toward them, fading after 1.5 s (gunshots and flashbangs 2.25 s). One marker per source. Shape and colour show the kind: double red chevron = gunshot, white ring = flashbang, amber chevron = roll, small pale chevron = footsteps |
+
+**Optics** (while aiming, right-click). Raising or lowering a sight takes 0.3 s; the cone, range, speed and camera blend over it. No sprinting through any optic.
+
+| Sight | Range | Cone | Move speed | Camera |
+|---|---|---|---|---|
+| Iron sights | ×1 | 110° | 100% | — |
+| Red dot / holographic | ×1 | 120° | 85% | — |
+| 2-4x scope | ×2 (60 m) | 40° | 60% | Pulls out ×1.25, leads up to 20 m toward the aim |
+| 6-8x scope | ×3 (90 m) | 25° | 50% | ×1.5, up to 35 m |
+| Binoculars (B) | ×4 (120 m) | 15° | 50% | ×1.7, up to 50 m. Can't shoot while holding them |
+
+The camera lead always keeps you within the middle 55% of the screen. Attachments aren't in yet: the gun's sight is set by the loadout (iron sights for now; F6 cycles it in the test yard) and by `BotProfile.optic` for AI.
+
+**Raid conditions:** each raid has a time of day (day, dusk, night) and weather (clear, fog, rain), set on the map's `RaidEnvironment` (sun, ambient light, fog, rain). The HUD shows both next to the map name. In the test yard F7 and F8 cycle them.
+
+All of these values live in `data/config/vision.tres`.
+
 ## 14. Economy
 
 | Item | Value |
@@ -454,7 +488,7 @@ All of these values live in `data/config/health.tres`.
 | Loot tables | `LootTable` Resource with weighted rarity rolls |
 | Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
-| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, equipment, pockets, skills, stash contents; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
+| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, equipment, pockets, skills, stash contents; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
 | Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}` (version 2 added equipment, pockets and skills; version 1 saves get the starter kit equipped). Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
@@ -465,9 +499,10 @@ All of these values live in `data/config/health.tres`.
 | Health | `BodyHealth` (`scripts/actors/body_health.gd`, RefCounted): part HP, blacked-damage spreading, bleeds, fractures, pain, and the death cause. Tuning is a `HealthConfig` resource, `data/config/health.tres`. HUD and death screen draw it with `BodySilhouette` (`scripts/ui/body_silhouette.gd`); the death screen is `ui/death_screen.tscn` |
 | Combat tuning | `CombatConfig` resource, `data/config/combat.tres`: roll, cover and bullet values. The numbers are in the file itself, so it can be edited in the Inspector or a text editor |
 | Cover | `CoverBox` (`scripts/world/`): @tool box with size + material that builds its own mesh and collision. `CoverSystem` autoload generates `CoverPoint`s every 1.2 m along each side and answers "nearest cover" / "best cover against this threat" |
-| Noise | `NoiseSystem` autoload: anything audible calls `emit_noise(position, radius, source)`; bots listen |
-| Camera | `TopDownCamera` (`scripts/camera/`): fixed 60° pitch, 18 m back, never turns; follows the player smoothly at any frame rate |
-| Physics | Jolt Physics at 60 ticks/s with physics interpolation on: move bodies in `_physics_process`. Anything moved in `_process` (like the camera), or placed once (tracers), turns interpolation off for itself. Layers: 1 world, 2 actors (movement), 3 hitboxes (bullets) |
+| Noise | `NoiseSystem` autoload: anything audible calls `emit_noise(position, radius, source, kind)`; bots listen, and the player's vision turns unseen ones into edge markers |
+| Vision | `VisionConfig` resource, `data/config/vision.tres` (with an `OpticProfile` per sight). `VisionSystem.view_for(actor)` gives a `VisionView` (cones, awareness, posture); `can_see()` tests a target; `visibility_polygon()` traces the visible area. Occluders (`CoverBox`, `VisionOccluder`) are also on physics layer 4 "vision": sight lines are rays against it at eye height (1.45 m standing, 0.5 m crouched). `PlayerVision` (in the map) draws the area into two SubViewport masks (visible now / seen before, one never cleared) that `assets/shaders/vision.gdshader` reads on a full-screen quad: it rebuilds each pixel's world position from depth and darkens what isn't visible. Actors in group `vision_hideable` get `set_seen()`. `RaidEnvironment` and `DarkZone` are in `scripts/world/` |
+| Camera | `TopDownCamera` (`scripts/camera/`): fixed 60° pitch, 18 m back, never turns; follows the player smoothly at any frame rate. `focus_offset` and `zoom` pull it out toward the aim point through a scope |
+| Physics | Jolt Physics at 60 ticks/s with physics interpolation on: move bodies in `_physics_process`. Anything moved in `_process` (like the camera), or placed once (tracers), turns interpolation off for itself. Layers: 1 world, 2 actors (movement), 3 hitboxes (bullets), 4 vision (sight blockers) |
 | Navigation | The level's `NavigationRegion3D` bakes its navmesh from static colliders when the level loads (0.1 m cells, 0.4 m agent radius); bots steer with `NavigationAgent3D` |
 | Naming | snake_case files, PascalCase classes (`class_name`) |
 | Engine version | Godot 4.7 (current stable 4.7.2), Forward+ renderer, 1920×1080 base resolution. Commit Godot's `.uid` files |
@@ -479,7 +514,7 @@ All of these values live in `data/config/health.tres`.
 | `scenes/` | Gameplay scenes: `actors/` (player, bots), `weapons/` (the shared gun scene), `props/` (car), `menu/` (main menu background), `hideout/` |
 | `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
 | `ui/` | Main menu (entry scene), settings, raid setup, loading, character, traders, pause menu, HUD; `theme/` |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets, guns, impact effects) and `world/` (cover) |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets, guns, impact effects, flashbang) and `world/` (cover, vision, raid environment) |
 | `data/` | `.tres` Resources: `items/` (one subfolder per category), `weapons/` (gun handling), `loot_tables/`, `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info) |
 | `assets/` | `models/`, `textures/`, `audio/` (`music/`, `ui/`), `shaders/`, `fonts/` |
 | `tools/` | Helper scripts run outside Godot (placeholder audio generator) |
@@ -496,6 +531,7 @@ All of these values live in `data/config/health.tres`.
 | `pause` | Esc | `aim_left/right/up/down` | Right stick (controller only) |
 | `hotkey_1` … `hotkey_5` | 1–5 | `sprint` | Shift (hold) |
 | `crouch` | C (toggle) | Facing | Turns toward where the mouse cursor touches the ground |
+| `flashlight` | L | `binoculars` | B |
 
 WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys can be remapped in Settings; controller bindings are listed in Section 17. Menus also use `ui_tab_previous` / `ui_tab_next` (Q / E, LB / RB).
 
@@ -562,7 +598,7 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 |---|---|
 | In-raid aiming | The mouse is captured during a raid and moves an on-screen reticle, so mouse sensitivity, aim sensitivity (while aiming/peeking) and invert apply. A controller's right stick points the reticle out from the player |
 | Colorblind modes | A screen-wide correction filter, plus a rarity palette that stays distinct for that type of color blindness (Section 6.2). Rarity letters (C, U, R, UR, E, L) are shown next to colors, so color is never the only cue |
-| Controller bindings | Left stick move, right stick aim, RT shoot, LT aim/peek, A roll, B crouch, X reload, Y interact, LB take cover, RB use item, L3 sprint, Back inventory, Start pause, D-pad hotkeys 1–4, R3 hotkey 5. Not remappable yet |
+| Controller bindings | Left stick move, right stick aim, RT shoot, LT aim/peek, A roll, B crouch, X reload, Y interact, LB take cover, RB use item, L3 sprint, Back inventory, Start pause, D-pad hotkeys 1–4, R3 hotkey 5. Flashlight and binoculars have no controller button yet (every button is taken). Not remappable yet |
 | Not active yet | Motion blur (Godot has no built-in motion blur), auto-equip, confirm selling, extra languages and subtitles: stored, and shown as "takes effect once..." in the menu |
 
 ## 18. Changelog
@@ -580,3 +616,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-11 | New main menu (dusk backdrop, music, profile, quit confirm, faction pick), Enter Raid flow (map, PMC/Scav, loadout check, loading), Character and Traders screens, Settings (six tabs, `user://settings.cfg`), in-raid pause menu and reticle, controller support, starter kit, save version 2 |
 | 2026-10-11 | Guns: `WeaponData` resource + shared `Weapon` node (fire rate, auto/semi, magazine, R reload with tactical/empty times, spread from movement and recoil), muzzle flash, hit sparks, HUD ammo panel, reload ring, auto-reload setting active. Bots use the same guns and reload behind cover; their spread is now aim error on top of the gun (Scav 2.8°, PMC 0.3°) |
 | 2026-10-12 | Body-part health (head, thorax, stomach, arms, legs; blacked parts spread damage), light/heavy bleeds, fractures, pain, weapon sway, HUD silhouette and pain vignette, death screen with cause of death, `health.tres`. Replaces single health pools; player aims at the chest of whoever is under the reticle |
+| 2026-10-12 | Vision (13.6): Project Zomboid-style cone + awareness circle, 2D shadow casting, fog-of-war shader with remembered layout, enemies hidden outside view, low cover blocks only crouched, time of day / dark rooms / flashlight, fog and rain, pain / head injury / flashbang, sound markers, optics and binoculars with camera pull-out, AI on the same rules (scoped PMCs), `vision.tres`; AI vision values moved there from bot profiles |

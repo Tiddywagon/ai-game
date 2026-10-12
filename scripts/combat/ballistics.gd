@@ -58,7 +58,7 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 		break
 	_warn_nearby(shooter, origin, result.end)
 	_spawn_tracer(shooter, muzzle, result.end)
-	NoiseSystem.emit_noise(origin, config.gunshot_noise, shooter)
+	NoiseSystem.emit_noise(origin, config.gunshot_noise, shooter, &"gunshot")
 	return result
 
 

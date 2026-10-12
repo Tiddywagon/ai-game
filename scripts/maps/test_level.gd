@@ -1,7 +1,8 @@
 extends Node3D
 ## Test level for movement, cover and combat (DESIGN.md §13). Esc / Start opens the pause menu.
 ## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC.
-## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS), F4 AI on/off, F5 heal.
+## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS), F4 AI on/off, F5 heal,
+## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
 ## Seconds between dying and the death screen.
@@ -10,6 +11,8 @@ const AMMO_TYPES: Array[String] = ["ammo_545_ps", "ammo_545_bs"]
 
 @onready var _player: Player = $Player
 @onready var _hud := $HUD
+@onready var _environment: RaidEnvironment = $RaidEnvironment
+@onready var _vision: PlayerVision = $PlayerVision
 
 var _start_msec := 0
 
@@ -65,6 +68,22 @@ func _unhandled_input(event: InputEvent) -> void:
 			if not _player.is_dead:
 				_player.health.heal_all()
 				_hud.show_message("Healed")
+		KEY_F6:
+			var sights := VisionConfig.Optic.BINOCULARS  # Every optic before the binoculars fits a gun.
+			_player.weapon.optic = (_player.weapon.optic + 1) % sights
+			_hud.show_message("Sight: " + VisionSystem.config.optic(_player.weapon.optic).display_name)
+		KEY_F7:
+			_environment.apply((_environment.time_of_day + 1) % VisionConfig.TimeOfDay.size(), _environment.weather)
+			_hud.show_message("Time: " + VisionSystem.time_name(_environment.time_of_day))
+		KEY_F8:
+			_environment.apply(_environment.time_of_day, (_environment.weather + 1) % VisionConfig.Weather.size())
+			_hud.show_message("Weather: " + VisionSystem.weather_name(_environment.weather))
+		KEY_F9:
+			if _player.has_aim:
+				Flashbang.detonate(get_tree(), Vector3(_player.aim_point.x, 0.2, _player.aim_point.z))
+		KEY_F10:
+			_vision.enabled = not _vision.enabled
+			_hud.show_message("Fog of war " + ("on" if _vision.enabled else "off"))
 
 
 ## A moment after dying, the death screen says what killed you (DESIGN.md §16.5).

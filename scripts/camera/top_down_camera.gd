@@ -1,7 +1,8 @@
 class_name TopDownCamera
 extends Camera3D
 ## Top-down camera that smoothly follows a target from a fixed angle (DESIGN.md §1, §15).
-## It never turns, so "up" on the screen is always the same direction in the world.
+## It never turns, so "up" on the screen is always the same direction in the world. Looking through a
+## scope pulls it out and leads it toward the aim point (focus_offset, zoom; DESIGN.md §13.6).
 
 ## The node to follow, usually the player.
 @export var target: Node3D
@@ -16,7 +17,14 @@ extends Camera3D
 ## How far the camera moves at full shake, in metres.
 @export var shake_distance := 0.35
 
+## Flat offset of the followed point, e.g. toward the aim point while looking through a scope.
+var focus_offset := Vector3.ZERO
+## Distance multiplier, e.g. pulled out while looking through a scope.
+var zoom := 1.0
+
 var _follow_position := Vector3.ZERO
+var _offset_now := Vector3.ZERO
+var _zoom_now := 1.0
 var _shake := 0.0
 var _time := 0.0
 
@@ -37,11 +45,22 @@ func add_shake(amount: float) -> void:
 	_shake = clampf(_shake + amount * Settings.camera_shake_scale(), 0.0, 1.0)
 
 
+## Roughly half the ground area on screen at `zoom_factor` (x: across the screen, y: up and down it),
+## in metres around the followed point.
+func ground_half_extents(zoom_factor: float) -> Vector2:
+	var half_height := tan(deg_to_rad(fov) / 2.0) * distance * zoom_factor
+	var aspect := get_viewport().get_visible_rect().size.aspect()
+	return Vector2(half_height * aspect, half_height / sin(deg_to_rad(pitch_degrees)))
+
+
 func _process(delta: float) -> void:
 	if target == null:
 		return
 	_time += delta
 	# Exponential smoothing: the same feel at any frame rate.
+	var view_blend := 1.0 - exp(-VisionSystem.config.camera_follow_speed * delta)
+	_offset_now = _offset_now.lerp(focus_offset, view_blend)
+	_zoom_now = lerpf(_zoom_now, zoom, view_blend)
 	_follow_position = _follow_position.lerp(_goal_position(), 1.0 - exp(-follow_speed * delta))
 	var offset := Vector3.ZERO
 	if _shake > 0.0:
@@ -52,5 +71,5 @@ func _process(delta: float) -> void:
 
 
 func _goal_position() -> Vector3:
-	var focus := target.get_global_transform_interpolated().origin + Vector3.UP * focus_height
-	return focus + global_basis.z * distance
+	var focus := target.get_global_transform_interpolated().origin + Vector3.UP * focus_height + _offset_now
+	return focus + global_basis.z * distance * _zoom_now

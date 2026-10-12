@@ -31,6 +31,9 @@ var spare_rounds := 0
 var is_reloading := false
 ## Extra spread from recoil right now, in degrees.
 var recoil := 0.0
+## The sight mounted on this gun (VisionConfig.Optic). Attachments will set it; for now the loadout
+## (player) or BotProfile (AI) does.
+var optic := 0
 
 var _cooldown := 0.0
 var _since_shot := 0.0

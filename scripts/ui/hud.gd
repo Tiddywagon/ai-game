@@ -3,6 +3,8 @@ extends CanvasLayer
 ## pain, stamina bar, movement state, a shield icon in cover,
 ## short messages such as "Can't roll: overweight", the raid name, the ammo panel (rounds in the
 ## magazine, spare rounds, loaded ammo, reload progress), the aiming reticle and hit markers.
+## Vision (DESIGN.md §13.6): direction markers for sounds you can't see, a white-out while blinded,
+## time of day and weather next to the raid name, and the sight in use or the binoculars.
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -42,9 +44,10 @@ func _ready() -> void:
 		player.hit_landed.connect(func(target: Actor, _damage: float, _at: Vector3) -> void:
 			if Settings.get_value("gameplay", "hit_markers"):
 				_reticle.show_hit_marker(target.is_dead))
-	var raid := GameState.raid
-	var map := MapInfo.find(raid.get("map", ""))
-	%RaidInfo.text = "%s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD", "SCAV" if raid.get("side") == "scav" else "PMC"]
+	%SoundMarkers.player = player
+	VisionSystem.conditions_changed.connect(_update_raid_info)
+	_update_raid_info()
+	_connect_vision.call_deferred()
 	Settings.applied.connect(_apply_settings)
 	_apply_settings()
 
@@ -53,6 +56,20 @@ func _ready() -> void:
 func show_message(text: String, duration := MESSAGE_TIME) -> void:
 	_message.text = text
 	_message_time = duration
+
+
+func _update_raid_info() -> void:
+	var raid := GameState.raid
+	var map := MapInfo.find(raid.get("map", ""))
+	%RaidInfo.text = "%s  ·  %s  ·  %s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD",
+		"SCAV" if raid.get("side") == "scav" else "PMC", VisionSystem.time_name(VisionSystem.time_of_day).to_upper(),
+		VisionSystem.weather_name(VisionSystem.weather).to_upper()]
+
+
+func _connect_vision() -> void:
+	var vision := get_tree().get_first_node_in_group("player_vision")
+	if vision:
+		vision.sound_heard.connect(%SoundMarkers.add_marker)
 
 
 func _apply_settings() -> void:
@@ -80,6 +97,7 @@ func _process(delta: float) -> void:
 	_state.text = text
 	_update_health(delta)
 	_update_ammo()
+	_update_blind()
 
 	var cover := player.cover
 	_cover_panel.visible = cover != null
@@ -106,9 +124,26 @@ func _update_health(delta: float) -> void:
 	%PainVignette.modulate.a = move_toward(%PainVignette.modulate.a, target, delta * 2.0)
 
 
+func _update_blind() -> void:
+	var amount := clampf(player.blind_fraction() * 1.5, 0.0, 1.0) if player.is_blind() else 0.0
+	%BlindOverlay.visible = amount > 0.0
+	# "Reduce flashing effects": fade to dark instead of a white flash.
+	var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
+	%BlindOverlay.color = Color(0.03, 0.03, 0.03, amount * 0.92) if reduced else Color(1.0, 1.0, 0.97, amount)
+
+
 func _update_ammo() -> void:
 	var weapon := player.weapon
-	%BottomRight.visible = weapon.has_gun()
+	%BottomRight.visible = weapon.has_gun() or player.using_binoculars
+	var gear: Array[String] = []
+	if player.using_binoculars:
+		gear.append("Binoculars in hand: can't shoot")
+	else:
+		var optic := VisionSystem.config.optic(weapon.optic)
+		gear.append(optic.display_name if optic else "Iron sights")
+	if player.flashlight_on:
+		gear.append("flashlight on")
+	%GearLine.text = "  ·  ".join(gear)
 	if not weapon.has_gun():
 		return
 	var magazine := weapon.data.magazine_size

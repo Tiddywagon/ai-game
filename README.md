@@ -26,22 +26,26 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 | Mouse | Right stick | Aim (the mouse is captured in a raid and moves the reticle) |
 | Left click | RT | Shoot (hold for full-auto) |
 | R | X | Reload |
-| Right click | LT | Aim; in cover, peek out |
+| Right click | LT | Aim (looks through the sight: a scope sees farther and narrower); in cover, peek out |
 | Space | A | Combat roll |
 | Q | LB | Take / leave cover |
 | Shift | L3 | Sprint (uses stamina) |
 | C | B | Crouch / stand: slower and quieter |
+| L | — | Flashlight |
+| B | — | Binoculars (right-click to look through them; can't shoot while holding them) |
 | Esc | Start | Pause menu (resume, settings, leave raid, quit) |
 
 Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
 
-Test Yard debug keys: **F1** left leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off, **F5** heal everything.
+Test Yard debug keys: **F1** left leg fracture, **F2** overweight, **F3** switch ammo (5.45 PS / BS), **F4** AI on/off, **F5** heal everything, **F6** cycle the gun's sight (iron, red dot, holo, 2-4x, 6-8x), **F7** time of day, **F8** weather, **F9** flashbang at the reticle, **F10** fog of war off.
+
+You only see inside a cone pointed at the reticle, plus a small circle around you; enemies outside it aren't drawn, and places you've seen before stay as a dim grey memory. Walls, cars, crates and the hedge block sight; low cover only blocks it while you crouch. Night, dark rooms, fog and rain shorten your sight; the flashlight helps. Sounds you can't see the source of show as arrows at the screen edge.
 
 Health works per body part, as in Tarkov: head or thorax at 0 kills, any other part at 0 is "blacked" and passes further damage on to the rest of the body. Hits can cause bleeds and fractures. The silhouette in the bottom-left corner shows each part's health and effects. There are no meds yet, so bleeds don't stop (F5 heals while testing). When you die, the death screen says what killed you.
 
 The ammo count, spare rounds and reload progress are in the bottom-right corner. With **Auto-reload** on (Settings > Gameplay), pulling the trigger on an empty magazine reloads.
 
-Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
+Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`; every vision angle, range and multiplier (cones, light, weather, optics, AI) in `data/config/vision.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
 
 ## Notes
 

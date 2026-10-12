@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/ui/cover_icon.gd" id="2_icon"]
 [ext_resource type="Script" path="res://scripts/ui/reticle.gd" id="3_reticle"]
 [ext_resource type="Script" path="res://scripts/ui/body_silhouette.gd" id="4_body"]
+[ext_resource type="Script" path="res://scripts/ui/sound_markers.gd" id="5_sounds"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 14.0
@@ -60,13 +61,24 @@ mouse_filter = 2
 texture = SubResource("GradientTexture2D_pain")
 expand_mode = 1
 
+[node name="SoundMarkers" type="Control" parent="HudRoot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("5_sounds")
+
 [node name="TopRight" type="PanelContainer" parent="HudRoot"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -340.0
+offset_left = -460.0
 offset_top = 20.0
 offset_right = -24.0
 offset_bottom = 64.0
@@ -208,7 +220,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -304.0
-offset_top = -150.0
+offset_top = -170.0
 offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
@@ -269,6 +281,13 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.8)
 theme_override_font_sizes/font_size = 14
 text = "5.45x39 PS  ·  pen 28  ·  auto"
 
+[node name="GearLine" type="Label" parent="HudRoot/BottomRight/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.65)
+theme_override_font_sizes/font_size = 14
+text = "Iron sights"
+
 [node name="ReloadBar" type="ProgressBar" parent="HudRoot/BottomRight/Rows"]
 unique_name_in_owner = true
 visible = false
@@ -290,3 +309,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("3_reticle")
+
+[node name="BlindOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

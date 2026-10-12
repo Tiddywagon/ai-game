@@ -7,15 +7,15 @@ extends Resource
 @export var body_color: Color
 ## Ammo item id from ItemDB.
 @export var ammo_id: String
+## Sight on its gun. A magnified one lets it spot targets farther away (DESIGN.md §13.6).
+@export var optic: VisionConfig.Optic = VisionConfig.Optic.IRON_SIGHTS
 
 @export_group("Movement")
 @export_range(0.5, 10.0, 0.1, "suffix:m/s") var walk_speed: float
 @export_range(0.5, 10.0, 0.1, "suffix:m/s") var sprint_speed: float
 
 @export_group("Senses")
-@export_range(1.0, 200.0, 1.0, "suffix:m") var vision_range: float
-## Width of the vision cone. Anyone within 3 m is noticed whatever the angle.
-@export_range(10.0, 360.0, 1.0, "suffix:°") var vision_angle: float
+## Vision cone and range are in data/config/vision.tres (Scav and PMC values).
 ## Multiplies the radius of every noise this bot hears.
 @export_range(0.0, 3.0, 0.05) var hearing: float
 ## Delay between first seeing someone and opening fire.
