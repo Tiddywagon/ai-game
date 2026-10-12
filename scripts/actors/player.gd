@@ -51,6 +51,8 @@ const SPIN_MIN_RADIUS := 0.75
 const SPIN_AIM_LOCK := 0.5
 ## Trick-shot feedback colour (popup, hit marker, banner).
 const TRICK_COLOR := Color(1.0, 0.82, 0.25)
+## Hit markers and damage numbers for a round that armor stopped (DESIGN.md §6.4).
+const ARMOR_HIT_COLOR := Color(0.62, 0.76, 0.95)
 
 ## Where the reticle is, in viewport pixels.
 var cursor_position := Vector2.ZERO
@@ -92,6 +94,8 @@ var _spin := SpinTracker.new()
 ## Where the reticle points on the ground (aim_point snaps to whoever is under it; this doesn't), for
 ## the spin.
 var _cursor_ground := Vector3.ZERO
+## What the last round that hit someone did (ArmorRules.resolve()): the HUD's hit marker reads it.
+var last_hit: Dictionary = {}
 ## The last damage number, so the pellets of one shell that hit the same target share it.
 var _last_number: Label3D
 var _last_number_frame := -1
@@ -521,7 +525,8 @@ func _update_camera_view() -> void:
 	camera.zoom = zoom
 
 
-func on_hit_landed(target: Actor, damage: float, hit_position: Vector3) -> void:
+func on_hit_landed(target: Actor, damage: float, hit_position: Vector3, outcome: Dictionary = {}) -> void:
+	last_hit = outcome
 	if weapon.firing_trick_shot:
 		trick_hits += 1
 		if target.is_dead:
@@ -539,19 +544,24 @@ func on_hit_landed(target: Actor, damage: float, hit_position: Vector3) -> void:
 			_last_number_damage += damage
 			_last_number.text = str(roundi(_last_number_damage))
 		else:
-			_last_number = _spawn_damage_number(hit_position, damage)
+			_last_number = _spawn_damage_number(hit_position, damage, outcome)
 			_last_number_frame = frame
 			_last_number_target = target
 			_last_number_damage = damage
 
 
-func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
-	super(damage, from, hit_position)
+func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
+	var outcome := super(damage, from, hit_position, shot)
 	_shake_camera(HIT_SHAKE)
+	return outcome
+
+
+func worn_gear() -> Inventory:
+	return inventory
 
 
 func _on_fired() -> void:
-	_shake_camera(weapon.data.camera_kick)
+	_shake_camera(weapon.data.camera_kick * Weapon.ammo_recoil(weapon.ammo))
 
 
 ## A roll that ends right next to cover, heading into it, snaps into that cover.
@@ -634,9 +644,11 @@ func _spawn_trick_popup(at: Vector3) -> void:
 	tween.chain().tween_callback(label.queue_free)
 
 
-func _spawn_damage_number(at: Vector3, damage: float) -> Label3D:
+## A number over a hit: amber, steel blue if armor stopped the round (blunt damage), "RICOCHET" if it
+## glanced off, orange-red if it fragmented.
+func _spawn_damage_number(at: Vector3, damage: float, outcome: Dictionary = {}) -> Label3D:
 	var label := Label3D.new()
-	label.text = str(roundi(damage))
+	label.text = "RICOCHET" if outcome.get("ricochet", false) else str(roundi(damage))
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.fixed_size = true
@@ -644,6 +656,10 @@ func _spawn_damage_number(at: Vector3, damage: float) -> Label3D:
 	label.font_size = 42
 	label.outline_size = 10
 	label.modulate = Color(1.0, 0.85, 0.4)
+	if not outcome.get("penetrated", true):
+		label.modulate = ARMOR_HIT_COLOR
+	elif outcome.get("fragmented", false):
+		label.modulate = Color(1.0, 0.5, 0.32)
 	label.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	get_tree().current_scene.add_child(label)
 	label.global_position = at + Vector3.UP * 0.3

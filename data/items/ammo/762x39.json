@@ -1,12 +1,14 @@
 [
   {"id": "ammo_762x39_ps", "name": "7.62x39 PS", "description": "Standard steel-core AKM round.", "category": "ammo", "rarity": "common", "weight": 0.016, "value": 160, "max_stack": 40,
-   "stats": {"caliber": "7.62x39", "damage": 57, "penetration": 35, "armor_damage": 52}},
+   "stats": {"caliber": "7.62x39", "damage": 57, "penetration": 35, "armor_damage": 52, "fragmentation": 0.15, "velocity": 718, "recoil": 0, "accuracy": 0, "ricochet": 0.3, "light_bleed": 0.35, "heavy_bleed": 0.15}},
   {"id": "ammo_762x39_hp", "name": "7.62x39 HP", "description": "Soft hunting hollow point.", "category": "ammo", "rarity": "uncommon", "weight": 0.016, "value": 190, "max_stack": 40,
-   "stats": {"caliber": "7.62x39", "damage": 80, "penetration": 15, "armor_damage": 20}},
-  {"id": "ammo_762x39_us", "name": "7.62x39 US", "description": "Subsonic: much quieter, a little weaker.", "category": "ammo", "rarity": "uncommon", "weight": 0.016, "value": 300, "max_stack": 40,
-   "stats": {"caliber": "7.62x39", "damage": 56, "penetration": 29, "armor_damage": 35, "noise": 0.6}},
+   "stats": {"caliber": "7.62x39", "damage": 80, "penetration": 15, "armor_damage": 20, "fragmentation": 0.5, "velocity": 754, "recoil": 0, "accuracy": -5, "ricochet": 0.05, "light_bleed": 0.6, "heavy_bleed": 0.35}},
+  {"id": "ammo_762x39_us", "name": "7.62x39 US", "description": "Subsonic: much quieter and softer-kicking, but slow and short-ranged.", "category": "ammo", "rarity": "uncommon", "weight": 0.016, "value": 300, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 56, "penetration": 29, "armor_damage": 35, "fragmentation": 0.12, "velocity": 301, "recoil": -15, "accuracy": -10, "ricochet": 0.25, "light_bleed": 0.3, "heavy_bleed": 0.1, "noise": 0.6}},
+  {"id": "ammo_762x39_t45", "name": "7.62x39 T-45M tracer", "description": "Green tracer for the AKM.", "category": "ammo", "rarity": "uncommon", "weight": 0.016, "value": 220, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 64, "penetration": 30, "armor_damage": 49, "fragmentation": 0.15, "velocity": 720, "recoil": 0, "accuracy": -5, "ricochet": 0.3, "light_bleed": 0.35, "heavy_bleed": 0.15, "tracer": "green"}},
   {"id": "ammo_762x39_bp", "name": "7.62x39 BP", "description": "Armor-piercing round with a hardened steel core.", "category": "ammo", "rarity": "epic", "weight": 0.016, "value": 1800, "max_stack": 40,
-   "stats": {"caliber": "7.62x39", "damage": 58, "penetration": 47, "armor_damage": 63}},
+   "stats": {"caliber": "7.62x39", "damage": 58, "penetration": 47, "armor_damage": 63, "fragmentation": 0.04, "velocity": 730, "recoil": 5, "accuracy": 0, "ricochet": 0.45, "light_bleed": 0.25, "heavy_bleed": 0.08}},
   {"id": "ammo_762x39_mai", "name": "7.62x39 MAI AP", "description": "Tungsten-carbide core. Cuts through class 5 plates.", "category": "ammo", "rarity": "legendary", "weight": 0.016, "value": 4200, "max_stack": 40,
-   "stats": {"caliber": "7.62x39", "damage": 53, "penetration": 58, "armor_damage": 70}}
+   "stats": {"caliber": "7.62x39", "damage": 53, "penetration": 58, "armor_damage": 70, "fragmentation": 0.03, "velocity": 730, "recoil": 5, "accuracy": 5, "ricochet": 0.5, "light_bleed": 0.2, "heavy_bleed": 0.06}}
 ]

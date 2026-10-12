@@ -39,6 +39,7 @@ const MODIFIER_NAMES := {"vertical_recoil": "Vertical recoil", "horizontal_recoi
 static var _profiles := {}
 static var _part_effects := {}
 static var _default_weights := {}
+static var _everyday_speeds := {}
 
 
 # --- Parts ---------------------------------------------------------------------------------------
@@ -171,6 +172,27 @@ static func build(gun: ItemInstance, skills: Dictionary = {}) -> WeaponData:
 ## 1 + `percent` / 100, kept inside `limits`.
 static func _multiplier(percent: float, limits: Vector2) -> float:
 	return clampf(1.0 + percent / 100.0, limits.x, limits.y)
+
+
+## How fast `ammo` leaves `gun` (the stats it fires with, parts included), in m/s: the round's
+## velocity (from a standard barrel) × the gun's barrel: its muzzle velocity over the velocity of its
+## caliber's everyday round. Without a gun, the round's own velocity.
+static func shot_speed(gun: WeaponData, ammo: ItemData) -> float:
+	var round_speed := float(ammo.stats.get("velocity", 0.0)) if ammo else 0.0
+	if gun == null:
+		return round_speed if round_speed > 0.0 else 800.0
+	if round_speed <= 0.0:
+		return float(gun.muzzle_velocity)
+	return gun.muzzle_velocity * round_speed / everyday_velocity(gun.caliber, round_speed)
+
+
+## The velocity of `caliber`'s everyday round (ItemDB.ammo_of()), or `fallback`.
+static func everyday_velocity(caliber: String, fallback := 800.0) -> float:
+	if not _everyday_speeds.has(caliber):
+		var rounds := ItemDB.ammo_of(caliber)
+		_everyday_speeds[caliber] = float(rounds[0].stats.get("velocity", 0.0)) if not rounds.is_empty() else 0.0
+	var speed: float = _everyday_speeds[caliber]
+	return speed if speed > 0.0 else fallback
 
 
 ## What the gun `gun_data` weighs with its default parts (no rounds): the build weight effects are

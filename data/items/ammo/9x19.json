@@ -1,10 +1,12 @@
 [
   {"id": "ammo_9x19_fmj", "name": "9x19 FMJ", "description": "Full metal jacket. The world's most common pistol round.", "category": "ammo", "rarity": "common", "weight": 0.012, "value": 70, "max_stack": 50,
-   "stats": {"caliber": "9x19", "damage": 54, "penetration": 18, "armor_damage": 30}},
+   "stats": {"caliber": "9x19", "damage": 54, "penetration": 18, "armor_damage": 30, "fragmentation": 0.2, "velocity": 380, "recoil": 0, "accuracy": 0, "ricochet": 0.25, "light_bleed": 0.35, "heavy_bleed": 0.12}},
   {"id": "ammo_9x19_hp", "name": "9x19 HP", "description": "Jacketed hollow point. Hard-hitting, useless against armor.", "category": "ammo", "rarity": "uncommon", "weight": 0.012, "value": 110, "max_stack": 50,
-   "stats": {"caliber": "9x19", "damage": 70, "penetration": 6, "armor_damage": 15}},
+   "stats": {"caliber": "9x19", "damage": 70, "penetration": 6, "armor_damage": 15, "fragmentation": 0.55, "velocity": 370, "recoil": 0, "accuracy": -5, "ricochet": 0.05, "light_bleed": 0.55, "heavy_bleed": 0.3}},
+  {"id": "ammo_9x19_gt", "name": "9x19 Green Tracer", "description": "Ball round with a green tracer: you see where it goes, and so do they.", "category": "ammo", "rarity": "uncommon", "weight": 0.012, "value": 95, "max_stack": 50,
+   "stats": {"caliber": "9x19", "damage": 58, "penetration": 14, "armor_damage": 33, "fragmentation": 0.15, "velocity": 365, "recoil": 0, "accuracy": -5, "ricochet": 0.25, "light_bleed": 0.35, "heavy_bleed": 0.12, "tracer": "green"}},
   {"id": "ammo_9x19_ap", "name": "9x19 AP", "description": "Steel-core armor-piercing round.", "category": "ammo", "rarity": "rare", "weight": 0.012, "value": 450, "max_stack": 50,
-   "stats": {"caliber": "9x19", "damage": 49, "penetration": 30, "armor_damage": 55}},
+   "stats": {"caliber": "9x19", "damage": 49, "penetration": 30, "armor_damage": 55, "fragmentation": 0.05, "velocity": 392, "recoil": 5, "accuracy": 0, "ricochet": 0.4, "light_bleed": 0.2, "heavy_bleed": 0.06}},
   {"id": "ammo_9x19_pbp", "name": "9x19 PBP", "description": "Tungsten-tipped penetrator. Goes through soft armor and most class 3 plates.", "category": "ammo", "rarity": "epic", "weight": 0.012, "value": 900, "max_stack": 50,
-   "stats": {"caliber": "9x19", "damage": 52, "penetration": 39, "armor_damage": 65}}
+   "stats": {"caliber": "9x19", "damage": 52, "penetration": 39, "armor_damage": 65, "fragmentation": 0.03, "velocity": 560, "recoil": 15, "accuracy": 5, "ricochet": 0.45, "light_bleed": 0.2, "heavy_bleed": 0.05}}
 ]

@@ -133,7 +133,7 @@ func display_name() -> String:
 func spread() -> float:
 	if data == null:
 		return 0.0
-	return data.base_spread + WeaponStats.wear_spread(durability) + shot_bloom + stance_bloom
+	return data.base_spread * ammo_spread(ammo) + WeaponStats.wear_spread(durability) + shot_bloom + stance_bloom
 
 
 ## How the holder is moving and aiming, every tick: `speed_ratio` 1 = sprint speed, `aim_blend` 1 =
@@ -178,7 +178,7 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 	for i in pellets:
 		var pellet := cone(direction, pellet_spread) if pellets > 1 else direction
 		Ballistics.fire(shooter, origin, pellet, ammo, muzzle.global_position, data, damage_multiplier, i == 0)
-	recoil_kick += WeaponStats.kick(data, _rng) * (1.0 - clampf(recoil_control, 0.0, 1.0))
+	recoil_kick += WeaponStats.kick(data, _rng) * ammo_recoil(ammo) * (1.0 - clampf(recoil_control, 0.0, 1.0))
 	shot_bloom = minf(shot_bloom + data.bloom_per_shot, data.max_bloom)
 	_since_shot = 0.0
 	_show_flash()
@@ -192,6 +192,18 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 		is_jammed = true
 		jammed.emit()
 	return true
+
+
+## How much `ammo_item` changes the kick of each shot: its "recoil" stat, % more (hot loads) or less
+## (subsonic).
+static func ammo_recoil(ammo_item: ItemData) -> float:
+	return clampf(1.0 + float(ammo_item.stats.get("recoil", 0.0)) / 100.0, 0.5, 2.0) if ammo_item else 1.0
+
+
+## How much `ammo_item` changes the gun's base spread: its "accuracy" stat, % tighter (match rounds)
+## or looser.
+static func ammo_spread(ammo_item: ItemData) -> float:
+	return clampf(1.0 - float(ammo_item.stats.get("accuracy", 0.0)) / 100.0, 0.5, 2.0) if ammo_item else 1.0
 
 
 ## Rounds each shot of `ammo_item` fires: 1, or a shot shell's pellets.

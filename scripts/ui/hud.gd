@@ -62,7 +62,7 @@ func _ready() -> void:
 		player.died.connect(show_message.bind("KILLED IN ACTION", 10.0))
 		player.hit_landed.connect(func(target: Actor, _damage: float, _at: Vector3) -> void:
 			if Settings.get_value("gameplay", "hit_markers"):
-				_reticle.show_hit_marker(target.is_dead, player.weapon.firing_trick_shot))
+				_reticle.show_hit_marker(target.is_dead, player.weapon.firing_trick_shot, not player.last_hit.get("penetrated", true)))
 		player.trick_shot_ready.connect(_on_trick_shot_ready)
 		player.trick_shot_hit.connect(_on_trick_shot_hit)
 	%SoundMarkers.player = player

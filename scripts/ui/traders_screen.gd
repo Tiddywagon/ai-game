@@ -1,9 +1,10 @@
 extends MenuScreen
 ## TRADERS screen (DESIGN.md §10, §11, §16.2): every trader with your loyalty level, reputation and
-## what the next level needs, and tabs to BUY (roubles or dollars), BARTER (items for an item) and do
-## their TASKS (accept, hand over, turn in). Everything you get goes to the stash and is never found in
-## raid. Requirements marked with the found-in-raid checkmark only take items that have it (Trading,
-## QuestLog). Each deal saves the game.
+## what the next level needs, and tabs to BUY (roubles or dollars), BARTER (items for an item), do
+## their TASKS (accept, hand over, turn in) and compare AMMO (every round of the gun in hand, or of any
+## caliber: AmmoChart). Offers above your loyalty level with a trader show the level they need.
+## Everything you get goes to the stash and is never found in raid. Requirements marked with the
+## found-in-raid checkmark only take items that have it (Trading, QuestLog). Each deal saves the game.
 
 const TRADERS := [
 	{"id": "prapor", "name": "Prapor", "specialty": "Eastern weapons and ammo", "currency": "Roubles", "unique": "Insurance: cheap, slow"},
@@ -14,8 +15,6 @@ const TRADERS := [
 	{"id": "ragman", "name": "Ragman", "specialty": "Clothing, rigs, backpacks and armor", "currency": "Roubles", "unique": "Cosmetics"},
 	{"id": "jaeger", "name": "Jaeger", "specialty": "Survival gear and hunting rifles", "currency": "Roubles", "unique": "Unlocked by a quest", "locked": true},
 ]
-## What each loyalty level needs: player level, reputation, roubles spent (DESIGN.md §10).
-const LOYALTY := {2: [15, 0.20, 750_000], 3: [25, 0.35, 1_500_000], 4: [35, 0.50, 2_500_000]}
 
 ## Item cells in offer rows: pixels per grid cell, and the most room one may take.
 const OFFER_CELL := 30.0
@@ -23,6 +22,8 @@ const OFFER_MAX := Vector2(150, 64)
 
 var _buttons: Array[Button] = []
 var _trader: Dictionary = {}
+## The caliber the AMMO tab compares ("" = the gun in hand's).
+var _ammo_caliber := ""
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _ready() -> void:
 		button.button_group = group
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size.y = 56
+		Trading.update_loyalty(trader.id)
 		var loyalty: Dictionary = GameState.trader_loyalty[trader.id]
 		button.text = "%s   ·   %s" % [trader.name, "LOCKED" if trader.get("locked", false) else "LL%d" % loyalty.level]
 		button.pressed.connect(_show.bind(trader))
@@ -68,14 +70,17 @@ func _refresh() -> void:
 		%Tabs.hide()
 		return
 	%Tabs.show()
+	Trading.update_loyalty(trader.id)
+	_buttons[TRADERS.find(trader)].text = "%s   ·   LL%d" % [trader.name, loyalty.level]
 	_build_buy(trader)
 	_build_barters(trader)
 	_build_tasks(trader)
+	_build_ammo()
 	%Tabs.current_tab = clampi(tab, 0, %Tabs.get_tab_count() - 1)
 	var lines := ["Loyalty level %d  ·  reputation %.2f  ·  spent %s" % [loyalty.level, loyalty.reputation, UiFormat.money(loyalty.spent)]]
 	var next: int = loyalty.level + 1
-	if LOYALTY.has(next):
-		var need: Array = LOYALTY[next]
+	if Trading.LOYALTY.has(next):
+		var need: Array = Trading.LOYALTY[next]
 		lines.append("Next level (LL%d) needs: player level %d, reputation %.2f, %s spent with %s." % [
 			next, need[0], need[1], UiFormat.money(need[2]), trader.name])
 	else:
@@ -93,12 +98,15 @@ func _build_buy(trader: Dictionary) -> void:
 		row.add_theme_constant_override("separation", 14)
 		row.add_child(_cell(item))
 		var name := Label.new()
-		name.text = "%s%s\n%s" % [item.data.display_name, "  ×%d" % item.count if item.count > 1 else "",
-			UiFormat.money(int(offer.price), str(offer.get("currency", "RUB")))]
+		var level := Trading.offer_level(offer)
+		name.text = "%s%s\n%s%s" % [item.data.display_name, "  ×%d" % item.count if item.count > 1 else "",
+			UiFormat.money(int(offer.price), str(offer.get("currency", "RUB"))), "   ·   LL%d" % level if level > 1 else ""]
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if Trading.loyalty_block_reason(trader.id, offer) != "":
+			name.theme_type_variation = &"DimLabel"
 		row.add_child(name)
-		row.add_child(_action_button("BUY", Trading.buy_block_reason(offer), func() -> String: return Trading.buy(trader.id, offer)))
+		row.add_child(_action_button("BUY", Trading.buy_block_reason(offer, trader.id), func() -> String: return Trading.buy(trader.id, offer)))
 		rows.add_child(row)
 		rows.add_child(HSeparator.new())
 	if rows.get_child_count() == 0:
@@ -132,7 +140,7 @@ func _build_barters(trader: Dictionary) -> void:
 		name.text = item.data.display_name + ("  ×%d" % item.count if item.count > 1 else "")
 		reward_box.add_child(name)
 		row.add_child(reward_box)
-		row.add_child(_action_button("TRADE", Trading.barter_block_reason(offer), func() -> String: return Trading.barter(offer)))
+		row.add_child(_action_button("TRADE", Trading.barter_block_reason(offer, trader.id), func() -> String: return Trading.barter(offer, trader.id)))
 		rows.add_child(row)
 		rows.add_child(HSeparator.new())
 	if rows.get_child_count() == 0:
@@ -182,6 +190,55 @@ func _build_tasks(trader: Dictionary) -> void:
 		rows.add_child(HSeparator.new())
 	if rows.get_child_count() == 0:
 		rows.add_child(_note("No tasks yet."))
+
+
+## The AMMO tab: every round of a caliber side by side (AmmoChart, extended), the gun in hand's by
+## default; pick another caliber from the list.
+func _build_ammo() -> void:
+	var rows := _add_tab("AMMO")
+	var held := _held_gun()
+	var calibers: Array[String] = []
+	for data in ItemDB.all_items():
+		if data.weapon and data.weapon.caliber not in calibers:
+			calibers.append(data.weapon.caliber)
+	calibers.sort()
+	var caliber := _ammo_caliber
+	if caliber == "" or caliber not in calibers:
+		caliber = held.data.weapon.caliber if held else calibers[0]
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 12)
+	var label := Label.new()
+	label.text = "Rounds for"
+	top.add_child(label)
+	var picker := OptionButton.new()
+	picker.name = "CaliberPicker"
+	for each in calibers:
+		var text := each
+		if held and held.data.weapon.caliber == each:
+			text += "   ·   in hand: " + held.data.display_name
+		picker.add_item(text)
+	picker.selected = calibers.find(caliber)
+	top.add_child(picker)
+	rows.add_child(top)
+	var chart := AmmoChart.new()
+	chart.name = "AmmoChart"
+	chart.extended = true
+	rows.add_child(chart)
+	var show := func(chosen: String) -> void:
+		var in_hand := held != null and held.data.weapon.caliber == chosen
+		chart.show_caliber(chosen, held.loaded_ammo if in_hand else "", WeaponStats.build(held, GameState.skills) if in_hand else null)
+	show.call(caliber)
+	picker.item_selected.connect(func(index: int) -> void:
+		_ammo_caliber = calibers[index]
+		show.call(_ammo_caliber))
+	rows.add_child(_note("Velocity is out of the gun in hand (its barrel and parts) when it takes this caliber. Frag: chance to fragment in flesh (more damage, a bleed). Bleed: chance of a light / heavy bleed per hit. AP rounds go through armor but hurt less; soft rounds hurt the unarmored most. LL: the loyalty level a trader needs; the best AP rounds are only found in raid or made at the Workbench."))
+
+
+## The gun you'd raid with (in hand), or null.
+func _held_gun() -> ItemInstance:
+	var slot := GameState.inventory.weapon_slot() if GameState.inventory else ""
+	var gun: ItemInstance = GameState.inventory.equipment[slot] if slot != "" else null
+	return gun if gun and gun.is_gun() else null
 
 
 ## A trick-kill objective: what it asks for and how many so far.

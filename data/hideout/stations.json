@@ -28,7 +28,21 @@
       {"level": 1, "roubles": 40000, "requires": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}],
         "crafts": [{"id": "bs_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 1}], "output": {"item": "ammo_545_bs", "count": 30}}]},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bolts", "count": 5, "fir": true}, {"item": "screws", "count": 3, "fir": true}],
-        "crafts": [{"id": "weapon_parts", "inputs": [{"item": "bolts", "count": 3}, {"item": "wires", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "weapon_parts", "count": 1}}]}
+        "crafts": [
+          {"id": "weapon_parts", "inputs": [{"item": "bolts", "count": 3}, {"item": "wires", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "weapon_parts", "count": 1}},
+          {"id": "pbp_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}, {"item": "wires", "count": 1}], "output": {"item": "ammo_9x19_pbp", "count": 30}},
+          {"id": "ap20_slugs", "inputs": [{"item": "bolts", "count": 3}, {"item": "duct_tape", "count": 1}], "output": {"item": "ammo_12ga_ap20", "count": 10}},
+          {"id": "bp_rounds", "inputs": [{"item": "bolts", "count": 3}, {"item": "screws", "count": 2}, {"item": "weapon_parts", "count": 1}], "output": {"item": "ammo_762x39_bp", "count": 30}}
+        ]},
+      {"level": 3, "roubles": 250000, "stations": {"generator": 2}, "requires": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 4, "fir": true}],
+        "crafts": [
+          {"id": "ppbs_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "bolts", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_545_ppbs", "count": 30}},
+          {"id": "ssa_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "bolts", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_556_ssa", "count": 30}},
+          {"id": "mai_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "screws", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_762x39_mai", "count": 30}},
+          {"id": "m993_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "bolts", "count": 3}], "output": {"item": "ammo_762x51_m993", "count": 20}},
+          {"id": "bs54_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "screws", "count": 3}], "output": {"item": "ammo_762x54r_bs", "count": 20}},
+          {"id": "ap338_rounds", "inputs": [{"item": "weapon_parts", "count": 3, "fir": true}, {"item": "gpu", "count": 1, "fir": true}], "output": {"item": "ammo_338_ap", "count": 10}}
+        ]}
     ]
   },
   {

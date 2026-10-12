@@ -1,10 +1,10 @@
 [
   {"id": "ammo_45_fmj", "name": ".45 ACP FMJ", "description": "Heavy, slow ball round. Hits hard, stops at armor.", "category": "ammo", "rarity": "common", "weight": 0.015, "value": 90, "max_stack": 40,
-   "stats": {"caliber": ".45 ACP", "damage": 66, "penetration": 19, "armor_damage": 35}},
+   "stats": {"caliber": ".45 ACP", "damage": 66, "penetration": 19, "armor_damage": 35, "fragmentation": 0.15, "velocity": 260, "recoil": 0, "accuracy": 0, "ricochet": 0.2, "light_bleed": 0.4, "heavy_bleed": 0.15}},
   {"id": "ammo_45_hp", "name": ".45 ACP HP", "description": "Big hollow point. Brutal on bare flesh.", "category": "ammo", "rarity": "uncommon", "weight": 0.015, "value": 140, "max_stack": 40,
-   "stats": {"caliber": ".45 ACP", "damage": 82, "penetration": 8, "armor_damage": 20}},
+   "stats": {"caliber": ".45 ACP", "damage": 82, "penetration": 8, "armor_damage": 20, "fragmentation": 0.5, "velocity": 300, "recoil": 5, "accuracy": -5, "ricochet": 0.05, "light_bleed": 0.6, "heavy_bleed": 0.35}},
   {"id": "ammo_45_match", "name": ".45 ACP Match", "description": "Match-grade ball with a hardened jacket.", "category": "ammo", "rarity": "rare", "weight": 0.015, "value": 380, "max_stack": 40,
-   "stats": {"caliber": ".45 ACP", "damage": 70, "penetration": 25, "armor_damage": 40}},
+   "stats": {"caliber": ".45 ACP", "damage": 70, "penetration": 25, "armor_damage": 40, "fragmentation": 0.1, "velocity": 255, "recoil": 0, "accuracy": 20, "ricochet": 0.25, "light_bleed": 0.4, "heavy_bleed": 0.15}},
   {"id": "ammo_45_ap", "name": ".45 ACP AP", "description": "Steel-core armor-piercing .45.", "category": "ammo", "rarity": "epic", "weight": 0.015, "value": 1100, "max_stack": 40,
-   "stats": {"caliber": ".45 ACP", "damage": 64, "penetration": 38, "armor_damage": 60}}
+   "stats": {"caliber": ".45 ACP", "damage": 64, "penetration": 38, "armor_damage": 60, "fragmentation": 0.03, "velocity": 300, "recoil": 10, "accuracy": 0, "ricochet": 0.45, "light_bleed": 0.25, "heavy_bleed": 0.08}}
 ]

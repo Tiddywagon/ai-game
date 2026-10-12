@@ -85,9 +85,14 @@ func _ready() -> void:
 	_update_outline.call_deferred()  # After the player is in the tree.
 
 
-func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
-	super(damage, from, hit_position)
+func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
+	var outcome := super(damage, from, hit_position, shot)
 	_update_outline()  # A friendly bot shot by the player turns hostile.
+	return outcome
+
+
+func worn_gear() -> Inventory:
+	return inventory
 
 
 func display_name() -> String:

@@ -5,7 +5,8 @@ extends Control
 ## real cone the next shot can land in, growing and shrinking live with bloom (shooting, moving,
 ## sprinting, rolling, hip-firing) and wear. A ring fills up while reloading or clearing a jam. Hit
 ## markers show here too. With a bolt-action rifle or DMR, a gold arc shows how far a 360 spin has
-## got (DESIGN.md §13.4); a trick-shot hit gets a gold marker with a diamond.
+## got (DESIGN.md §13.4); a trick-shot hit gets a gold marker with a diamond. A round armor stopped
+## gets a smaller steel-blue marker with a square (DESIGN.md §6.4).
 
 const HIT_MARKER_TIME := 0.25
 const KILL_COLOR := Color(1.0, 0.3, 0.25)
@@ -23,6 +24,7 @@ var player: Player
 var _hit_time := 0.0
 var _hit_kill := false
 var _hit_trick := false
+var _hit_armor := false
 
 
 func _ready() -> void:
@@ -35,10 +37,12 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func show_hit_marker(killed: bool, trick := false) -> void:
+## A hit landed: `killed` it, a 360 `trick` shot, or `armored`: armor stopped the round.
+func show_hit_marker(killed: bool, trick := false, armored := false) -> void:
 	_hit_time = HIT_MARKER_TIME * (2.0 if trick else 1.0)
 	_hit_kill = killed
 	_hit_trick = trick
+	_hit_armor = armored and not killed
 
 
 func _draw() -> void:
@@ -78,9 +82,12 @@ func _draw() -> void:
 	elif _hit_time > 0.0:
 		var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
 		var t := _hit_time / HIT_MARKER_TIME
-		var marker := KILL_COLOR if _hit_kill else Color.WHITE
+		var marker := KILL_COLOR if _hit_kill else (Player.ARMOR_HIT_COLOR if _hit_armor else Color.WHITE)
 		marker.a = 0.8 if reduced else t
 		var size := 10.0 if reduced else 10.0 + 6.0 * t
+		if _hit_armor:
+			size *= 0.8  # Smaller, with a square: the round didn't get through.
+			draw_rect(Rect2(center - Vector2(4, 4), Vector2(8, 8)), marker, false, 1.5)
 		for corner in [Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
 			draw_line(center + corner * 5.0, center + corner * size, marker, 2.5)
 

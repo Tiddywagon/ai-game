@@ -1,12 +1,14 @@
 [
   {"id": "ammo_762x51_fmj", "name": "7.62x51 FMJ", "description": "Full-power ball round.", "category": "ammo", "rarity": "common", "weight": 0.025, "value": 250, "max_stack": 40,
-   "stats": {"caliber": "7.62x51", "damage": 80, "penetration": 29, "armor_damage": 45}},
+   "stats": {"caliber": "7.62x51", "damage": 80, "penetration": 29, "armor_damage": 45, "fragmentation": 0.2, "velocity": 833, "recoil": 0, "accuracy": 0, "ricochet": 0.3, "light_bleed": 0.4, "heavy_bleed": 0.18}},
   {"id": "ammo_762x51_sp", "name": "7.62x51 SP", "description": "Soft point hunting round. Hits like a truck, hates armor.", "category": "ammo", "rarity": "uncommon", "weight": 0.025, "value": 280, "max_stack": 40,
-   "stats": {"caliber": "7.62x51", "damage": 102, "penetration": 18, "armor_damage": 30}},
+   "stats": {"caliber": "7.62x51", "damage": 102, "penetration": 18, "armor_damage": 30, "fragmentation": 0.45, "velocity": 822, "recoil": 0, "accuracy": 0, "ricochet": 0.05, "light_bleed": 0.6, "heavy_bleed": 0.4}},
   {"id": "ammo_762x51_m80", "name": "7.62x51 M80", "description": "Military ball with a steel penetrator.", "category": "ammo", "rarity": "rare", "weight": 0.025, "value": 700, "max_stack": 40,
-   "stats": {"caliber": "7.62x51", "damage": 80, "penetration": 41, "armor_damage": 66}},
+   "stats": {"caliber": "7.62x51", "damage": 80, "penetration": 41, "armor_damage": 66, "fragmentation": 0.15, "velocity": 833, "recoil": 0, "accuracy": 5, "ricochet": 0.35, "light_bleed": 0.35, "heavy_bleed": 0.15}},
+  {"id": "ammo_762x51_m62", "name": "7.62x51 M62 tracer", "description": "Red tracer with a steel penetrator.", "category": "ammo", "rarity": "rare", "weight": 0.025, "value": 800, "max_stack": 40,
+   "stats": {"caliber": "7.62x51", "damage": 79, "penetration": 44, "armor_damage": 75, "fragmentation": 0.12, "velocity": 838, "recoil": 0, "accuracy": -5, "ricochet": 0.35, "light_bleed": 0.35, "heavy_bleed": 0.15, "tracer": "red"}},
   {"id": "ammo_762x51_m61", "name": "7.62x51 M61", "description": "Armor-piercing round with a hardened steel core.", "category": "ammo", "rarity": "epic", "weight": 0.025, "value": 3000, "max_stack": 40,
-   "stats": {"caliber": "7.62x51", "damage": 70, "penetration": 64, "armor_damage": 83}},
+   "stats": {"caliber": "7.62x51", "damage": 70, "penetration": 64, "armor_damage": 83, "fragmentation": 0.04, "velocity": 849, "recoil": 5, "accuracy": 0, "ricochet": 0.45, "light_bleed": 0.25, "heavy_bleed": 0.1}},
   {"id": "ammo_762x51_m993", "name": "7.62x51 M993", "description": "Tungsten-carbide penetrator. Nothing in the zone stops it.", "category": "ammo", "rarity": "legendary", "weight": 0.025, "value": 6000, "max_stack": 40,
-   "stats": {"caliber": "7.62x51", "damage": 67, "penetration": 70, "armor_damage": 85}}
+   "stats": {"caliber": "7.62x51", "damage": 67, "penetration": 70, "armor_damage": 85, "fragmentation": 0.03, "velocity": 910, "recoil": 5, "accuracy": 10, "ricochet": 0.5, "light_bleed": 0.2, "heavy_bleed": 0.08}}
 ]

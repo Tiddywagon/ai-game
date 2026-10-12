@@ -41,3 +41,37 @@ extends Resource
 @export_range(0.0, 100.0, 1.0) var wood_penetration_loss: float
 ## How far away AI can hear an unsuppressed shot.
 @export_range(0.0, 200.0, 1.0, "suffix:m") var gunshot_noise: float
+
+@export_group("Rounds and armor")
+## A round's velocity this fast (m/s) or faster reaches the full range (Ballistics.MAX_RANGE) and keeps
+## full energy through wood; slower rounds reach proportionally less far (pistols, subsonic).
+@export_range(100.0, 1500.0, 10.0, "suffix:m/s") var reference_velocity: float
+## The shortest range, as a share of the full range, however slow the round.
+@export_range(0.1, 1.0, 0.05) var min_range_factor: float
+## Rounds do full damage up to this share of their range, then lose damage in a straight line...
+@export_range(0.0, 1.0, 0.05) var falloff_start: float
+## ...down to this share of it at the end of their range.
+@export_range(0.0, 1.0, 0.05) var range_damage_kept: float
+## Armor resistance per class: a class 4 vest resists penetration 40.
+@export_range(1.0, 30.0, 0.5) var armor_resistance_per_class: float
+## Penetration this far above the armor's resistance always goes through, this far below never;
+## halfway, half the time.
+@export_range(1.0, 50.0, 0.5) var penetration_window: float
+## A worn-out armor piece resists this share of its class (scaled up to full at full durability).
+## At 0 durability it stops nothing.
+@export_range(0.0, 1.0, 0.05) var armor_min_effectiveness: float
+## Share of a round's damage that reaches the body after it goes through armor.
+@export_range(0.0, 1.0, 0.05) var penetrated_damage_kept: float
+## Blunt damage of a stopped round = damage × the armor's blunt × (penetration / resistance), at least
+## this share: a round far below the armor's class pushes little through.
+@export_range(0.0, 1.0, 0.05) var blunt_min_push: float
+## Armor wear from a round that glances off (ricochets), as a share of a normal hit's.
+@export_range(0.0, 1.0, 0.05) var ricochet_wear: float
+## A round that fragments in flesh deals this much more damage (0.4: +40%), always starts a light bleed
+## and multiplies its heavy-bleed chance by `fragmentation_heavy_bleed`.
+@export_range(0.0, 2.0, 0.05) var fragmentation_damage_bonus: float
+@export_range(1.0, 5.0, 0.1) var fragmentation_heavy_bleed: float
+## Tracer rounds: how long their bright tracer shows, and how close they pass to warn someone (normal
+## rounds: Ballistics.NEAR_MISS_DISTANCE): tracers give the shooter away.
+@export_range(0.0, 2.0, 0.01, "suffix:s") var tracer_time: float
+@export_range(0.0, 20.0, 0.5, "suffix:m") var tracer_warn_distance: float

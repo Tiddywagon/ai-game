@@ -1,10 +1,12 @@
 [
   {"id": "ammo_762x54r_lps", "name": "7.62x54R LPS", "description": "Full-power rifle round with a light steel core. Goes through wood.", "category": "ammo", "rarity": "common", "weight": 0.022, "value": 300, "max_stack": 40,
-   "stats": {"caliber": "7.62x54R", "damage": 81, "penetration": 41, "armor_damage": 66}},
+   "stats": {"caliber": "7.62x54R", "damage": 81, "penetration": 41, "armor_damage": 66, "fragmentation": 0.15, "velocity": 865, "recoil": 0, "accuracy": 0, "ricochet": 0.35, "light_bleed": 0.35, "heavy_bleed": 0.15}},
   {"id": "ammo_762x54r_sp", "name": "7.62x54R SP", "description": "Soft point hunting load.", "category": "ammo", "rarity": "uncommon", "weight": 0.022, "value": 320, "max_stack": 40,
-   "stats": {"caliber": "7.62x54R", "damage": 92, "penetration": 27, "armor_damage": 32}},
+   "stats": {"caliber": "7.62x54R", "damage": 92, "penetration": 27, "armor_damage": 32, "fragmentation": 0.45, "velocity": 830, "recoil": 0, "accuracy": 0, "ricochet": 0.05, "light_bleed": 0.6, "heavy_bleed": 0.4}},
+  {"id": "ammo_762x54r_t46", "name": "7.62x54R T-46M tracer", "description": "Red tracer for the PK and the SVD.", "category": "ammo", "rarity": "uncommon", "weight": 0.022, "value": 340, "max_stack": 40,
+   "stats": {"caliber": "7.62x54R", "damage": 82, "penetration": 39, "armor_damage": 83, "fragmentation": 0.15, "velocity": 800, "recoil": 0, "accuracy": -5, "ricochet": 0.35, "light_bleed": 0.35, "heavy_bleed": 0.15, "tracer": "red"}},
   {"id": "ammo_762x54r_snb", "name": "7.62x54R SNB", "description": "Sniper armor-piercing round.", "category": "ammo", "rarity": "epic", "weight": 0.022, "value": 2400, "max_stack": 40,
-   "stats": {"caliber": "7.62x54R", "damage": 75, "penetration": 62, "armor_damage": 88}},
+   "stats": {"caliber": "7.62x54R", "damage": 75, "penetration": 62, "armor_damage": 88, "fragmentation": 0.04, "velocity": 875, "recoil": 5, "accuracy": 10, "ricochet": 0.45, "light_bleed": 0.25, "heavy_bleed": 0.1}},
   {"id": "ammo_762x54r_bs", "name": "7.62x54R BS", "description": "Tungsten-core armor-piercing round. Ends arguments.", "category": "ammo", "rarity": "legendary", "weight": 0.022, "value": 5200, "max_stack": 40,
-   "stats": {"caliber": "7.62x54R", "damage": 72, "penetration": 70, "armor_damage": 88}}
+   "stats": {"caliber": "7.62x54R", "damage": 72, "penetration": 70, "armor_damage": 88, "fragmentation": 0.03, "velocity": 785, "recoil": 10, "accuracy": 5, "ricochet": 0.5, "light_bleed": 0.2, "heavy_bleed": 0.08}}
 ]

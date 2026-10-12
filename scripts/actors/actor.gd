@@ -156,7 +156,7 @@ func on_bullet_near(_shooter: Actor) -> void:
 
 
 ## Called when one of this actor's bullets hits someone. Override for hit markers and the like.
-func on_hit_landed(_target: Actor, _damage: float, _position: Vector3) -> void:
+func on_hit_landed(_target: Actor, _damage: float, _position: Vector3, _outcome: Dictionary = {}) -> void:
 	pass
 
 
@@ -317,24 +317,43 @@ func aim_blend() -> float:
 	return 1.0
 
 
-## A bullet from `from` hit this actor at `hit_position`, which decides the body part.
-func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
+## A bullet from `from` hit this actor at `hit_position`, which decides the body part. `shot`
+## (ArmorRules.shot()) is the round: armor worn over that part may stop it, and its stats decide
+## fragmentation and bleeds; without it the damage goes straight to the body. Returns what happened
+## (ArmorRules.resolve() plus "part"), or {} if the round passed beside the body.
+func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
 	if is_dead:
-		return
+		return {}
 	if from and from != self and not is_hostile(from):
 		enemies.append(from)  # Provoked: whoever shot us is an enemy from now on.
 	var part := body_part_at(hit_position, from.global_position if from else hit_position)
 	if part < 0:
-		return
-	var cause := {"kind": "shot", "part": part, "damage": damage}
+		return {}
+	var outcome := ArmorRules.resolve(damage, shot, worn_gear(), part) if not shot.is_empty() \
+		else {"damage": damage, "armor": null, "penetrated": true, "ricochet": false, "blunt": false, "fragmented": false}
+	outcome.part = part
+	var cause := {"kind": "shot", "part": part, "damage": outcome.damage}
+	if outcome.has("light_bleed"):
+		cause.light_bleed = outcome.light_bleed
+		cause.heavy_bleed = outcome.heavy_bleed
+	if outcome.armor:
+		cause.armor = (outcome.armor as ItemInstance).data.display_name
+		cause.penetrated = outcome.penetrated
 	if from:
 		cause.attacker = from.display_name()
 		cause.weapon = from.weapon.display_name()
 		cause.ammo = from.weapon.ammo.display_name if from.weapon.ammo else ""
 		cause.distance = from.global_position.distance_to(global_position)
-	health.hit(part, damage, cause)
+	if outcome.damage > 0.0:
+		health.hit(part, outcome.damage, cause)
 	if health.is_dead:
 		die()
+	return outcome
+
+
+## The kit this actor wears (armor and helmets stop rounds), or null.
+func worn_gear() -> Inventory:
+	return null
 
 
 ## Which body part (a BodyHealth.Part) a bullet fired from `shot_from` and landing at `point` hits,

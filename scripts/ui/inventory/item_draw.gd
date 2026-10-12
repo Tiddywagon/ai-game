@@ -68,6 +68,8 @@ static func tooltip(item: ItemInstance) -> String:
 		"%s  ·  %s  ·  %s" % [Palette.RARITY_NAMES[item.data.rarity], Settings.format_weight(item.weight()), UiFormat.money(item.value())]]
 	if item.is_gun():
 		lines.append("Durability %.1f / %.1f" % [item.durability, item.max_durability])
+	elif item.is_armor():
+		lines.append("Class %d  ·  durability %.1f / %.1f" % [int(item.data.stats["class"]), item.durability, item.max_durability])
 	elif WeaponMods.is_mod(item.data):
 		lines.append(ModPartRow.summary(item.data))
 	if has_fir_mark(item):

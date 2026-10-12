@@ -57,6 +57,9 @@ func heal_all() -> void:
 # --- Damage -----------------------------------------------------------------------------------
 
 ## A bullet hit: damages `part`, then (if still alive) may start a bleed or, on a limb, a fracture.
+## The round's own bleed chances come in `cause` ("light_bleed", "heavy_bleed"; ArmorRules.resolve()
+## sets them: 0 for a round stopped by armor, a light bleed for one that fragmented); without them the
+## chances in health.tres apply, scaled by damage.
 func hit(part: int, damage: float, cause: Dictionary) -> void:
 	if is_dead:
 		return
@@ -64,9 +67,15 @@ func hit(part: int, damage: float, cause: Dictionary) -> void:
 	if is_dead:
 		return
 	var scale := clampf(damage / config.reference_damage, 0.0, 1.5)
-	if bleeds[part] != Bleed.HEAVY and randf() < config.heavy_bleed_chance * scale:
+	var heavy := float(cause.get("heavy_bleed", -1.0))
+	var light := float(cause.get("light_bleed", -1.0))
+	if heavy < 0.0:
+		heavy = config.heavy_bleed_chance * scale
+	if light < 0.0:
+		light = config.light_bleed_chance * scale
+	if bleeds[part] != Bleed.HEAVY and randf() < heavy:
 		_start_bleed(part, Bleed.HEAVY, cause)
-	elif bleeds[part] == Bleed.NONE and randf() < config.light_bleed_chance * scale:
+	elif bleeds[part] == Bleed.NONE and randf() < light:
 		_start_bleed(part, Bleed.LIGHT, cause)
 	if is_limb(part) and not fractures[part] and randf() < config.fracture_chance * scale:
 		fractures[part] = true

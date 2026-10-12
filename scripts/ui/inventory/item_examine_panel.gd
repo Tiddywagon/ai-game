@@ -5,7 +5,9 @@ extends PanelContainer
 ## damage and penetration, armor class, what meds treat, a container's grid and what's in it) and its
 ## description, and whether it's found in raid (with the checkmark). Guns show their stats with their
 ## parts fitted and their durability; weapon parts what they change and which guns they fit. Guns with
-## rounds loaded can be unloaded from here, and out of raid MODIFY opens the modding screen.
+## rounds loaded can be unloaded from here, and out of raid MODIFY opens the modding screen. Guns and
+## rounds also show an ammo chart beside the stats: every round of the caliber compared (AmmoChart).
+## Armor shows its class, what it covers and its durability.
 ## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
@@ -26,6 +28,7 @@ var _name: Label
 var _subtitle: Label
 var _stats: GridContainer
 var _description: Label
+var _chart: AmmoChart
 var _unload: Button
 var _modify: Button
 
@@ -63,16 +66,25 @@ func _ready() -> void:
 	_subtitle.theme_type_variation = &"DimLabel"
 	titles.add_child(_subtitle)
 	rows.add_child(HSeparator.new())
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 32)
+	rows.add_child(body)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 10)
+	body.add_child(left)
 	_stats = GridContainer.new()
 	_stats.columns = 2
 	_stats.add_theme_constant_override("h_separation", 28)
 	_stats.add_theme_constant_override("v_separation", 4)
-	rows.add_child(_stats)
+	left.add_child(_stats)
 	_description = Label.new()
 	_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description.custom_minimum_size.x = 420
 	_description.theme_type_variation = &"DimLabel"
-	rows.add_child(_description)
+	left.add_child(_description)
+	_chart = AmmoChart.new()
+	_chart.name = "AmmoChart"
+	body.add_child(_chart)
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	buttons.add_theme_constant_override("separation", 10)
@@ -129,6 +141,11 @@ func show_item(examined: ItemInstance) -> void:
 	_modify.visible = can_modify and item.is_gun()
 	_description.text = data.description
 	_description.visible = data.description != ""
+	_chart.visible = data.weapon != null or data.category == ItemData.Category.AMMO
+	if data.weapon:
+		_chart.show_caliber(data.weapon.caliber, item.loaded_ammo, WeaponStats.build(item, GameState.skills))
+	elif data.category == ItemData.Category.AMMO:
+		_chart.show_caliber(str(data.stats.get("caliber", "")), data.id)
 	show()
 	_fit.call_deferred()
 
@@ -155,6 +172,34 @@ static func fits_text(data: ItemData) -> String:
 			names.append(each.display_name)
 	names.sort()
 	return ", ".join(names) if not names.is_empty() else ", ".join(platforms)
+
+
+## A round's own stats beyond damage and penetration: velocity, fragmentation, bleeds, recoil,
+## accuracy, ricochet, pellets, tracer, noise and the guns that fire it.
+static func round_lines(data: ItemData) -> Array:
+	var stats := data.stats
+	var lines := []
+	if stats.has("velocity"):
+		lines.append(["Velocity", "%d m/s" % int(stats.velocity)])
+	if stats.has("fragmentation"):
+		lines.append(["Fragmentation", "%d%% (more damage and a bleed)" % roundi(float(stats.fragmentation) * 100.0)])
+	if stats.has("light_bleed"):
+		lines.append(["Bleed chance", "%d%% light, %d%% heavy" % [roundi(float(stats.light_bleed) * 100.0), roundi(float(stats.get("heavy_bleed", 0.0)) * 100.0)]])
+	if float(stats.get("recoil", 0.0)) != 0.0:
+		lines.append(["Recoil", AmmoChart.signed_percent(float(stats.recoil))])
+	if float(stats.get("accuracy", 0.0)) != 0.0:
+		lines.append(["Accuracy", AmmoChart.signed_percent(float(stats.accuracy))])
+	if stats.has("ricochet"):
+		lines.append(["Ricochet chance", "%d%% off armor it doesn't get through" % roundi(float(stats.ricochet) * 100.0)])
+	if stats.has("pellet_spread"):
+		lines.append(["Pellet spread", "%s°" % str(stats.pellet_spread)])
+	if str(stats.get("tracer", "")) != "":
+		lines.append(["Tracer", "%s: gives your position away" % str(stats.tracer).capitalize()])
+	if stats.has("noise"):
+		lines.append(["Heard", "%d%% as far as other rounds" % roundi(float(stats.noise) * 100.0)])
+	if stats.has("caliber"):
+		lines.append(["Fits", guns_for_caliber(str(stats.caliber))])
+	return lines
 
 
 ## The guns that fire `caliber`, by name.
@@ -220,18 +265,24 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Penetration", str(int(stats.penetration))])
 	if stats.has("armor_damage"):
 		lines.append(["Armor damage", "%d%%" % int(stats.armor_damage)])
-	if stats.has("pellet_spread"):
-		lines.append(["Pellet spread", "%s°" % str(stats.pellet_spread)])
-	if stats.has("noise") and data.category == ItemData.Category.AMMO:
-		lines.append(["Heard", "%d%% as far as other rounds" % roundi(float(stats.noise) * 100.0)])
-	if data.category == ItemData.Category.AMMO and stats.has("caliber"):
-		lines.append(["Fits", guns_for_caliber(str(stats.caliber))])
+	if data.category == ItemData.Category.AMMO:
+		lines.append_array(round_lines(data))
 	if stats.has("class") and data.weapon == null:
-		if data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET]:
-			lines.append(["Armor class", str(int(stats["class"]))])
+		if examined.is_armor():
+			lines.append(["Armor class", "%d (stops penetration below %d when new)" % [int(stats["class"]), roundi(ArmorRules.resistance(int(stats["class"])))]])
+			lines.append(["Protects", ", ".join(stats.get("zones", []).map(func(zone: String) -> String: return zone.capitalize()))])
+			if stats.has("material"):
+				lines.append(["Material", str(stats.material).capitalize()])
+			lines.append(["Blunt damage", "%d%% of a stopped round's" % roundi(float(stats.get("blunt", 0.3)) * 100.0)])
+			if float(stats.get("ricochet", 0.0)) > 0.0:
+				lines.append(["Ricochet", "×%s the round's chance" % str(stats.ricochet)])
 		else:
 			lines.append(["Type", str(stats["class"]).capitalize()])
-	if stats.has("durability"):
+	if examined.is_armor():
+		var worn := examined.durability / maxf(examined.max_durability, 1.0)
+		lines.append(["Durability", "%.1f / %.1f%s" % [examined.durability, examined.max_durability,
+			", stops nothing" if examined.durability <= 0.0 else (", resists %d" % roundi(ArmorRules.resistance(int(stats["class"]), worn)) if worn < 1.0 else "")]])
+	elif stats.has("durability"):
 		lines.append(["Durability", str(int(stats.durability))])
 	if stats.has("treats"):
 		var treated: Array = stats.treats.map(func(what: String) -> String: return TREATMENTS.get(what, what))

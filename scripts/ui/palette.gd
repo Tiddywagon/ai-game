@@ -19,3 +19,25 @@ const RARITY_COLORS := {
 static func rarity_color(rarity: int) -> Color:
 	var mode: String = Settings.get_value("interface", "colorblind_mode")
 	return RARITY_COLORS.get(mode, RARITY_COLORS.none)[clampi(rarity, 0, 5)]
+
+
+## How well a round does against an armor class (0-1 chance to penetrate), from good to bad, in the
+## current colorblind palette. Ammo charts also show the chance as how full each square is, so colour
+## is never the only cue.
+const EFFECTIVENESS_COLORS := {
+	"none": [Color("4fb35a"), Color("a6c84a"), Color("e3b236"), Color("e07a2e"), Color("c8443a")],
+	"protanopia": [Color("0072b2"), Color("56b4e9"), Color("f0e442"), Color("e69f00"), Color("d55e00")],
+	"deuteranopia": [Color("0072b2"), Color("56b4e9"), Color("f0e442"), Color("e69f00"), Color("d55e00")],
+	"tritanopia": [Color("00a99d"), Color("7fd4c8"), Color("f4f4f4"), Color("e88aa8"), Color("e0532e")],
+}
+## Chance thresholds for the colours above (at least 80%, 50%, 20%, above 0, none).
+const EFFECTIVENESS_STEPS := [0.8, 0.5, 0.2, 0.0001]
+
+
+static func effectiveness_color(chance: float) -> Color:
+	var mode: String = Settings.get_value("interface", "colorblind_mode")
+	var colors: Array = EFFECTIVENESS_COLORS.get(mode, EFFECTIVENESS_COLORS.none)
+	for i in EFFECTIVENESS_STEPS.size():
+		if chance >= EFFECTIVENESS_STEPS[i]:
+			return colors[i]
+	return colors[-1]

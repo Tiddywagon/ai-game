@@ -1,12 +1,12 @@
 [
   {"id": "ammo_12ga_buck", "name": "12ga 7mm buckshot", "description": "Eight 7 mm pellets. Devastating up close, nothing at range or against armor.", "category": "ammo", "rarity": "common", "weight": 0.045, "value": 60, "max_stack": 20,
-   "stats": {"caliber": "12ga", "damage": 37, "penetration": 3, "armor_damage": 20, "pellets": 8, "pellet_spread": 3.5}},
-  {"id": "ammo_12ga_magnum", "name": "12ga magnum buckshot", "description": "Eight heavy 8.5 mm pellets. More damage, more spread.", "category": "ammo", "rarity": "uncommon", "weight": 0.045, "value": 120, "max_stack": 20,
-   "stats": {"caliber": "12ga", "damage": 50, "penetration": 2, "armor_damage": 22, "pellets": 8, "pellet_spread": 4.0}},
+   "stats": {"caliber": "12ga", "damage": 37, "penetration": 3, "armor_damage": 20, "fragmentation": 0.0, "velocity": 415, "recoil": 0, "accuracy": 0, "ricochet": 0.3, "light_bleed": 0.15, "heavy_bleed": 0.04, "pellets": 8, "pellet_spread": 3.5}},
+  {"id": "ammo_12ga_magnum", "name": "12ga magnum buckshot", "description": "Eight heavy 8.5 mm pellets. More damage, more spread, more kick.", "category": "ammo", "rarity": "uncommon", "weight": 0.045, "value": 120, "max_stack": 20,
+   "stats": {"caliber": "12ga", "damage": 50, "penetration": 2, "armor_damage": 22, "fragmentation": 0.0, "velocity": 400, "recoil": 15, "accuracy": -5, "ricochet": 0.3, "light_bleed": 0.2, "heavy_bleed": 0.06, "pellets": 8, "pellet_spread": 4.0}},
   {"id": "ammo_12ga_flechette", "name": "12ga flechette", "description": "Eight steel darts in a tight pattern. Gets through soft armor.", "category": "ammo", "rarity": "rare", "weight": 0.045, "value": 600, "max_stack": 20,
-   "stats": {"caliber": "12ga", "damage": 25, "penetration": 31, "armor_damage": 33, "pellets": 8, "pellet_spread": 2.5}},
+   "stats": {"caliber": "12ga", "damage": 25, "penetration": 31, "armor_damage": 33, "fragmentation": 0.0, "velocity": 450, "recoil": -5, "accuracy": 10, "ricochet": 0.35, "light_bleed": 0.3, "heavy_bleed": 0.1, "pellets": 8, "pellet_spread": 2.5}},
   {"id": "ammo_12ga_slug", "name": "12ga slug", "description": "One heavy lead slug. Accurate to mid range.", "category": "ammo", "rarity": "uncommon", "weight": 0.045, "value": 150, "max_stack": 20,
-   "stats": {"caliber": "12ga", "damage": 167, "penetration": 15, "armor_damage": 45}},
+   "stats": {"caliber": "12ga", "damage": 167, "penetration": 15, "armor_damage": 45, "fragmentation": 0.15, "velocity": 410, "recoil": 10, "accuracy": 15, "ricochet": 0.1, "light_bleed": 0.55, "heavy_bleed": 0.35}},
   {"id": "ammo_12ga_ap20", "name": "12ga AP-20 slug", "description": "Armor-piercing sabot slug.", "category": "ammo", "rarity": "epic", "weight": 0.045, "value": 1400, "max_stack": 20,
-   "stats": {"caliber": "12ga", "damage": 164, "penetration": 37, "armor_damage": 65}}
+   "stats": {"caliber": "12ga", "damage": 164, "penetration": 37, "armor_damage": 65, "fragmentation": 0.05, "velocity": 510, "recoil": 15, "accuracy": 10, "ricochet": 0.35, "light_bleed": 0.45, "heavy_bleed": 0.25}}
 ]

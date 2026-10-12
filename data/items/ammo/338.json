@@ -1,10 +1,10 @@
 [
   {"id": "ammo_338_fmj", "name": ".338 Lapua FMJ", "description": "Long-range magnum ball round.", "category": "ammo", "rarity": "common", "weight": 0.05, "value": 900, "max_stack": 30,
-   "stats": {"caliber": ".338 Lapua", "damage": 122, "penetration": 47, "armor_damage": 83}},
+   "stats": {"caliber": ".338 Lapua", "damage": 122, "penetration": 47, "armor_damage": 83, "fragmentation": 0.15, "velocity": 890, "recoil": 0, "accuracy": 0, "ricochet": 0.35, "light_bleed": 0.5, "heavy_bleed": 0.3}},
   {"id": "ammo_338_ucw", "name": ".338 Lapua UCW", "description": "Heavy hunting bullet.", "category": "ammo", "rarity": "uncommon", "weight": 0.05, "value": 1000, "max_stack": 30,
-   "stats": {"caliber": ".338 Lapua", "damage": 142, "penetration": 32, "armor_damage": 70}},
+   "stats": {"caliber": ".338 Lapua", "damage": 142, "penetration": 32, "armor_damage": 70, "fragmentation": 0.3, "velocity": 849, "recoil": 0, "accuracy": 0, "ricochet": 0.15, "light_bleed": 0.6, "heavy_bleed": 0.4}},
   {"id": "ammo_338_tacx", "name": ".338 Lapua TAC-X", "description": "Solid copper expanding bullet. Enormous damage, poor penetration.", "category": "ammo", "rarity": "rare", "weight": 0.05, "value": 1800, "max_stack": 30,
-   "stats": {"caliber": ".338 Lapua", "damage": 196, "penetration": 18, "armor_damage": 55}},
+   "stats": {"caliber": ".338 Lapua", "damage": 196, "penetration": 18, "armor_damage": 55, "fragmentation": 0.5, "velocity": 880, "recoil": 0, "accuracy": 5, "ricochet": 0.05, "light_bleed": 0.7, "heavy_bleed": 0.5}},
   {"id": "ammo_338_ap", "name": ".338 Lapua AP", "description": "Armor-piercing magnum. Through any armor at any range.", "category": "ammo", "rarity": "legendary", "weight": 0.05, "value": 9000, "max_stack": 30,
-   "stats": {"caliber": ".338 Lapua", "damage": 115, "penetration": 79, "armor_damage": 89}}
+   "stats": {"caliber": ".338 Lapua", "damage": 115, "penetration": 79, "armor_damage": 89, "fragmentation": 0.03, "velocity": 849, "recoil": 10, "accuracy": 5, "ricochet": 0.5, "light_bleed": 0.35, "heavy_bleed": 0.15}}
 ]

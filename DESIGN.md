@@ -115,9 +115,9 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Category | Examples | Key stats |
 |---|---|---|
 | Weapons | Pistols, SMGs, shotguns, ARs, DMRs, bolt-actions, LMGs (22 guns, Section 6.4) | Fire rate, recoil, ergonomics, accuracy, caliber (damage comes from the ammo) |
-| Ammo | 9x18, 9x19, .45 ACP, 12ga, 5.45x39, 5.56x45, 7.62x39, 7.62x51, 7.62x54R, .338 Lapua; 3–5 rounds each (Section 6.4) | Damage, penetration, armor damage; pellets for shot shells |
+| Ammo | 9x18, 9x19, .45 ACP, 12ga, 5.45x39, 5.56x45, 7.62x39, 7.62x51, 7.62x54R, .338 Lapua; 4–6 rounds each (Section 6.4) | Damage, penetration, armor damage, fragmentation, velocity, recoil, accuracy, ricochet, light/heavy bleed; pellets, tracer, noise |
 | Attachments (weapon parts) | Muzzle devices, barrels, handguards, foregrips, stocks, pistol grips, dust covers, sights, lasers, magazines | Vertical and horizontal recoil, recoil recovery, base spread, bloom per shot, max bloom, bloom recovery, hip-fire spread, ergonomics, weight; some also muzzle velocity, aim speed, noise, jam chance, wear, magazine size (Section 12.1) |
-| Armor | Vests (class 1–6) | Class, durability, zones, move penalty |
+| Armor | Vests (class 1–6) | Class, durability, zones, blunt, ricochet, destructibility (Section 6.4); move penalty planned |
 | Rigs | Chest rigs, armored rigs | Grid slots, (armor class if armored) |
 | Backpacks | Sling → large raid packs | Grid size, weight |
 | Helmets | Bump caps → class 4–5 helmets | Class, durability, ricochet, hearing penalty |
@@ -258,7 +258,7 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 
 ### 6.4 Weapons & Ammo
 
-The starter arsenal: **22 guns** in seven classes, **10 calibers with 3–5 rounds each (45 rounds)** and **183 weapon parts**, all in data files (made-up names, each inspired by a real type of gun). The round decides damage, penetration and armor damage; the gun decides how it handles (Section 12.1) and its parts what that becomes. Bolt-action rifles and DMRs make 360 trick shots (Section 13.4.1).
+The starter arsenal: **22 guns** in seven classes, **10 calibers with 4–6 rounds each (50 rounds)** and **183 weapon parts**, all in data files (made-up names, each inspired by a real type of gun). The round decides damage, penetration and armor damage; the gun decides how it handles (Section 12.1) and its parts what that becomes. Bolt-action rifles and DMRs make 360 trick shots (Section 13.4.1).
 
 **Guns** *(tune: `data/weapons/<gun>.tres`; items in `data/items/weapons/`)*. Every gun trains its class's skill: Pistols, SMGs, Shotguns, Assault rifles, Marksman rifles, Bolt-action rifles or Machine guns (Section 12.3). Pistols go in the Pistol slot. Climb / side is the recoil per shot with the parts each gun comes with. Every gun can also turn up as loot (weapon boxes, loose loot), loaded with its caliber's everyday round.
 
@@ -287,67 +287,104 @@ The starter arsenal: **22 guns** in seven classes, **10 calibers with 3–5 roun
 | Bulwark 249 | LMG | Belt-fed squad automatic | 5.56x45 | 750 rpm auto | 100 (box) | 28 | 0.42° / 0.34° | Epic | Loot |
 | Anvil PK | LMG | General-purpose machine gun | 7.62x54R | 650 rpm auto | 100 (box) | 22 | 0.7° / 0.45° | Epic | Loot |
 
-**Ammo** *(tune: `data/items/ammo/<caliber>.json`; 5.45 PS and BS are `.tres` files)*. Every gun takes every round of its caliber. In each caliber the cheapest round is Common and the best armor-piercing one Epic or Legendary; in between, hollow points and soft points hit harder but stop at armor, and AP rounds trade damage for penetration. Damage is per round (per pellet for shot shells).
+**Ammo** *(tune: every round in `data/items/ammo/<caliber>.json`; the rules in `data/config/combat.tres`, "Rounds and armor")*. Every gun takes every round of its caliber, and every caliber has at least 4 (50 rounds; 6 tracers). In each caliber the cheapest round is Common and the best armor-piercing one Epic or Legendary. **Soft rounds** (hollow and soft points) hit the unarmored hardest, fragment and bleed; **AP rounds** get through armor but do less flesh damage and rarely fragment; ball rounds sit between. So the round you load is a choice about who you expect to fight.
 
-| Caliber | Round | Rarity | Damage | Penetration | Armor damage | Value | Notes |
-|---|---|---|---|---|---|---|---|
-| 9x18 | PM P | Common | 46 | 5 | 20% | 35 ₽ |  |
-| 9x18 | PM PSt | Common | 50 | 12 | 28% | 60 ₽ |  |
-| 9x18 | PM HP | Uncommon | 66 | 3 | 15% | 90 ₽ |  |
-| 9x18 | PM PBM | Epic | 40 | 28 | 55% | 650 ₽ |  |
-| 9x19 | FMJ | Common | 54 | 18 | 30% | 70 ₽ |  |
-| 9x19 | HP | Uncommon | 70 | 6 | 15% | 110 ₽ |  |
-| 9x19 | AP | Rare | 49 | 30 | 55% | 450 ₽ |  |
-| 9x19 | PBP | Epic | 52 | 39 | 65% | 900 ₽ |  |
-| .45 ACP | FMJ | Common | 66 | 19 | 35% | 90 ₽ |  |
-| .45 ACP | HP | Uncommon | 82 | 8 | 20% | 140 ₽ |  |
-| .45 ACP | Match | Rare | 70 | 25 | 40% | 380 ₽ |  |
-| .45 ACP | AP | Epic | 64 | 38 | 60% | 1,100 ₽ |  |
-| 12ga | 7mm buckshot | Common | 37 × 8 | 3 | 20% | 60 ₽ | 3.5° pellet spread |
-| 12ga | magnum buckshot | Uncommon | 50 × 8 | 2 | 22% | 120 ₽ | 4.0° pellet spread |
-| 12ga | slug | Uncommon | 167 | 15 | 45% | 150 ₽ |  |
-| 12ga | flechette | Rare | 25 × 8 | 31 | 33% | 600 ₽ | 2.5° pellet spread |
-| 12ga | AP-20 slug | Epic | 164 | 37 | 65% | 1,400 ₽ |  |
-| 5.45x39 | PS | Common | 50 | 28 | 40% | 120 ₽ |  |
-| 5.45x39 | HP | Uncommon | 62 | 9 | 15% | 150 ₽ |  |
-| 5.45x39 | BT | Rare | 48 | 37 | 50% | 400 ₽ |  |
-| 5.45x39 | BS | Epic | 40 | 45 | 80% | 1,500 ₽ |  |
-| 5.45x39 | PPBS "Needle" | Legendary | 37 | 62 | 90% | 4,000 ₽ |  |
-| 5.56x45 | FMJ | Common | 54 | 23 | 33% | 130 ₽ |  |
-| 5.56x45 | HP | Uncommon | 68 | 9 | 16% | 140 ₽ |  |
-| 5.56x45 | EPR | Rare | 49 | 44 | 52% | 700 ₽ |  |
-| 5.56x45 | AP | Epic | 42 | 53 | 58% | 2,200 ₽ |  |
-| 5.56x45 | SSA AP | Legendary | 38 | 57 | 60% | 4,500 ₽ |  |
-| 7.62x39 | PS | Common | 57 | 35 | 52% | 160 ₽ |  |
-| 7.62x39 | HP | Uncommon | 80 | 15 | 20% | 190 ₽ |  |
-| 7.62x39 | US | Uncommon | 56 | 29 | 35% | 300 ₽ | subsonic: heard 60% as far |
-| 7.62x39 | BP | Epic | 58 | 47 | 63% | 1,800 ₽ |  |
-| 7.62x39 | MAI AP | Legendary | 53 | 58 | 70% | 4,200 ₽ |  |
-| 7.62x51 | FMJ | Common | 80 | 29 | 45% | 250 ₽ |  |
-| 7.62x51 | SP | Uncommon | 102 | 18 | 30% | 280 ₽ |  |
-| 7.62x51 | M80 | Rare | 80 | 41 | 66% | 700 ₽ |  |
-| 7.62x51 | M61 | Epic | 70 | 64 | 83% | 3,000 ₽ |  |
-| 7.62x51 | M993 | Legendary | 67 | 70 | 85% | 6,000 ₽ |  |
-| 7.62x54R | LPS | Common | 81 | 41 | 66% | 300 ₽ |  |
-| 7.62x54R | SP | Uncommon | 92 | 27 | 32% | 320 ₽ |  |
-| 7.62x54R | SNB | Epic | 75 | 62 | 88% | 2,400 ₽ |  |
-| 7.62x54R | BS | Legendary | 72 | 70 | 88% | 5,200 ₽ |  |
-| .338 Lapua | FMJ | Common | 122 | 47 | 83% | 900 ₽ |  |
-| .338 Lapua | UCW | Uncommon | 142 | 32 | 70% | 1,000 ₽ |  |
-| .338 Lapua | TAC-X | Rare | 196 | 18 | 55% | 1,800 ₽ |  |
-| .338 Lapua | AP | Legendary | 115 | 79 | 89% | 9,000 ₽ |  |
+| Caliber | Round | Rarity | Damage | Pen | Armor dmg | Frag | Velocity | Recoil | Accuracy | Ricochet | Bleed L / H | Where (trader LL, Workbench level) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 9x18 | PM P | C | 46 | 5 | 20% | 25% | 300 m/s | — | −5% | 15% | 35% / 12% | Prapor 1 |
+| 9x18 | PM PSt | C | 50 | 12 | 28% | 15% | 302 m/s | — | — | 25% | 30% / 10% | Prapor 1, Skier 1 |
+| 9x18 | PM HP | U | 66 | 3 | 15% | 55% | 310 m/s | — | −5% | 5% | 55% / 30% | Prapor 2 |
+| 9x18 | PM PBM | E | 40 | 28 | 55% | 5% | 519 m/s | +10% | +5% | 40% | 20% / 5% | Prapor 4 |
+| 9x19 | FMJ | C | 54 | 18 | 30% | 20% | 380 m/s | — | — | 25% | 35% / 12% | Peacekeeper 1 |
+| 9x19 | HP | U | 70 | 6 | 15% | 55% | 370 m/s | — | −5% | 5% | 55% / 30% | Skier 1 |
+| 9x19 | Green Tracer | U | 58 | 14 | 33% | 15% | 365 m/s | — | −5% | 25% | 35% / 12% | Peacekeeper 2 |
+| 9x19 | AP | R | 49 | 30 | 55% | 5% | 392 m/s | +5% | — | 40% | 20% / 6% | Peacekeeper 3 |
+| 9x19 | PBP | E | 52 | 39 | 65% | 3% | 560 m/s | +15% | +5% | 45% | 20% / 5% | Skier 4, Workbench 2 |
+| .45 ACP | FMJ | C | 66 | 19 | 35% | 15% | 260 m/s | — | — | 20% | 40% / 15% | Peacekeeper 1 |
+| .45 ACP | HP | U | 82 | 8 | 20% | 50% | 300 m/s | +5% | −5% | 5% | 60% / 35% | Skier 1 |
+| .45 ACP | Match | R | 70 | 25 | 40% | 10% | 255 m/s | — | +20% | 25% | 40% / 15% | Peacekeeper 3 |
+| .45 ACP | AP | E | 64 | 38 | 60% | 3% | 300 m/s | +10% | — | 45% | 25% / 8% | Peacekeeper 4 |
+| 12ga | 7mm buckshot | C | 37 × 8 | 3 | 20% | 0% | 415 m/s | — | — | 30% | 15% / 4% | Skier 1, Jaeger 1 |
+| 12ga | magnum buckshot | U | 50 × 8 | 2 | 22% | 0% | 400 m/s | +15% | −5% | 30% | 20% / 6% | Skier 2, Jaeger 1 |
+| 12ga | slug | U | 167 | 15 | 45% | 15% | 410 m/s | +10% | +15% | 10% | 55% / 35% | Skier 2, Jaeger 1 |
+| 12ga | flechette | R | 25 × 8 | 31 | 33% | 0% | 450 m/s | −5% | +10% | 35% | 30% / 10% | Skier 3 |
+| 12ga | AP-20 slug | E | 164 | 37 | 65% | 5% | 510 m/s | +15% | +10% | 35% | 45% / 25% | Skier 4, Workbench 2 |
+| 5.45x39 | PS | C | 50 | 28 | 40% | 20% | 890 m/s | — | — | 25% | 35% / 12% | Prapor 1 |
+| 5.45x39 | HP | U | 62 | 9 | 15% | 55% | 884 m/s | — | −5% | 5% | 55% / 30% | Prapor 2 |
+| 5.45x39 | BT (red tracer) | R | 48 | 37 | 50% | 12% | 880 m/s | — | — | 35% | 30% / 10% | Prapor 3 |
+| 5.45x39 | BS | E | 40 | 45 | 80% | 3% | 830 m/s | +5% | — | 45% | 20% / 6% | Prapor 3, Workbench 1 |
+| 5.45x39 | PPBS "Needle" | L | 37 | 62 | 90% | 2% | 905 m/s | +5% | +5% | 50% | 15% / 5% | Workbench 3 |
+| 5.56x45 | FMJ | C | 54 | 23 | 33% | 35% | 957 m/s | — | — | 25% | 40% / 15% | Peacekeeper 1 |
+| 5.56x45 | HP | U | 68 | 9 | 16% | 60% | 936 m/s | — | −5% | 5% | 60% / 30% | Peacekeeper 2 |
+| 5.56x45 | M856 tracer | U | 54 | 20 | 35% | 30% | 874 m/s | — | −5% | 25% | 35% / 12% | Peacekeeper 2 |
+| 5.56x45 | EPR | R | 49 | 44 | 52% | 15% | 945 m/s | +5% | +5% | 35% | 30% / 10% | Peacekeeper 3 |
+| 5.56x45 | AP | E | 42 | 53 | 58% | 4% | 1013 m/s | +10% | — | 45% | 20% / 6% | Peacekeeper 4 |
+| 5.56x45 | SSA AP | L | 38 | 57 | 60% | 2% | 990 m/s | +5% | +10% | 50% | 15% / 5% | Workbench 3 |
+| 7.62x39 | PS | C | 57 | 35 | 52% | 15% | 718 m/s | — | — | 30% | 35% / 15% | Prapor 1 |
+| 7.62x39 | HP | U | 80 | 15 | 20% | 50% | 754 m/s | — | −5% | 5% | 60% / 35% | Prapor 2 |
+| 7.62x39 | US (subsonic) | U | 56 | 29 | 35% | 12% | 301 m/s | −15% | −10% | 25% | 30% / 10% | Prapor 2 |
+| 7.62x39 | T-45M tracer | U | 64 | 30 | 49% | 15% | 720 m/s | — | −5% | 30% | 35% / 15% | Prapor 2 |
+| 7.62x39 | BP | E | 58 | 47 | 63% | 4% | 730 m/s | +5% | — | 45% | 25% / 8% | Prapor 3, Workbench 2 |
+| 7.62x39 | MAI AP | L | 53 | 58 | 70% | 3% | 730 m/s | +5% | +5% | 50% | 20% / 6% | Workbench 3 |
+| 7.62x51 | FMJ | C | 80 | 29 | 45% | 20% | 833 m/s | — | — | 30% | 40% / 18% | Peacekeeper 1 |
+| 7.62x51 | SP | U | 102 | 18 | 30% | 45% | 822 m/s | — | — | 5% | 60% / 40% | Peacekeeper 2, Jaeger 1 |
+| 7.62x51 | M80 | R | 80 | 41 | 66% | 15% | 833 m/s | — | +5% | 35% | 35% / 15% | Peacekeeper 3 |
+| 7.62x51 | M62 tracer | R | 79 | 44 | 75% | 12% | 838 m/s | — | −5% | 35% | 35% / 15% | Peacekeeper 3 |
+| 7.62x51 | M61 | E | 70 | 64 | 83% | 4% | 849 m/s | +5% | — | 45% | 25% / 10% | Peacekeeper 4 |
+| 7.62x51 | M993 | L | 67 | 70 | 85% | 3% | 910 m/s | +5% | +10% | 50% | 20% / 8% | Workbench 3 |
+| 7.62x54R | LPS | C | 81 | 41 | 66% | 15% | 865 m/s | — | — | 35% | 35% / 15% | Prapor 1 |
+| 7.62x54R | SP | U | 92 | 27 | 32% | 45% | 830 m/s | — | — | 5% | 60% / 40% | Prapor 2, Jaeger 1 |
+| 7.62x54R | T-46M tracer | U | 82 | 39 | 83% | 15% | 800 m/s | — | −5% | 35% | 35% / 15% | Prapor 2 |
+| 7.62x54R | SNB | E | 75 | 62 | 88% | 4% | 875 m/s | +5% | +10% | 45% | 25% / 10% | Prapor 4 |
+| 7.62x54R | BS | L | 72 | 70 | 88% | 3% | 785 m/s | +10% | +5% | 50% | 20% / 8% | Workbench 3 |
+| .338 Lapua | FMJ | C | 122 | 47 | 83% | 15% | 890 m/s | — | — | 35% | 50% / 30% | Jaeger 1 |
+| .338 Lapua | UCW | U | 142 | 32 | 70% | 30% | 849 m/s | — | — | 15% | 60% / 40% | Jaeger 2 |
+| .338 Lapua | TAC-X | R | 196 | 18 | 55% | 50% | 880 m/s | — | +5% | 5% | 70% / 50% | Jaeger 3 |
+| .338 Lapua | AP | L | 115 | 79 | 89% | 3% | 849 m/s | +10% | +5% | 50% | 35% / 15% | Workbench 3 |
+
+Where: the trader and the loyalty level you need with them (Section 10), and the Workbench level that crafts it (Section 9). Legendary rounds aren't sold: they're found in raid or made at the Workbench.
+
+| Round stat | What it does |
+|---|---|
+| Damage | Taken off the body part hit (Section 13.5) by a round that reaches flesh; per pellet for shot shells. Rounds keep full damage to 40% of their range, then lose it in a straight line to 75% at the end of it |
+| Penetration | Against armor: a piece of armor of class N resists penetration 10 × N when new, down to half that as it wears (nothing at 0 durability). The chance to get through is 50% when penetration equals the resistance, +5% per point above and −5% per point below (always at +10, never at −10). Also decides wood: 30+ goes through (Section 13.4) |
+| Armor damage | How hard the round wears armor: each hit takes penetration × armor damage % × the armor's destructibility off its durability (half that for a ricochet) |
+| Fragmentation | Chance that a round that reaches flesh fragments: +40% damage, a sure light bleed and double its heavy-bleed chance. High on soft rounds, low on AP |
+| Velocity | m/s out of a standard barrel; each gun's barrel scales it (the gun's muzzle velocity over its caliber's everyday round's) and parts change it. Range is 150 m at 800 m/s and faster, less for slower rounds (at least 35%: pistols reach about 55–70 m, subsonic 7.62x39 about 55 m), and slower rounds keep less energy through wood |
+| Recoil | % more (or less) kick per shot and camera shake: hot loads +5–15%, subsonic −15% |
+| Accuracy | % tighter (or looser) base spread: match rounds +20%, subsonic −10%, tracers −5% |
+| Ricochet | Chance, × the armor's own ricochet factor (helmets 0.4–0.6, plates 0–0.1), that a round armor stops glances off for no damage instead of pushing blunt damage through |
+| Bleed L / H | Chance per hit that reaches flesh of a light / heavy bleed (heavy first, replacing a light one). Stopped rounds don't bleed |
+| Pellets, pellet spread | Shot shells: 8 pellets, each its own round, spread around the aim (chokes tighten it) |
+| Noise | Subsonic rounds are heard 60% as far |
+| Tracer | Red or green: a thick, bright streak that lasts 0.25 s, and anyone the round passes within 6 m of (instead of 2 m) learns where you are |
+
+| Armor rule | Detail |
+|---|---|
+| Armor | Helmets, body armor and armored rigs (an armor `class`) stop rounds on the body parts they cover (`zones`): helmets the head, most vests the thorax and stomach, the slick carrier only the thorax. Arms and legs are never covered |
+| Stopped | A round that doesn't get through either glances off (ricochet) or pushes blunt damage through: damage × the armor's blunt share × penetration / resistance (at least 30% of that), so a pistol round on a rifle plate barely hurts. No bleed, no fragmentation |
+| Through | A round that gets through keeps 85% of its damage, then may fragment and bleed as above |
+| Wear | Armor keeps its durability per item, saved with your gear and on bodies: looted armor can be half shot through |
+| Feedback | A round armor stops gets a smaller steel-blue hit marker with a square and a steel-blue damage number ("RICOCHET" if it glanced off); fragmenting hits an orange-red number; sparks instead of blood on the armor |
+
+| Armor | Class | Covers | Durability | Material | Blunt | Ricochet |
+|---|---|---|---|---|---|---|
+| PACA soft armor | 2 | Thorax, stomach | 50 | Aramid | 35% | — |
+| 6B23-1 body armor | 4 | Thorax, stomach | 49 | Steel | 25% | ×0.1 |
+| Gzhel-K body armor | 5 | Thorax, stomach | 65 | Ceramic | 20% | ×0.05 |
+| Slick plate carrier | 6 | Thorax | 80 | Ceramic | 15% | ×0.1 |
+| SSh-68 steel helmet | 2 | Head | 30 | Steel | 35% | ×0.5 |
+| ZSh-1-2M helmet | 4 | Head | 36 | Titanium | 25% | ×0.4 |
+| Altyn assault helmet | 5 | Head | 50 | Titanium | 20% | ×0.6 |
 
 | Rule | Detail |
 |---|---|
-| Damage | Taken off the body part hit (Section 13.5). Wood and cover reduce it (Section 13.4) |
-| Penetration | Decides whether a round goes through wood (and, once armor is modelled, through armor of a class) |
-| Armor damage | % of the round's damage taken off the armor's durability when armor stops or slows it. Body armor doesn't protect yet (Section 13.5): the values are ready for it |
-| Shot shells | Buckshot and flechettes fire **8 pellets**, each its own round with the damage and penetration in the table, spread `pellet_spread` degrees around the aim (after recoil and bloom). Chokes and barrels change the pellet spread (a part's `pellet_spread` modifier; a shotgun's stats show it). Slugs are one round. A shell is heard once, and the pellets that hit one target add up into one damage number |
-| Subsonic | A round's `noise` stat scales how far the shot is heard: 7.62x39 US is heard 60% as far (36 m instead of 60), on top of a suppressor |
+| Ammo charts | Examining a gun or a round shows every round of its caliber side by side: damage, penetration, armor damage and six squares for armor classes 1–6, each filled to the round's chance to get through new armor of that class and coloured by it (green → red; a colorblind-safe scale in the colorblind modes); hover for the numbers. The round loaded (or examined) is marked ▶; tracers have a coloured dot. The trader screen's **AMMO** tab shows the same for the gun in hand (or any caliber you pick), with velocity out of that gun, fragmentation, bleeds, recoil, accuracy and where to get each round |
 | Loading | Drag rounds onto a gun (in a grid or an equipment slot, in raid or out) to load them. Rounds of another type come out first, into the grid the new ones came from (else your pockets, rig or backpack; any with nowhere to go stay in, under the new ones), then the new ones fill the magazine. The gun reloads with that type from then on, and fires whatever is on top of its magazine |
 | Running out | Reloading with none of the gun's round type left switches to another round of the same caliber you carry ("Loading 12ga slug") |
 | Everyday round | Found guns come loaded with their caliber's everyday round (the commonest, then least penetrating: `ItemDB.ammo_of()`). Debug F3 in the test level cycles the gun's caliber |
-| Where | Prapor sells Eastern rounds (9x18 P, 5.45 HP / BT, 7.62x39 PS / US, 7.62x54R SP and LPS), Peacekeeper Western ones for dollars (9x19, .45, 5.56 FMJ / EPR, 7.62x51 FMJ / M80), Skier 9x19 and .45 hollow points, buckshot and slugs, Jaeger (once unlocked) shells, 7.62x51 SP and .338 FMJ. The best AP rounds only come from loot, barters and crafts |
+| Traders | Ammo offers need a loyalty level with the trader (`"ll"` in `offers.json`): everyday rounds at LL1, soft rounds, tracers and subsonic at LL2, armor-piercing rounds at LL3–4. Legendary AP rounds aren't sold |
+| Workbench | Level 1 crafts 5.45 BS, level 2 9x19 PBP, 12ga AP-20 and 7.62x39 BP, level 3 the six Legendary AP rounds (PPBS, SSA AP, MAI AP, M993, 7.62x54R BS, .338 AP) from found-in-raid parts and valuables (Section 9) |
 
 **Weapon parts** *(tune: `data/items/attachments/*.json`)*: what each kind does and how rarity scales it is in Section 12.1. Every gun comes with **standard** parts (Common, no effects), and each platform has upgrades from Common to Legendary. Parts shared between guns: AK-74 grips, handguards and dust covers also fit the Tundra 47, Grizzly 74 and Tempest S12 (stocks the Tundra and Grizzly, 5.45 muzzle devices and magazines the Grizzly); AR grips and stocks fit the Sentinel and the Longbow (grips the Wasp too); STANAG magazines and 5.56 muzzle devices fit the Sentinel, Halcyon and Bulwark; 7.62x54R muzzle devices the Mosin, SVD and Anvil; the 9x18 suppressor the PM and Strelka. Foregrips, tactical devices and sights go in any slot of their kind.
 
@@ -399,7 +436,7 @@ The 40 parts from before (AK-74N, PM, SVD and the rail parts) are listed in Sect
 | Containers | Rigs, backpacks and cases have their own grid (`"grid": [w, h]` stat). Drop an item on one to put it inside; double-click one to open it in its own window (e.g. a backpack in the stash). A container only goes inside another when empty, and never inside itself. The secure container takes no rigs, backpacks or containers |
 | Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol |
 | Rarity | Every item's background and border are its rarity colour, with the rarity letter in the corner so colour is never the only cue (colorblind palette aware) |
-| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (a gun's type, caliber and how many round types it takes, handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage (per pellet), penetration, armor damage and the guns it fits, armor class and durability, what meds treat, a container's grid and contents, sight, Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
+| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (a gun's type, caliber and how many round types it takes, handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage (per pellet), penetration, armor damage, velocity, fragmentation, bleeds, recoil, accuracy, ricochet, tracer and the guns it fits, with an ammo chart of its caliber beside the stats (a gun shows its caliber's too, Section 6.4); armor class, what it covers and its durability and durability, what meds treat, a container's grid and contents, sight, Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
 | Weapon parts | Out of raid, dropping a part on a gun (in a grid or an equipment slot) fits it to a free slot it fits (the gun lights amber). A gun's weight and value include its parts. Hover a gun for its durability, a part for what it does |
 | Weight | Everything you carry counts, containers with their contents. Up to **25 kg** no effect. 25–40 kg **heavy**: speed falls to 80% and sprinting costs up to 1.5× stamina. **40 kg+ overweight**: no sprinting or combat roll, speed falls to 55% at 65 kg. Shown in the inventory header and the HUD. Values in `data/config/inventory.tres` *(tune)* |
 | Ammo | Spare rounds are counted from the pockets, rig and backpack (not the secure container); a reload takes the rounds it used out of them. Guns remember the rounds loaded |
@@ -435,7 +472,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench and Lavatory. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench and Lavatory. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
@@ -451,16 +488,16 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
 
-**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). Selling, trader repair, insurance, LL-gated stock and restocks are planned.
+**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
 
 ### Loyalty Levels (LL)
 
 | LL | Player level | Reputation | Spent with trader | Unlocks |
 |---|---|---|---|---|
 | 1 | 1 | 0.00 | 0 | Basic stock |
-| 2 | 15 | 0.20 | 750k ₽ | Mid-tier gear, more barters |
-| 3 | 25 | 0.35 | 1.5M ₽ | High-tier gear, better buy prices |
-| 4 | 35 | 0.50 | 2.5M ₽ | Top-tier gear, best prices |
+| 2 | 15 | 0.20 | 750k ₽ | Mid-tier gear, more barters; soft rounds, tracers, subsonic |
+| 3 | 25 | 0.35 | 1.5M ₽ | High-tier gear, better buy prices; armor-piercing rounds |
+| 4 | 35 | 0.50 | 2.5M ₽ | Top-tier gear, best prices; the best AP rounds traders sell |
 
 Stock restocks every 1 h *(tune)*; some items have per-restock limits.
 
@@ -626,6 +663,8 @@ All of these values live in `data/config/combat.tres`.
 | Wood | Stops rounds with penetration below 30. Rounds with 30+ go through, keeping 60% damage and losing 15 penetration |
 | Concrete, metal | Stop every round |
 | Noise | Every shot is a 60 m noise, × the gun's noise from its parts (a suppressed AK: 18 m) × the round's (subsonic 7.62x39 US: 60%) |
+| Range | 150 m for rounds at 800 m/s or faster, less for slower ones (pistols about 55–70 m); damage falls off over the last 60% of the range to 75% (Section 6.4) |
+| Armor | Helmets and body armor may stop a round on the parts they cover, by its penetration against their class (Section 6.4) |
 | Health | Body parts for everyone, player and AI (Section 13.5). A round damages the part it lands on |
 | Guns | 22 guns in seven classes (Section 6.4). Each gun's handling is a `WeaponData` file (Section 15), changed by its parts (Section 12.1). Damage and penetration always come from the ammo |
 | Shot shells | Buckshot and flechettes fire 8 pellets per shot, each a round of its own, spread around the aim by the shell's pellet spread × the gun's (chokes); slugs fire one (Section 6.4) |
@@ -665,7 +704,7 @@ A risk / reward move for bolt-action rifles and DMRs (`WeaponData.weapon_class` 
 |---|---|
 | The spin | Sweep the reticle a full 360° around your character in one direction within **1.5 s** (`trick_spin_time`), rolling or not. What counts is the direction from you to the reticle, so the combat roll doesn't stop it. Turning back more than 20° starts the count over; the reticle has to be at least 0.75 m from you |
 | Ready window | A full spin opens **TRICK SHOT READY** for **1 s** (`trick_window`): a gold label over the HUD with the time left, a low sting, and a full gold ring around the reticle. While spinning, a gold arc around the reticle shows how far round you are |
-| The bonus | The **first shot** in the window deals **+50% damage** (`trick_damage_bonus`). It's put on the round as it leaves the muzzle, before wood, cover or armor reduce it, so armor still matters (body armor doesn't reduce damage yet, Section 13.5). The window closes with that shot; the next one is normal |
+| The bonus | The **first shot** in the window deals **+50% damage** (`trick_damage_bonus`). It's put on the round as it leaves the muzzle, before wood, cover or armor reduce it, so armor still matters (Section 6.4). The window closes with that shot; the next one is normal |
 | The risk | No aiming while spinning (from half a turn) or while the window is open: the sight drops and the shot is fired from the hip with full hip-fire bloom (+3.5° on the Mosin), plus any movement or roll bloom. Miss and the bolt has to cycle |
 | Hit | A gold hit marker with a diamond (held twice as long), "360!" popping up over the hit, and a sound sting |
 | Kill | A kill banner across the screen ("★ 360 TRICK SHOT ★", who went down, the bonus), +250 raid experience on top of the kill's and +25 **Drip** *(tune: `raid.tres`)* |
@@ -673,7 +712,7 @@ A risk / reward move for bolt-action rifles and DMRs (`WeaponData.weapon_class` 
 
 ### 13.5 Health & Status Effects *(tune)*
 
-Every actor, player and AI, has the same body. There's no armor or meds yet.
+Every actor, player and AI, has the same body. Armor stops rounds before they reach it (Section 6.4). There are no meds yet.
 
 | Part | HP | At 0 HP | Damage spread when blacked |
 |---|---|---|---|
@@ -689,8 +728,8 @@ Every actor, player and AI, has the same body. There's no armor or meds yet.
 | Hit zones | Where a round lands on the hitbox decides the part, by height (head from 86%, thorax from 60%, stomach from 47%, legs below) and by side (in the torso band, more than 0.22 m off the centre line is an arm; legs split left/right). The head is narrower than the hitbox: a round passing more than 0.13 m beside the centre line at head height misses, over the shoulder. Shots from the side tend to hit an arm first |
 | Aiming | With the reticle over someone, the player aims at their chest (the middle of the thorax), as bots do. Spread, sway and their movement decide where rounds land |
 | Blacked parts | A part at 0 is blacked. Damage it takes from then on, and any damage beyond a part's remaining HP, is multiplied (table) and shared evenly by every part that still has HP, head and thorax included. So limb hits can still kill |
-| Light bleed | 35% chance per hit (at 50 damage; scaled by damage, up to ×1.5). Loses 0.5 HP/s from that part |
-| Heavy bleed | 12% chance per hit (same scaling); replaces a light bleed on that part. Loses 1.5 HP/s |
+| Light bleed | Each round has its own chance per hit that reaches flesh (Section 6.4: soft rounds high, AP low; a fragmenting round always). Anything else: 35% at 50 damage, scaled by damage up to ×1.5. Loses 0.5 HP/s from that part |
+| Heavy bleed | The round's own chance (else 12%, same scaling); replaces a light bleed on that part. Loses 1.5 HP/s |
 | Bleeding | Doesn't stop on its own. On a blacked part, bleed damage spreads like any other damage. Treatment comes with meds |
 | Fracture | 25% chance per hit to an arm or leg (same scaling). Leg (fractured or blacked): 70% speed, no sprinting, no rolling. Arm (fractured or blacked): +2° weapon sway each |
 | Pain | While any part is fractured or blacked. +1° weapon sway; for the player, dark red tunnel vision at the screen edges (pulsing; steady with "reduce flashing") |
@@ -751,7 +790,8 @@ All of these values live in `data/config/vision.tres`.
 | Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category (weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container, melee), rarity, grid size, weight, base value, max stack, stats, `loot_weight`, an optional `icon`, and for guns a `weapon` (`WeaponData`). Items live in `data/items/<category>/` as either `.tres` files (one item each, made in the Inspector) or `.json` files (one item or a list; keys listed in `ItemData.from_dict()`, see the README). `ItemDB` loads both and reports bad entries with the file name. Enums are saved as numbers in `.tres` files, so only append new values. Exported builds need `*.json` in the export filter |
 | Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. Inventory grids draw them with `ItemDraw` |
 | Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, weapon skill, class (`weapon_class`: pistol, smg, shotgun, assault_rifle, dmr, bolt_action, lmg), fire rate, auto/semi, magazine, reload and empty-reload time; recoil (vertical, horizontal, recovery rate and delay, camera kick); spread and bloom (base spread, bloom per shot, max bloom, bloom recovery and delay, hip-fire, moving, sprint and roll spread, sway). Modding fields: platform, ergonomics, muzzle velocity, `slots` and `default_mods`; durability: wear per shot, malfunction threshold, jam chance at 0 durability, time to clear a jam. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
-| Content files | Guns: `data/weapons/<gun>.tres` plus their items in `data/items/weapons/<class>.json`; ammo: `data/items/ammo/<caliber>.json` (stats `caliber`, `damage`, `penetration`, `armor_damage`, optional `pellets`, `pellet_spread`, `noise`); parts: `data/items/attachments/<family>_mods.json`. `ItemDB.ammo_of(caliber)` lists a caliber's rounds (commonest first); `LootTable.ammo_for()` picks the everyday one. `Weapon.pull_trigger` fires one `Ballistics.fire` per pellet (`sound` only on the first); `InventoryDrag.can_load()` / `load_into()` load rounds dropped on a gun; `Player` chambers the top round of the magazine and switches round type on reload |
+| Content files | Guns: `data/weapons/<gun>.tres` plus their items in `data/items/weapons/<class>.json`; ammo: `data/items/ammo/<caliber>.json` (stats `caliber`, `damage`, `penetration`, `armor_damage`, `fragmentation`, `velocity`, `recoil`, `accuracy`, `ricochet`, `light_bleed`, `heavy_bleed`, optional `pellets`, `pellet_spread`, `noise`, `tracer`); armor: `class`, `durability`, `zones`, `material`, `blunt`, `ricochet`, `destructibility`; parts: `data/items/attachments/<family>_mods.json`. `ItemDB.ammo_of(caliber)` lists a caliber's rounds (commonest first); `LootTable.ammo_for()` picks the everyday one. `Weapon.pull_trigger` fires one `Ballistics.fire` per pellet (`sound` only on the first); `InventoryDrag.can_load()` / `load_into()` load rounds dropped on a gun; `Player` chambers the top round of the magazine and switches round type on reload |
+| Armor and rounds | `ArmorRules` (`scripts/combat/`): resistance, penetration chance, `resolve()` (penetration, ricochet, blunt, wear, fragmentation, bleed chances) and `effectiveness()` for the charts. `Actor.take_hit(damage, from, position, shot)` resolves a round (`ArmorRules.shot()`) against `worn_gear()` and returns the outcome, which `Ballistics` passes to `on_hit_landed()` (`Player.last_hit` drives the armor hit marker). `BodyHealth.hit` takes the round's bleed chances from the cause. `WeaponStats.shot_speed()` gives a round's speed out of a gun; `Weapon.ammo_recoil()` / `ammo_spread()` apply the round's recoil and accuracy. Armor `ItemInstance`s keep their durability (`is_armor()`, `has_durability()`). `AmmoChart` (`scripts/ui/`) draws the charts; `Trading.offer_level()`, `loyalty_block_reason()` and `update_loyalty()` gate offers by loyalty level |
 | Loot tables | `LootTable` Resource, one per container type (`data/loot_tables/*.tres`: base rarity weights, the table's rarity multipliers, categories or an item list, item weights, item count) with `roll_rarity()`, `roll_item()`, `roll()`, `roll_items()` (ready-made, guns loaded) and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: their table, grid size, search time, placeholder look, solid or not, bullet material); maps add `MapInfo.loot_multipliers` |
 | Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid (`fir`, plus raid-only `fir_pending` and `brought_in`), its own `InventoryGrid` for rigs / backpacks / containers, for guns the round type and the magazine (ammo instances bottom to top, so each run of rounds keeps its status), `durability` / `max_durability`, and for guns and parts the parts fitted (`mods`, slot id → `ItemInstance`, nested); saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses and gunsmith mods (`AffixData` / `GunsmithModData` Resources) |
 | Handling tuning | `HandlingConfig` (`data/config/handling.tres`): rarity strength, ergonomics points, the special-modifier rarity factor, ergonomics handling, weight sway and bloom-recovery loss, aimed sway, stance bloom rise, wear spread, recoil jitter, preview shots, skill recoil, stat limits, repair. `data/config/attachment_profiles.json`: each attachment kind's default effects. The `Weapon` node keeps the recoil kick and the bloom (shot and stance) at run time; `Actor.set_stance` each tick feeds it speed, sprint, roll and aim (`aim_blend()`) |
@@ -899,3 +939,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Weapon handling rework (Sections 12.1, 13.4): recoil split into vertical (muzzle climb: the aim moves out along the aim direction and rounds fly higher) and horizontal (random side kick), with recoil recovery pulling the aim back after each shot; bloom replaces recoil spread (grows per shot up to max bloom, while moving, sprinting, rolling and hip-firing; shrinks at bloom recovery); the bloom reticle is now a circle at the kicked aim point. Attachments change ten handling stats from a per-kind profile table (`attachment_profiles.json`) with rarity strength Common 4% to Legendary 23% and fixed downsides; heavier builds sway more and recover bloom slower; low durability adds spread; weapon skills (new: Pistols) and Strength reduce recoil. Modding screen: recoil pattern preview and spread circles with before / after numbers. Tuning in `handling.tres` and the gun `.tres` files. New parts: polymer foregrip and rubberized AK grip (Common), AK competition brake (Legendary) (96 items) |
 | 2026-10-12 | 360 trick shots (Section 13.4.1): sweep the reticle a full turn one way within 1.5 s (rolling or not) with a bolt-action rifle or DMR and a TRICK SHOT READY window opens for 1 s; its first shot deals +50% damage on the round (before armor), fired from the hip with full bloom (no aiming while spinning). Gold hit marker, "360!" popup, sound sting, kill banner, +250 XP and +25 Drip per kill. Drip (new), Trick Shots on the character screen, three trick-shot quests (Showboat, Around the World, Spin Doctor; new quest objective type `trick_kill`). New guns: Mosin (bolt-action) and SVD (DMR) with 7.62x54R LPS and an SVD magazine (100 items); new skills Bolt-action rifles and Marksman rifles. Tuning per gun (`trick_spin_time`, `trick_window`, `trick_damage_bonus`) and in `raid.tres`. Save version 6 |
 | 2026-10-12 | Starter arsenal (Section 6.4; the ammo table referred to as "3.2a" didn't exist in this document, so it was written there): 18 new guns, 22 in all across pistols, SMGs, shotguns, assault rifles, DMRs, bolt-action rifles and LMGs (Vektor P9, Bastion 45, Strelka MP, Hornet SMG, Wasp PDW, Brigand 45, Warden 870, Tempest S12, Sentinel AR, Tundra 47, Halcyon B5, Partisan, Longbow DMR, Huntsman 700, Leviathan .338, Grizzly 74, Bulwark 249, Anvil PK); 10 calibers with 3–5 rounds each (45 rounds; new `armor_damage` stat on every round, Common everyday rounds, Epic/Legendary best AP); 143 new weapon parts (183 in all) with standard parts for every gun and upgrades from Common to Legendary, plus AK, AR, STANAG and caliber parts shared across guns. Shot shells fire 8 pellets (chokes tighten them: new `pellet_spread` part modifier, shown for shotguns), subsonic rounds are quieter (`noise` ammo stat), rounds dragged onto a gun load it, reloading with none of the gun's round type left switches to another of its caliber, found guns come loaded with their caliber's everyday round. Mosin and SVD get a muzzle slot. New weapon classes `smg`, `shotgun`, `lmg` and skills SMGs, Shotguns, Machine guns. Traders sell most of it (Jaeger has hunting stock ready for when he unlocks). 302 items |
+| 2026-10-12 | Ammo rework (Section 6.4; the request's ammo table didn't come through, a "[paste the table]" placeholder, so the rounds in Section 6.4 were kept and extended): every round now has fragmentation, velocity, recoil, accuracy, ricochet and light/heavy bleed chances on top of damage, penetration and armor damage (50 rounds, 4–6 per caliber; 5.45 PS and BS moved into `545.json`); 5 new tracer rounds (9x19, 5.56, 7.62x39, 7.62x51, 7.62x54R; 5.45 BT is one too). Armor works: helmets and vests stop rounds on the parts they cover by penetration against class and wear, push blunt damage through or let them ricochet, and wear down (durability saved per item). Soft rounds fragment and bleed, AP rounds get through armor for less flesh damage. Velocity sets range, damage falloff and energy through wood; rounds change recoil and spread. Ammo charts (examine panel for guns and rounds; new AMMO tab on the trader screen) compare every round of a caliber with armor class 1–6 squares. Ammo offers need trader loyalty (LL1 cheap, LL3–4 AP; Legendary rounds aren't sold); loyalty levels now rise when you meet their requirements. Workbench level 3 crafts the Legendary AP rounds. Armor hit marker and damage numbers. 307 items |

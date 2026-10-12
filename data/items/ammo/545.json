@@ -1,8 +1,12 @@
 [
+  {"id": "ammo_545_ps", "name": "5.45x39 PS", "description": "Standard steel-core 5.45 round.", "category": "ammo", "rarity": "common", "weight": 0.01, "value": 120, "max_stack": 60,
+   "stats": {"caliber": "5.45x39", "damage": 50, "penetration": 28, "armor_damage": 40, "fragmentation": 0.2, "velocity": 890, "recoil": 0, "accuracy": 0, "ricochet": 0.25, "light_bleed": 0.35, "heavy_bleed": 0.12}},
   {"id": "ammo_545_hp", "name": "5.45x39 HP", "description": "Hunting hollow point. Big wounds on the unarmored.", "category": "ammo", "rarity": "uncommon", "weight": 0.01, "value": 150, "max_stack": 60,
-   "stats": {"caliber": "5.45x39", "damage": 62, "penetration": 9, "armor_damage": 15}},
-  {"id": "ammo_545_bt", "name": "5.45x39 BT", "description": "Steel-core tracer: you can see where it's going.", "category": "ammo", "rarity": "rare", "weight": 0.01, "value": 400, "max_stack": 60,
-   "stats": {"caliber": "5.45x39", "damage": 48, "penetration": 37, "armor_damage": 50}},
+   "stats": {"caliber": "5.45x39", "damage": 62, "penetration": 9, "armor_damage": 15, "fragmentation": 0.55, "velocity": 884, "recoil": 0, "accuracy": -5, "ricochet": 0.05, "light_bleed": 0.55, "heavy_bleed": 0.3}},
+  {"id": "ammo_545_bt", "name": "5.45x39 BT", "description": "Steel-core tracer: you can see where it's going, and so can they.", "category": "ammo", "rarity": "rare", "weight": 0.01, "value": 400, "max_stack": 60,
+   "stats": {"caliber": "5.45x39", "damage": 48, "penetration": 37, "armor_damage": 50, "fragmentation": 0.12, "velocity": 880, "recoil": 0, "accuracy": 0, "ricochet": 0.35, "light_bleed": 0.3, "heavy_bleed": 0.1, "tracer": "red"}},
+  {"id": "ammo_545_bs", "name": "5.45x39 BS", "description": "Armor-piercing 5.45 round with a tool-steel core.", "category": "ammo", "rarity": "epic", "weight": 0.01, "value": 1500, "max_stack": 60,
+   "stats": {"caliber": "5.45x39", "damage": 40, "penetration": 45, "armor_damage": 80, "fragmentation": 0.03, "velocity": 830, "recoil": 5, "accuracy": 0, "ricochet": 0.45, "light_bleed": 0.2, "heavy_bleed": 0.06}},
   {"id": "ammo_545_ppbs", "name": "5.45x39 PPBS \"Needle\"", "description": "Experimental tungsten-carbide penetrator. Goes through nearly anything.", "category": "ammo", "rarity": "legendary", "weight": 0.01, "value": 4000, "max_stack": 60,
-   "stats": {"caliber": "5.45x39", "damage": 37, "penetration": 62, "armor_damage": 90}}
+   "stats": {"caliber": "5.45x39", "damage": 37, "penetration": 62, "armor_damage": 90, "fragmentation": 0.02, "velocity": 905, "recoil": 5, "accuracy": 5, "ricochet": 0.5, "light_bleed": 0.15, "heavy_bleed": 0.05}}
 ]

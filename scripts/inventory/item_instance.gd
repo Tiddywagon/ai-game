@@ -35,6 +35,8 @@ var magazine: Array[ItemInstance] = []
 var mods: Dictionary = {}
 ## Guns: condition out of 100. Every shot wears it a little; worn guns jam (WeaponData). A repair
 ## restores it to `max_durability`, which drops a little each time (WeaponStats.repair()).
+## Armor and helmets: durability points out of their "durability" stat. Every hit wears them, and worn
+## armor stops less (ArmorRules); at 0 it stops nothing.
 var durability := 100.0
 var max_durability := 100.0
 
@@ -52,6 +54,9 @@ static func create(id: String, amount := 1) -> ItemInstance:
 	if grid.size() == 2:
 		instance.contents = InventoryGrid.new(Vector2i(int(grid[0]), int(grid[1])), _grid_kind(item_data), instance)
 	WeaponMods.install_defaults(instance)
+	if instance.is_armor():
+		instance.max_durability = float(item_data.stats.get("durability", 100.0))
+		instance.durability = instance.max_durability
 	return instance
 
 
@@ -139,6 +144,16 @@ func value() -> int:
 ## A gun (with durability and mods).
 func is_gun() -> bool:
 	return data.weapon != null
+
+
+## Armor that stops rounds: a vest, a helmet or an armored rig (it has an armor "class").
+func is_armor() -> bool:
+	return data.stats.has("class") and data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET, ItemData.Category.RIG]
+
+
+## Guns and armor wear and keep their durability.
+func has_durability() -> bool:
+	return is_gun() or is_armor()
 
 
 # --- Magazine ---------------------------------------------------------------------------------
@@ -245,7 +260,7 @@ func to_dict() -> Dictionary:
 		for slot: String in mods:
 			saved[slot] = (mods[slot] as ItemInstance).to_dict()
 		result.mods = saved
-	if is_gun():
+	if has_durability():
 		result.durability = snappedf(durability, 0.001)
 		result.max_durability = snappedf(max_durability, 0.001)
 	return result
@@ -269,7 +284,7 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 			var mod := from_dict(saved_mods[slot])
 			if mod and not WeaponMods.slot_on(instance, slot).is_empty():
 				instance.mods[slot] = mod
-	instance.max_durability = clampf(float(entry.get("max_durability", 100.0)), 1.0, 100.0)
+	instance.max_durability = clampf(float(entry.get("max_durability", instance.max_durability)), 1.0, instance.max_durability)
 	instance.durability = clampf(float(entry.get("durability", instance.max_durability)), 0.0, instance.max_durability)
 	for saved in entry.get("magazine", []):
 		var rounds := ItemInstance.new()
