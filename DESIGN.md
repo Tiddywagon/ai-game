@@ -121,6 +121,24 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 - Rates are per-roll weights for generic loot spawns; sum = 100%.
 - **Modifiers:** container type (safe/jacket/weapon box), map tier (Labs ×2 for Epic+), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
 
+**How a roll works:** weight of each rarity = base weight (`data/loot_tables/default.tres`) × the container's multiplier × the map's multiplier. Pick a rarity by weight, then an item of that rarity the container can hold (each item's `loot_weight` sets how often it comes up among its rarity; 0 = never from loot, for quest items and boss uniques). If a container can't hold any item of some rarity (a medical case has no Epic meds), that rarity's weight is 0, so the other rarities share its chance. Stackable items (ammo) come as a partial stack (a fifth to a half of a full stack).
+
+| Container *(tune)* | Holds | Items | Rarity multipliers (C / U / R / UR / E / L) |
+|---|---|---|---|
+| Loose loot | Anything | 1 | 1 / 1 / 1 / 1 / 1 / 1 |
+| Jacket | Ammo, meds, food, valuables, junk, keys | 0–2 | 1 / 1 / 1 / 1 / 1 / 1 |
+| Duffle bag | Ammo, attachments, meds, food, valuables, junk | 1–3 | 1 / 1 / 1 / 1 / 1 / 1 |
+| Weapon box | Weapons, ammo, attachments | 1–2 | 0.8 / 1 / 1.3 / 1.3 / 1.2 / 1 |
+| Medical case | Meds | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 |
+| Safe | Valuables, keys | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 |
+
+| Map | Rarity multipliers |
+|---|---|
+| Labs | Epic and Legendary ×2 |
+| Every other map | ×1 |
+
+So a safe on Labs drops Epic about 22% and Legendary about 4.4% of the time, against 2.5% and 0.5% for loose loot elsewhere. `scenes/debug/loot_roll_test.tscn` rolls 10,000 times per setup and prints expected vs rolled rates.
+
 ### 6.3 Gear Variance (Rolled Loot)
 
 Borderlands-style variety with Tarkov-style realism. Each dropped **weapon, attachment, armor, helmet, rig, or backpack** is an *instance* of a base item. Depending on rarity, it can roll **craftsmanship bonuses** based on real differences in manufacturing quality, wear, and gunsmith work. Meds, food, ammo, valuables, junk, and keys never roll.
@@ -483,9 +501,10 @@ All of these values live in `data/config/vision.tres`.
 
 | Area | Approach |
 |---|---|
-| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category, rarity, size, weight, base value, max stack, stats, and for guns a `weapon` (`WeaponData`). One `.tres` per item in `data/items/<category>/<id>.tres`; enums are saved as numbers, so only append new values |
+| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category (weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container), rarity, grid size, weight, base value, max stack, stats, `loot_weight`, an optional `icon`, and for guns a `weapon` (`WeaponData`). Items live in `data/items/<category>/` as either `.tres` files (one item each, made in the Inspector) or `.json` files (one item or a list; keys listed in `ItemData.from_dict()`, see the README). `ItemDB` loads both and reports bad entries with the file name. Enums are saved as numbers in `.tres` files, so only append new values. Exported builds need `*.json` in the export filter |
+| Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. The stash grid draws them |
 | Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, fire rate, auto/semi, magazine, reload and empty-reload time, base and movement spread, recoil per shot, recoil cap, recovery rate and delay, camera kick. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
-| Loot tables | `LootTable` Resource with weighted rarity rolls |
+| Loot tables | `LootTable` Resource (`data/loot_tables/default.tres`: base rarity weights) with `roll_rarity()`, `roll_item()`, `roll_container()` and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: multipliers, categories, item count); maps add `MapInfo.loot_multipliers` |
 | Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
 | Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
 | Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, equipment, pockets, skills, stash contents; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
@@ -511,11 +530,11 @@ All of these values live in `data/config/vision.tres`.
 
 | Folder | Contents |
 |---|---|
-| `scenes/` | Gameplay scenes: `actors/` (player, bots), `weapons/` (the shared gun scene), `props/` (car), `menu/` (main menu background), `hideout/` |
+| `scenes/` | Gameplay scenes: `actors/` (player, bots), `weapons/` (the shared gun scene), `props/` (car), `menu/` (main menu background), `hideout/`, `debug/` (test scenes such as the loot roll check) |
 | `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
 | `ui/` | Main menu (entry scene), settings, raid setup, loading, character, traders, pause menu, HUD; `theme/` |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets, guns, impact effects, flashbang) and `world/` (cover, vision, raid environment) |
-| `data/` | `.tres` Resources: `items/` (one subfolder per category), `weapons/` (gun handling), `loot_tables/`, `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info) |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets, guns, impact effects, flashbang), `world/` (cover, vision, raid environment) and `debug/` |
+| `data/` | `.tres` Resources (and item `.json` files): `items/` (one subfolder per category), `weapons/` (gun handling), `loot_tables/` (`default.tres`, `containers/`), `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info, loot multipliers) |
 | `assets/` | `models/`, `textures/`, `audio/` (`music/`, `ui/`), `shaders/`, `fonts/` |
 | `tools/` | Helper scripts run outside Godot (placeholder audio generator) |
 
@@ -617,3 +636,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-11 | Guns: `WeaponData` resource + shared `Weapon` node (fire rate, auto/semi, magazine, R reload with tactical/empty times, spread from movement and recoil), muzzle flash, hit sparks, HUD ammo panel, reload ring, auto-reload setting active. Bots use the same guns and reload behind cover; their spread is now aim error on top of the gun (Scav 2.8°, PMC 0.3°) |
 | 2026-10-12 | Body-part health (head, thorax, stomach, arms, legs; blacked parts spread damage), light/heavy bleeds, fractures, pain, weapon sway, HUD silhouette and pain vignette, death screen with cause of death, `health.tres`. Replaces single health pools; player aims at the chest of whoever is under the reticle |
 | 2026-10-12 | Vision (13.6): Project Zomboid-style cone + awareness circle, 2D shadow casting, fog-of-war shader with remembered layout, enemies hidden outside view, low cover blocks only crouched, time of day / dark rooms / flashlight, fog and rain, pain / head injury / flashbang, sound markers, optics and binoculars with camera pull-out, AI on the same rules (scoped PMCs), `vision.tres`; AI vision values moved there from bot profiles |
+| 2026-10-12 | Item system: categories renamed food and junk (same numbers), items in `.tres` or JSON, `loot_weight`, rarity-coloured placeholder icons, 46 new items (52 in all) across every category and rarity, PM pistol. Loot tables: base weights 55 / 25 / 12 / 5 / 2.5 / 0.5, container types and map multipliers (Labs Epic+ ×2), debug roll scene |

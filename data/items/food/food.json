@@ -1,0 +1,12 @@
+[
+  {"id": "crackers", "name": "Army crackers", "description": "Dry, filling, forever.", "category": "food",
+   "rarity": "common", "weight": 0.1, "value": 2500, "stats": {"energy": 15}},
+  {"id": "water_bottle", "name": "Water bottle", "description": "Half a litre of clean water.", "category": "food",
+   "rarity": "common", "size": [1, 2], "weight": 0.6, "value": 7000, "stats": {"hydration": 60}},
+  {"id": "canned_beef", "name": "Canned beef stew", "description": "Heavy, greasy, very welcome.", "category": "food",
+   "rarity": "uncommon", "weight": 0.35, "value": 12000, "stats": {"energy": 60}},
+  {"id": "energy_drink", "name": "Energy drink", "description": "Sugar and caffeine.", "category": "food",
+   "rarity": "uncommon", "weight": 0.36, "value": 9000, "stats": {"hydration": 40, "energy": 10}},
+  {"id": "mre", "name": "Field ration (MRE)", "description": "A full meal in a pouch.", "category": "food",
+   "rarity": "rare", "size": [1, 2], "weight": 0.7, "value": 30000, "stats": {"energy": 75, "hydration": 15}}
+]

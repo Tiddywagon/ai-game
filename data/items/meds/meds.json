@@ -1,0 +1,14 @@
+[
+  {"id": "tourniquet", "name": "Tourniquet", "description": "Stops a heavy bleed.", "category": "meds",
+   "rarity": "common", "weight": 0.1, "value": 3000, "stats": {"treats": ["heavy_bleed"], "uses": 1}},
+  {"id": "ai2_medkit", "name": "AI-2 medkit", "description": "Small first aid kit. Restores 100 HP.", "category": "meds",
+   "rarity": "uncommon", "weight": 0.2, "value": 7000, "stats": {"heals": 100}},
+  {"id": "splint", "name": "Splint", "description": "Fixes a fracture.", "category": "meds",
+   "rarity": "uncommon", "weight": 0.1, "value": 3500, "stats": {"treats": ["fracture"], "uses": 1}},
+  {"id": "painkillers", "name": "Painkillers", "description": "Suppresses pain for a few minutes.", "category": "meds",
+   "rarity": "uncommon", "weight": 0.05, "value": 9000, "stats": {"treats": ["pain"], "uses": 4}},
+  {"id": "surgical_kit", "name": "Surgical kit", "description": "Restores a blacked limb.", "category": "meds",
+   "rarity": "rare", "size": [2, 1], "weight": 0.8, "value": 40000, "stats": {"treats": ["blacked"], "uses": 5}},
+  {"id": "propital", "name": "Propital stimulant", "description": "Regenerates health and suppresses pain for a while.", "category": "meds",
+   "rarity": "ultra_rare", "weight": 0.05, "value": 50000, "stats": {"effect": "regeneration"}}
+]

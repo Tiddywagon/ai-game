@@ -1,0 +1,13 @@
+[
+  {
+    "id": "ammo_9x18_pst",
+    "name": "9x18 PM PSt",
+    "description": "Steel-core pistol round.",
+    "category": "ammo",
+    "rarity": "common",
+    "weight": 0.01,
+    "value": 60,
+    "max_stack": 50,
+    "stats": {"caliber": "9x18", "damage": 50, "penetration": 12}
+  }
+]

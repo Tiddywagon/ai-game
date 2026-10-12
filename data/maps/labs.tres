@@ -14,3 +14,4 @@ players = "6 PMCs · 12 Raiders"
 extracts = "3 (all conditional)"
 boss = "None"
 scene_path = ""
+loot_multipliers = PackedFloat32Array(1, 1, 1, 1, 2, 2)

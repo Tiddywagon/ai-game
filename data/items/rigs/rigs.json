@@ -1,0 +1,6 @@
+[
+  {"id": "scav_vest", "name": "Scav vest", "description": "Cheap vest with a few pouches.", "category": "rig",
+   "rarity": "common", "size": [2, 2], "weight": 0.3, "value": 4000, "stats": {"slots": 4}},
+  {"id": "tactical_rig", "name": "Tactical chest rig", "description": "Six magazine pouches and two utility pouches.", "category": "rig",
+   "rarity": "uncommon", "size": [3, 3], "weight": 1.0, "value": 18000, "stats": {"slots": 8}}
+]

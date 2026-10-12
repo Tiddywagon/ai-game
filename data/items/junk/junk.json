@@ -1,0 +1,18 @@
+[
+  {"id": "screws", "name": "Screw nuts", "description": "Barter and crafting material.", "category": "junk",
+   "rarity": "common", "weight": 0.1, "value": 6000},
+  {"id": "duct_tape", "name": "Duct tape", "description": "Fixes everything, almost.", "category": "junk",
+   "rarity": "common", "weight": 0.15, "value": 9000},
+  {"id": "wires", "name": "Wires", "description": "A bundle of copper wire.", "category": "junk",
+   "rarity": "common", "weight": 0.1, "value": 7000},
+  {"id": "toilet_paper", "name": "Toilet paper", "description": "Needed for the Lavatory.", "category": "junk",
+   "rarity": "common", "weight": 0.1, "value": 3500},
+  {"id": "matches", "name": "Matches", "description": "A box of matches.", "category": "junk",
+   "rarity": "common", "weight": 0.02, "value": 2000},
+  {"id": "weapon_parts", "name": "Weapon parts", "description": "Springs, pins and a bolt carrier.", "category": "junk",
+   "rarity": "uncommon", "size": [2, 1], "weight": 0.5, "value": 15000},
+  {"id": "fuel_can", "name": "Fuel can", "description": "Powers the hideout generator.", "category": "junk",
+   "rarity": "uncommon", "size": [2, 2], "weight": 4.0, "value": 30000},
+  {"id": "electric_motor", "name": "Electric motor", "description": "Wanted for hideout upgrades.", "category": "junk",
+   "rarity": "rare", "size": [2, 2], "weight": 2.3, "value": 55000}
+]

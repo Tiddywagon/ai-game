@@ -1,0 +1,10 @@
+[
+  {"id": "gold_chain", "name": "Gold chain", "description": "Sells well to Therapist.", "category": "valuable",
+   "rarity": "rare", "weight": 0.1, "value": 30000},
+  {"id": "bronze_lion", "name": "Bronze lion", "description": "Heavy statuette. Collectors pay a lot.", "category": "valuable",
+   "rarity": "ultra_rare", "size": [2, 2], "weight": 3.0, "value": 95000},
+  {"id": "bitcoin", "name": "Physical bitcoin", "description": "A souvenir coin worth a fortune.", "category": "valuable",
+   "rarity": "epic", "weight": 0.01, "value": 300000},
+  {"id": "gpu", "name": "Graphics card", "description": "Wanted for the Bitcoin farm.", "category": "valuable",
+   "rarity": "epic", "size": [2, 1], "weight": 0.6, "value": 420000}
+]

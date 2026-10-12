@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+
+[resource]
+script = ExtResource("1_container")
+id = "safe"
+display_name = "Safe"
+rarity_multipliers = PackedFloat32Array(0.3, 0.8, 1.5, 2.5, 3, 3)
+categories = Array[int]([9, 11])
+item_count = Vector2i(1, 2)

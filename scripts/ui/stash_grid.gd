@@ -1,6 +1,6 @@
 extends Control
-## Read-only view of the stash grid (DESIGN.md §8): every item at its cell position with a
-## rarity-coloured border, short name, rarity letter and stack count. Hover an item for details.
+## Read-only view of the stash grid (DESIGN.md §8): every item at its cell position with its icon
+## (a rarity-coloured placeholder until there's art), short name, rarity letter and stack count. Hover an item for details.
 ## Moving items around comes with the inventory system.
 
 const CELL := 52
@@ -29,8 +29,14 @@ func _draw() -> void:
 			continue
 		var rect := _rect_of(entry, item)
 		var color := Palette.rarity_color(item.rarity)
-		draw_rect(rect, Color(color, 0.16))
-		draw_rect(rect, color, false, 2.0)
+		if entry.get("rotated", false):
+			# Rotated items: draw the icon turned a quarter turn to fit the swapped footprint.
+			draw_set_transform(rect.get_center(), PI / 2.0)
+			draw_texture_rect(item.get_icon(), Rect2(-Vector2(rect.size.y, rect.size.x) / 2.0, Vector2(rect.size.y, rect.size.x)), false, Color(1, 1, 1, 0.85))
+			draw_set_transform(Vector2.ZERO)
+		else:
+			draw_texture_rect(item.get_icon(), rect, false, Color(1, 1, 1, 0.85))
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 19)), Color(0, 0, 0, 0.6))  # Keeps the name readable.
 		draw_string(font, rect.position + Vector2(5, 15), _short_name(item, rect.size.x), HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 8, 12, TEXT_COLOR)
 		draw_string(font, rect.position + Vector2(5, rect.size.y - 5), Palette.RARITY_SHORT[item.rarity], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, color)
 		if int(entry.count) > 1:

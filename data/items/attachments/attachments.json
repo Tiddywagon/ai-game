@@ -1,0 +1,12 @@
+[
+  {"id": "foregrip", "name": "Vertical foregrip", "description": "Steadies the gun.", "category": "attachment",
+   "rarity": "uncommon", "weight": 0.08, "value": 9000, "stats": {"ergonomics": 4}},
+  {"id": "red_dot", "name": "Red dot sight", "description": "Fast both-eyes-open sight.", "category": "attachment",
+   "rarity": "rare", "weight": 0.12, "value": 22000, "stats": {"optic": 1}},
+  {"id": "holo_sight", "name": "Holographic sight", "description": "Wide window, quick to pick up.", "category": "attachment",
+   "rarity": "rare", "weight": 0.3, "value": 38000, "stats": {"optic": 2}},
+  {"id": "scope_2_4", "name": "2-4x scope", "description": "Variable low-power scope.", "category": "attachment",
+   "rarity": "ultra_rare", "size": [2, 1], "weight": 0.45, "value": 65000, "stats": {"optic": 3}},
+  {"id": "scope_6_8", "name": "6-8x scope", "description": "Long-range marksman scope.", "category": "attachment",
+   "rarity": "epic", "size": [2, 1], "weight": 0.7, "value": 130000, "stats": {"optic": 4}}
+]

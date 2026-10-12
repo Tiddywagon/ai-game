@@ -1,0 +1,10 @@
+[
+  {"id": "paca_armor", "name": "PACA soft armor", "description": "Concealable soft vest. Stops pistol rounds.", "category": "armor",
+   "rarity": "uncommon", "size": [3, 3], "weight": 3.5, "value": 22000, "stats": {"class": 2, "durability": 50}},
+  {"id": "armor_6b23", "name": "6B23-1 body armor", "description": "Russian army vest with steel plates.", "category": "armor",
+   "rarity": "rare", "size": [3, 3], "weight": 8.6, "value": 55000, "stats": {"class": 4, "durability": 49}},
+  {"id": "gzhel_armor", "name": "Gzhel-K body armor", "description": "Modern ceramic plates; stops most rifle rounds.", "category": "armor",
+   "rarity": "ultra_rare", "size": [3, 3], "weight": 9.0, "value": 140000, "stats": {"class": 5, "durability": 65}},
+  {"id": "slick_carrier", "name": "Slick plate carrier", "description": "Light carrier with class 6 plates. The best armor money can't buy.", "category": "armor",
+   "rarity": "legendary", "size": [3, 3], "weight": 9.5, "value": 420000, "stats": {"class": 6, "durability": 80}}
+]

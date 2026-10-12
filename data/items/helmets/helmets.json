@@ -1,0 +1,8 @@
+[
+  {"id": "ssh68_helmet", "name": "SSh-68 steel helmet", "description": "Old Soviet steel pot.", "category": "helmet",
+   "rarity": "uncommon", "size": [2, 2], "weight": 1.5, "value": 9000, "stats": {"class": 2, "durability": 30}},
+  {"id": "zsh_helmet", "name": "ZSh-1-2M helmet", "description": "Titanium helmet with a visor mount.", "category": "helmet",
+   "rarity": "rare", "size": [2, 2], "weight": 3.2, "value": 60000, "stats": {"class": 4, "durability": 36}},
+  {"id": "altyn_helmet", "name": "Altyn assault helmet", "description": "Heavy class 5 helmet with a face shield.", "category": "helmet",
+   "rarity": "epic", "size": [2, 2], "weight": 5.9, "value": 250000, "stats": {"class": 5, "durability": 50}}
+]

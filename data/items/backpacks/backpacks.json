@@ -1,0 +1,8 @@
+[
+  {"id": "sling_bag", "name": "Sling bag", "description": "Small shoulder bag.", "category": "backpack",
+   "rarity": "common", "size": [2, 3], "weight": 0.3, "value": 5000, "stats": {"grid": [3, 3]}},
+  {"id": "tourist_pack", "name": "Tourist backpack", "description": "Roomy hiking pack.", "category": "backpack",
+   "rarity": "uncommon", "size": [4, 5], "weight": 1.4, "value": 25000, "stats": {"grid": [5, 6]}},
+  {"id": "raid_pack", "name": "Large raid pack", "description": "Military pack for long raids.", "category": "backpack",
+   "rarity": "rare", "size": [5, 6], "weight": 3.6, "value": 90000, "stats": {"grid": [6, 8]}}
+]
