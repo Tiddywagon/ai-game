@@ -35,6 +35,8 @@ func show_outcome(outcome: RaidOutcome, raid: RaidController) -> void:
 	_stat("Time in raid", "%d:%02d" % [int(outcome.seconds) / 60, int(outcome.seconds) % 60])
 	_stat("Kills", str(outcome.kills))
 	_stat("Experience", "+%s" % UiFormat.thousands(outcome.xp))
+	if outcome.trick_hits > 0:
+		_stat("Trick shots", "%d hits, %d kills  ·  +%d Drip" % [outcome.trick_hits, outcome.trick_kills, outcome.drip])
 	if outcome.side == "scav" and outcome.survived():
 		_stat("Moved to stash", "%d items" % outcome.moved_to_stash.size())
 		if not outcome.left_behind.is_empty():

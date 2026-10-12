@@ -18,6 +18,10 @@ var elapsed := 0.0
 var time_left := 0.0
 ## Raid experience so far.
 var xp := 0
+## Drip earned this raid (360 trick-shot kills), and the trick-shot kills: [{"side": "pmc" or "scav",
+## "weapon_class"}] (for quests).
+var drip := 0
+var trick_kills: Array[Dictionary] = []
 var outcome: RaidOutcome
 ## The extract zone the player is standing in, and how long they've been in it.
 var extract_zone: ExtractZone
@@ -31,6 +35,7 @@ func _ready() -> void:
 	if player:
 		player.killed.connect(_on_kill)
 		player.loot_claimed.connect(_on_loot_claimed)
+		player.trick_shot_hit.connect(_on_trick_shot_hit)
 		player.died.connect(end_raid.bind(RaidOutcome.Status.KILLED))
 
 
@@ -79,13 +84,23 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 	if outcome:
 		return outcome
 	outcome = RaidOutcome.settle(status, GameState.raid.get("side", "pmc"), player.inventory, elapsed, xp,
-		player.kills, is_real_raid())
+		player.kills, is_real_raid(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip})
 	raid_ended.emit(outcome)
 	return outcome
 
 
 func _on_kill(target: Actor) -> void:
 	xp += config.xp_pmc_kill if target.side == Actor.Side.PMC else config.xp_scav_kill
+
+
+## A 360 trick-shot kill: bonus experience on top of the kill's, and Drip.
+func _on_trick_shot_hit(target: Actor, _damage: float, _at: Vector3, killed: bool) -> void:
+	if not killed:
+		return
+	xp += config.xp_trick_kill
+	drip += config.drip_trick_kill
+	trick_kills.append({"side": "pmc" if target.side == Actor.Side.PMC else "scav",
+		"weapon_class": player.weapon.data.weapon_class if player.weapon.data else ""})
 
 
 func _on_loot_claimed(items: Array[ItemInstance]) -> void:

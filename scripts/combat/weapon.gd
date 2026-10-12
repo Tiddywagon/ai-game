@@ -52,6 +52,11 @@ var shot_bloom := 0.0
 var stance_bloom := 0.0
 ## Share of each kick the holder fights off (AI skill; 0 for the player).
 var recoil_control := 0.0
+## 360 trick shot (DESIGN.md §13.4): the next shot deals the gun's trick-shot bonus damage. Set by the
+## holder when a trick window opens; the first shot uses it up.
+var trick_armed := false
+## True while the shot being fired is a trick shot (hits land during it), so the holder can tell.
+var firing_trick_shot := false
 ## The sight on this gun (VisionConfig.Optic): for the player, the sight fitted to it (WeaponStats);
 ## for AI, BotProfile.optic.
 var optic := 0
@@ -94,6 +99,7 @@ func equip(gun: ItemData, ammo_item: ItemData, spare: int, stats: WeaponData = n
 	item = gun
 	data = stats if stats else (gun.weapon if gun else null)
 	cancel_reload()
+	trick_armed = false
 	is_jammed = false
 	is_clearing = false
 	durability = -1.0
@@ -162,7 +168,11 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 	_trigger_reset = false
 	rounds -= 1
 	var direction := cone(kicked((target - origin).normalized()), spread() + extra_spread)
-	Ballistics.fire(shooter, origin, direction, ammo, muzzle.global_position, data)
+	# A trick shot: more damage on the round itself, so armor still applies to it.
+	firing_trick_shot = trick_armed
+	trick_armed = false
+	var damage_multiplier := 1.0 + data.trick_damage_bonus if firing_trick_shot else 1.0
+	Ballistics.fire(shooter, origin, direction, ammo, muzzle.global_position, data, damage_multiplier)
 	recoil_kick += WeaponStats.kick(data, _rng) * (1.0 - clampf(recoil_control, 0.0, 1.0))
 	shot_bloom = minf(shot_bloom + data.bloom_per_shot, data.max_bloom)
 	_since_shot = 0.0
@@ -171,6 +181,7 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 	if durability >= 0.0:
 		durability = maxf(durability - data.wear_per_shot(), 0.0)
 	fired.emit()
+	firing_trick_shot = false
 	# The next round fails to feed.
 	if rounds > 0 and randf() < data.malfunction_chance(durability):
 		is_jammed = true

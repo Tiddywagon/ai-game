@@ -1,8 +1,9 @@
-"""Generates the placeholder audio in assets/audio: a seamless dark ambient menu loop and two UI sounds.
+"""Generates the placeholder audio in assets/audio: a seamless dark ambient menu loop, two UI sounds and the
+360 trick-shot sting.
 
 Usage: python3 tools/make_placeholder_audio.py assets/audio   (needs numpy and ffmpeg with libvorbis)
 """
-import sys, wave, subprocess
+import os, sys, wave, subprocess
 import numpy as np
 
 out_dir = sys.argv[1]
@@ -86,4 +87,17 @@ click = (np.sin(2 * np.pi * 170 * tt) * np.exp(-tt / 0.035) * 0.45
          + np.sin(2 * np.pi * 1250 * tt) * np.exp(-tt / 0.006) * 0.25)
 click[:60] += rng.standard_normal(60) * 0.12 * np.linspace(1, 0, 60)
 write_wav(f"{out_dir}/ui/click.wav", click)
+
+# ---- 360 trick-shot sting: a quick rising arpeggio (E5 B5 E6 G#6) with a shimmer on top -------
+total = int(0.85 * sr)
+sting = np.zeros(total)
+for k, (freq, start) in enumerate([(659.25, 0.0), (987.77, 0.06), (1318.5, 0.12), (1661.2, 0.18), (3322.4, 0.18)]):
+    tt = np.arange(int(0.65 * sr)) / sr
+    env = np.minimum(1.0, tt / 0.004) * np.exp(-tt * 7.0)
+    note = (np.sin(2 * np.pi * freq * tt) + 0.35 * np.sin(2 * np.pi * freq * 2 * tt) + 0.12 * np.sin(2 * np.pi * freq * 3.01 * tt)) * env
+    gain = 0.05 if k == 4 else (0.28 if k == 3 else 0.22)
+    s = int(start * sr)
+    sting[s:s + len(tt)] += note[:total - s] * gain
+os.makedirs(f"{out_dir}/sfx", exist_ok=True)
+write_wav(f"{out_dir}/sfx/trick_sting.wav", sting / np.max(np.abs(sting)) * 0.85)
 print("done")

@@ -8,6 +8,25 @@
     "weight": 0.01,
     "value": 60,
     "max_stack": 50,
-    "stats": {"caliber": "9x18", "damage": 50, "penetration": 12}
+    "stats": {
+      "caliber": "9x18",
+      "damage": 50,
+      "penetration": 12
+    }
+  },
+  {
+    "id": "ammo_762x54r_lps",
+    "name": "7.62x54R LPS",
+    "description": "Full-power rifle round with a light steel core. Goes through wood.",
+    "category": "ammo",
+    "rarity": "uncommon",
+    "weight": 0.022,
+    "value": 380,
+    "max_stack": 40,
+    "stats": {
+      "caliber": "7.62x54R",
+      "damage": 81,
+      "penetration": 41
+    }
   }
 ]

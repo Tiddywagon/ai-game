@@ -14,6 +14,10 @@ extends Actor
 ## inventory screen is open (`ui_open`) you can still walk, but not shoot, aim or move the reticle.
 ## Looting: F uses the nearest container, body or item on the ground in reach. Anything that reaches
 ## the inventory and wasn't brought in is claimed as loot: found in raid if you extract (FoundInRaid).
+## 360 trick shots (DESIGN.md §13.4): with a bolt-action rifle or DMR in hand, sweeping the reticle a
+## full turn around the player in one direction (within the gun's spin time, rolling or not) opens a
+## TRICK SHOT READY window; the first shot in it deals bonus damage. No aiming while spinning or while
+## the window is open: the shot is fired from the hip, with full hip-fire bloom.
 
 ## Emitted when one of the player's bullets hits someone (hit markers, damage numbers).
 signal hit_landed(target: Actor, damage: float, position: Vector3)
@@ -24,6 +28,10 @@ signal loot_requested(title: String, loot: Variant, source: Node3D)
 signal loot_claimed(items: Array[ItemInstance])
 ## Someone this player shot died (for raid XP).
 signal killed(target: Actor)
+## A full spin opened a 360 trick shot window (DESIGN.md §13.4).
+signal trick_shot_ready
+## A trick shot hit `target` (and killed it, if `killed`).
+signal trick_shot_hit(target: Actor, damage: float, position: Vector3, killed: bool)
 
 ## Right stick: how far from the player it puts the reticle, and how fast the reticle gets there.
 const STICK_AIM_RADIUS := 360.0
@@ -36,6 +44,13 @@ const FLASHLIGHT_ENERGY := 8.0
 const MAX_LEAD_SCREEN_SHARE := 0.55
 ## How close a container, body or item must be to use it with F (metres, flat).
 const INTERACT_RANGE := 2.0
+## The reticle has to be at least this far from the player (metres, flat) for its direction to count
+## toward a spin: right on top of the player, tiny moves would look like huge turns.
+const SPIN_MIN_RADIUS := 0.75
+## A spin past this share of a full turn (within the spin time) already stops you aiming.
+const SPIN_AIM_LOCK := 0.5
+## Trick-shot feedback colour (popup, hit marker, banner).
+const TRICK_COLOR := Color(1.0, 0.82, 0.25)
 
 ## Where the reticle is, in viewport pixels.
 var cursor_position := Vector2.ZERO
@@ -57,6 +72,11 @@ var debug_extra_weight := 0.0:
 var ui_open := false
 ## The nearest thing in reach that F would use (in group "interactables"), or null. The HUD shows it.
 var focused_interactable: Node
+## Seconds left in the TRICK SHOT READY window (0: closed).
+var trick_window_left := 0.0
+## Trick shots this raid: hits, and kills.
+var trick_hits := 0
+var trick_kills := 0
 
 var _roll_requested := false
 var _cover_requested := false
@@ -68,6 +88,7 @@ var _flashlight: SpotLight3D
 var _weapon_item: ItemInstance
 ## True while a reload moves rounds from the inventory into the magazine.
 var _loading_rounds := false
+var _spin := SpinTracker.new()
 
 
 func _ready() -> void:
@@ -155,11 +176,14 @@ func _think(delta: float) -> void:
 		try_reload()
 	peek_input = (_aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")) and not ui_open
 	_update_aim()
+	_update_trick_shot(delta)
 	var transition := VisionSystem.config.optic_transition_time
 	if weapon.data and not using_binoculars:
 		transition *= weapon.data.aim_time_multiplier  # Ergonomics and sights.
 	var raise := 1.0 if is_using_optic() else 0.0
 	optic_blend = move_toward(optic_blend, raise, delta / transition) if transition > 0.0 else raise
+	if is_spinning():
+		optic_blend = 0.0  # Spinning: the gun is down at the hip.
 	_flashlight.position.y = gun_height()
 	if _roll_requested:
 		_roll_requested = false
@@ -242,7 +266,39 @@ func current_optic() -> int:
 func is_using_optic() -> bool:
 	if is_dead or is_rolling or not peek_input:
 		return false
-	return using_binoculars or (weapon.has_gun() and not weapon.is_reloading and not weapon.is_clearing)
+	return using_binoculars or (weapon.has_gun() and not weapon.is_reloading and not weapon.is_clearing and not is_spinning())
+
+
+## True if the gun in hand can make 360 trick shots (a bolt-action rifle or DMR).
+func can_trick_shot() -> bool:
+	return weapon.has_gun() and weapon.data.allows_trick_shots()
+
+
+## Spinning for a trick shot (half a turn or more within the spin time) or holding one ready: the gun
+## stays at the hip, so no aiming.
+func is_spinning() -> bool:
+	return can_trick_shot() and (_spin.progress() >= SPIN_AIM_LOCK or trick_window_left > 0.0)
+
+
+## How far into a spin the aim is, 0-1 of a full turn (the reticle shows it).
+func spin_progress() -> float:
+	return _spin.progress() if can_trick_shot() else 0.0
+
+
+## Tracks the reticle turning around the player; a full turn one way opens the trick-shot window.
+func _update_trick_shot(delta: float) -> void:
+	if trick_window_left > 0.0:
+		trick_window_left = maxf(trick_window_left - delta, 0.0)
+		if trick_window_left == 0.0:
+			weapon.trick_armed = false  # Closed without a shot.
+	var to_aim := aim_point - global_position
+	if not has_aim or is_dead or ui_open or Vector2(to_aim.x, to_aim.z).length() < SPIN_MIN_RADIUS:
+		return
+	_spin.spin_time = weapon.data.trick_spin_time if weapon.data else 1.5
+	if _spin.feed(atan2(to_aim.x, to_aim.z), delta) and can_trick_shot():
+		trick_window_left = weapon.data.trick_window
+		weapon.trick_armed = true
+		trick_shot_ready.emit()
 
 
 ## Opens `loot` (a container's InventoryGrid or a body's Inventory) from `source` beside the inventory.
@@ -299,6 +355,7 @@ func _sync_weapon(force := false) -> void:
 			# A gun without a round type yet takes the first matching ammo you carry.
 			if item.loaded_ammo == "":
 				item.loaded_ammo = _carried_ammo_for(item.data.weapon.caliber)
+			trick_window_left = 0.0
 			var stats := WeaponStats.build(item, GameState.skills)
 			equip_weapon(item.data.id, item.loaded_ammo, inventory.count_of(item.loaded_ammo), stats)
 			weapon.optic = stats.optic
@@ -326,6 +383,8 @@ func set_ammo(id: String) -> void:
 
 
 func _on_round_fired() -> void:
+	if weapon.firing_trick_shot:
+		trick_window_left = 0.0  # Only the first shot in the window is a trick shot.
 	if _weapon_item:
 		_weapon_item.fire_round()
 		_weapon_item.durability = maxf(weapon.durability, 0.0)
@@ -422,6 +481,12 @@ func _update_camera_view() -> void:
 
 
 func on_hit_landed(target: Actor, damage: float, hit_position: Vector3) -> void:
+	if weapon.firing_trick_shot:
+		trick_hits += 1
+		if target.is_dead:
+			trick_kills += 1
+		trick_shot_hit.emit(target, damage, hit_position, target.is_dead)
+		_spawn_trick_popup(hit_position)
 	if target.is_dead:
 		kills += 1  # Corpses can't be hit, so this hit was the kill.
 		killed.emit(target)
@@ -492,6 +557,28 @@ func _shake_camera(amount: float) -> void:
 	var camera := get_viewport().get_camera_3d()
 	if camera and camera.has_method("add_shake"):
 		camera.add_shake(amount)
+
+
+## "360!" over a trick-shot hit: big, gold, rising and fading.
+func _spawn_trick_popup(at: Vector3) -> void:
+	var label := Label3D.new()
+	label.name = "TrickPopup"
+	label.text = "360!"
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.fixed_size = true
+	label.pixel_size = 0.0009
+	label.font_size = 72
+	label.outline_size = 14
+	label.modulate = TRICK_COLOR
+	label.outline_modulate = Color(0.25, 0.05, 0.2)
+	label.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	get_tree().current_scene.add_child(label)
+	label.global_position = at + Vector3.UP * 0.6
+	var tween := label.create_tween().set_parallel()
+	tween.tween_property(label, "global_position", label.global_position + Vector3.UP * 0.9, 1.1)
+	tween.tween_property(label, "modulate:a", 0.0, 1.1).set_delay(0.4)
+	tween.chain().tween_callback(label.queue_free)
 
 
 func _spawn_damage_number(at: Vector3, damage: float) -> void:

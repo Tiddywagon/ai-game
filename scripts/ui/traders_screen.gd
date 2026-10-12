@@ -158,6 +158,9 @@ func _build_tasks(trader: Dictionary) -> void:
 			continue
 		box.add_child(_note(quest.get("description", "")))
 		for i in quest.objectives.size():
+			if QuestLog.objective_type(quest, i) == "trick_kill":
+				box.add_child(_trick_objective(quest, i, state))
+				continue
 			var wanted := QuestLog.objective(quest, i)
 			var line := HBoxContainer.new()
 			line.add_theme_constant_override("separation", 12)
@@ -181,6 +184,30 @@ func _build_tasks(trader: Dictionary) -> void:
 		rows.add_child(_note("No tasks yet."))
 
 
+## A trick-kill objective: what it asks for and how many so far.
+func _trick_objective(quest: Dictionary, index: int, state: String) -> Control:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
+	var badge := Label.new()
+	badge.text = "360"
+	badge.add_theme_color_override("font_color", Player.TRICK_COLOR)
+	badge.custom_minimum_size.x = 44
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.add_child(badge)
+	var label := Label.new()
+	label.text = "%s  ×%d" % [QuestLog.objective_text(quest, index), QuestLog.objective_count(quest, index)]
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(label)
+	if state != "available":
+		var done := QuestLog.progress(quest, index)
+		var count := Label.new()
+		count.text = "%d / %d in raids" % [done, QuestLog.objective_count(quest, index)]
+		count.add_theme_color_override("font_color", RequirementRow.MET_COLOR if done >= QuestLog.objective_count(quest, index) else Color(1, 1, 1, 0.7))
+		line.add_child(count)
+	line.tooltip_text = "Counted at the end of each raid, whether you survive or not: spin a full 360° with a bolt-action rifle or DMR, then kill with the first shot"
+	return line
+
+
 func _rewards_text(rewards: Dictionary) -> String:
 	var parts: Array[String] = []
 	if int(rewards.get("roubles", 0)) > 0:
@@ -189,6 +216,8 @@ func _rewards_text(rewards: Dictionary) -> String:
 		parts.append("%s XP" % UiFormat.thousands(int(rewards.xp)))
 	if float(rewards.get("reputation", 0.0)) > 0.0:
 		parts.append("+%.2f reputation" % float(rewards.reputation))
+	if int(rewards.get("drip", 0)) > 0:
+		parts.append("%d Drip" % int(rewards.drip))
 	for reward in rewards.get("items", []):
 		var data := ItemDB.get_item(str(reward.item))
 		if data:

@@ -17,6 +17,10 @@ extends Resource
 @export_range(0, 5000, 10) var xp_pmc_kill := 300
 ## For each item that reaches your inventory as loot (the first time).
 @export_range(0, 1000, 1) var xp_looted_item := 10
+## A 360 trick-shot kill (DESIGN.md §13.4): bonus experience on top of the kill's, and Drip (style
+## points, kept in the profile).
+@export_range(0, 5000, 10) var xp_trick_kill := 250
+@export_range(0, 1000, 1) var drip_trick_kill := 25
 
 @export_group("Searching")
 ## Seconds to reveal one item when searching a container or body: this, plus search_seconds_per_cell

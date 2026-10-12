@@ -17,6 +17,7 @@ const START_DOLLARS := 0
 const SKILLS := [
 	["strength", "Strength"], ["endurance", "Endurance"], ["vitality", "Vitality"],
 	["metabolism", "Metabolism"], ["search", "Search"], ["assault_rifles", "Assault rifles"], ["pistols", "Pistols"],
+	["bolt_action_rifles", "Bolt-action rifles"], ["marksman_rifles", "Marksman rifles"],
 ]
 ## What a new character has in the stash (DESIGN.md §16.4). The worn kit is Inventory.starter().
 const STARTER_STASH := [
@@ -31,6 +32,10 @@ var level: int = 1
 var xp: int = 0
 var roubles: int = START_ROUBLES
 var dollars: int = START_DOLLARS
+## Drip: style points, earned with 360 trick-shot kills and some quests (DESIGN.md §13.4).
+var drip: int = 0
+## 360 trick shots over the whole profile: rounds that hit, and kills.
+var trick_shots := {"hits": 0, "kills": 0}
 ## Trader id -> {"level": loyalty level 1-4, "reputation": float, "spent": roubles spent} (DESIGN.md §10).
 var trader_loyalty: Dictionary = {}
 ## The stash grid (DESIGN.md §8).
@@ -80,6 +85,8 @@ func _reset(new_faction: Faction) -> void:
 	xp = 0
 	roubles = START_ROUBLES
 	dollars = START_DOLLARS
+	drip = 0
+	trick_shots = {"hits": 0, "kills": 0}
 	var config: InventoryConfig = load("res://data/config/inventory.tres")
 	stash = InventoryGrid.new(config.stash_size, &"stash")
 	trader_loyalty = {}
@@ -109,6 +116,8 @@ func to_dict() -> Dictionary:
 			"xp": xp,
 			"roubles": roubles,
 			"dollars": dollars,
+			"drip": drip,
+			"trick_shots": trick_shots.duplicate(),
 			"trader_loyalty": trader_loyalty.duplicate(true),
 			"inventory": inventory.to_dict(),
 			"skills": skills.duplicate(true),
@@ -128,6 +137,9 @@ func from_dict(data: Dictionary) -> void:
 	xp = int(profile.get("xp", xp))
 	roubles = int(profile.get("roubles", roubles))
 	dollars = int(profile.get("dollars", dollars))
+	drip = int(profile.get("drip", 0))
+	var saved_tricks: Dictionary = profile.get("trick_shots", {})
+	trick_shots = {"hits": int(saved_tricks.get("hits", 0)), "kills": int(saved_tricks.get("kills", 0))}
 
 	var saved_loyalty: Dictionary = profile.get("trader_loyalty", {})
 	for trader in saved_loyalty:

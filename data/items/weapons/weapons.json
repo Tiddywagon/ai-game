@@ -5,10 +5,43 @@
     "description": "Makarov service pistol. Eight rounds of 9x18, semi-automatic.",
     "category": "weapon",
     "rarity": "uncommon",
-    "size": [2, 1],
+    "size": [
+      2,
+      1
+    ],
     "weight": 0.64,
     "value": 7800,
-    "stats": {"class": "pistol"},
+    "stats": {
+      "class": "pistol"
+    },
     "weapon": "res://data/weapons/pm.tres"
+  },
+  {
+    "id": "mosin_rifle",
+    "name": "Mosin rifle",
+    "description": "Bolt-action 7.62x54R infantry rifle. Five rounds, worked one at a time. Takes a scope on its mount.",
+    "category": "weapon",
+    "rarity": "uncommon",
+    "size": [
+      5,
+      1
+    ],
+    "weight": 4.0,
+    "value": 26000,
+    "weapon": "res://data/weapons/mosin.tres"
+  },
+  {
+    "id": "svd",
+    "name": "SVD marksman rifle",
+    "description": "Semi-automatic 7.62x54R designated marksman rifle with a 10-round magazine and a side mount for optics.",
+    "category": "weapon",
+    "rarity": "rare",
+    "size": [
+      5,
+      2
+    ],
+    "weight": 3.7,
+    "value": 85000,
+    "weapon": "res://data/weapons/svd.tres"
   }
 ]

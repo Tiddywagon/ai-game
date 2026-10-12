@@ -11,6 +11,7 @@ magazine_size = 8
 reload_time = 1.8
 empty_reload_time = 2.3
 skill = "pistols"
+weapon_class = "pistol"
 vertical_recoil = 1.0
 horizontal_recoil = 0.55
 recoil_recovery = 9.0

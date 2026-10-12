@@ -10,5 +10,7 @@ run_through_xp = 200
 xp_scav_kill = 100
 xp_pmc_kill = 300
 xp_looted_item = 10
+xp_trick_kill = 250
+drip_trick_kill = 25
 search_base_seconds = 0.35
 search_seconds_per_cell = 0.25

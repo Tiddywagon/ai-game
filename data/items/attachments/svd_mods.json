@@ -1,0 +1,4 @@
+[
+  {"id": "svd_mag_10", "name": "SVD 10-round magazine", "description": "Standard steel magazine for the SVD.", "category": "attachment", "rarity": "common", "size": [1, 2], "weight": 0.21, "value": 3000, "loot_weight": 0.6,
+   "stats": {"mod": {"kind": "magazine", "fits": ["svd"], "capacity": 10, "standard": true}}}
+]

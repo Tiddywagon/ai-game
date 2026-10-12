@@ -82,6 +82,10 @@ func _fill_stats() -> void:
 	_row(grid, "Health", "%d HP over 7 body parts" % health.max_total(), Color.WHITE)
 	_row(grid, "Roubles", UiFormat.money(GameState.roubles), Color.WHITE)
 	_row(grid, "Dollars", UiFormat.money(GameState.dollars, "USD"), Color.WHITE)
+	_row(grid, "Drip", UiFormat.thousands(GameState.drip), Player.TRICK_COLOR)
+	var tricks: Dictionary = GameState.trick_shots
+	_row(grid, "Trick Shots", "%s kill%s  ·  %s hit%s (360)" % [UiFormat.thousands(tricks.kills), "" if tricks.kills == 1 else "s",
+		UiFormat.thousands(tricks.hits), "" if tricks.hits == 1 else "s"], Player.TRICK_COLOR if tricks.kills > 0 else Color.WHITE)
 	_row(grid, "Items in stash", str(GameState.stash.items.size()), Color.WHITE)
 
 

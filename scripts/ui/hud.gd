@@ -7,6 +7,8 @@ extends CanvasLayer
 ## time of day and weather next to the raid name, and the sight in use or the binoculars.
 ## Raid (DESIGN.md §2): the time left and the extract under the raid name, an "F  Search ..." prompt
 ## when a container, body or item is in reach, and a countdown while extracting.
+## 360 trick shots (DESIGN.md §13.4): "TRICK SHOT READY" while the window is open, a gold hit marker
+## and a sound sting for a trick-shot hit, and a kill banner with the bonus experience and Drip.
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -20,6 +22,10 @@ const MESSAGE_TIME := 2.0
 ## Indexed by CoverBox.CoverMaterial.
 const MATERIAL_NAMES := ["wood", "concrete", "metal"]
 const EXTRACT_COLOR := Color(0.45, 0.95, 0.5)
+const TRICK_STING := preload("res://assets/audio/sfx/trick_sting.wav")
+## How long the trick-shot kill banner stays up.
+const BANNER_TIME := 2.6
+const RAID_CONFIG: RaidConfig = preload("res://data/config/raid.tres")
 
 ## The player whose status is shown.
 @export var player: Player
@@ -29,6 +35,12 @@ var _raid: RaidController
 var _raid_line := ""
 var _prompt: Label
 var _extract: Label
+var _trick_ready: Label
+var _sting: AudioStreamPlayer
+var _banner: Control
+var _banner_title: Label
+var _banner_detail: Label
+var _banner_tween: Tween
 
 @onready var _root: Control = %HudRoot
 @onready var _bottom_left: Control = %BottomLeft
@@ -50,10 +62,19 @@ func _ready() -> void:
 		player.died.connect(show_message.bind("KILLED IN ACTION", 10.0))
 		player.hit_landed.connect(func(target: Actor, _damage: float, _at: Vector3) -> void:
 			if Settings.get_value("gameplay", "hit_markers"):
-				_reticle.show_hit_marker(target.is_dead))
+				_reticle.show_hit_marker(target.is_dead, player.weapon.firing_trick_shot))
+		player.trick_shot_ready.connect(_on_trick_shot_ready)
+		player.trick_shot_hit.connect(_on_trick_shot_hit)
 	%SoundMarkers.player = player
 	_prompt = _add_center_label(-210.0, 22, NORMAL_COLOR)
 	_extract = _add_center_label(-470.0, 40, EXTRACT_COLOR)
+	_trick_ready = _add_center_label(-560.0, 34, Player.TRICK_COLOR)
+	_trick_ready.name = "TrickReady"
+	_sting = AudioStreamPlayer.new()
+	_sting.stream = TRICK_STING
+	_sting.bus = &"Effects"
+	add_child(_sting)
+	_build_banner()
 	VisionSystem.conditions_changed.connect(_update_raid_info)
 	_update_raid_info()
 	_connect_vision.call_deferred()
@@ -90,8 +111,11 @@ func _update_raid_clock() -> void:
 		%RaidInfo.text = text
 
 
-## The F prompt and the extract countdown.
+## The F prompt, the extract countdown and TRICK SHOT READY.
 func _update_raid_prompts() -> void:
+	_trick_ready.visible = player != null and player.trick_window_left > 0.0 and not player.is_dead
+	if _trick_ready.visible:
+		_trick_ready.text = "TRICK SHOT READY  %.1f" % player.trick_window_left
 	var target := player.focused_interactable if player and not player.ui_open and not player.is_dead else null
 	_prompt.visible = target != null
 	if target:
@@ -100,6 +124,93 @@ func _update_raid_prompts() -> void:
 	_extract.visible = left >= 0.0
 	if left >= 0.0:
 		_extract.text = "EXTRACTING  %.1f" % left
+
+
+func _on_trick_shot_ready() -> void:
+	_sting.pitch_scale = 0.6
+	_sting.volume_db = -8.0
+	_sting.play()
+
+
+## A trick shot hit: the sting; a kill gets the banner too.
+func _on_trick_shot_hit(target: Actor, _damage: float, _at: Vector3, killed: bool) -> void:
+	_sting.pitch_scale = 1.0
+	_sting.volume_db = 0.0
+	_sting.play()
+	if killed:
+		var config := _raid.config if _raid else RAID_CONFIG
+		show_trick_banner("%s DOWN  ·  +%d XP  ·  +%d DRIP" % [target.display_name().to_upper(), config.xp_trick_kill, config.drip_trick_kill])
+
+
+## The kill banner: a dark band across the screen with "360 TRICK SHOT" sliding in, then fading.
+func show_trick_banner(detail: String) -> void:
+	_banner_detail.text = detail
+	_banner.show()
+	_banner.modulate.a = 1.0
+	if _banner_tween:
+		_banner_tween.kill()
+	var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
+	_banner.scale = Vector2(1.0, 0.2 if not reduced else 1.0)
+	_banner_title.position.x = -260.0 if not reduced else 0.0
+	_banner_tween = create_tween()
+	_banner_tween.set_parallel()
+	_banner_tween.tween_property(_banner, "scale:y", 1.0, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_banner_tween.tween_property(_banner_title, "position:x", 0.0, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_banner_tween.chain().tween_property(_banner, "modulate:a", 0.0, 0.5).set_delay(BANNER_TIME - 0.5)
+	_banner_tween.chain().tween_callback(_banner.hide)
+
+
+func _build_banner() -> void:
+	_banner = Control.new()
+	_banner.name = "TrickBanner"
+	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_banner.anchor_left = 0.0
+	_banner.anchor_right = 1.0
+	_banner.anchor_top = 0.24
+	_banner.anchor_bottom = 0.24
+	_banner.offset_bottom = 120.0
+	_banner.pivot_offset = Vector2(0, 60)
+	_banner.hide()
+	_root.add_child(_banner)
+	var band := ColorRect.new()
+	band.color = Color(0.06, 0.03, 0.08, 0.72)
+	band.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_banner.add_child(band)
+	for edge in [0.0, 1.0]:
+		var line := ColorRect.new()
+		line.color = Player.TRICK_COLOR
+		line.anchor_right = 1.0
+		line.anchor_top = edge
+		line.anchor_bottom = edge
+		line.offset_top = -2.0 if edge > 0.0 else 0.0
+		line.offset_bottom = 0.0 if edge > 0.0 else 2.0
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_banner.add_child(line)
+	_banner_title = Label.new()
+	_banner_title.name = "Title"
+	_banner_title.text = "★  360 TRICK SHOT  ★"
+	_banner_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner_title.anchor_right = 1.0
+	_banner_title.offset_top = 10.0
+	_banner_title.offset_bottom = 72.0
+	_banner_title.add_theme_font_size_override("font_size", 48)
+	_banner_title.add_theme_color_override("font_color", Player.TRICK_COLOR)
+	_banner_title.add_theme_color_override("font_outline_color", Color(0.3, 0.05, 0.25))
+	_banner_title.add_theme_constant_override("outline_size", 10)
+	_banner_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	_banner_title.add_theme_constant_override("shadow_offset_x", 3)
+	_banner_title.add_theme_constant_override("shadow_offset_y", 3)
+	_banner.add_child(_banner_title)
+	_banner_detail = Label.new()
+	_banner_detail.name = "Detail"
+	_banner_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner_detail.anchor_right = 1.0
+	_banner_detail.offset_top = 74.0
+	_banner_detail.offset_bottom = 110.0
+	_banner_detail.add_theme_font_size_override("font_size", 20)
+	_banner_detail.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85))
+	_banner.add_child(_banner_detail)
 
 
 func _add_center_label(from_bottom: float, size: int, color: Color) -> Label:

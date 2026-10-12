@@ -8,7 +8,8 @@ extends RefCounted
 ##   except the secure container and what's inside it.
 ## - Scav: surviving moves everything the Scav carries into the stash (what doesn't fit is left
 ##   behind). Dying costs nothing.
-## - Raid experience is added to the profile either way, then the game is saved.
+## - Raid experience, Drip and 360 trick-shot stats are added to the profile either way (and trick-shot
+##   kills count toward quests), then the game is saved.
 
 enum Status { SURVIVED, RUN_THROUGH, KILLED, MIA }
 
@@ -19,6 +20,10 @@ var side := "pmc"
 var seconds := 0.0
 var xp := 0
 var kills := 0
+## 360 trick shots this raid: rounds that hit, kills, and the Drip they earned.
+var trick_hits := 0
+var trick_kills := 0
+var drip := 0
 ## Items that became found in raid.
 var found: Array[ItemInstance] = []
 ## Scav runs: items that went into the stash, and those that didn't fit.
@@ -49,14 +54,19 @@ func found_value() -> int:
 
 ## Settles the raid (see the class notes) with `inventory`, what the player has at the end. With
 ## `to_profile` false (the test level run on its own) only the found-in-raid marks change.
+## `tricks`: {"hits", "kills": [{"side", "weapon_class"}], "drip"} from the RaidController.
 static func settle(end: Status, raid_side: String, inventory: Inventory, raid_seconds: float, raid_xp: int,
-		raid_kills: int, to_profile: bool) -> RaidOutcome:
+		raid_kills: int, to_profile: bool, tricks: Dictionary = {}) -> RaidOutcome:
 	var outcome := RaidOutcome.new()
 	outcome.status = end
 	outcome.side = raid_side
 	outcome.seconds = raid_seconds
 	outcome.xp = raid_xp
 	outcome.kills = raid_kills
+	var trick_kill_list: Array = tricks.get("kills", [])
+	outcome.trick_hits = int(tricks.get("hits", 0))
+	outcome.trick_kills = trick_kill_list.size()
+	outcome.drip = int(tricks.get("drip", 0))
 	outcome.found = FoundInRaid.resolve(inventory.all_items(), end == Status.SURVIVED)
 	if not to_profile:
 		return outcome
@@ -73,6 +83,10 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 			kept.equip("secure", secure)
 		GameState.inventory = kept
 	GameState.xp += raid_xp
+	GameState.drip += outcome.drip
+	GameState.trick_shots.hits += outcome.trick_hits
+	GameState.trick_shots.kills += outcome.trick_kills
+	QuestLog.record_trick_kills(trick_kill_list)
 	SaveManager.save_game()
 	return outcome
 

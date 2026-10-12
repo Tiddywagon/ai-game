@@ -5,9 +5,16 @@ extends RefCounted
 ## with the checkmark. You can hand over part of an objective and come back with the rest. Rewards go
 ## to the stash and are never found in raid.
 ##
-## A quest is {"id", "name", "trader", "description", "requires": [quest ids], "objectives":
-## [{"type": "hand_in", "item", "count", "fir"}], "rewards": {"roubles", "xp", "reputation",
-## "items": [{"item", "count"}]}}.
+## A quest is {"id", "name", "trader", "description", "requires": [quest ids], "objectives": [...],
+## "rewards": {"roubles", "xp", "reputation", "drip", "items": [{"item", "count"}]}}.
+## Objectives: {"type": "hand_in", "item", "count", "fir"}, or {"type": "trick_kill", "count",
+## "target": "pmc" / "scav" (leave out for anyone), "weapon_class": "bolt_action" / "dmr" (leave out
+## for either)}: kills with a 360 trick shot (DESIGN.md §13.4), counted at the end of each raid while
+## the quest is active, whether you survive or not.
+
+## What a trick-kill objective's filters are called.
+const TARGET_NAMES := {"pmc": "PMCs", "scav": "Scavs"}
+const CLASS_NAMES := {"bolt_action": "a bolt-action rifle", "dmr": "a DMR"}
 
 const QUESTS_DIR := "res://data/quests"
 
@@ -47,7 +54,7 @@ static func state(quest: Dictionary) -> String:
 		return "completed"
 	if saved.get("state", "") == "active":
 		for i in quest.objectives.size():
-			if progress(quest, i) < objective(quest, i).count:
+			if progress(quest, i) < objective_count(quest, i):
 				return "active"
 		return "ready"
 	for before: String in quest.get("requires", []):
@@ -56,8 +63,46 @@ static func state(quest: Dictionary) -> String:
 	return "available"
 
 
+## Objective `index` of `quest` as an item requirement (hand-in objectives).
 static func objective(quest: Dictionary, index: int) -> Requirement:
 	return Requirement.from_dict(quest.objectives[index])
+
+
+## "hand_in" or "trick_kill".
+static func objective_type(quest: Dictionary, index: int) -> String:
+	return str(quest.objectives[index].get("type", "hand_in"))
+
+
+static func objective_count(quest: Dictionary, index: int) -> int:
+	return maxi(int(quest.objectives[index].get("count", 1)), 1)
+
+
+## What a trick-kill objective asks for, e.g. "360 trick-shot kills on PMCs with a bolt-action rifle".
+static func objective_text(quest: Dictionary, index: int) -> String:
+	var entry: Dictionary = quest.objectives[index]
+	var text := "360 trick-shot kills"
+	if TARGET_NAMES.has(entry.get("target", "")):
+		text += " on " + TARGET_NAMES[entry.target]
+	if CLASS_NAMES.has(entry.get("weapon_class", "")):
+		text += " with " + CLASS_NAMES[entry.weapon_class]
+	return text
+
+
+## Counts `kills` (a raid's trick-shot kills: [{"side": "pmc" / "scav", "weapon_class"}]) toward every
+## active quest's trick-kill objectives they match.
+static func record_trick_kills(kills: Array) -> void:
+	for quest in all():
+		if state(quest) != "active":
+			continue
+		for i in quest.objectives.size():
+			if objective_type(quest, i) != "trick_kill":
+				continue
+			var entry: Dictionary = quest.objectives[i]
+			var matching := kills.filter(func(kill: Dictionary) -> bool:
+				return str(entry.get("target", kill.side)) == kill.side \
+					and str(entry.get("weapon_class", kill.weapon_class)) == kill.weapon_class).size()
+			if matching > 0:
+				GameState.quests[quest.id].progress[i] = mini(progress(quest, i) + matching, objective_count(quest, i))
 
 
 ## How many have been handed over for objective `index`.
@@ -79,7 +124,7 @@ static func accept(quest: Dictionary) -> bool:
 ## Hands over as many items as you have (up to what's still needed) for objective `index`. Returns how
 ## many were handed over.
 static func hand_in(quest: Dictionary, index: int) -> int:
-	if state(quest) != "active":
+	if state(quest) != "active" or objective_type(quest, index) != "hand_in":
 		return 0
 	var wanted := objective(quest, index)
 	var handed := ItemSearch.take(wanted.item_id, wanted.count - progress(quest, index), wanted.fir)
@@ -107,6 +152,7 @@ static func complete(quest: Dictionary) -> String:
 	var rewards: Dictionary = quest.get("rewards", {})
 	GameState.roubles += int(rewards.get("roubles", 0))
 	GameState.xp += int(rewards.get("xp", 0))
+	GameState.drip += int(rewards.get("drip", 0))
 	var trader: String = quest.get("trader", "")
 	if GameState.trader_loyalty.has(trader):
 		GameState.trader_loyalty[trader].reputation += float(rewards.get("reputation", 0.0))

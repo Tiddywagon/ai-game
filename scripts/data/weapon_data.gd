@@ -10,6 +10,8 @@ extends Resource
 @export var caliber := ""
 ## The weapon skill that trains with it and lowers its recoil (GameState.SKILLS), e.g. "assault_rifles".
 @export var skill := ""
+## What kind of gun it is. Bolt-action rifles and DMRs can make 360 trick shots (see "Trick shot").
+@export_enum("assault_rifle", "pistol", "bolt_action", "dmr") var weapon_class := "assault_rifle"
 
 @export_group("Firing")
 ## Rounds per minute.
@@ -82,6 +84,15 @@ extends Resource
 ## Seconds to clear a jam (R).
 @export_range(0.1, 10.0, 0.05, "suffix:s") var clear_time := 1.6
 
+@export_group("Trick shot")
+## 360 trick shots (DESIGN.md §13.4), bolt-action rifles and DMRs only: spin the aim a full turn one
+## way within `trick_spin_time` seconds and a TRICK SHOT READY window opens for `trick_window`
+## seconds. The first shot fired in it deals `trick_damage_bonus` more damage (0.5: +50%), applied to
+## the round before armor.
+@export_range(0.3, 5.0, 0.05, "suffix:s") var trick_spin_time := 1.5
+@export_range(0.1, 5.0, 0.05, "suffix:s") var trick_window := 1.0
+@export_range(0.0, 3.0, 0.05) var trick_damage_bonus := 0.5
+
 @export_group("Set by mods")
 ## These stay at their defaults in the .tres files: WeaponStats.build() sets them on the copy it makes
 ## for a modded gun.
@@ -101,6 +112,15 @@ extends Resource
 @export var extra_weight := 0.0
 ## How much less recoil the holder's skills give (0.03: 3% less).
 @export var skill_recoil_reduction := 0.0
+
+
+## Gun classes that can make 360 trick shots.
+const TRICK_SHOT_CLASSES: Array[String] = ["bolt_action", "dmr"]
+
+
+## True if this gun can make 360 trick shots (a bolt-action rifle or DMR with a damage bonus).
+func allows_trick_shots() -> bool:
+	return weapon_class in TRICK_SHOT_CLASSES and trick_damage_bonus > 0.0
 
 
 ## Seconds between shots.

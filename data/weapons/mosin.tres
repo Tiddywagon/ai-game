@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "7.62x54R"
+skill = "bolt_action_rifles"
+weapon_class = "bolt_action"
+fire_rate = 50
+automatic = false
+magazine_size = 5
+reload_time = 3.2
+empty_reload_time = 3.8
+vertical_recoil = 2.4
+horizontal_recoil = 0.5
+recoil_recovery = 6.0
+recovery_delay = 0.1
+camera_kick = 0.3
+base_spread = 0.12
+bloom_per_shot = 1.0
+max_bloom = 3.0
+bloom_recovery = 5.0
+bloom_delay = 0.3
+hip_spread = 3.5
+move_spread = 4.0
+sprint_spread = 2.5
+roll_spread = 7.0
+sway = 0.35
+platform = "mosin"
+ergonomics = 35
+muzzle_velocity = 865
+slots = Array[Dictionary]([{
+"id": "sight",
+"kinds": ["sight"],
+"name": "Scope mount"
+}])
+default_mods = {}
+durability_per_shot = 0.08
+malfunction_threshold = 60.0
+max_malfunction_chance = 0.03
+clear_time = 1.2
+trick_spin_time = 1.5
+trick_window = 1.0
+trick_damage_bonus = 0.5

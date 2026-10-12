@@ -7,6 +7,9 @@
       {"item": "ammo_9x18_pst", "count": 50, "price": 4500, "currency": "RUB"},
       {"item": "ak_74n", "price": 41000, "currency": "RUB"},
       {"item": "pm_pistol", "price": 12500, "currency": "RUB"},
+      {"item": "mosin_rifle", "price": 32000, "currency": "RUB"},
+      {"item": "svd", "price": 140000, "currency": "RUB"},
+      {"item": "ammo_762x54r_lps", "count": 20, "price": 9500, "currency": "RUB"},
       {"item": "hatchet", "price": 14000, "currency": "RUB"}
     ],
     "barters": [
@@ -68,7 +71,8 @@
       {"item": "ak_mag_45", "price": 12000, "currency": "RUB"},
       {"item": "tactical_laser", "price": 15000, "currency": "RUB"},
       {"item": "pm_grip_rubber", "price": 3200, "currency": "RUB"},
-      {"item": "pm_mag_12", "price": 5800, "currency": "RUB"}
+      {"item": "pm_mag_12", "price": 5800, "currency": "RUB"},
+      {"item": "svd_mag_10", "price": 4000, "currency": "RUB"}
     ],
     "barters": [
       {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 2, "fir": true}], "get": {"item": "scope_2_4"}},

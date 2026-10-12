@@ -1,0 +1,34 @@
+[
+  {
+    "id": "showboat",
+    "name": "Showboat",
+    "trader": "prapor",
+    "description": "Word is you spin around like a circus act before you shoot. Fine. Drop someone with a 360 and I'll stop laughing. Any target, any rifle that can do it.",
+    "objectives": [
+      {"type": "trick_kill", "count": 1}
+    ],
+    "rewards": {"roubles": 40000, "xp": 3000, "reputation": 0.02, "drip": 25, "items": [{"item": "ammo_762x54r_lps", "count": 40}]}
+  },
+  {
+    "id": "around_the_world",
+    "name": "Around the World",
+    "trader": "mechanic",
+    "requires": ["showboat"],
+    "description": "A Mosin is more than a museum piece, if the hands are right. Three 360 kills with a bolt-action and the scope is yours.",
+    "objectives": [
+      {"type": "trick_kill", "count": 3, "weapon_class": "bolt_action"}
+    ],
+    "rewards": {"roubles": 90000, "xp": 6000, "reputation": 0.03, "drip": 50, "items": [{"item": "scope_2_4", "count": 1}]}
+  },
+  {
+    "id": "spin_doctor",
+    "name": "Spin Doctor",
+    "trader": "skier",
+    "requires": ["showboat"],
+    "description": "PMCs pay for their reputations and I sell the tapes. Two of them, spun and dropped. Style is the product.",
+    "objectives": [
+      {"type": "trick_kill", "count": 2, "target": "pmc"}
+    ],
+    "rewards": {"roubles": 120000, "xp": 8000, "reputation": 0.04, "drip": 100, "items": [{"item": "scope_6_8", "count": 1}]}
+  }
+]

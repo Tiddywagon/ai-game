@@ -18,13 +18,14 @@ static var _dim_tracer_material: StandardMaterial3D
 
 ## Fires one round from `origin` along `direction`. `muzzle` is only where the tracer starts. `gun`
 ## (the stats it's fired with, if any) scales the range and the energy kept through wood by its muzzle
-## velocity, and how far the shot is heard by its noise (a suppressor).
+## velocity, and how far the shot is heard by its noise (a suppressor). `damage_multiplier` scales the
+## round's damage as it leaves the muzzle (a 360 trick shot), before wood, cover or armor reduce it.
 ## Returns {"end": where it stopped, "hit": the Actor hit or null, "passed_through": wood surfaces crossed}.
 static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: ItemData, muzzle: Vector3,
-		gun: WeaponData = null) -> Dictionary:
+		gun: WeaponData = null, damage_multiplier := 1.0) -> Dictionary:
 	var config := shooter.config
 	var space := shooter.get_world_3d().direct_space_state
-	var damage := float(ammo.stats.get("damage", 40))
+	var damage := float(ammo.stats.get("damage", 40)) * damage_multiplier
 	var penetration := float(ammo.stats.get("penetration", 20))
 	var velocity := gun.velocity_multiplier if gun else 1.0
 	var exclude: Array[RID] = [shooter.get_rid(), shooter.hitbox_rid()]

@@ -4,11 +4,14 @@ extends Control
 ## the style and colour chosen in Settings > Interface. The "bloom" style is a circle the size of the
 ## real cone the next shot can land in, growing and shrinking live with bloom (shooting, moving,
 ## sprinting, rolling, hip-firing) and wear. A ring fills up while reloading or clearing a jam. Hit
-## markers show here too.
+## markers show here too. With a bolt-action rifle or DMR, a gold arc shows how far a 360 spin has
+## got (DESIGN.md §13.4); a trick-shot hit gets a gold marker with a diamond.
 
 const HIT_MARKER_TIME := 0.25
 const KILL_COLOR := Color(1.0, 0.3, 0.25)
 const RELOAD_RING_RADIUS := 22.0
+## The gold ring that fills as a 360 spin goes round.
+const SPIN_RING_RADIUS := 30.0
 ## Largest the bloom circle grows to, in pixels, and the smallest it shrinks to.
 const MAX_BLOOM := 220.0
 const MIN_BLOOM := 5.0
@@ -19,6 +22,7 @@ var player: Player
 
 var _hit_time := 0.0
 var _hit_kill := false
+var _hit_trick := false
 
 
 func _ready() -> void:
@@ -31,9 +35,10 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func show_hit_marker(killed: bool) -> void:
-	_hit_time = HIT_MARKER_TIME
+func show_hit_marker(killed: bool, trick := false) -> void:
+	_hit_time = HIT_MARKER_TIME * (2.0 if trick else 1.0)
 	_hit_kill = killed
+	_hit_trick = trick
 
 
 func _draw() -> void:
@@ -57,12 +62,20 @@ func _draw() -> void:
 			_draw_cross(center, 5.0, color, shadow)
 		_:
 			_draw_bloom(center, clampf(_spread_radius(), MIN_BLOOM, MAX_BLOOM), color, shadow)
+	var spin := player.spin_progress()
+	if spin > 0.1 or player.trick_window_left > 0.0:
+		var start := -PI / 2.0
+		var sweep := TAU if player.trick_window_left > 0.0 else TAU * spin
+		draw_arc(center, SPIN_RING_RADIUS, start, start + sweep, 64, shadow, 5.0, true)
+		draw_arc(center, SPIN_RING_RADIUS, start, start + sweep, 64, Player.TRICK_COLOR, 3.0, true)
 	if player.weapon.is_reloading or player.weapon.is_clearing:
 		var start := -PI / 2.0
 		var end := start + TAU * player.weapon.reload_progress()
 		draw_arc(center, RELOAD_RING_RADIUS, start, end, 40, shadow, 4.0)
 		draw_arc(center, RELOAD_RING_RADIUS, start, end, 40, color, 2.0)
-	if _hit_time > 0.0:
+	if _hit_time > 0.0 and _hit_trick:
+		_draw_trick_marker(center)
+	elif _hit_time > 0.0:
 		var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
 		var t := _hit_time / HIT_MARKER_TIME
 		var marker := KILL_COLOR if _hit_kill else Color.WHITE
@@ -70,6 +83,21 @@ func _draw() -> void:
 		var size := 10.0 if reduced else 10.0 + 6.0 * t
 		for corner in [Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
 			draw_line(center + corner * 5.0, center + corner * size, marker, 2.5)
+
+
+## A trick-shot hit: a gold X with a diamond around it (red-gold for a kill), held twice as long.
+func _draw_trick_marker(center: Vector2) -> void:
+	var reduced: bool = Settings.get_value("accessibility", "reduce_flashing")
+	var t := _hit_time / (HIT_MARKER_TIME * 2.0)
+	var color := Player.TRICK_COLOR.lerp(KILL_COLOR, 0.35) if _hit_kill else Player.TRICK_COLOR
+	color.a = 0.9 if reduced else clampf(t * 1.5, 0.0, 1.0)
+	var size := 14.0 if reduced else 14.0 + 10.0 * t
+	for corner in [Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
+		draw_line(center + corner * 6.0, center + corner * size, Color(0, 0, 0, color.a * 0.6), 5.0)
+		draw_line(center + corner * 6.0, center + corner * size, color, 3.0)
+	var diamond := PackedVector2Array([center + Vector2(0, -size - 8), center + Vector2(size + 8, 0), center + Vector2(0, size + 8),
+		center + Vector2(-size - 8, 0), center + Vector2(0, -size - 8)])
+	draw_polyline(diamond, color, 2.0, true)
 
 
 ## Radius in pixels of the cone the next shot can land in, measured at the aim point.
