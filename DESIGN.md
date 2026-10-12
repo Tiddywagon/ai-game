@@ -234,14 +234,19 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 
 | Rule | Detail |
 |---|---|
-| Grid | Items occupy W×H cells (e.g., bandage 1×1, AR 5×2, backpack folded 5×5) |
-| Rotation | `R` rotates 90° while dragging |
-| Nesting | Rigs, backpacks, cases have their own grids; can't nest a container in a larger copy of itself |
-| Stacking | Ammo, money, some barter items stack (max per type) |
-| Slots | Primary, Secondary, Holster, Melee, Helmet, Earpiece, Face, Armor, Rig, Backpack, Pockets (4×1×1), Secure container |
-| Weight | Over-encumbered → slower move, faster stamina drain. Above 40 kg you're **overweight** and can't combat-roll *(tune)* |
-| Examine | Unknown items must be examined to reveal name/value |
-| Search | Containers/bodies reveal items over time |
+| Opening | **Tab** in a raid; the game keeps running (you can walk, but not shoot or aim). Out of raid: CHARACTER → INVENTORY (or Tab), with the stash beside you. Tab or Esc closes it (Esc closes the examine panel and open windows first) |
+| Layout | Equipment slots on the left; pockets and the grids of the equipped rig, backpack and secure container in the middle; the stash on the right (out of raid only). Header: carried weight, what it does to you, carried value |
+| Grid | Items take W×H cells (bandage 1×1, AK 5×2, armor 3×3) and can't overlap |
+| Moving | Drag and drop with the mouse. While dragging, the cells under the item light **green** (fits), **amber** (stacks onto / goes inside the item underneath) or **red** (doesn't fit). Nothing moves until you drop somewhere valid; dropping anywhere else cancels |
+| Rotation | `R` while dragging turns the item 90° |
+| Stacking | Drop a stack on the same item to merge, up to its max stack; the rest stays where it was. **Shift-drag** splits off half; the mouse wheel changes how many while dragging |
+| Containers | Rigs, backpacks and cases have their own grid (`"grid": [w, h]` stat). Drop an item on one to put it inside; double-click one to open it in its own window (e.g. a backpack in the stash). A container only goes inside another when empty, and never inside itself. The secure container takes no rigs, backpacks or containers |
+| Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol |
+| Rarity | Every item's background and border are its rarity colour, with the rarity letter in the corner so colour is never the only cue (colorblind palette aware) |
+| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (gun handling and loaded rounds, ammo damage and penetration, armor class and durability, what meds treat, a container's grid and contents, sight, Found in Raid). *Planned:* unknown items must be examined first to reveal their name and value |
+| Weight | Everything you carry counts, containers with their contents. Up to **25 kg** no effect. 25–40 kg **heavy**: speed falls to 80% and sprinting costs up to 1.5× stamina. **40 kg+ overweight**: no sprinting or combat roll, speed falls to 55% at 65 kg. Shown in the inventory header and the HUD. Values in `data/config/inventory.tres` *(tune)* |
+| Ammo | Spare rounds are counted from the pockets, rig and backpack (not the secure container); a reload takes the rounds it used out of them. Guns remember the rounds loaded |
+| Search | Containers/bodies reveal items over time *(planned)* |
 
 ## 8. Stash
 
@@ -501,14 +506,14 @@ All of these values live in `data/config/vision.tres`.
 
 | Area | Approach |
 |---|---|
-| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category (weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container), rarity, grid size, weight, base value, max stack, stats, `loot_weight`, an optional `icon`, and for guns a `weapon` (`WeaponData`). Items live in `data/items/<category>/` as either `.tres` files (one item each, made in the Inspector) or `.json` files (one item or a list; keys listed in `ItemData.from_dict()`, see the README). `ItemDB` loads both and reports bad entries with the file name. Enums are saved as numbers in `.tres` files, so only append new values. Exported builds need `*.json` in the export filter |
-| Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. The stash grid draws them |
+| Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category (weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container, melee), rarity, grid size, weight, base value, max stack, stats, `loot_weight`, an optional `icon`, and for guns a `weapon` (`WeaponData`). Items live in `data/items/<category>/` as either `.tres` files (one item each, made in the Inspector) or `.json` files (one item or a list; keys listed in `ItemData.from_dict()`, see the README). `ItemDB` loads both and reports bad entries with the file name. Enums are saved as numbers in `.tres` files, so only append new values. Exported builds need `*.json` in the export filter |
+| Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. Inventory grids draw them with `ItemDraw` |
 | Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, fire rate, auto/semi, magazine, reload and empty-reload time, base and movement spread, recoil per shot, recoil cap, recovery rate and delay, camera kick. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
 | Loot tables | `LootTable` Resource (`data/loot_tables/default.tres`: base rarity weights) with `roll_rarity()`, `roll_item()`, `roll_container()` and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: multipliers, categories, item count); maps add `MapInfo.loot_multipliers` |
-| Rolled items | `ItemInstance` (base `ItemData` + rarity + bonuses + gunsmith mod + durability + FIR flag); saved per instance. Bonuses and mods are `AffixData` / `GunsmithModData` Resources |
-| Inventory | `InventoryGrid` (pure data class) + UI `Control` scene; drag & drop |
-| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, equipment, pockets, skills, stash contents; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
-| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}` (version 2 added equipment, pockets and skills; version 1 saves get the starter kit equipped). Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
+| Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid, its own `InventoryGrid` for rigs / backpacks / containers, and for guns the round type and count loaded; saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses, gunsmith mod and durability (`AffixData` / `GunsmithModData` Resources) |
+| Inventory | Data (`scripts/inventory/`, no UI): `InventoryGrid` (placement, rotation, stacking, what may go inside what, weight, save), `Inventory` (equipment slots + pockets: slot rules, weight, ammo count / take, starter and Scav kits), `InventoryConfig` (`data/config/inventory.tres`: stash size, weight thresholds). UI (`scripts/ui/inventory/`): `InventoryScreen` (`ui/inventory_screen.tscn`), `InventoryGridView`, `EquipmentSlotView`, `InventoryDrag` (what a drop would do, and doing it), `InventoryDragPreview`, `ItemDraw`, `ItemExaminePanel`; `InventoryLayer` opens it in a raid. Built on Godot's GUI drag & drop (`_get_drag_data` / `_can_drop_data` / `_drop_data`). The player's weight, gun and spare rounds follow its `Inventory` (`Player.set_inventory()`) |
+| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, stash grid; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
+| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
 | Audio | Buses: Master, Music, Effects, Voice, UI, Ambient (`default_bus_layout.tres`). Placeholder music and UI sounds are generated by `tools/make_placeholder_audio.py` |
@@ -532,8 +537,8 @@ All of these values live in `data/config/vision.tres`.
 |---|---|
 | `scenes/` | Gameplay scenes: `actors/` (player, bots), `weapons/` (the shared gun scene), `props/` (car), `menu/` (main menu background), `hideout/`, `debug/` (test scenes such as the loot roll check) |
 | `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
-| `ui/` | Main menu (entry scene), settings, raid setup, loading, character, traders, pause menu, HUD; `theme/` |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `camera/`, `combat/` (bullets, guns, impact effects, flashbang), `world/` (cover, vision, raid environment) and `debug/` |
+| `ui/` | Main menu (entry scene), settings, raid setup, loading, character, inventory, traders, pause menu, HUD; `theme/` |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/` with `ui/inventory/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `inventory/` (item instances, grids, the inventory), `camera/`, `combat/` (bullets, guns, impact effects, flashbang), `world/` (cover, vision, raid environment) and `debug/` |
 | `data/` | `.tres` Resources (and item `.json` files): `items/` (one subfolder per category), `weapons/` (gun handling), `loot_tables/` (`default.tres`, `containers/`), `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info, loot multipliers) |
 | `assets/` | `models/`, `textures/`, `audio/` (`music/`, `ui/`), `shaders/`, `fonts/` |
 | `tools/` | Helper scripts run outside Godot (placeholder audio generator) |
@@ -572,7 +577,7 @@ WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys c
 
 | Screen | Shows |
 |---|---|
-| CHARACTER | Gear (all slots from Section 7, loaded ammo, 4 pockets, carried weight), stats (faction, level, XP, health, money), skills (Section 12.3, level and progress) and the stash grid side by side. Stash items show at their grid position with rarity border, rarity letter and stack count; hover for details. Moving items comes with the inventory |
+| CHARACTER | Gear (every slot from Section 7 with the loaded ammo or how many items are inside, pockets, carried weight and value), stats (faction, level, XP, health, money), skills (Section 12.3, level and progress) and the stash grid side by side. Stash items show at their grid position in their rarity colours with the rarity letter and stack count; hover for details. **INVENTORY** (or Tab) opens the grid inventory (Section 7) with the stash beside it; closing it saves |
 | TRADERS | All traders (Section 10) with loyalty level, reputation, money spent and what the next level needs. Jaeger is locked until his quest. Buying and selling come later |
 
 ### 16.3 Enter Raid
@@ -581,7 +586,7 @@ WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys c
 |---|---|
 | 1. Map | Every map from Section 5 is listed. Maps that aren't built yet show "in development" and can't be picked. Test Yard is playable |
 | 2. PMC or Scav | **PMC:** your character and gear; die and lose what you brought. **Scav:** random gear, nothing from your stash at risk; AI Scavs leave you alone unless you shoot them (whoever you shoot turns hostile). AI PMCs are hostile either way |
-| 3. Loadout check | Every slot, loaded ammo, pockets and weight, plus warnings: no armor, no helmet, no meds, no backpack, "if you die, everything you bring is lost" |
+| 3. Loadout check | Every slot with its loaded ammo and what's inside rigs, backpacks and the secure container, pockets and weight, plus warnings (heavy / overweight too): no armor, no helmet, no meds, no backpack, "if you die, everything you bring is lost" |
 | 4. Loading | Map name, side, a gameplay tip and a progress bar while the map loads in the background (shown for at least 1.5 s) |
 
 Back (or Esc / B) steps back one step at a time.
@@ -592,7 +597,7 @@ On first launch the player picks **BEAR** or **USEC** (Section 3); that creates 
 
 | Where | Items |
 |---|---|
-| Equipped | AK-74N loaded with 5.45x39 PS |
+| Equipped | AK-74N loaded with 5.45x39 PS, Secure container Alpha (2×2) |
 | Pockets | 60 × 5.45x39 PS, 1 bandage |
 | Stash | AK-74N, 2 × 60 5.45x39 PS, 3 bandages, 2 bolts |
 
@@ -637,3 +642,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Body-part health (head, thorax, stomach, arms, legs; blacked parts spread damage), light/heavy bleeds, fractures, pain, weapon sway, HUD silhouette and pain vignette, death screen with cause of death, `health.tres`. Replaces single health pools; player aims at the chest of whoever is under the reticle |
 | 2026-10-12 | Vision (13.6): Project Zomboid-style cone + awareness circle, 2D shadow casting, fog-of-war shader with remembered layout, enemies hidden outside view, low cover blocks only crouched, time of day / dark rooms / flashlight, fog and rain, pain / head injury / flashbang, sound markers, optics and binoculars with camera pull-out, AI on the same rules (scoped PMCs), `vision.tres`; AI vision values moved there from bot profiles |
 | 2026-10-12 | Item system: categories renamed food and junk (same numbers), items in `.tres` or JSON, `loot_weight`, rarity-coloured placeholder icons, 46 new items (52 in all) across every category and rarity, PM pistol. Loot tables: base weights 55 / 25 / 12 / 5 / 2.5 / 0.5, container types and map multipliers (Labs Epic+ ×2), debug roll scene |
+| 2026-10-12 | Grid inventory (Section 7): Tab in raid, CHARACTER → INVENTORY out of raid with the stash; drag and drop, R to turn, stacking, Shift-drag splits, right-click examine, rigs / backpacks / containers with their own grids, rarity-coloured items. Slots are now Primary, Secondary, Pistol (was Holster), Melee, Helmet, Body armor, Rig, Backpack, Secure container (Earpiece and Face cover dropped). Weight slows you from 25 kg and makes you overweight at 40 kg (`inventory.tres`); reloads use rounds you carry. New items: hatchet (melee category), Secure containers Alpha and Beta (55 items). Starter kit adds the Alpha container. Save version 3 (item instances), version 2 saves converted |

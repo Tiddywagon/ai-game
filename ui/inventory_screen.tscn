@@ -1,0 +1,175 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_grid_view.gd" id="2_grid"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
+bg_color = Color(1, 1, 1, 0.12)
+
+[node name="InventoryScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.022, 0.025, 0.95)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 36
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 36
+theme_override_constants/margin_bottom = 26
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 28
+
+[node name="Title" type="Label" parent="Margin/Layout/Header"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "INVENTORY"
+
+[node name="WeightBox" type="VBoxContainer" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="WeightLabel" type="Label" parent="Margin/Layout/Header/WeightBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "WEIGHT"
+
+[node name="WeightBar" type="ProgressBar" parent="Margin/Layout/Header/WeightBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(330, 8)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar")
+show_percentage = false
+
+[node name="WeightState" type="Label" parent="Margin/Layout/Header/WeightBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+
+[node name="ValueLabel" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Hint" type="Label" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+text = "Drag to move  ·  R while dragging: turn  ·  Shift-drag: split (wheel: how many)  ·  Right-click: examine  ·  Double-click: open"
+autowrap_mode = 3
+
+[node name="CloseButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 46)
+layout_mode = 2
+size_flags_vertical = 4
+text = "CLOSE  (Tab)"
+
+[node name="Columns" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/separation = 22
+
+[node name="EquipmentPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/EquipmentPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Margin/Layout/Columns/EquipmentPanel/Rows"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "EQUIPMENT"
+
+[node name="Equipment" type="HBoxContainer" parent="Margin/Layout/Columns/EquipmentPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="ContainersPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/ContainersPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Containers" type="VBoxContainer" parent="Margin/Layout/Columns/ContainersPanel/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="StashPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/StashPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "STASH"
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StashView" type="Control" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_grid")
+
+[node name="Overlay" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

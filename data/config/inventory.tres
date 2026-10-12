@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="InventoryConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/inventory_config.gd" id="1_inventory"]
+
+[resource]
+script = ExtResource("1_inventory")
+stash_size = Vector2i(10, 30)
+encumbered_kg = 25.0
+overweight_kg = 40.0
+max_weight_kg = 65.0
+overweight_speed = 0.8
+max_weight_speed = 0.55
+overweight_stamina_cost = 1.5

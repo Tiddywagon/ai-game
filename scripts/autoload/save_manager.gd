@@ -7,7 +7,9 @@ extends Node
 const SAVE_PATH := "user://savegame.json"
 ## Increase when the save format changes, and convert old saves in load_game().
 ## Version 2 added equipment, pockets and skills; version 1 saves get the starter kit equipped.
-const SAVE_VERSION := 2
+## Version 3 stores the inventory as item instances in grids (with container contents and loaded
+## rounds); version 2 equipment and pockets are converted, and get the Alpha secure container.
+const SAVE_VERSION := 3
 
 
 func has_save() -> bool:

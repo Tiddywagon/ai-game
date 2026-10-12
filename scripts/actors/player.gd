@@ -8,6 +8,10 @@ extends Actor
 ## Vision (DESIGN.md §13.6): the cone points at the reticle. Aiming (right-click) looks through the
 ## gun's sight: a scope gives a longer, narrower cone, slows you down and pulls the camera out toward
 ## the aim point. L toggles the flashlight, B takes out or puts away binoculars (no shooting with them).
+## Inventory (DESIGN.md §7): the gun in hand is the first one in the primary, secondary or pistol slot;
+## spare rounds come from the pockets, rig and backpack and are used up by reloads; everything carried
+## counts toward the weight that slows you. While an inventory screen is open (`ui_open`) you can still
+## walk, but not shoot, aim or move the reticle.
 
 ## Emitted when one of the player's bullets hits someone (hit markers, damage numbers).
 signal hit_landed(target: Actor, damage: float, position: Vector3)
@@ -31,6 +35,15 @@ var flashlight_on := false
 var using_binoculars := false
 ## 0 to 1 while raising a sight to the eye (DESIGN.md §13.6): cone, range, speed and camera blend by it.
 var optic_blend := 0.0
+## What the player carries. The level sets it from the raid loadout (set_inventory()).
+var inventory: Inventory
+## Extra weight on top of the inventory (debug key F2).
+var debug_extra_weight := 0.0:
+	set(value):
+		debug_extra_weight = value
+		_update_weight()
+## True while an inventory screen is open: walking still works; shooting, aiming and the reticle don't.
+var ui_open := false
 
 var _roll_requested := false
 var _cover_requested := false
@@ -38,6 +51,8 @@ var _sprint_toggled := false
 var _aim_toggled := false
 var _reload_requested := false
 var _flashlight: SpotLight3D
+## The inventory item of the gun in hand.
+var _weapon_item: ItemInstance
 
 
 func _ready() -> void:
@@ -56,9 +71,14 @@ func _ready() -> void:
 	_flashlight.shadow_enabled = true
 	_flashlight.visible = false
 	add_child(_flashlight)
+	weapon.fired.connect(_store_weapon_state)
+	weapon.reload_finished.connect(_on_reload_finished)
+	set_inventory(Inventory.starter())
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if ui_open:
+		return
 	if event is InputEventMouseMotion:
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			var motion: Vector2 = event.relative * _sensitivity()
@@ -107,14 +127,14 @@ func _think(delta: float) -> void:
 		sprint_input = Input.is_action_pressed("sprint")
 	if not Settings.is_toggle("crouch_mode") and cover == null:
 		set_crouching(Input.is_action_pressed("crouch") and not (sprint_input and moving))
-	fire_input = Input.is_action_pressed("shoot") and not using_binoculars
-	if using_binoculars and Input.is_action_just_pressed("shoot"):
+	fire_input = Input.is_action_pressed("shoot") and not using_binoculars and not ui_open
+	if using_binoculars and Input.is_action_just_pressed("shoot") and not ui_open:
 		action_blocked.emit("Put the binoculars away to shoot (%s)" % Settings.key_label("binoculars"))
 	auto_reload = Settings.get_value("gameplay", "auto_reload")
 	if _reload_requested:
 		_reload_requested = false
 		try_reload()
-	peek_input = _aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")
+	peek_input = (_aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")) and not ui_open
 	_update_aim()
 	var transition := VisionSystem.config.optic_transition_time
 	var raise := 1.0 if is_using_optic() else 0.0
@@ -141,6 +161,17 @@ func set_flashlight(on: bool) -> void:
 	_flashlight.visible = on
 
 
+## Carries `new_inventory` from now on: its weight, its gun, its spare rounds.
+func set_inventory(new_inventory: Inventory) -> void:
+	if inventory and inventory.changed.is_connected(_on_inventory_changed):
+		inventory.changed.disconnect(_on_inventory_changed)
+	_store_weapon_state()
+	inventory = new_inventory
+	inventory.changed.connect(_on_inventory_changed)
+	_update_weight()
+	_sync_weapon(true)
+
+
 func set_binoculars(on: bool) -> void:
 	using_binoculars = on
 	weapon.visible = weapon.has_gun() and not on
@@ -158,6 +189,62 @@ func is_using_optic() -> bool:
 	if is_dead or is_rolling or not peek_input:
 		return false
 	return using_binoculars or (weapon.has_gun() and not weapon.is_reloading)
+
+
+func _on_inventory_changed() -> void:
+	_update_weight()
+	_sync_weapon()
+
+
+func _update_weight() -> void:
+	carried_weight_kg = (inventory.total_weight() if inventory else 0.0) + debug_extra_weight
+
+
+## Puts the inventory's gun in hand if it changed (or `force`), and recounts the spare rounds.
+func _sync_weapon(force := false) -> void:
+	var slot := inventory.weapon_slot()
+	var item: ItemInstance = inventory.equipment[slot] if slot != "" else null
+	if force or item != _weapon_item:
+		_store_weapon_state()
+		_weapon_item = item
+		if item == null or item.data.weapon == null:
+			equip_weapon("", "", 0)
+		else:
+			# A gun without rounds loaded takes the first matching ammo you carry, magazine empty.
+			var ammo := item.loaded_ammo if item.loaded_ammo != "" else _carried_ammo_for(item.data.weapon.caliber)
+			equip_weapon(item.data.id, ammo, inventory.count_of(ammo))
+			if item.loaded_ammo == "":
+				weapon.rounds = 0
+				item.loaded_ammo = ammo
+				item.loaded_rounds = 0
+			elif item.loaded_rounds >= 0:
+				weapon.rounds = mini(item.loaded_rounds, weapon.data.magazine_size)
+		weapon.visible = weapon.has_gun() and not using_binoculars
+	elif weapon.has_gun():
+		weapon.spare_rounds = inventory.count_of(ammo_id)
+
+
+func _carried_ammo_for(caliber: String) -> String:
+	for grid in inventory.ammo_grids():
+		for item in grid.items:
+			if item.data.category == ItemData.Category.AMMO and item.data.stats.get("caliber", "") == caliber:
+				return item.data.id
+	return ""
+
+
+## Remembers the rounds in the gun on its inventory item.
+func _store_weapon_state() -> void:
+	if _weapon_item and weapon.has_gun():
+		_weapon_item.loaded_ammo = ammo_id
+		_weapon_item.loaded_rounds = weapon.rounds
+
+
+## The rounds a reload put in the magazine come out of the pockets, rig or backpack.
+func _on_reload_finished() -> void:
+	var used := inventory.count_of(ammo_id) - weapon.spare_rounds
+	_store_weapon_state()
+	if used > 0:
+		inventory.take(ammo_id, used)
 
 
 # --- Vision -----------------------------------------------------------------------------------

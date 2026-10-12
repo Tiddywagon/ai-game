@@ -1,35 +1,75 @@
 extends MenuScreen
-## CHARACTER screen (DESIGN.md §16.2): gear, stats, skills and the stash side by side.
+## CHARACTER screen (DESIGN.md §16.2): gear, stats, skills and the stash side by side. INVENTORY (or Tab)
+## opens the grid inventory with the stash beside it, to move gear between them; closing it saves.
 
 const DIM := Color(1, 1, 1, 0.35)
+const INVENTORY_SCENE := preload("res://ui/inventory_screen.tscn")
+
+var _inventory_screen: InventoryScreen
 
 
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
+	%InventoryButton.pressed.connect(open_inventory)
+	_refresh()
+	%StashTitle.text = "STASH  ·  %d × %d" % [GameState.stash.size.x, GameState.stash.size.y]
+	%InventoryButton.grab_focus.call_deferred()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_inventory") and _inventory_screen == null:
+		open_inventory()
+		get_viewport().set_input_as_handled()
+		return
+	super(event)
+
+
+## Opens the grid inventory over this screen, with the stash.
+func open_inventory() -> void:
+	if _inventory_screen:
+		return
+	_inventory_screen = INVENTORY_SCENE.instantiate()
+	_inventory_screen.inventory = GameState.inventory
+	_inventory_screen.stash = GameState.stash
+	_inventory_screen.closed.connect(_on_inventory_closed)
+	add_child(_inventory_screen)
+
+
+func _on_inventory_closed() -> void:
+	_inventory_screen = null
+	SaveManager.save_game()
+	_refresh()
+	%InventoryButton.grab_focus()
+
+
+func _refresh() -> void:
+	for grid: GridContainer in [%GearGrid, %StatsGrid, %SkillsGrid]:
+		for child in grid.get_children():
+			grid.remove_child(child)
+			child.queue_free()
 	_fill_gear()
 	_fill_stats()
 	_fill_skills()
-	%StashTitle.text = "STASH  ·  %d × %d" % [%StashGrid.columns, %StashGrid.rows]
-	%BackButton.grab_focus.call_deferred()
+	%StashGrid.queue_redraw()
 
 
 func _fill_gear() -> void:
 	var grid: GridContainer = %GearGrid
-	var weight := 0.0
-	for slot in GameState.SLOTS:
-		var item := _item(GameState.equipment.get(slot[0], ""))
-		weight += item.weight_kg if item else 0.0
-		_row(grid, slot[1], item.display_name if item else "—", Palette.rarity_color(item.rarity) if item else DIM)
-	var ammo := _item(GameState.weapon_ammo)
-	_row(grid, "Loaded ammo", ammo.display_name if ammo else "—", Palette.rarity_color(ammo.rarity) if ammo else DIM)
-	for i in GameState.POCKET_COUNT:
-		var pocket: Dictionary = GameState.pockets[i] if i < GameState.pockets.size() else {}
-		var item := _item(pocket.get("id", ""))
-		var count := int(pocket.get("count", 1))
-		weight += item.weight_kg * count if item else 0.0
-		var text := "—" if item == null else (item.display_name + (" ×%d" % count if count > 1 else ""))
-		_row(grid, "Pocket %d" % (i + 1), text, Palette.rarity_color(item.rarity) if item else DIM)
-	%GearWeight.text = "Carried weight: %s" % Settings.format_weight(weight)
+	var inventory := GameState.inventory
+	for slot in Inventory.SLOTS:
+		var item: ItemInstance = inventory.equipment[slot[0]]
+		var text := "—"
+		if item:
+			text = item.data.display_name
+			if item.contents and not item.contents.items.is_empty():
+				text += "  (%d inside)" % item.contents.items.size()
+			elif item.loaded_ammo != "" and ItemDB.get_item(item.loaded_ammo):
+				text += "  ·  " + ItemDB.get_item(item.loaded_ammo).display_name
+		_row(grid, slot[1], text, Palette.rarity_color(item.data.rarity) if item else DIM)
+	var pockets: Array = inventory.pockets.items.map(func(item: ItemInstance) -> String:
+		return item.data.display_name + (" ×%d" % item.count if item.count > 1 else ""))
+	_row(grid, "Pockets", ", ".join(pockets) if not pockets.is_empty() else "—", Color.WHITE if not pockets.is_empty() else DIM)
+	%GearWeight.text = "Carried weight: %s  ·  value %s" % [Settings.format_weight(inventory.total_weight()), UiFormat.money(inventory.total_value())]
 
 
 func _fill_stats() -> void:
@@ -41,7 +81,7 @@ func _fill_stats() -> void:
 	_row(grid, "Health", "%d HP over 7 body parts" % health.max_total(), Color.WHITE)
 	_row(grid, "Roubles", UiFormat.money(GameState.roubles), Color.WHITE)
 	_row(grid, "Dollars", UiFormat.money(GameState.dollars, "USD"), Color.WHITE)
-	_row(grid, "Items in stash", str(GameState.stash.size()), Color.WHITE)
+	_row(grid, "Items in stash", str(GameState.stash.items.size()), Color.WHITE)
 
 
 func _fill_skills() -> void:
@@ -72,7 +112,3 @@ func _row(grid: GridContainer, name: String, value: String, color: Color) -> voi
 	value_label.add_theme_color_override("font_color", color if color == DIM else color.lerp(Color.WHITE, 0.25))
 	grid.add_child(label)
 	grid.add_child(value_label)
-
-
-func _item(item_id: String) -> ItemData:
-	return ItemDB.get_item(item_id) if item_id != "" else null

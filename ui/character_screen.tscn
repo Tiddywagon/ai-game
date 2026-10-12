@@ -49,6 +49,16 @@ text = "CHARACTER"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="InventoryButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "INVENTORY  (Tab)"
+
+[node name="ButtonGap" type="Control" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(12, 0)
+layout_mode = 2
+
 [node name="BackButton" type="Button" parent="Margin/Layout/Header"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 48)
@@ -161,5 +171,5 @@ script = ExtResource("2_stash")
 [node name="StashHint" type="Label" parent="Margin/Layout/Columns/Stash/Rows"]
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-text = "Hover an item for details. Moving items comes with the inventory."
+text = "Hover an item for details. Open INVENTORY (Tab) to move gear between you and the stash."
 autowrap_mode = 3

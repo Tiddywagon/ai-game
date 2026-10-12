@@ -1,7 +1,7 @@
 extends Node3D
 ## Test level for movement, cover and combat (DESIGN.md §13). Esc / Start opens the pause menu.
 ## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC.
-## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS), F4 AI on/off, F5 heal,
+## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS, adds 60 if you have none), F4 AI on/off, F5 heal,
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
@@ -26,21 +26,14 @@ func _ready() -> void:
 	_player.died.connect(_on_player_died)
 
 
-## Plays as the side picked in ENTER RAID with that loadout's gun, loaded ammo, and the matching
-## rounds from the pockets as spare ammo. Run on its own, the player keeps the default AK-74N.
+## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
+## player gets the starter kit.
 func _apply_raid() -> void:
 	var raid := GameState.raid
 	if raid.get("side") == "scav":
 		_player.side = Actor.Side.SCAV
-	var loadout: Dictionary = raid.get("loadout", {})
-	if loadout.is_empty():
-		return
-	var ammo: String = loadout.get("weapon_ammo", "")
-	var spare := 0
-	for pocket: Dictionary in loadout.get("pockets", []):
-		if ammo != "" and pocket.get("id", "") == ammo:
-			spare += int(pocket.get("count", 0))
-	_player.equip_weapon(loadout.get("equipment", {}).get("primary", ""), ammo, spare)
+	var loadout: Variant = raid.get("loadout")
+	_player.set_inventory(loadout if loadout is Inventory else Inventory.starter())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -53,10 +46,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_player.health.set_fracture(leg, not _player.health.fractures[leg])
 			_hud.show_message("Left leg fracture: %s" % ("on" if _player.health.fractures[leg] else "off"))
 		KEY_F2:
-			_player.carried_weight_kg = 0.0 if _player.is_overweight() else _player.overweight_kg + 10.0
+			_player.debug_extra_weight = 0.0 if _player.is_overweight() else _player.inventory_config.overweight_kg + 10.0
 			_hud.show_message("Carrying %s%s" % [Settings.format_weight(_player.carried_weight_kg), " (overweight)" if _player.is_overweight() else ""])
 		KEY_F3:
-			_player.set_ammo(AMMO_TYPES[(AMMO_TYPES.find(_player.ammo_id) + 1) % AMMO_TYPES.size()])
+			var ammo: String = AMMO_TYPES[(AMMO_TYPES.find(_player.ammo_id) + 1) % AMMO_TYPES.size()]
+			if _player.inventory.count_of(ammo) == 0:
+				_player.inventory.add(ItemInstance.create(ammo, 60))  # Something to reload with.
+			_player.set_ammo(ammo)
+			_player.weapon.spare_rounds = _player.inventory.count_of(ammo)
 			_hud.show_message("Ammo: " + _player.ammo_label())
 		KEY_F4:
 			var bots := get_tree().get_nodes_in_group("bots")

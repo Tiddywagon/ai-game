@@ -5,13 +5,13 @@ extends Resource
 ## Per-copy state (rolled bonuses, durability, Found-in-Raid) lives on the item instance, not here.
 
 ## Item categories (DESIGN.md §6.1). Saved as numbers in .tres files: only add new values at the end.
-enum Category { WEAPON, AMMO, ATTACHMENT, ARMOR, RIG, BACKPACK, HELMET, MEDS, FOOD, VALUABLE, JUNK, KEY, CONTAINER }
+enum Category { WEAPON, AMMO, ATTACHMENT, ARMOR, RIG, BACKPACK, HELMET, MEDS, FOOD, VALUABLE, JUNK, KEY, CONTAINER, MELEE }
 ## Rarity scale (DESIGN.md §6.2). Same rule: only add new values at the end.
 enum Rarity { COMMON, UNCOMMON, RARE, ULTRA_RARE, EPIC, LEGENDARY }
 
 ## Names used in JSON files, indexed by Category and Rarity.
 const CATEGORY_NAMES: Array[String] = ["weapon", "ammo", "attachment", "armor", "rig", "backpack", "helmet",
-	"meds", "food", "valuable", "junk", "key", "container"]
+	"meds", "food", "valuable", "junk", "key", "container", "melee"]
 const RARITY_IDS: Array[String] = ["common", "uncommon", "rare", "ultra_rare", "epic", "legendary"]
 ## Keys a JSON item may have.
 const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rarity", "size", "weight", "value",
@@ -30,7 +30,9 @@ const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rari
 @export var base_value: int = 0
 ## How many fit in one stack; 1 means the item doesn't stack (DESIGN.md §7).
 @export_range(1, 9999) var max_stack: int = 1
-## Category-specific stats, e.g. {"caliber": "5.45x39", "damage": 50, "penetration": 28} for ammo.
+## Category-specific stats, e.g. {"caliber": "5.45x39", "damage": 50, "penetration": 28} for ammo,
+## {"grid": [4, 2]} for anything with its own grid (rigs, backpacks, containers; add "secure": true
+## for secure containers), {"class": "pistol"} for guns that go in the pistol slot.
 @export var stats: Dictionary = {}
 ## Weapons only: how the gun handles (fire rate, magazine, reload, recoil). See WeaponData.
 @export var weapon: WeaponData

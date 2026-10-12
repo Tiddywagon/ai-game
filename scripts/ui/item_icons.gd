@@ -30,6 +30,11 @@ static func _draw_icon(item: ItemData, color: Color) -> Image:
 	image.fill_rect(Rect2i(size.x - BORDER, 0, BORDER, size.y), color)
 	var glyph := Glyph.new(image, Rect2(Vector2(size) * 0.14, Vector2(size) * 0.72), color.lightened(0.25))
 	match item.category:
+		ItemData.Category.WEAPON when str(item.stats.get("class", "")) == "pistol":
+			glyph.box(0.1, 0.22, 0.92, 0.46)  # Slide.
+			glyph.box(0.18, 0.46, 0.44, 0.92)  # Grip.
+			glyph.box(0.44, 0.46, 0.6, 0.64)  # Trigger guard.
+			glyph.clear(0.47, 0.46, 0.57, 0.58)
 		ItemData.Category.WEAPON:
 			glyph.box(0.18, 0.36, 0.78, 0.5)  # Receiver.
 			glyph.box(0.78, 0.4, 1.0, 0.46)  # Barrel.
@@ -78,6 +83,9 @@ static func _draw_icon(item: ItemData, color: Color) -> Image:
 			glyph.box(0.45, 0.44, 0.95, 0.56)  # Blade.
 			glyph.box(0.75, 0.56, 0.82, 0.72)  # Teeth.
 			glyph.box(0.87, 0.56, 0.94, 0.68)
+		ItemData.Category.MELEE:
+			glyph.box(0.44, 0.15, 0.56, 0.95)  # Handle.
+			glyph.box(0.2, 0.12, 0.6, 0.38)  # Blade.
 		_:
 			glyph.box(0.1, 0.25, 0.9, 0.9)  # A case.
 			glyph.clear(0.1, 0.42, 0.9, 0.46)

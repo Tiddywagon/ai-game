@@ -1,0 +1,6 @@
+[
+  {"id": "secure_alpha", "name": "Secure container Alpha", "description": "Everything in it stays yours when you die. Holds 2×2; no rigs, backpacks or other containers.", "category": "container",
+   "rarity": "rare", "size": [2, 2], "weight": 0.5, "value": 0, "stats": {"grid": [2, 2], "secure": true}, "loot_weight": 0},
+  {"id": "secure_beta", "name": "Secure container Beta", "description": "A bigger secure container: 3×2.", "category": "container",
+   "rarity": "epic", "size": [2, 2], "weight": 0.6, "value": 0, "stats": {"grid": [3, 2], "secure": true}, "loot_weight": 0}
+]

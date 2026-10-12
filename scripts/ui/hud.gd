@@ -94,6 +94,10 @@ func _process(delta: float) -> void:
 	var text := "%s  ·  noise %s" % [_move_text(), Settings.format_distance(player.noise_radius)]
 	if player.is_exhausted:
 		text += "  ·  exhausted"
+	if player.is_overweight():
+		text += "  ·  overweight %s" % Settings.format_weight(player.carried_weight_kg)
+	elif player.is_encumbered():
+		text += "  ·  heavy %s" % Settings.format_weight(player.carried_weight_kg)
 	_state.text = text
 	_update_health(delta)
 	_update_ammo()

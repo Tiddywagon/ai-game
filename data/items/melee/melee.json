@@ -1,0 +1,4 @@
+[
+  {"id": "hatchet", "name": "Tactical hatchet", "description": "A light axe. Opens crates and the occasional skull.", "category": "melee",
+   "rarity": "common", "size": [1, 2], "weight": 0.8, "value": 12000, "stats": {"damage": 40}}
+]

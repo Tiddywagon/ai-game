@@ -36,6 +36,8 @@ const CHEST_HEIGHT_RATIO := 0.72
 @export var config: CombatConfig = preload("res://data/config/combat.tres")
 ## Body-part HP and status effect tuning.
 @export var health_config: HealthConfig = preload("res://data/config/health.tres")
+## Weight thresholds: carrying more slows you down (DESIGN.md §7).
+@export var inventory_config: InventoryConfig = preload("res://data/config/inventory.tres")
 ## Gun and ammo item ids from ItemDB. The gun item's WeaponData sets fire rate, magazine, recoil.
 @export var weapon_id := "ak_74n"
 @export var ammo_id := "ammo_545_ps"
@@ -75,9 +77,6 @@ const CHEST_HEIGHT_RATIO := 0.72
 @export var stand_height := 1.8
 @export var crouch_height := 1.1
 
-@export_group("Weight")
-## Above this carried weight the actor is overweight and can't roll (DESIGN.md §7).
-@export var overweight_kg := 40.0
 
 # What the controller wants this physics tick. Set in _think().
 ## Flat world direction to move in, length up to 1.
@@ -196,8 +195,14 @@ func set_crouching(value: bool) -> void:
 		is_crouching = value
 
 
+## Overweight (DESIGN.md §7): no sprinting or rolling, and slow.
 func is_overweight() -> bool:
-	return carried_weight_kg > overweight_kg
+	return carried_weight_kg >= inventory_config.overweight_kg
+
+
+## Carrying enough to slow down a little and tire faster.
+func is_encumbered() -> bool:
+	return carried_weight_kg > inventory_config.encumbered_kg
 
 
 ## Why a roll isn't possible right now, or "" if it is.
@@ -488,7 +493,7 @@ func _step_free(delta: float) -> void:
 	var moving := not move_input.is_zero_approx()
 	var injured_legs := health.injured_legs() > 0
 	# Shooting stops a sprint, and so does a fractured or blacked leg; sprinting from a crouch stands you up.
-	var sprint_held := moving and sprint_input and not fire_input and not injured_legs and _can_sprint()
+	var sprint_held := moving and sprint_input and not fire_input and not injured_legs and _can_sprint() and not is_overweight()
 	if sprint_held and is_crouching:
 		is_crouching = false
 	var sprinting := sprint_held and not is_exhausted
@@ -513,7 +518,7 @@ func _step_free(delta: float) -> void:
 
 	if injured_legs:
 		speed *= health_config.injured_leg_speed
-	speed *= _move_multiplier()
+	speed *= _move_multiplier() * inventory_config.speed_multiplier(carried_weight_kg)
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(move_input * speed, acceleration * delta)
 	velocity = Vector3(horizontal.x, velocity.y, horizontal.z)
 	_apply_gravity(delta)
@@ -583,7 +588,7 @@ func _apply_gravity(delta: float) -> void:
 
 func _update_stamina(sprinting: bool, delta: float) -> void:
 	if sprinting:
-		stamina = maxf(stamina - sprint_cost * delta, 0.0)
+		stamina = maxf(stamina - sprint_cost * inventory_config.stamina_multiplier(carried_weight_kg) * delta, 0.0)
 		_regen_cooldown = regen_delay
 	elif _regen_cooldown > 0.0:
 		_regen_cooldown -= delta

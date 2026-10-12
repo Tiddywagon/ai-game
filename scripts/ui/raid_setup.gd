@@ -11,7 +11,7 @@ var _step := Step.MAP
 var _maps: Array[MapInfo] = []
 var _map: MapInfo
 var _side := "pmc"
-var _loadout := {}
+var _loadout: Inventory
 var _map_buttons: Array[Button] = []
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]
@@ -107,24 +107,21 @@ func _show_loadout() -> void:
 	var gear: GridContainer = %GearGrid
 	for child in gear.get_children():
 		child.queue_free()
-	var equipment: Dictionary = _loadout.equipment
-	var weight := 0.0
-	for slot in GameState.SLOTS:
-		var item_id: String = equipment.get(slot[0], "")
-		var item: ItemData = ItemDB.get_item(item_id) if item_id != "" else null
-		weight += item.weight_kg if item else 0.0
-		_add_row(gear, slot[1], item.display_name if item else "—", Palette.rarity_color(item.rarity) if item else Color(1, 1, 1, 0.35))
-	var ammo: ItemData = ItemDB.get_item(_loadout.weapon_ammo) if _loadout.weapon_ammo != "" else null
-	_add_row(gear, "Loaded ammo", ammo.display_name if ammo else "—", Palette.rarity_color(ammo.rarity) if ammo else Color(1, 1, 1, 0.35))
-	var has_meds := false
-	for i in GameState.POCKET_COUNT:
-		var pocket: Dictionary = _loadout.pockets[i] if i < _loadout.pockets.size() else {}
-		var item: ItemData = ItemDB.get_item(pocket.id) if pocket.has("id") else null
+	for slot in Inventory.SLOTS:
+		var item: ItemInstance = _loadout.equipment[slot[0]]
+		var text := "—"
 		if item:
-			weight += item.weight_kg * pocket.count
-			has_meds = has_meds or item.category == ItemData.Category.MEDS
-		var text := "—" if item == null else ("%s ×%d" % [item.display_name, pocket.count] if pocket.count > 1 else item.display_name)
-		_add_row(gear, "Pocket %d" % (i + 1), text, Palette.rarity_color(item.rarity) if item else Color(1, 1, 1, 0.35))
+			text = item.data.display_name
+			if item.contents:
+				text += "  (%s)" % _contents_text(item.contents)
+		_add_row(gear, slot[1], text, Palette.rarity_color(item.data.rarity) if item else Color(1, 1, 1, 0.35))
+	var weapon_slot := _loadout.weapon_slot()
+	var gun: ItemInstance = _loadout.equipment[weapon_slot] if weapon_slot != "" else null
+	var ammo: ItemData = ItemDB.get_item(gun.loaded_ammo) if gun and gun.loaded_ammo != "" else null
+	_add_row(gear, "Loaded ammo", ammo.display_name if ammo else "—", Palette.rarity_color(ammo.rarity) if ammo else Color(1, 1, 1, 0.35))
+	_add_row(gear, "Pockets", _contents_text(_loadout.pockets), Color(1, 1, 1, 0.9))
+	var weight := _loadout.total_weight()
+	var config: InventoryConfig = load("res://data/config/inventory.tres")
 	%WeightLabel.text = "Carried weight: %s" % Settings.format_weight(weight)
 
 	var checks: Array[String] = []
@@ -132,18 +129,30 @@ func _show_loadout() -> void:
 		checks.append("Scav run: random gear. Nothing from your stash is at risk.")
 		checks.append("AI Scavs leave you alone unless you shoot them.")
 	else:
-		if equipment.get("armor", "") == "":
+		if _loadout.equipment.armor == null:
 			checks.append("No body armor: every hit goes straight to your health.")
-		if equipment.get("helmet", "") == "":
+		if _loadout.equipment.helmet == null:
 			checks.append("No helmet.")
-		if not has_meds:
-			checks.append("No meds in your pockets.")
-		if equipment.get("backpack", "") == "":
-			checks.append("No backpack: loot only fits in your pockets.")
+		if not _loadout.has_category(ItemData.Category.MEDS):
+			checks.append("No meds.")
+		if _loadout.equipment.backpack == null:
+			checks.append("No backpack: loot only fits in your pockets and rig.")
+		if weight >= config.overweight_kg:
+			checks.append("Overweight: you can't sprint or roll.")
+		elif weight > config.encumbered_kg:
+			checks.append("Heavy load: you'll move slower and tire faster.")
 		checks.append("If you die, everything you bring is lost.")
 	%Checks.text = "\n".join(checks.map(func(line: String) -> String: return "•  " + line))
 	%Checks.add_theme_color_override("font_color", WARNING_COLOR if _side == "pmc" else MenuEntryButton.TEXT)
 	%RaidSummary.text = "%s  ·  %d min  ·  %s" % [_map.display_name, _map.raid_minutes, "PMC" if _side == "pmc" else "Scav"]
+
+
+## "Bandage, 5.45x39 PS ×60" or "empty".
+func _contents_text(grid: InventoryGrid) -> String:
+	if grid.items.is_empty():
+		return "empty"
+	return ", ".join(grid.items.map(func(item: ItemInstance) -> String:
+		return item.data.display_name + (" ×%d" % item.count if item.count > 1 else "")))
 
 
 func _add_row(grid: GridContainer, name: String, value: String, color: Color) -> void:

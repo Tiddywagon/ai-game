@@ -14,7 +14,7 @@ Top-down 3D survival extraction looter shooter built in Godot 4 with GDScript. T
 On first launch you pick a faction (BEAR or USEC); that creates your profile. From the main menu:
 
 - **ENTER RAID**: pick a map (only Test Yard is playable so far), play as your PMC or as a Scav, check your loadout, then load in.
-- **CHARACTER**: your gear, stats, skills and stash.
+- **CHARACTER**: your gear, stats, skills and stash. **INVENTORY** (or Tab) opens the grid inventory with the stash beside it, to move gear between them.
 - **TRADERS**: loyalty levels and what the next one needs.
 - **Settings** (gear icon, bottom right): graphics, audio, controls and key bindings, gameplay, interface and accessibility.
 
@@ -31,9 +31,12 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 | Q | LB | Take / leave cover |
 | Shift | L3 | Sprint (uses stamina) |
 | C | B | Crouch / stand: slower and quieter |
+| Tab | Back | Inventory (open / close; moving items needs the mouse for now) |
 | L | — | Flashlight |
 | B | — | Binoculars (right-click to look through them; can't shoot while holding them) |
 | Esc | Start | Pause menu (resume, settings, leave raid, quit) |
+
+**Inventory** (mouse only for now): drag items to move them; the cells underneath turn green where the item fits, amber where it stacks or goes inside a rig or backpack, red where it can't go. **R** while dragging turns it; **Shift**-drag splits a stack in half (the mouse wheel changes how many); **right-click** examines (stats, rarity, value); **double-click** a rig, backpack or case to open it. Drop guns, armor, rigs and so on onto the equipment slots to wear them. Everything you carry has weight: from 25 kg you slow down and sprinting tires you faster; from 40 kg you're overweight and can't sprint or roll (thresholds in `data/config/inventory.tres`).
 
 Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
 
@@ -67,7 +70,7 @@ Every item lives in `data/items/` (any subfolder). No code needed: either make a
 }
 ```
 
-Only `id`, `name`, `category` and `rarity` are required. Categories: weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container. Rarities: common, uncommon, rare, ultra_rare (or "Ultra Rare"), epic, legendary. Guns add `"weapon": "res://data/weapons/<gun>.tres"`; `"icon": "res://..."` replaces the placeholder icon; `"loot_weight": 0` keeps an item out of random loot. Mistakes show up in the Output panel with the file name.
+Only `id`, `name`, `category` and `rarity` are required. Categories: weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container, melee. Rarities: common, uncommon, rare, ultra_rare (or "Ultra Rare"), epic, legendary. Guns add `"weapon": "res://data/weapons/<gun>.tres"`; `"icon": "res://..."` replaces the placeholder icon; `"loot_weight": 0` keeps an item out of random loot. Rigs, backpacks and cases get their own grid with `"stats": {"grid": [4, 2]}` (add `"secure": true` for a secure container); pistols need `"stats": {"class": "pistol"}` to go in the pistol slot. Mistakes show up in the Output panel with the file name.
 
 ## Loot
 

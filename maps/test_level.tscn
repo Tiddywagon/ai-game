@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://scripts/world/raid_environment.gd" id="13_environment"]
 [ext_resource type="Script" path="res://scripts/world/dark_zone.gd" id="14_dark"]
 [ext_resource type="Script" path="res://scripts/world/vision_occluder.gd" id="15_occluder"]
+[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_layer.gd" id="16_inventory"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -232,6 +233,10 @@ target = NodePath("../Player")
 [node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("10_hud")]
 player = NodePath("../Player")
 
+[node name="InventoryLayer" type="CanvasLayer" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("16_inventory")
+player = NodePath("../Player")
+
 [node name="DebugHelp" type="CanvasLayer" parent="."]
 
 [node name="Label" type="Label" parent="DebugHelp"]
@@ -243,7 +248,7 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
-text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Esc pause"
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Tab inventory  ·  Esc pause"
 
 [node name="PlayerVision" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("12_vision")
