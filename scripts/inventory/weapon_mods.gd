@@ -1,9 +1,11 @@
 class_name WeaponMods
 extends RefCounted
-## The mod tree on a gun (DESIGN.md §12.1). A gun's WeaponData lists its slots; a mod (an attachment
-## item with a "mod" stat) can bring slots of its own, e.g. a rail handguard adds a foregrip and a
-## tactical slot. Installed mods live in ItemInstance.mods by slot id, each with its own `mods`, so
-## taking a handguard off takes its foregrip with it.
+## The mod tree on a gun (DESIGN.md §12.1), and on a helmet (§12.2). A gun's WeaponData lists its
+## slots; a mod (an attachment item with a "mod" stat) can bring slots of its own, e.g. a rail handguard
+## adds a foregrip and a tactical slot. Helmets list theirs in their stats ("slots": face shield,
+## headset; "platform" is what face shields fit, "default_mods" what they come with). Installed mods
+## live in ItemInstance.mods by slot id, each with its own `mods`, so taking a handguard off takes its
+## foregrip with it.
 ##
 ## A mod's "mod" stat: {"kind": one of KINDS, "fits": [platforms] (leave out to fit any gun with a slot
 ## for its kind: rails, sights), "slots": [slot definitions], "modifiers": {...} (see WeaponStats),
@@ -13,10 +15,12 @@ extends RefCounted
 ## A slot path names a slot in the tree: "handguard" on the gun, "handguard/foregrip" on the handguard.
 
 const KINDS: Array[String] = ["muzzle", "barrel", "handguard", "foregrip", "stock", "pistol_grip", "receiver",
-	"sight", "tactical", "magazine"]
+	"sight", "tactical", "magazine", "face_shield", "headset"]
 const KIND_NAMES := {"muzzle": "Muzzle device", "barrel": "Barrel", "handguard": "Handguard", "foregrip": "Foregrip",
 	"stock": "Stock", "pistol_grip": "Pistol grip", "receiver": "Receiver", "sight": "Sight",
-	"tactical": "Tactical device", "magazine": "Magazine"}
+	"tactical": "Tactical device", "magazine": "Magazine", "face_shield": "Face shield", "headset": "Headset"}
+## Kinds that go on helmets, not guns.
+const GEAR_KINDS: Array[String] = ["face_shield", "headset"]
 
 
 ## The "mod" stat of `data`, or {} if it isn't a weapon mod.
@@ -40,11 +44,24 @@ static func capacity_of(data: ItemData) -> int:
 	return int(info(data).get("capacity", 0))
 
 
-## The slot definitions on `item`: a gun's from its WeaponData, a mod's from its "mod" stat.
+## The slot definitions on `item`: a gun's from its WeaponData, a mod's from its "mod" stat, a
+## helmet's from its "slots" stat.
 static func slots_of(item: ItemInstance) -> Array:
 	if item.data.weapon:
 		return item.data.weapon.slots
-	return info(item.data).get("slots", [])
+	if is_mod(item.data):
+		return info(item.data).get("slots", [])
+	return item.data.stats.get("slots", [])
+
+
+## True if `item` takes parts: a gun, or gear with slots (a helmet).
+static func has_slots(item: ItemInstance) -> bool:
+	return item.data.weapon != null or (not is_mod(item.data) and not item.data.stats.get("slots", []).is_empty())
+
+
+## True for parts that go on helmets (face shields, headsets).
+static func is_gear_mod(data: ItemData) -> bool:
+	return kind_of(data) in GEAR_KINDS
 
 
 ## True if mod item `mod` can go in `slot` on a gun of `platform`.
@@ -57,7 +74,7 @@ static func fits(platform: String, slot: Dictionary, mod: ItemData) -> bool:
 
 
 static func platform_of(gun: ItemInstance) -> String:
-	return gun.data.weapon.platform if gun.data.weapon else ""
+	return gun.data.weapon.platform if gun.data.weapon else str(gun.data.stats.get("platform", ""))
 
 
 ## Every slot in `gun`'s tree, in order (each slot followed by the slots of what's in it): [{"path",
@@ -175,14 +192,16 @@ static func compatible_paths(gun: ItemInstance, mod: ItemInstance) -> Array[Stri
 	return result
 
 
-## Fits the parts `gun` comes with (WeaponData.default_mods), parents before children.
+## Fits the parts `gun` comes with (WeaponData.default_mods, or a helmet's "default_mods" stat),
+## parents before children.
 static func install_defaults(gun: ItemInstance) -> void:
-	if gun.data.weapon == null:
+	var defaults: Dictionary = gun.data.weapon.default_mods if gun.data.weapon else gun.data.stats.get("default_mods", {})
+	if defaults.is_empty():
 		return
-	var paths: Array = gun.data.weapon.default_mods.keys()
+	var paths: Array = defaults.keys()
 	paths.sort_custom(func(a: String, b: String) -> bool: return a.count("/") < b.count("/"))
 	for path: String in paths:
-		var mod := ItemInstance.create(str(gun.data.weapon.default_mods[path]))
+		var mod := ItemInstance.create(str(defaults[path]))
 		if mod == null:
 			continue
 		if install_block_reason(gun, path, mod) == "":

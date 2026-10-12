@@ -7,7 +7,8 @@ extends PanelContainer
 ## parts fitted and their durability; weapon parts what they change and which guns they fit. Guns with
 ## rounds loaded can be unloaded from here, and out of raid MODIFY opens the modding screen. Guns and
 ## rounds also show an ammo chart beside the stats: every round of the caliber compared (AmmoChart).
-## Armor shows its class, what it covers and its durability.
+## Armor shows its class, what it covers and its durability; helmets their face shield and headset
+## (TAKE OFF out of raid); upgradable gear its level, and out of raid UPGRADE opens GearUpgradePanel.
 ## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
@@ -15,6 +16,10 @@ signal closed
 signal unload_requested(item: ItemInstance)
 ## MODIFY pressed for a gun.
 signal modify_requested(item: ItemInstance)
+## UPGRADE pressed for upgradable gear.
+signal upgrade_requested(item: ItemInstance)
+## TAKE OFF pressed for the part in slot `path` of `item` (a helmet's face shield or headset).
+signal part_removal_requested(item: ItemInstance, path: String)
 
 const TREATMENTS := {"light_bleed": "light bleed", "heavy_bleed": "heavy bleed", "fracture": "fracture",
 	"pain": "pain", "blacked": "blacked limb"}
@@ -31,6 +36,8 @@ var _description: Label
 var _chart: AmmoChart
 var _unload: Button
 var _modify: Button
+var _upgrade: Button
+var _parts: VBoxContainer
 
 
 func _ready() -> void:
@@ -82,6 +89,9 @@ func _ready() -> void:
 	_description.custom_minimum_size.x = 420
 	_description.theme_type_variation = &"DimLabel"
 	left.add_child(_description)
+	_parts = VBoxContainer.new()
+	_parts.name = "GearParts"
+	left.add_child(_parts)
 	_chart = AmmoChart.new()
 	_chart.name = "AmmoChart"
 	body.add_child(_chart)
@@ -102,6 +112,13 @@ func _ready() -> void:
 	_modify.tooltip_text = "Fit and swap parts, see the stats change, repair"
 	_modify.pressed.connect(func() -> void: modify_requested.emit(item))
 	buttons.add_child(_modify)
+	_upgrade = Button.new()
+	_upgrade.name = "UpgradeButton"
+	_upgrade.text = "UPGRADE"
+	_upgrade.custom_minimum_size = Vector2(120, 36)
+	_upgrade.tooltip_text = "Raise its level at the Workbench or Ragman: more durability, room or hearing"
+	_upgrade.pressed.connect(func() -> void: upgrade_requested.emit(item))
+	buttons.add_child(_upgrade)
 	var close_button := Button.new()
 	close_button.text = "CLOSE"
 	close_button.custom_minimum_size = Vector2(120, 36)
@@ -114,7 +131,7 @@ func show_item(examined: ItemInstance) -> void:
 	item = examined
 	var data := item.data
 	_icon.texture = data.get_icon()
-	_name.text = data.display_name
+	_name.text = item.title()
 	_name.add_theme_color_override("font_color", Palette.rarity_color(data.rarity).lightened(0.15))
 	_subtitle.text = "%s (%s)  ·  %s" % [Palette.RARITY_NAMES[data.rarity], Palette.RARITY_SHORT[data.rarity], data.category_name().capitalize()]
 	for child in _stats.get_children():
@@ -139,6 +156,8 @@ func show_item(examined: ItemInstance) -> void:
 			_stats.add_child(value)
 	_unload.visible = item.rounds_loaded() > 0
 	_modify.visible = can_modify and item.is_gun()
+	_upgrade.visible = can_modify and GearUpgrades.is_upgradable(data)
+	_build_parts()
 	_description.text = data.description
 	_description.visible = data.description != ""
 	_chart.visible = data.weapon != null or data.category == ItemData.Category.AMMO
@@ -148,6 +167,38 @@ func show_item(examined: ItemInstance) -> void:
 		_chart.show_caliber(str(data.stats.get("caliber", "")), data.id)
 	show()
 	_fit.call_deferred()
+
+
+## A helmet's face shield and headset slots: what's fitted, with TAKE OFF out of raid.
+func _build_parts() -> void:
+	for child in _parts.get_children():
+		_parts.remove_child(child)
+		child.queue_free()
+	if item.is_gun() or not WeaponMods.has_slots(item):
+		_parts.hide()
+		return
+	_parts.show()
+	for entry in WeaponMods.walk(item):
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		var label := Label.new()
+		label.theme_type_variation = &"DimLabel"
+		label.text = str(entry.slot.get("name", entry.path))
+		label.custom_minimum_size.x = 110
+		row.add_child(label)
+		var value := Label.new()
+		value.text = (entry.mod as ItemInstance).title() if entry.mod else "empty (drop one on the helmet)"
+		value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(value)
+		if entry.mod and can_modify:
+			var take_off := Button.new()
+			take_off.name = "TakeOff_" + str(entry.path)
+			take_off.text = "TAKE OFF"
+			take_off.custom_minimum_size = Vector2(110, 30)
+			var path := str(entry.path)
+			take_off.pressed.connect(func() -> void: part_removal_requested.emit(item, path))
+			row.add_child(take_off)
+		_parts.add_child(row)
 
 
 ## Shrinks to the new content once it's laid out, centred over the screen.
@@ -161,14 +212,16 @@ func close() -> void:
 	closed.emit()
 
 
-## Which guns weapon part `data` fits: their names, or any gun with a slot for it.
+## Which guns (or helmets, for a face shield) part `data` fits: their names, or any with a slot for it.
 static func fits_text(data: ItemData) -> String:
 	var platforms: Array = WeaponMods.info(data).get("fits", [])
+	var gear := WeaponMods.is_gear_mod(data)
 	if platforms.is_empty():
-		return "Any gun with a slot for it"
+		return "Any helmet with a %s slot" % WeaponMods.KIND_NAMES.get(WeaponMods.kind_of(data), "").to_lower() if gear else "Any gun with a slot for it"
 	var names: Array[String] = []
 	for each in ItemDB.all_items():
-		if each.weapon and each.weapon.platform in platforms:
+		var platform := str(each.stats.get("platform", "")) if gear and each.category == ItemData.Category.HELMET else (each.weapon.platform if each.weapon else "")
+		if platform != "" and platform in platforms:
 			names.append(each.display_name)
 	names.sort()
 	return ", ".join(names) if not names.is_empty() else ", ".join(platforms)
@@ -273,9 +326,9 @@ static func stat_lines(examined: ItemInstance) -> Array:
 			lines.append(["Protects", ", ".join(stats.get("zones", []).map(func(zone: String) -> String: return zone.capitalize()))])
 			if stats.has("material"):
 				lines.append(["Material", str(stats.material).capitalize()])
-			lines.append(["Blunt damage", "%d%% of a stopped round's" % roundi(float(stats.get("blunt", 0.3)) * 100.0)])
+			lines.append(["Blunt damage", "%d%% of a stopped round's" % roundi(GearUpgrades.blunt(examined) * 100.0)])
 			if float(stats.get("ricochet", 0.0)) > 0.0:
-				lines.append(["Ricochet", "×%s the round's chance" % str(stats.ricochet)])
+				lines.append(["Ricochet", "×%.2f the round's chance" % GearUpgrades.ricochet(examined)])
 		else:
 			lines.append(["Type", str(stats["class"]).capitalize()])
 	if examined.is_armor():
@@ -316,6 +369,18 @@ static func stat_lines(examined: ItemInstance) -> Array:
 			lines.append(["Adds slots", ", ".join(slots.map(func(slot: Dictionary) -> String: return str(slot.name)))])
 		if not examined.mods.is_empty():
 			lines.append(["Fitted", ", ".join(examined.mods.values().map(func(mod: ItemInstance) -> String: return mod.data.display_name))])
+	if stats.has("hearing"):
+		var hearing := GearUpgrades.hearing(examined)
+		var text := "%+d%% (sounds heard %s)" % [roundi(hearing * 100.0), "further" if hearing > 0.0 else "less far"]
+		if not examined.mods.is_empty():
+			var total := hearing
+			for part in WeaponMods.installed(examined):
+				total += GearUpgrades.hearing(part)
+			text = "%+d%% on its own, %+d%% with its face shield and headset" % [roundi(hearing * 100.0), roundi(total * 100.0)]
+		if not is_zero_approx(hearing) or not examined.mods.is_empty():
+			lines.append(["Hearing", text.replace("-", "−")])
+	if GearUpgrades.is_upgradable(data):
+		lines.append(["Upgrade", "+%d of +%d (%s)" % [examined.upgrade_level, GearUpgrades.max_level(data), Palette.RARITY_NAMES[data.rarity]]])
 	if examined.contents:
 		var inside := examined.contents
 		lines.append(["Holds", "%d × %d grid" % [inside.size.x, inside.size.y]])

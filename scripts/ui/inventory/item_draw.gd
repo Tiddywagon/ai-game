@@ -2,8 +2,8 @@ class_name ItemDraw
 extends RefCounted
 ## Draws one inventory item into a rectangle (DESIGN.md §7): the rarity-coloured background and border,
 ## its icon (turned when the item is), a name strip, the stack count and the rarity letter, so colour is
-## never the only cue, and the found-in-raid checkmark in the bottom-right corner (faded while it's
-## only pending, during a raid). Used by grids, equipment slots, the drag preview and item lists.
+## never the only cue, the found-in-raid checkmark in the bottom-right corner (faded while it's only
+## pending, during a raid) and a gold "+N" for upgraded gear. Used by grids, equipment slots, the drag preview and item lists.
 
 const TEXT_COLOR := Color(0.92, 0.91, 0.86)
 const NAME_STRIP := 18.0
@@ -11,6 +11,8 @@ const NAME_STRIP := 18.0
 const FIR_SIZE := 14.0
 const FIR_COLOR := Color(0.93, 0.96, 0.86)
 const FIR_PENDING_ALPHA := 0.35
+## The "+N" of an upgraded item.
+const UPGRADE_COLOR := Color(1.0, 0.82, 0.35)
 
 
 static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bool, alpha := 1.0, count := -1) -> void:
@@ -33,6 +35,9 @@ static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bo
 		canvas.draw_rect(Rect2(rect.position + Vector2(2, 2), Vector2(rect.size.x - 4, NAME_STRIP)), Color(0, 0, 0, 0.6 * alpha))
 		canvas.draw_string(font, rect.position + Vector2(5, 15), short_name(item.data.display_name, rect.size.x), HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 8, 12, Color(TEXT_COLOR, alpha))
 	canvas.draw_string(font, rect.position + Vector2(5, rect.size.y - 5), Palette.RARITY_SHORT[item.data.rarity], HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(color.lightened(0.2), alpha))
+	if item.upgrade_level > 0:
+		canvas.draw_string(font, rect.position + Vector2(0, rect.size.y - 5), "+%d" % item.upgrade_level, HORIZONTAL_ALIGNMENT_CENTER,
+			rect.size.x, 12, Color(UPGRADE_COLOR, alpha))
 	var marked := has_fir_mark(item)
 	if marked:
 		draw_fir_mark(canvas, fir_mark_rect(rect), item.fir_pending and not item.fir, alpha)
@@ -64,12 +69,14 @@ static func draw_unknown(canvas: CanvasItem, rect: Rect2, progress := -1.0) -> v
 
 ## Hover text for an item.
 static func tooltip(item: ItemInstance) -> String:
-	var lines := [item.data.display_name + (" ×%d" % item.count if item.count > 1 else ""),
+	var lines := [item.title() + (" ×%d" % item.count if item.count > 1 else ""),
 		"%s  ·  %s  ·  %s" % [Palette.RARITY_NAMES[item.data.rarity], Settings.format_weight(item.weight()), UiFormat.money(item.value())]]
 	if item.is_gun():
 		lines.append("Durability %.1f / %.1f" % [item.durability, item.max_durability])
 	elif item.is_armor():
 		lines.append("Class %d  ·  durability %.1f / %.1f" % [int(item.data.stats["class"]), item.durability, item.max_durability])
+	if GearUpgrades.is_upgradable(item.data):
+		lines.append("Upgrade +%d of +%d" % [item.upgrade_level, GearUpgrades.max_level(item.data)])
 	elif WeaponMods.is_mod(item.data):
 		lines.append(ModPartRow.summary(item.data))
 	if has_fir_mark(item):

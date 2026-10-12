@@ -1,8 +1,8 @@
 extends MenuScreen
 ## TRADERS screen (DESIGN.md §10, §11, §16.2): every trader with your loyalty level, reputation and
 ## what the next level needs, and tabs to BUY (roubles or dollars), BARTER (items for an item), do
-## their TASKS (accept, hand over, turn in) and compare AMMO (every round of the gun in hand, or of any
-## caliber: AmmoChart). Offers above your loyalty level with a trader show the level they need.
+## their TASKS (accept, hand over, turn in), compare AMMO (every round of the gun in hand, or of any
+## caliber: AmmoChart) and, at Ragman, UPGRADE gear (GearUpgradeRow). Offers above your loyalty level with a trader show the level they need.
 ## Everything you get goes to the stash and is never found in raid. Requirements marked with the
 ## found-in-raid checkmark only take items that have it (Trading, QuestLog). Each deal saves the game.
 
@@ -76,6 +76,8 @@ func _refresh() -> void:
 	_build_barters(trader)
 	_build_tasks(trader)
 	_build_ammo()
+	if trader.id in GearUpgrades.sources():
+		_build_upgrades(trader)
 	%Tabs.current_tab = clampi(tab, 0, %Tabs.get_tab_count() - 1)
 	var lines := ["Loyalty level %d  ·  reputation %.2f  ·  spent %s" % [loyalty.level, loyalty.reputation, UiFormat.money(loyalty.spent)]]
 	var next: int = loyalty.level + 1
@@ -232,6 +234,24 @@ func _build_ammo() -> void:
 		_ammo_caliber = calibers[index]
 		show.call(_ammo_caliber))
 	rows.add_child(_note("Velocity is out of the gun in hand (its barrel and parts) when it takes this caliber. Frag: chance to fragment in flesh (more damage, a bleed). Bleed: chance of a light / heavy bleed per hit. AP rounds go through armor but hurt less; soft rounds hurt the unarmored most. LL: the loyalty level a trader needs; the best AP rounds are only found in raid or made at the Workbench."))
+
+
+## The UPGRADES tab (traders that upgrade gear): every piece of upgradable gear you own, with what the
+## next level costs here (GearUpgradeRow).
+func _build_upgrades(trader: Dictionary) -> void:
+	var rows := _add_tab("UPGRADES")
+	rows.add_child(_note("%s raises gear a level at a time, up to +%d at your loyalty level (rarer gear goes higher: Common +1 … Epic and Legendary +5). The Workbench in the hideout does it for less money." % [
+		trader.name, GearUpgrades.source_max_level(trader.id)]))
+	var owned := GearUpgrades.owned()
+	for gear in owned:
+		var row := GearUpgradeRow.create(gear, trader.id)
+		row.upgraded.connect(func(_item: ItemInstance) -> void:
+			%Status.text = "Upgraded."
+			_refresh.call_deferred())
+		rows.add_child(row)
+		rows.add_child(HSeparator.new())
+	if owned.is_empty():
+		rows.add_child(_note("You have no gear to upgrade: armor, helmets, face shields, headsets, rigs and backpacks."))
 
 
 ## The gun you'd raid with (in hand), or null.

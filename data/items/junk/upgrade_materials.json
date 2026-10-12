@@ -1,0 +1,7 @@
+[
+  {"id": "ripstop_fabric", "name": "Ripstop fabric", "description": "A roll of tear-resistant nylon. Used to upgrade rigs and backpacks.", "category": "junk", "rarity": "common", "size": [1, 1], "weight": 0.3, "value": 7000},
+  {"id": "paracord", "name": "Paracord", "description": "Thirty metres of parachute cord. Used to upgrade rigs and backpacks.", "category": "junk", "rarity": "common", "size": [1, 1], "weight": 0.2, "value": 5000},
+  {"id": "aramid_fabric", "name": "Aramid fabric", "description": "Ballistic fabric for patching and reinforcing armor.", "category": "junk", "rarity": "uncommon", "size": [1, 1], "weight": 0.4, "value": 18000},
+  {"id": "epoxy_resin", "name": "Epoxy resin", "description": "Two-part resin. Bonds plates and frames.", "category": "junk", "rarity": "rare", "size": [1, 1], "weight": 0.5, "value": 30000},
+  {"id": "ceramic_shards", "name": "Ceramic plate shards", "description": "Ballistic ceramic from broken plates. The best armor upgrades need it.", "category": "junk", "rarity": "ultra_rare", "size": [1, 1], "weight": 0.8, "value": 52000}
+]

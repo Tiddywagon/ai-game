@@ -45,6 +45,8 @@ func _ready() -> void:
 	_examine = ItemExaminePanel.new()
 	_examine.unload_requested.connect(unload)
 	_examine.modify_requested.connect(open_modding)
+	_examine.upgrade_requested.connect(open_upgrade)
+	_examine.part_removal_requested.connect(take_off_part)
 	_examine.can_modify = stash != null
 	InventoryDrag.mods_allowed = stash != null
 	%Overlay.add_child(_examine)
@@ -113,7 +115,10 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_inventory") or event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if get_viewport().gui_is_dragging():
 			return
-		if _examine.visible:
+		var upgrade_panel := %Overlay.get_node_or_null("GearUpgradePanel") as GearUpgradePanel
+		if upgrade_panel and upgrade_panel.visible:
+			upgrade_panel.close()
+		elif _examine.visible:
 			_examine.close()
 		elif not _windows.is_empty():
 			_close_window(_windows.keys().back())
@@ -263,6 +268,42 @@ func unload(gun: ItemInstance) -> void:
 		stash.changed.emit()
 	if _examine.visible and _examine.item == gun:
 		_examine.show_item(gun)
+
+
+## Opens the upgrade dialog for `item` over the inventory (out of raid only).
+func open_upgrade(item: ItemInstance) -> GearUpgradePanel:
+	if stash == null or item == null or not GearUpgrades.is_upgradable(item.data):
+		return null
+	_examine.close()
+	var panel := GearUpgradePanel.new()
+	%Overlay.add_child(panel)
+	panel.upgraded.connect(func(_upgraded: ItemInstance) -> void: _on_gear_upgraded())
+	panel.closed.connect(panel.queue_free)
+	panel.show_item(item)
+	return panel
+
+
+func _on_gear_upgraded() -> void:
+	for grid in inventory.grids():
+		grid.changed.emit()
+	stash.changed.emit()
+	inventory.changed.emit()
+	_build_containers()  # A bigger rig or backpack.
+
+
+## Takes the part in slot `path` off `item` (a helmet's face shield or headset) into the stash, else
+## your pockets, rig or backpack.
+func take_off_part(item: ItemInstance, path: String) -> void:
+	var part := WeaponMods.mod_at(item, path)
+	if part == null:
+		return
+	WeaponMods.uninstall(item, path)
+	if not ((stash and stash.add(part)) or inventory.add(part)):
+		WeaponMods.install(item, path, part)  # Nowhere to put it.
+	inventory.changed.emit()
+	if stash:
+		stash.changed.emit()
+	_examine.show_item(item)
 
 
 ## Opens the modding screen for `gun` over the inventory (out of raid only).

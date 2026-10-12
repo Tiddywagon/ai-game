@@ -23,7 +23,7 @@
   {
     "id": "workbench",
     "name": "Workbench",
-    "description": "Hand-loads ammo and makes parts.",
+    "description": "Hand-loads ammo, makes parts and upgrades gear.",
     "levels": [
       {"level": 1, "roubles": 40000, "requires": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}],
         "crafts": [{"id": "bs_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 1}], "output": {"item": "ammo_545_bs", "count": 30}}]},

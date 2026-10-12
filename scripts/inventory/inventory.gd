@@ -32,7 +32,7 @@ func _init() -> void:
 
 
 ## True if `item` may go in `slot`: weapons in the weapon slots (pistols only in the pistol slot),
-## armor in armor, and so on. One item at a time.
+## armor in armor, and so on. One item at a time. Body armor and an armored rig don't go together.
 func accepts(slot: String, item: ItemInstance) -> bool:
 	if item.count != 1:
 		return false
@@ -48,9 +48,11 @@ func accepts(slot: String, item: ItemInstance) -> bool:
 		"helmet":
 			return category == ItemData.Category.HELMET
 		"armor":
-			return category == ItemData.Category.ARMOR
+			# Not over an armored rig: it already is the armor.
+			return category == ItemData.Category.ARMOR and not (equipment.get("rig") and equipment.rig.is_armor())
 		"rig":
-			return category == ItemData.Category.RIG
+			# An armored rig doesn't go over body armor.
+			return category == ItemData.Category.RIG and not (item.is_armor() and equipment.get("armor") != null)
 		"backpack":
 			return category == ItemData.Category.BACKPACK
 		"secure":

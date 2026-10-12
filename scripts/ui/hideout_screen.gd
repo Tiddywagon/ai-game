@@ -72,6 +72,8 @@ func _refresh() -> void:
 			%Details.add_child(RequirementRow.create(wanted))
 		%Details.add_child(_action_button("UPGRADE" if level > 0 else "BUILD", Hideout.upgrade_block_reason(station),
 			func() -> String: return Hideout.upgrade(station)))
+	if station.id == GearUpgrades.WORKBENCH:
+		_build_gear_upgrades(level)
 	var recipes := Hideout.all_crafts(station)
 	if not recipes.is_empty():
 		%Details.add_child(HSeparator.new())
@@ -108,6 +110,18 @@ func _refresh() -> void:
 		if level < unlock_level:
 			blocked = "Needs %s level %d" % [station.name, unlock_level]
 		row.add_child(_action_button("CRAFT", blocked, func() -> String: return Hideout.craft(station, recipe)))
+		%Details.add_child(row)
+
+
+## The Workbench's gear upgrades: every piece of upgradable gear you own, with what the next level
+## costs here (GearUpgradeRow).
+func _build_gear_upgrades(level: int) -> void:
+	%Details.add_child(HSeparator.new())
+	_heading("GEAR UPGRADES  (up to +%d at this level)" % GearUpgrades.source_max_level(GearUpgrades.WORKBENCH) if level > 0 else "GEAR UPGRADES  (build the Workbench first)", true)
+	_note("Raise armor, helmets, face shields, headsets, rigs and backpacks a level at a time: more durability, less blunt damage, more room, less weight, better hearing. Level 1 upgrades to +2, level 2 to +4, level 3 to +5; rarer gear goes higher.")
+	for gear in GearUpgrades.owned():
+		var row := GearUpgradeRow.create(gear, GearUpgrades.WORKBENCH)
+		row.upgraded.connect(func(_item: ItemInstance) -> void: _refresh.call_deferred())
 		%Details.add_child(row)
 
 

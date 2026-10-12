@@ -1,0 +1,44 @@
+{
+  "_comment": "Gear upgrades (DESIGN.md §12.2): traders or the hideout Workbench raise a piece of gear's level, +1 to +5, for roubles and barter items. The highest level depends on rarity. Armor (vests, armored rigs, helmets, face shields) gains durability and lets less blunt damage through, and helmets and face shields deflect more; rigs and backpacks get lighter and roomier; headsets hear further. per_level values are percent per level (hearing: percentage points). capacity: extra [columns, rows] at each level 0-5. money_share: share of the item's value each level costs. items: barter items each level costs, by upgrade group.",
+  "max_level_by_rarity": [1, 2, 3, 4, 5, 5],
+  "per_level": {
+    "durability": 10,
+    "blunt": -4,
+    "ricochet": 6,
+    "hearing": 5,
+    "weight": -5
+  },
+  "capacity": [[0, 0], [0, 0], [0, 1], [0, 1], [0, 2], [1, 2]],
+  "money_share": [0.0, 0.15, 0.25, 0.4, 0.6, 0.85],
+  "min_roubles": 3000,
+  "items": {
+    "armor": [
+      [],
+      [{"item": "aramid_fabric", "count": 1}, {"item": "duct_tape", "count": 1}],
+      [{"item": "aramid_fabric", "count": 2}, {"item": "bolts", "count": 2}],
+      [{"item": "aramid_fabric", "count": 2}, {"item": "epoxy_resin", "count": 1}],
+      [{"item": "aramid_fabric", "count": 3}, {"item": "epoxy_resin", "count": 1}, {"item": "ceramic_shards", "count": 1}],
+      [{"item": "aramid_fabric", "count": 4}, {"item": "epoxy_resin", "count": 2}, {"item": "ceramic_shards", "count": 2}]
+    ],
+    "carry": [
+      [],
+      [{"item": "paracord", "count": 1}],
+      [{"item": "ripstop_fabric", "count": 1}, {"item": "paracord", "count": 1}],
+      [{"item": "ripstop_fabric", "count": 2}, {"item": "duct_tape", "count": 1}],
+      [{"item": "ripstop_fabric", "count": 2}, {"item": "paracord", "count": 2}, {"item": "epoxy_resin", "count": 1}],
+      [{"item": "ripstop_fabric", "count": 3}, {"item": "paracord", "count": 2}, {"item": "epoxy_resin", "count": 2}]
+    ],
+    "electronics": [
+      [],
+      [{"item": "wires", "count": 1}],
+      [{"item": "wires", "count": 2}, {"item": "screws", "count": 1}],
+      [{"item": "wires", "count": 2}, {"item": "screwdriver", "count": 1}],
+      [{"item": "wires", "count": 3}, {"item": "flash_drive", "count": 1}],
+      [{"item": "wires", "count": 4}, {"item": "gpu", "count": 1}]
+    ]
+  },
+  "sources": {
+    "workbench": {"name": "Workbench", "money": 0.4, "extra_items": [{"item": "duct_tape", "count": 1}], "max_level_by_station_level": [0, 2, 4, 5]},
+    "ragman": {"name": "Ragman", "money": 1.0, "extra_items": [], "max_level_by_loyalty": [0, 2, 3, 4, 5]}
+  }
+}

@@ -179,8 +179,8 @@ func _to_mask(point: Vector2) -> Vector2:
 func _on_noise(position: Vector3, radius: float, source: Node, kind: StringName) -> void:
 	if player == null or not is_instance_valid(player) or player.is_dead or source == player or not enabled:
 		return
-	if player.global_position.distance_to(position) > radius:
-		return  # Too far to hear.
+	if player.global_position.distance_to(position) > radius * player.hearing_multiplier():
+		return  # Too far to hear (a headset hears further, a helmet muffles).
 	if source is Actor:
 		if sees(source):
 			return

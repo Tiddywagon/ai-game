@@ -5,7 +5,7 @@ extends RefCounted
 ## with R. It also decides what dropping it somewhere would do, and does it. Nothing moves until the
 ## drop succeeds, so letting go anywhere else simply cancels. Stacks only merge with the same
 ## Found-in-Raid status, and a split keeps the status of its stack. Out of raid, a weapon part dropped
-## on a gun is fitted to a free slot it fits (DESIGN.md §12.1); in the modding screen parts are also
+## on a gun (or a face shield or headset on a helmet) is fitted to a free slot it fits (DESIGN.md §12.1); in the modding screen parts are also
 ## dragged off a gun's slots. Rounds dropped on a gun of their caliber load it (DESIGN.md §6.4).
 
 ## The drag in progress, if any (for R and the mouse wheel).
@@ -182,7 +182,7 @@ func load_into(gun: ItemInstance) -> bool:
 ## The free slot on `gun` the dragged part would be fitted to, or "" if it's not a part, there's no
 ## free slot it fits, or modding isn't allowed here.
 func install_path(gun: ItemInstance) -> String:
-	if not mods_allowed or splitting or gun == null or not gun.is_gun() or gun == item or gun == from_gun:
+	if not mods_allowed or splitting or gun == null or not WeaponMods.has_slots(gun) or gun == item or gun == from_gun:
 		return ""
 	return WeaponMods.slot_for(gun, item, true)
 

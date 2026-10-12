@@ -117,10 +117,10 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Weapons | Pistols, SMGs, shotguns, ARs, DMRs, bolt-actions, LMGs (22 guns, Section 6.4) | Fire rate, recoil, ergonomics, accuracy, caliber (damage comes from the ammo) |
 | Ammo | 9x18, 9x19, .45 ACP, 12ga, 5.45x39, 5.56x45, 7.62x39, 7.62x51, 7.62x54R, .338 Lapua; 4–6 rounds each (Section 6.4) | Damage, penetration, armor damage, fragmentation, velocity, recoil, accuracy, ricochet, light/heavy bleed; pellets, tracer, noise |
 | Attachments (weapon parts) | Muzzle devices, barrels, handguards, foregrips, stocks, pistol grips, dust covers, sights, lasers, magazines | Vertical and horizontal recoil, recoil recovery, base spread, bloom per shot, max bloom, bloom recovery, hip-fire spread, ergonomics, weight; some also muzzle velocity, aim speed, noise, jam chance, wear, magazine size (Section 12.1) |
-| Armor | Vests (class 1–6) | Class, durability, zones, blunt, ricochet, destructibility (Section 6.4); move penalty planned |
-| Rigs | Chest rigs, armored rigs | Grid slots, (armor class if armored) |
-| Backpacks | Sling → large raid packs | Grid size, weight |
-| Helmets | Bump caps → class 4–5 helmets | Class, durability, ricochet, hearing penalty |
+| Armor | Vests and plate carriers (class 1–6; Section 12.2) | Class, durability, zones (thorax, stomach, arms), blunt, ricochet, destructibility, upgrade level; move penalty planned |
+| Rigs | Chest rigs, armored rigs (class 1–6) | Grid, (armor stats if armored), upgrade level |
+| Backpacks | Daypack → 8×8 raid packs | Grid size, weight, upgrade level |
+| Helmets | Bump caps → class 6 helmets, with face shield and headset slots | Class, durability, ricochet, hearing; face shields (face zone), headsets (hearing) |
 | Meds | Bandage, tourniquet, splint, medkit, surgical kit, painkillers, stims | Heals HP / fixes bleed, fracture; uses |
 | Food & Drink | Crackers, canned meat, water, energy drink | Energy, hydration |
 | Valuables | Gold chain, Bitcoin, LEDX, GPU, secure flash drive, intelligence folder | High sell value, small size |
@@ -361,21 +361,15 @@ Where: the trader and the loyalty level you need with them (Section 10), and the
 
 | Armor rule | Detail |
 |---|---|
-| Armor | Helmets, body armor and armored rigs (an armor `class`) stop rounds on the body parts they cover (`zones`): helmets the head, most vests the thorax and stomach, the slick carrier only the thorax. Arms and legs are never covered |
+| Armor | Helmets, face shields, body armor and armored rigs (an armor `class`, 1–6) stop rounds on the body parts they cover (`zones`): helmets the head, face shields the face, most vests the thorax and stomach, plate carriers only the thorax, the heaviest suits the arms too. Legs are never covered. All the gear is listed in Section 12.2 |
+| Face | A head hit from within 60° of where the target faces is a face hit: only a face shield covers it (helmets don't). From the side or behind, the helmet takes it. A face shield is checked before its helmet |
+| Armored rigs | An armored rig is armor and pouches in one: it can't be worn with body armor (neither goes on over the other) |
 | Stopped | A round that doesn't get through either glances off (ricochet) or pushes blunt damage through: damage × the armor's blunt share × penetration / resistance (at least 30% of that), so a pistol round on a rifle plate barely hurts. No bleed, no fragmentation |
 | Through | A round that gets through keeps 85% of its damage, then may fragment and bleed as above |
-| Wear | Armor keeps its durability per item, saved with your gear and on bodies: looted armor can be half shot through |
+| Wear | Armor keeps its durability per item, saved with your gear and on bodies: looted armor can be half shot through. Upgrades raise its max durability and lower its blunt share (Section 12.2) |
 | Feedback | A round armor stops gets a smaller steel-blue hit marker with a square and a steel-blue damage number ("RICOCHET" if it glanced off); fragmenting hits an orange-red number; sparks instead of blood on the armor |
 
-| Armor | Class | Covers | Durability | Material | Blunt | Ricochet |
-|---|---|---|---|---|---|---|
-| PACA soft armor | 2 | Thorax, stomach | 50 | Aramid | 35% | — |
-| 6B23-1 body armor | 4 | Thorax, stomach | 49 | Steel | 25% | ×0.1 |
-| Gzhel-K body armor | 5 | Thorax, stomach | 65 | Ceramic | 20% | ×0.05 |
-| Slick plate carrier | 6 | Thorax | 80 | Ceramic | 15% | ×0.1 |
-| SSh-68 steel helmet | 2 | Head | 30 | Steel | 35% | ×0.5 |
-| ZSh-1-2M helmet | 4 | Head | 36 | Titanium | 25% | ×0.4 |
-| Altyn assault helmet | 5 | Head | 50 | Titanium | 20% | ×0.6 |
+Every piece of armor, with its class, zones, durability and blunt share, is in Section 12.2.
 
 | Rule | Detail |
 |---|---|
@@ -434,7 +428,7 @@ The 40 parts from before (AK-74N, PM, SVD and the rail parts) are listed in Sect
 | Rotation | `R` while dragging turns the item 90° |
 | Stacking | Drop a stack on the same item to merge, up to its max stack (only stacks with the same found-in-raid status merge, Section 2.1); the rest stays where it was. **Shift-drag** splits off half; the mouse wheel changes how many while dragging |
 | Containers | Rigs, backpacks and cases have their own grid (`"grid": [w, h]` stat). Drop an item on one to put it inside; double-click one to open it in its own window (e.g. a backpack in the stash). A container only goes inside another when empty, and never inside itself. The secure container takes no rigs, backpacks or containers |
-| Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol |
+| Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol. An armored rig and body armor don't go together. Face shields and headsets go on the helmet (Section 12.2) |
 | Rarity | Every item's background and border are its rarity colour, with the rarity letter in the corner so colour is never the only cue (colorblind palette aware) |
 | Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (a gun's type, caliber and how many round types it takes, handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage (per pellet), penetration, armor damage, velocity, fragmentation, bleeds, recoil, accuracy, ricochet, tracer and the guns it fits, with an ammo chart of its caliber beside the stats (a gun shows its caliber's too, Section 6.4); armor class, what it covers and its durability and durability, what meds treat, a container's grid and contents, sight, Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
 | Weapon parts | Out of raid, dropping a part on a gun (in a grid or an equipment slot) fits it to a free slot it fits (the gun lights amber). A gun's weight and value include its parts. Hover a gun for its durability, a part for what it does |
@@ -472,7 +466,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench and Lavatory. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench and Lavatory. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
@@ -488,7 +482,7 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
 
-**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
+**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Ragman sells the gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials, and upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4); Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
 
 ### Loyalty Levels (LL)
 
@@ -583,13 +577,120 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 
 These are the first 40 parts; the other 143 (every new gun's standard parts and upgrades, shared muzzle devices and magazines, more rail parts and sights) are listed in Section 6.4. Parts come from Mechanic, Skier, Peacekeeper and Jaeger (Section 10), weapon boxes and duffle bags, and the guns you find.
 
-### 12.2 Gear Upgrades
+### 12.2 Gear & Gear Upgrades
 
-| Gear | Upgrade path | Effect |
+**Gear** *(tune: `data/items/armor/`, `helmets/`, `rigs/`, `backpacks/` and `attachments/helmet_mods.json`)*: 13 vests and 7 armored rigs in classes 1–6, 10 helmets in classes 1–6 with 7 face shields and 6 headsets, and 9 rigs and 9 backpacks from 3×1 to 8×8 (47 new pieces, every rarity). How armor stops rounds (penetration against class, durability loss) is in Section 6.4. Ragman sells gear by loyalty level (Common and Uncommon at LL1, Rare LL2, Ultra Rare LL3, Epic LL4; Legendary gear is only found in raid); all of it can turn up as loose loot or on bodies.
+
+**Body armor**
+
+| Armor | Class | Covers | Durability | Material | Blunt | Weight | Rarity (max upgrade) | Where |
+|---|---|---|---|---|---|---|---|---|
+| Trooper soft vest | 1 | Thorax, Stomach | 35 | Aramid | 40% | 2.2 kg | C (+1) | Ragman LL1 |
+| Module-3M body armor | 2 | Thorax, Stomach | 40 | Aramid | 38% | 2.8 kg | C (+1) | Ragman LL1 |
+| PACA soft armor | 2 | Thorax, Stomach | 50 | Aramid | 35% | 3.5 kg | U (+2) | Ragman LL1 |
+| Zhuk-3 press vest | 3 | Thorax, Stomach | 52 | Titanium | 30% | 5.2 kg | U (+2) | Ragman LL1 |
+| MMAC plate carrier | 3 | Thorax | 46 | Polyethylene | 28% | 3.6 kg | R (+3) | Ragman LL2 |
+| 6B23-1 body armor | 4 | Thorax, Stomach | 49 | Steel | 25% | 8.6 kg | R (+3) | Ragman LL2 |
+| Gzhel-K body armor | 5 | Thorax, Stomach | 65 | Ceramic | 20% | 9.0 kg | UR (+4) | Ragman LL3 |
+| Korund-VM body armor | 5 | Thorax, Stomach | 60 | Ceramic | 20% | 10.2 kg | UR (+4) | Ragman LL3 |
+| Redut-T5 body armor | 5 | Thorax, Stomach, arms | 75 | Steel | 22% | 13.4 kg | UR (+4) | Ragman LL3 |
+| Hexgrid plate carrier | 5 | Thorax | 55 | Ceramic | 18% | 6.4 kg | E (+5) | Ragman LL4 |
+| Zabralo-Sh body armor | 6 | Thorax, Stomach, arms | 85 | Steel | 18% | 18.0 kg | E (+5) | Ragman LL4 |
+| Slick plate carrier | 6 | Thorax | 80 | Ceramic | 15% | 9.5 kg | L (+5) | Loot |
+| Atlas heavy assault armor | 6 | Thorax, Stomach, arms | 110 | Ceramic | 12% | 20.0 kg | L (+5) | Loot |
+
+**Armored rigs** (armor and pouches in one; not worn with body armor)
+
+| Rig | Class | Covers | Durability | Grid | Weight | Rarity (max upgrade) | Where |
+|---|---|---|---|---|---|---|---|
+| Improvised plate rig | 1 | Thorax | 25 | 3×1 | 3.0 kg | C (+1) | Ragman LL1 |
+| Patrol armored vest | 2 | Thorax, Stomach | 38 | 4×1 | 2.6 kg | U (+2) | Ragman LL1 |
+| 6B5 armored rig | 3 | Thorax, Stomach | 45 | 4×2 | 7.5 kg | U (+2) | Ragman LL1 |
+| Thor plate rig | 4 | Thorax | 50 | 4×3 | 6.2 kg | R (+3) | Ragman LL2 |
+| Bagariy armored rig | 5 | Thorax, Stomach | 60 | 5×2 | 9.5 kg | UR (+4) | Ragman LL3 |
+| AVS assault rig | 5 | Thorax, Stomach | 70 | 6×2 | 8.0 kg | E (+5) | Ragman LL4 |
+| TSR combat rig | 6 | Thorax | 80 | 6×3 | 9.0 kg | L (+5) | Loot |
+
+**Helmets** (cover the head except the face; face shield and headset slots)
+
+| Helmet | Class | Durability | Ricochet | Hearing | Slots | Comes with | Rarity (max upgrade) | Where |
+|---|---|---|---|---|---|---|---|---|
+| Bump cap | 1 | 20 | ×0.2 | — | headset | — | C (+1) | Ragman LL1 |
+| Kolpak riot helmet | 1 | 26 | ×0.3 | −5% | face shield, headset | — | C (+1) | Ragman LL1 |
+| SSh-68 steel helmet | 2 | 30 | ×0.5 | −10% | headset | — | U (+2) | Ragman LL1 |
+| Kiver-M helmet | 3 | 34 | ×0.3 | −15% | face shield, headset | — | U (+2) | Ragman LL1 |
+| ZSh-1-2M helmet | 4 | 36 | ×0.4 | −15% | face shield, headset | — | R (+3) | Ragman LL2 |
+| FAST high-cut helmet | 4 | 30 | ×0.35 | −5% | face shield, headset | — | R (+3) | Ragman LL2 |
+| Sentry ballistic helmet | 5 | 38 | ×0.4 | −5% | face shield, headset | — | UR (+4) | Ragman LL3 |
+| Altyn assault helmet | 5 | 50 | ×0.6 | −25% | face shield, headset | Altyn face shield | E (+5) | Ragman LL4 |
+| Lynx-T helmet | 5 | 44 | ×0.5 | −20% | face shield, headset | Lynx-T face shield | E (+5) | Ragman LL4 |
+| Vulkan-6 heavy helmet | 6 | 60 | ×0.6 | −30% | face shield, headset | Vulkan-6 face shield | L (+5) | Loot |
+
+**Face shields** (cover the face: head hits from the front)
+
+| Face shield | Class | Durability | Ricochet | Hearing | Fits | Rarity (max upgrade) | Where |
+|---|---|---|---|---|---|---|---|
+| Kolpak riot visor | 1 | 20 | ×0.3 | −5% | Kolpak riot helmet | C (+1) | Ragman LL1 |
+| Kiver face shield | 2 | 28 | ×0.4 | −10% | Kiver-M helmet | U (+2) | Ragman LL1 |
+| Ballistic rail visor | 3 | 30 | ×0.45 | −5% | FAST high-cut helmet, Sentry ballistic helmet | R (+3) | Ragman LL2 |
+| ZSh armored visor | 4 | 36 | ×0.5 | −10% | ZSh-1-2M helmet | UR (+4) | Ragman LL3 |
+| Altyn face shield | 5 | 50 | ×0.6 | −10% | Altyn assault helmet | E (+5) | Loot |
+| Lynx-T face shield | 5 | 46 | ×0.55 | −10% | Lynx-T helmet | E (+5) | Loot |
+| Vulkan-6 face shield | 6 | 60 | ×0.6 | −15% | Vulkan-6 heavy helmet | L (+5) | Loot |
+
+**Headsets** (any helmet's headset slot)
+
+| Headset | Hearing | Weight | Rarity (max upgrade) | Where |
+|---|---|---|---|---|
+| GSSh-01 headset | +15% | 0.15 kg | C (+1) | Ragman LL1 |
+| Sordin headset | +25% | 0.30 kg | U (+2) | Ragman LL1 |
+| ComTac headset | +35% | 0.35 kg | R (+3) | Ragman LL2 |
+| Tactical Sport headset | +40% | 0.25 kg | UR (+4) | Ragman LL3 |
+| Razor headset | +45% | 0.30 kg | E (+5) | Ragman LL4 |
+| Ghost headset | +55% | 0.25 kg | L (+5) | Loot |
+
+**Rigs and backpacks** (plain)
+
+| Item | Kind | Grid | Item size | Weight | Rarity (max upgrade) | Where |
+|---|---|---|---|---|---|---|
+| Sling bag | Backpack | 3×3 | 2×3 | 0.3 kg | C (+1) | Ragman LL1 |
+| Daypack | Backpack | 4×4 | 3×4 | 0.6 kg | C (+1) | Ragman LL1 |
+| MBSS backpack | Backpack | 4×5 | 3×4 | 0.9 kg | U (+2) | Ragman LL1 |
+| Tourist backpack | Backpack | 5×6 | 4×5 | 1.4 kg | U (+2) | Ragman LL1 |
+| Trizip backpack | Backpack | 6×6 | 4×5 | 1.8 kg | R (+3) | Ragman LL2 |
+| Large raid pack | Backpack | 6×8 | 5×6 | 3.6 kg | R (+3) | Ragman LL2 |
+| Pilgrim tourist backpack | Backpack | 7×7 | 5×6 | 3.2 kg | UR (+4) | Ragman LL3 |
+| Attack 2 raid backpack | Backpack | 6×8 | 5×6 | 2.4 kg | E (+5) | Ragman LL4 |
+| Blackjack 50 backpack | Backpack | 8×8 | 5×6 | 2.0 kg | L (+5) | Loot |
+| Battle belt | Rig | 3×1 | 2×1 | 0.4 kg | C (+1) | Ragman LL1 |
+| Scav vest | Rig | 4×1 | 2×2 | 0.3 kg | C (+1) | Ragman LL1 |
+| Tactical chest rig | Rig | 4×2 | 3×3 | 1.0 kg | U (+2) | Ragman LL1 |
+| Triton chest rig | Rig | 6×2 | 3×3 | 1.2 kg | R (+3) | Ragman LL2 |
+| Bear assault rig | Rig | 6×3 | 3×3 | 1.6 kg | UR (+4) | Ragman LL3 |
+| Blackrock chest rig | Rig | 7×3 | 3×3 | 1.3 kg | E (+5) | Ragman LL4 |
+| Operator chest rig | Rig | 8×3 | 3×3 | 1.1 kg | L (+5) | Loot |
+
+| Helmet rule | Detail |
+|---|---|
+| Slots | Helmets list their slots (`"slots"`): a face shield (fits by mount, `"platform"`: the rail visor goes on any railed helmet) and a headset (any headset). Some come with their face shield (`"default_mods"`: Altyn, Lynx-T, Vulkan-6). Out of raid, drop a face shield or headset on a helmet to fit it; examining the helmet lists them with TAKE OFF (to the stash) |
+| Hearing | Helmets and face shields muffle (−5% to −30% hearing), a headset amplifies (+15% to +55%, more when upgraded). The total (×0.5 to ×2) sets how far you hear: the sound markers of things you can't see (Section 13.6), and for AI how far they hear you |
+
+**Upgrades** *(tune: `data/config/gear_upgrades.json`)*: raise a piece of gear's level, **+1 to +5**, one level at a time, for roubles and barter items.
+
+| Rule | Detail |
+|---|---|
+| What | Armor (vests, armored rigs, helmets, face shields), plain rigs and backpacks, and headsets. Guns are modded, not upgraded (Section 12.1); secure containers, meds and the rest don't upgrade |
+| Max level | By rarity: Common +1, Uncommon +2, Rare +3, Ultra Rare +4, Epic and Legendary +5 |
+| Effects per level | Armor: **+10% max durability** (the current durability goes up as much), **−4% blunt damage**; helmets and face shields **+6% ricochet**. Rigs and backpacks: **5% lighter**, **+1 row of room at +2, +2 rows at +4, +1 column and +2 rows at +5** (armored rigs get both). Headsets: **+5% hearing** |
+| Where | **Ragman** (UPGRADES tab): up to +2 at LL1, +3 at LL2, +4 at LL3, +5 at LL4; full price, counted as money spent with him. **Workbench** (hideout, GEAR UPGRADES): up to +2 at level 1, +4 at level 2, +5 at level 3; 40% of the money but an extra roll of duct tape. Out of raid, **UPGRADE** in the examine panel opens a dialog with both |
+| Cost | Roubles: 15 / 25 / 40 / 60 / 85% of the item's value for +1 … +5 (at least 3,000). Barter items: armor needs aramid fabric (then bolts, epoxy resin, ceramic plate shards); rigs and backpacks paracord and ripstop fabric (then duct tape, epoxy resin); headsets wires (then screws, a screwdriver, a flash drive, a GPU). Ragman sells ripstop fabric and paracord (LL1) and aramid fabric (LL2); the rest is loot |
+| Showing it | The item's name gets "+N" (examine, tooltips, lists) and a gold "+N" in its grid cell; examine shows "Upgrade: +1 of +3 (Rare)" and the durability, blunt share, ricochet, room and hearing at its level. Each row in the upgrade lists shows what the next level changes, the price (red if you can't afford it), the items (with how many you have) and UPGRADE, disabled with the reason ("Needs a higher loyalty level with Ragman", "Upgrade the Workbench for +3", "Missing items") |
+| Saving | The level is saved with the item (`"upgrade"`); its max durability and grid are rebuilt from it on load |
+
+| Planned gear upgrades | Upgrade path | Effect |
 |---|---|---|
 | Armor | Repair kits, plate inserts (class swap) | Restore durability, raise class |
-| Helmets | Visors, faceshields, NVG/headset mounts | Face protection, utility |
-| Rigs/Backpacks | Tier progression only (no mods) | Bigger grids |
+| Helmets | NVG mounts | Night vision |
 | Secure container | Quest/barter tiers: Alpha 2×2 → Beta 3×2 → Gamma 3×3 → Kappa 3×4 | Safer loot |
 
 ### 12.3 Player Skills
@@ -791,6 +892,7 @@ All of these values live in `data/config/vision.tres`.
 | Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. Inventory grids draw them with `ItemDraw` |
 | Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, weapon skill, class (`weapon_class`: pistol, smg, shotgun, assault_rifle, dmr, bolt_action, lmg), fire rate, auto/semi, magazine, reload and empty-reload time; recoil (vertical, horizontal, recovery rate and delay, camera kick); spread and bloom (base spread, bloom per shot, max bloom, bloom recovery and delay, hip-fire, moving, sprint and roll spread, sway). Modding fields: platform, ergonomics, muzzle velocity, `slots` and `default_mods`; durability: wear per shot, malfunction threshold, jam chance at 0 durability, time to clear a jam. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
 | Content files | Guns: `data/weapons/<gun>.tres` plus their items in `data/items/weapons/<class>.json`; ammo: `data/items/ammo/<caliber>.json` (stats `caliber`, `damage`, `penetration`, `armor_damage`, `fragmentation`, `velocity`, `recoil`, `accuracy`, `ricochet`, `light_bleed`, `heavy_bleed`, optional `pellets`, `pellet_spread`, `noise`, `tracer`); armor: `class`, `durability`, `zones`, `material`, `blunt`, `ricochet`, `destructibility`; parts: `data/items/attachments/<family>_mods.json`. `ItemDB.ammo_of(caliber)` lists a caliber's rounds (commonest first); `LootTable.ammo_for()` picks the everyday one. `Weapon.pull_trigger` fires one `Ballistics.fire` per pellet (`sound` only on the first); `InventoryDrag.can_load()` / `load_into()` load rounds dropped on a gun; `Player` chambers the top round of the magazine and switches round type on reload |
+| Gear and upgrades | Helmets use the mod slot tree (`WeaponMods`: `slots_of()` reads a helmet's `"slots"`, `platform_of()` its `"platform"`, `install_defaults()` its `"default_mods"`; `has_slots()`, `is_gear_mod()`); face shields and headsets are attachment items with a `"mod"` stat of kind `face_shield` / `headset`. `ArmorRules.armor_for(gear, part, frontal)` checks face shields before helmets (`is_frontal()`), `Actor.hearing_multiplier()` adds up helmet hearing. `Inventory.accepts()` keeps body armor and armored rigs apart. `GearUpgrades` (`scripts/progression/`, data in `data/config/gear_upgrades.json`): groups, max level, effects (`blunt()`, `ricochet()`, `hearing()`, `weight_multiplier()`, `grid_size()`, `apply()`), sources and limits, `cost()`, `block_reason()`, `upgrade()`, `owned()`. `ItemInstance.upgrade_level` (saved as `"upgrade"`) and `title()`. UI: `GearUpgradeRow` (`scripts/ui/`), `GearUpgradePanel` (`scripts/ui/inventory/`, from the examine panel's UPGRADE), Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES |
 | Armor and rounds | `ArmorRules` (`scripts/combat/`): resistance, penetration chance, `resolve()` (penetration, ricochet, blunt, wear, fragmentation, bleed chances) and `effectiveness()` for the charts. `Actor.take_hit(damage, from, position, shot)` resolves a round (`ArmorRules.shot()`) against `worn_gear()` and returns the outcome, which `Ballistics` passes to `on_hit_landed()` (`Player.last_hit` drives the armor hit marker). `BodyHealth.hit` takes the round's bleed chances from the cause. `WeaponStats.shot_speed()` gives a round's speed out of a gun; `Weapon.ammo_recoil()` / `ammo_spread()` apply the round's recoil and accuracy. Armor `ItemInstance`s keep their durability (`is_armor()`, `has_durability()`). `AmmoChart` (`scripts/ui/`) draws the charts; `Trading.offer_level()`, `loyalty_block_reason()` and `update_loyalty()` gate offers by loyalty level |
 | Loot tables | `LootTable` Resource, one per container type (`data/loot_tables/*.tres`: base rarity weights, the table's rarity multipliers, categories or an item list, item weights, item count) with `roll_rarity()`, `roll_item()`, `roll()`, `roll_items()` (ready-made, guns loaded) and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: their table, grid size, search time, placeholder look, solid or not, bullet material); maps add `MapInfo.loot_multipliers` |
 | Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid (`fir`, plus raid-only `fir_pending` and `brought_in`), its own `InventoryGrid` for rigs / backpacks / containers, for guns the round type and the magazine (ammo instances bottom to top, so each run of rounds keeps its status), `durability` / `max_durability`, and for guns and parts the parts fitted (`mods`, slot id → `ItemInstance`, nested); saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses and gunsmith mods (`AffixData` / `GunsmithModData` Resources) |
@@ -940,3 +1042,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | 360 trick shots (Section 13.4.1): sweep the reticle a full turn one way within 1.5 s (rolling or not) with a bolt-action rifle or DMR and a TRICK SHOT READY window opens for 1 s; its first shot deals +50% damage on the round (before armor), fired from the hip with full bloom (no aiming while spinning). Gold hit marker, "360!" popup, sound sting, kill banner, +250 XP and +25 Drip per kill. Drip (new), Trick Shots on the character screen, three trick-shot quests (Showboat, Around the World, Spin Doctor; new quest objective type `trick_kill`). New guns: Mosin (bolt-action) and SVD (DMR) with 7.62x54R LPS and an SVD magazine (100 items); new skills Bolt-action rifles and Marksman rifles. Tuning per gun (`trick_spin_time`, `trick_window`, `trick_damage_bonus`) and in `raid.tres`. Save version 6 |
 | 2026-10-12 | Starter arsenal (Section 6.4; the ammo table referred to as "3.2a" didn't exist in this document, so it was written there): 18 new guns, 22 in all across pistols, SMGs, shotguns, assault rifles, DMRs, bolt-action rifles and LMGs (Vektor P9, Bastion 45, Strelka MP, Hornet SMG, Wasp PDW, Brigand 45, Warden 870, Tempest S12, Sentinel AR, Tundra 47, Halcyon B5, Partisan, Longbow DMR, Huntsman 700, Leviathan .338, Grizzly 74, Bulwark 249, Anvil PK); 10 calibers with 3–5 rounds each (45 rounds; new `armor_damage` stat on every round, Common everyday rounds, Epic/Legendary best AP); 143 new weapon parts (183 in all) with standard parts for every gun and upgrades from Common to Legendary, plus AK, AR, STANAG and caliber parts shared across guns. Shot shells fire 8 pellets (chokes tighten them: new `pellet_spread` part modifier, shown for shotguns), subsonic rounds are quieter (`noise` ammo stat), rounds dragged onto a gun load it, reloading with none of the gun's round type left switches to another of its caliber, found guns come loaded with their caliber's everyday round. Mosin and SVD get a muzzle slot. New weapon classes `smg`, `shotgun`, `lmg` and skills SMGs, Shotguns, Machine guns. Traders sell most of it (Jaeger has hunting stock ready for when he unlocks). 302 items |
 | 2026-10-12 | Ammo rework (Section 6.4; the request's ammo table didn't come through, a "[paste the table]" placeholder, so the rounds in Section 6.4 were kept and extended): every round now has fragmentation, velocity, recoil, accuracy, ricochet and light/heavy bleed chances on top of damage, penetration and armor damage (50 rounds, 4–6 per caliber; 5.45 PS and BS moved into `545.json`); 5 new tracer rounds (9x19, 5.56, 7.62x39, 7.62x51, 7.62x54R; 5.45 BT is one too). Armor works: helmets and vests stop rounds on the parts they cover by penetration against class and wear, push blunt damage through or let them ricochet, and wear down (durability saved per item). Soft rounds fragment and bleed, AP rounds get through armor for less flesh damage. Velocity sets range, damage falloff and energy through wood; rounds change recoil and spread. Ammo charts (examine panel for guns and rounds; new AMMO tab on the trader screen) compare every round of a caliber with armor class 1–6 squares. Ammo offers need trader loyalty (LL1 cheap, LL3–4 AP; Legendary rounds aren't sold); loyalty levels now rise when you meet their requirements. Workbench level 3 crafts the Legendary AP rounds. Armor hit marker and damage numbers. 307 items |
+| 2026-10-12 | Gear and gear upgrades (Section 12.2): armor classes 1–6 across 13 vests, 7 armored rigs and 10 helmets (penetration and durability as in Section 6.4), new zones (face for frontal head hits, arms for the heaviest suits), helmet face shield and headset slots (7 face shields, 6 headsets; helmets muffle hearing, headsets amplify it for the player's sound markers and AI hearing), armored rigs that can't be worn with body armor, plain rigs and backpacks from 3×1 to 8×8: 47 new gear items across every rarity, plus 5 upgrade materials. Upgrades +1…+5 (max by rarity: Common +1 … Epic/Legendary +5) at Ragman (by loyalty level) or the Workbench (by its level, cheaper): +10% durability and −4% blunt per level for armor, +6% ricochet for helmets and face shields, lighter and roomier rigs and backpacks, +5% hearing for headsets; roubles plus barter items per level (`data/config/gear_upgrades.json`). UPGRADE in the examine panel, Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES; "+N" on upgraded items. 359 items |

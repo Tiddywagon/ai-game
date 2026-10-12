@@ -329,7 +329,8 @@ func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionar
 	var part := body_part_at(hit_position, from.global_position if from else hit_position)
 	if part < 0:
 		return {}
-	var outcome := ArmorRules.resolve(damage, shot, worn_gear(), part) if not shot.is_empty() \
+	var frontal := ArmorRules.is_frontal(self, from.global_position if from else hit_position)
+	var outcome := ArmorRules.resolve(damage, shot, worn_gear(), part, null, frontal) if not shot.is_empty() \
 		else {"damage": damage, "armor": null, "penetrated": true, "ricochet": false, "blunt": false, "fragmented": false}
 	outcome.part = part
 	var cause := {"kind": "shot", "part": part, "damage": outcome.damage}
@@ -354,6 +355,19 @@ func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionar
 ## The kit this actor wears (armor and helmets stop rounds), or null.
 func worn_gear() -> Inventory:
 	return null
+
+
+## How far this actor hears, × (DESIGN.md §12.2): a headset on the helmet hears further (better with
+## its upgrade level); helmets and face shields muffle. 1 without a helmet.
+func hearing_multiplier() -> float:
+	var gear := worn_gear()
+	var helmet: ItemInstance = gear.equipment.get("helmet") if gear else null
+	if helmet == null:
+		return 1.0
+	var total := 1.0
+	for piece: ItemInstance in WeaponMods.installed(helmet) + [helmet]:
+		total += GearUpgrades.hearing(piece)
+	return clampf(total, 0.5, 2.0)
 
 
 ## Which body part (a BodyHealth.Part) a bullet fired from `shot_from` and landing at `point` hits,

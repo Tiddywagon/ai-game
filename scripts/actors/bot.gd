@@ -239,7 +239,7 @@ func _on_noise(noise_position: Vector3, radius: float, source: Node, _kind: Stri
 	var other := source as Actor
 	if other == null or not is_hostile(other):
 		return
-	if global_position.distance_to(noise_position) > radius * profile.hearing:
+	if global_position.distance_to(noise_position) > radius * profile.hearing * hearing_multiplier():
 		return
 	if state == State.COMBAT:
 		if other == target and not _sees_target:

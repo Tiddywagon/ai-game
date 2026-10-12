@@ -128,6 +128,15 @@ static func _draw_part(glyph: Glyph, kind: String) -> void:
 			glyph.box(0.25, 0.0, 0.7, 0.35)
 			glyph.box(0.3, 0.35, 0.78, 0.7)  # The curve.
 			glyph.box(0.38, 0.7, 0.88, 1.0)
+		"face_shield":
+			glyph.disc(0.5, 0.75, 0.48, true)  # The curved visor.
+			glyph.clear(0.08, 0.62, 0.92, 0.7)  # Eye slit.
+		"headset":
+			glyph.box(0.18, 0.12, 0.82, 0.24)  # Band.
+			glyph.box(0.18, 0.12, 0.3, 0.5)
+			glyph.box(0.7, 0.12, 0.82, 0.5)
+			glyph.disc(0.24, 0.66, 0.2, false)  # Ear cups.
+			glyph.disc(0.76, 0.66, 0.2, false)
 		_:
 			glyph.box(0.1, 0.42, 0.9, 0.58)  # Tube.
 			glyph.box(0.05, 0.3, 0.25, 0.7)  # Lenses.

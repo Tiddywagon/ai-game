@@ -39,6 +39,9 @@ var mods: Dictionary = {}
 ## armor stops less (ArmorRules); at 0 it stops nothing.
 var durability := 100.0
 var max_durability := 100.0
+## Gear upgrade level, 0 to +5 (GearUpgrades): more durability, less blunt damage, more room or better
+## hearing, depending on the item.
+var upgrade_level := 0
 
 
 ## A new instance of item `id` (null if there's no such item), `count` of it (capped to a stack).
@@ -58,6 +61,11 @@ static func create(id: String, amount := 1) -> ItemInstance:
 		instance.max_durability = float(item_data.stats.get("durability", 100.0))
 		instance.durability = instance.max_durability
 	return instance
+
+
+## The item's name with its upgrade level, e.g. "6B23-1 body armor +2".
+func title() -> String:
+	return data.display_name + (" +%d" % upgrade_level if upgrade_level > 0 else "")
 
 
 ## Cells taken as placed (turned or not).
@@ -124,7 +132,8 @@ func weight() -> float:
 ## Weight without the rounds loaded (what the modding screen shows for a gun). A weapon part weighs
 ## its item weight changed by its rarity (WeaponStats).
 func weight_without_rounds() -> float:
-	var unit := data.weight_kg * (WeaponStats.part_weight_multiplier(data) if WeaponMods.is_mod(data) else 1.0)
+	var unit := data.weight_kg * (WeaponStats.part_weight_multiplier(data) if WeaponMods.is_mod(data) else 1.0) \
+		* GearUpgrades.weight_multiplier(self)
 	var total := unit * count + (contents.weight() if contents else 0.0)
 	for mod: ItemInstance in mods.values():
 		total += mod.weight()
@@ -146,9 +155,10 @@ func is_gun() -> bool:
 	return data.weapon != null
 
 
-## Armor that stops rounds: a vest, a helmet or an armored rig (it has an armor "class").
+## Armor that stops rounds: a vest, a helmet, a face shield or an armored rig (it has an armor "class").
 func is_armor() -> bool:
-	return data.stats.has("class") and data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET, ItemData.Category.RIG]
+	return data.stats.has("class") and data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET, ItemData.Category.RIG,
+		ItemData.Category.ATTACHMENT]
 
 
 ## Guns and armor wear and keep their durability.
@@ -255,7 +265,7 @@ func to_dict() -> Dictionary:
 	if not magazine.is_empty():
 		result.magazine = magazine.map(func(rounds: ItemInstance) -> Dictionary:
 			return {"id": rounds.data.id, "count": rounds.count, "fir": rounds.fir})
-	if not mods.is_empty() or is_gun():
+	if not mods.is_empty() or WeaponMods.has_slots(self):
 		var saved := {}
 		for slot: String in mods:
 			saved[slot] = (mods[slot] as ItemInstance).to_dict()
@@ -263,6 +273,8 @@ func to_dict() -> Dictionary:
 	if has_durability():
 		result.durability = snappedf(durability, 0.001)
 		result.max_durability = snappedf(max_durability, 0.001)
+	if upgrade_level > 0:
+		result.upgrade = upgrade_level
 	return result
 
 
@@ -277,6 +289,9 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 	instance.rotated = bool(entry.get("rotated", false))
 	instance.fir = bool(entry.get("fir", false))
 	instance.loaded_ammo = str(entry.get("loaded_ammo", ""))
+	instance.upgrade_level = clampi(int(entry.get("upgrade", 0)), 0, GearUpgrades.max_level(instance.data))
+	if instance.upgrade_level > 0:
+		GearUpgrades.apply(instance)
 	if entry.has("mods"):
 		instance.mods.clear()
 		var saved_mods: Dictionary = entry.mods
