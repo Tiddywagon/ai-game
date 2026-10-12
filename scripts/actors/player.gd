@@ -89,6 +89,9 @@ var _weapon_item: ItemInstance
 ## True while a reload moves rounds from the inventory into the magazine.
 var _loading_rounds := false
 var _spin := SpinTracker.new()
+## Where the reticle points on the ground (aim_point snaps to whoever is under it; this doesn't), for
+## the spin.
+var _cursor_ground := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -291,7 +294,8 @@ func _update_trick_shot(delta: float) -> void:
 		trick_window_left = maxf(trick_window_left - delta, 0.0)
 		if trick_window_left == 0.0:
 			weapon.trick_armed = false  # Closed without a shot.
-	var to_aim := aim_point - global_position
+	# The reticle's own direction: sweeping it across someone mustn't jump the spin to their chest.
+	var to_aim := _cursor_ground - global_position
 	if not has_aim or is_dead or ui_open or Vector2(to_aim.x, to_aim.z).length() < SPIN_MIN_RADIUS:
 		return
 	_spin.spin_time = weapon.data.trick_spin_time if weapon.data else 1.5
@@ -537,6 +541,9 @@ func _update_aim() -> void:
 		return
 	var from := camera.project_ray_origin(cursor_position)
 	var direction := camera.project_ray_normal(cursor_position)
+	var on_ground: Variant = Plane(Vector3.UP, global_position.y).intersects_ray(from, direction)
+	if on_ground != null:
+		_cursor_ground = on_ground
 	var query := PhysicsRayQueryParameters3D.create(from, from + direction * 200.0, HITBOX_MASK, [hitbox_rid()])
 	query.collide_with_areas = true
 	query.collide_with_bodies = false
