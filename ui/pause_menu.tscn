@@ -85,9 +85,10 @@ mouse_filter = 2
 [node name="LeaveDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "Leave raid"
-size = Vector2i(480, 150)
+size = Vector2i(560, 190)
 ok_button_text = "Leave"
-dialog_text = "Leave the raid and go back to the main menu?"
+dialog_autowrap = true
+dialog_text = "Leave the raid? You'll be missing in action: as a PMC you lose everything except your secure container, and nothing you picked up counts as found in raid."
 cancel_button_text = "Stay"
 
 [node name="QuitDialog" type="ConfirmationDialog" parent="."]

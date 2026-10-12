@@ -1,0 +1,97 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/raid_result_screen.gd" id="1_result"]
+[ext_resource type="Script" path="res://scripts/ui/menu_entry_button.gd" id="2_button"]
+
+[node name="RaidResultScreen" type="CanvasLayer"]
+layer = 60
+script = ExtResource("1_result")
+
+[node name="Root" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Backdrop" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.015, 0.03, 0.02, 0.9)
+
+[node name="Center" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="VBoxContainer" parent="Root/Center"]
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 60
+text = "SURVIVED"
+
+[node name="Subtitle" type="Label" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Extracted at the north-east gate"
+autowrap_mode = 3
+
+[node name="Separator" type="HSeparator" parent="Root/Center/Panel"]
+layout_mode = 2
+
+[node name="Stats" type="GridContainer" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="FoundTitle" type="Label" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+theme_override_font_sizes/font_size = 18
+text = "FOUND IN RAID"
+
+[node name="FoundItems" type="HFlowContainer" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Note" type="Label" parent="Root/Center/Panel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(900, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Root/Center/Panel"]
+layout_mode = 2
+alignment = 2
+
+[node name="MenuButton" type="Button" parent="Root/Center/Panel/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "BACK TO MENU"
+script = ExtResource("2_button")
+primary = true

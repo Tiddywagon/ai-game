@@ -1,10 +1,17 @@
 extends Control
 ## Read-only view of the stash grid on the Character screen (DESIGN.md §8): every item at its cell with
-## its rarity-coloured background and border, icon, short name, rarity letter and stack count. Hover an
-## item for details. Moving items happens in the inventory (INVENTORY or Tab).
+## its rarity-coloured background and border, icon, short name, rarity letter, stack count and
+## found-in-raid checkmark. Hover an item for details. With `fir_only`, items that aren't found in raid
+## are dimmed. Moving items happens in the inventory (INVENTORY or Tab).
 
 const CELL := InventoryGridView.CELL
 const LINE_COLOR := Color(1, 1, 1, 0.07)
+
+## Dims everything that isn't found in raid.
+var fir_only := false:
+	set(value):
+		fir_only = value
+		queue_redraw()
 
 
 func _ready() -> void:
@@ -21,14 +28,18 @@ func _draw() -> void:
 	for y in stash.size.y + 1:
 		draw_line(Vector2(0, y * CELL), Vector2(stash.size.x * CELL, y * CELL), LINE_COLOR)
 	for item in stash.items:
-		ItemDraw.draw(self, item, _rect_of(item), item.rotated)
+		ItemDraw.draw(self, item, _rect_of(item), item.rotated, 0.18 if fir_only and not item.fir else 1.0)
 
 
 func _get_tooltip(at_position: Vector2) -> String:
 	for item in GameState.stash.items:
-		if _rect_of(item).has_point(at_position):
-			var text := ItemDraw.tooltip(item).get_slice("\n", 0) + "\n" + ItemDraw.tooltip(item).get_slice("\n", 1)
-			return text + ("\n" + item.data.description if item.data.description != "" else "")
+		var rect := _rect_of(item)
+		if rect.has_point(at_position):
+			if ItemDraw.has_fir_mark(item) and ItemDraw.fir_mark_rect(rect).grow(3.0).has_point(at_position):
+				return FoundInRaid.status_text(item)
+			var lines := ItemDraw.tooltip(item).split("\n")
+			lines.remove_at(lines.size() - 1)  # No examining here.
+			return "\n".join(lines) + ("\n" + item.data.description if item.data.description != "" else "")
 	return ""
 
 

@@ -21,17 +21,35 @@
 |---|---|---|---|
 | 1 | **Prepare (Hideout)** | Manage stash, buy/sell/barter, take quests, craft, upgrade stations, build loadout | Ready loadout |
 | 2 | **Enter Raid** | Pick a map, play as your PMC or as a Scav, check the loadout (Section 16.3); deploy at random spawn | Raid timer starts |
-| 3 | **Loot** | Fight Scavs/PMCs, search containers & bodies, complete in-raid quest objectives | Backpack fills |
-| 4a | **Extract** | Reach an open extract before timer ends | Keep everything carried → stash |
-| 4b | **Die / MIA** | Killed or timer expires | Lose all gear except Secure Container + insured items (returned later) |
+| 3 | **Loot** | Fight Scavs/PMCs, search containers & bodies (**F**), pick up loose items, complete in-raid quest objectives | Backpack fills |
+| 4a | **Extract** | Stand in an open extract for 7 s *(tune)* before the timer ends | Keep everything carried; loot becomes found in raid |
+| 4b | **Die / MIA** | Killed, the raid timer runs out, or LEAVE RAID from the pause menu | Lose all gear except Secure Container + insured items (returned later) |
 
-**Retention rules**
+**Retention rules** (built: `RaidOutcome`)
 
-| Item location | Survived | Died |
+| Item location | Survived / Run Through | Killed / MIA |
 |---|---|---|
-| Equipped / backpack / rig / pockets | Kept | Lost (insured items may return in 1–2 raids) |
+| Equipped / backpack / rig / pockets | Kept | Lost (insured items may return in 1–2 raids; insurance isn't built yet) |
 | Secure container | Kept | Kept |
-| Found-in-Raid (FIR) tag | Applied to looted items on extract | — |
+| Found-in-Raid (FIR) tag | Applied to loot on a SURVIVED extract (not on a Run Through) | Never |
+| Scav run | Everything the Scav carries goes to the stash (what doesn't fit is left behind) | Nothing from the stash was at risk |
+
+**Raid experience** *(tune, `data/config/raid.tres`)*: 100 per Scav kill, 300 per PMC kill, 10 per item looted. Added to the profile however the raid ends.
+
+### 2.1 Found in Raid (FIR)
+
+| Rule | Detail |
+|---|---|
+| Gains FIR | An item you pick up, loot from a container or body, or take off an enemy during a raid, **and** you survive and extract with it. Until then it's *pending*: a faded checkmark that turns solid on a successful extract |
+| Never FIR | Anything bought from traders or the flea market, quick-buy loadouts, insurance returns, barter rewards and quest rewards (the sources the flea market, quick-buy and insurance will use are already defined) |
+| Always FIR | Hideout crafts |
+| Brought in | Items you bring into a raid keep their status. Putting one in a container or on a body and taking it back doesn't change it |
+| No FIR | Killed, MIA (timer or leaving) and Run Through: nothing gains FIR. **Run Through:** extracting within 7 minutes **and** with under 200 raid experience *(tune)* |
+| Stacks | Only merge when they share the same status (FIR, looted this raid, brought in). A split keeps the status of its stack |
+| Inside things | Containers keep FIR per item inside them (a plain backpack can hold FIR items). A gun's magazine keeps FIR per round: a reload adds the rounds as they are, the last loaded is fired first, and UNLOAD (examine panel) gives them back as stacks by status |
+| Display | A small checkmark in the bottom-right corner of the item's cell everywhere items are drawn (stash, inventory, loot panels, trader, quest and hideout screens), with the tooltip "Found in raid". The examine panel shows the status (and how many loaded rounds are FIR) |
+| Stash filter | **FIR only** (stash header, inventory and Character screen) dims everything else |
+| Requirements | Quest hand-ins, hideout upgrades and certain barters that require FIR only accept items with the checkmark; the requirement shows the same checkmark next to the item name. Requirements without it use non-FIR items first, so FIR items are kept |
 
 ## 3. Factions
 
@@ -69,6 +87,7 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 | Health | Same body parts, bleeds and fractures as the player (Section 13.5): a leg hit slows a bot, an arm hit makes it sway |
 | Shooting | Same guns as the player (Section 13.4): fires in bursts, so recoil builds and settles. Aim error is added on top of the gun's spread. From cover it waits until it has stopped stepping out before firing |
 | Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Bots carry 90 spare rounds |
+| Gear | Each bot carries a kit you can loot from its body (F): a Scav has an AK-74N with PS, a Scav vest with rounds and sometimes a sling bag of junk; an AI PMC has an AK-74N with BS, armor, a helmet, a tactical rig with BS and a pack with a few finds. The gun keeps the rounds left in it |
 
 | Profile | Vision (daylight) | Sight | Reaction | Aim error | Hearing | Rolls | Ammo |
 |---|---|---|---|---|---|---|---|
@@ -86,6 +105,8 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 | Labs | Medium | 6 / 12 Raiders | 35 min | 3 (all conditional) | — | Requires keycard; Epic/Legendary loot |
 
 Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional (no backpack, power on, keycard) · Scav-only**.
+
+**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), five containers (duffle bag, weapon box, medical case, jacket, safe, rolled from the loot tables at raid start) and five loose items. Containers are placeholder boxes you can walk through.
 
 ## 6. Items
 
@@ -239,14 +260,14 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 | Grid | Items take W×H cells (bandage 1×1, AK 5×2, armor 3×3) and can't overlap |
 | Moving | Drag and drop with the mouse. While dragging, the cells under the item light **green** (fits), **amber** (stacks onto / goes inside the item underneath) or **red** (doesn't fit). Nothing moves until you drop somewhere valid; dropping anywhere else cancels |
 | Rotation | `R` while dragging turns the item 90° |
-| Stacking | Drop a stack on the same item to merge, up to its max stack; the rest stays where it was. **Shift-drag** splits off half; the mouse wheel changes how many while dragging |
+| Stacking | Drop a stack on the same item to merge, up to its max stack (only stacks with the same found-in-raid status merge, Section 2.1); the rest stays where it was. **Shift-drag** splits off half; the mouse wheel changes how many while dragging |
 | Containers | Rigs, backpacks and cases have their own grid (`"grid": [w, h]` stat). Drop an item on one to put it inside; double-click one to open it in its own window (e.g. a backpack in the stash). A container only goes inside another when empty, and never inside itself. The secure container takes no rigs, backpacks or containers |
 | Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol |
 | Rarity | Every item's background and border are its rarity colour, with the rarity letter in the corner so colour is never the only cue (colorblind palette aware) |
 | Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (gun handling and loaded rounds, ammo damage and penetration, armor class and durability, what meds treat, a container's grid and contents, sight, Found in Raid). *Planned:* unknown items must be examined first to reveal their name and value |
 | Weight | Everything you carry counts, containers with their contents. Up to **25 kg** no effect. 25–40 kg **heavy**: speed falls to 80% and sprinting costs up to 1.5× stamina. **40 kg+ overweight**: no sprinting or combat roll, speed falls to 55% at 65 kg. Shown in the inventory header and the HUD. Values in `data/config/inventory.tres` *(tune)* |
 | Ammo | Spare rounds are counted from the pockets, rig and backpack (not the secure container); a reload takes the rounds it used out of them. Guns remember the rounds loaded |
-| Search | Containers/bodies reveal items over time *(planned)* |
+| Search | In a raid, **F** near a container or body opens it beside your inventory (a body shows its equipment slots and grids, so you can take gear straight off it); F on a loose item picks it up. Walking away closes it. Revealing items over time is *planned* |
 
 ## 8. Stash
 
@@ -278,6 +299,8 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench and Lavatory. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+
 ## 10. Traders
 
 | Trader | Specialty | Currency | Unique |
@@ -291,6 +314,8 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 | Jaeger | Survival gear, hunting rifles | ₽ | Unlocked by quest |
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
+
+**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Selling, repair, insurance, LL-gated stock and restocks are planned.
 
 ### Loyalty Levels (LL)
 
@@ -313,6 +338,8 @@ Stock restocks every 1 h *(tune)*; some items have per-restock limits.
 | Daily/Weekly | Either | Rotating random objectives | XP, ₽, rep |
 
 Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked, may require FIR) → turn-in → rewards. Some rewards unlock trader items or barters.
+
+**Built so far** (`data/quests/quests.json`, the trader's TASKS tab): hand-in quests. Accept, then HAND OVER per objective (part now, the rest later) from the stash and your character, including inside containers; FIR objectives only take items with the checkmark. TURN IN when everything is handed over: roubles, experience, reputation with the trader, and reward items in the stash (never FIR). Prior-quest prerequisites work. Five quests: Scrap Run (Prapor), Shortage and Sanitary Standards (Therapist), Textile (Ragman), Gunsmith Part 0 (Mechanic).
 
 ## 12. Weapon & Gear Upgrades
 
@@ -510,10 +537,13 @@ All of these values live in `data/config/vision.tres`.
 | Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. Inventory grids draw them with `ItemDraw` |
 | Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, fire rate, auto/semi, magazine, reload and empty-reload time, base and movement spread, recoil per shot, recoil cap, recovery rate and delay, camera kick. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
 | Loot tables | `LootTable` Resource (`data/loot_tables/default.tres`: base rarity weights) with `roll_rarity()`, `roll_item()`, `roll_container()` and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: multipliers, categories, item count); maps add `MapInfo.loot_multipliers` |
-| Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid, its own `InventoryGrid` for rigs / backpacks / containers, and for guns the round type and count loaded; saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses, gunsmith mod and durability (`AffixData` / `GunsmithModData` Resources) |
+| Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid (`fir`, plus raid-only `fir_pending` and `brought_in`), its own `InventoryGrid` for rigs / backpacks / containers, and for guns the round type and the magazine (ammo instances bottom to top, so each run of rounds keeps its status); saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses, gunsmith mod and durability (`AffixData` / `GunsmithModData` Resources) |
+| Found in raid | `FoundInRaid` (`scripts/inventory/`): where items come from (`Source`: trader, flea market, quick-buy, insurance, barter, quest reward, craft, starter) and `make()` with the right status; `mark_brought_in()` at raid start, `claim()` when loot reaches the player's inventory (on `Inventory.changed`), `resolve()` at the end |
+| Raid | `RaidController` (`scripts/raid/`, a node in the map): clock, raid experience, extraction (`ExtractZone`, `scripts/world/`), ending. `RaidOutcome` settles it (FIR, keep / lose gear, Scav transfer, XP, save). `RaidConfig` (`data/config/raid.tres`): extract time, Run Through limits, XP. Interactables are in group `interactables` with `interact_text()`, `can_interact()`, `interact()`: `LootBox` (container rolled from a `LootContainer`), `LootPickup` (loose item), dead `Bot`s (their `inventory`). The result screen is `ui/raid_result_screen.tscn` |
+| Progression | `scripts/progression/`: `Requirement` (item, count, fir), `ItemSearch` (count / take from the stash and character, FIR-only where required), `Trading` (`data/traders/offers.json`), `QuestLog` (`data/quests/*.json`, progress in `GameState.quests`), `Hideout` (`data/hideout/stations.json`, levels in `GameState.hideout`). Screens: TRADERS tabs, `ui/hideout_screen.tscn`; shared widgets `RequirementRow`, `ItemCell`, `FirMark` |
 | Inventory | Data (`scripts/inventory/`, no UI): `InventoryGrid` (placement, rotation, stacking, what may go inside what, weight, save), `Inventory` (equipment slots + pockets: slot rules, weight, ammo count / take, starter and Scav kits), `InventoryConfig` (`data/config/inventory.tres`: stash size, weight thresholds). UI (`scripts/ui/inventory/`): `InventoryScreen` (`ui/inventory_screen.tscn`), `InventoryGridView`, `EquipmentSlotView`, `InventoryDrag` (what a drop would do, and doing it), `InventoryDragPreview`, `ItemDraw`, `ItemExaminePanel`; `InventoryLayer` opens it in a raid. Built on Godot's GUI drag & drop (`_get_drag_data` / `_can_drop_data` / `_drop_data`). The player's weight, gun and spare rounds follow its `Inventory` (`Player.set_inventory()`) |
-| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, stash grid; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
-| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
+| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, quests, hideout levels, stash grid; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
+| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 4 keeps each gun's magazine as runs of rounds with their FIR status, and adds quests and hideout levels (version 3 rounds load as not found in raid). Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
 | Audio | Buses: Master, Music, Effects, Voice, UI, Ambient (`default_bus_layout.tres`). Placeholder music and UI sounds are generated by `tools/make_placeholder_audio.py` |
@@ -537,9 +567,9 @@ All of these values live in `data/config/vision.tres`.
 |---|---|
 | `scenes/` | Gameplay scenes: `actors/` (player, bots), `weapons/` (the shared gun scene), `props/` (car), `menu/` (main menu background), `hideout/`, `debug/` (test scenes such as the loot roll check) |
 | `maps/` | One scene per raid map (Section 5), plus `test_level.tscn` for movement testing |
-| `ui/` | Main menu (entry scene), settings, raid setup, loading, character, inventory, traders, pause menu, HUD; `theme/` |
-| `scripts/` | All GDScript, mirroring scene folders (`ui/` with `ui/inventory/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `inventory/` (item instances, grids, the inventory), `camera/`, `combat/` (bullets, guns, impact effects, flashbang), `world/` (cover, vision, raid environment) and `debug/` |
-| `data/` | `.tres` Resources (and item `.json` files): `items/` (one subfolder per category), `weapons/` (gun handling), `loot_tables/` (`default.tres`, `containers/`), `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info, loot multipliers) |
+| `ui/` | Main menu (entry scene), settings, raid setup, loading, hideout, character, inventory, traders, pause menu, HUD, raid result; `theme/` |
+| `scripts/` | All GDScript, mirroring scene folders (`ui/` with `ui/inventory/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `inventory/` (item instances, grids, the inventory, found-in-raid rules), `raid/` (raid controller and outcome), `progression/` (trading, quests, hideout), `camera/`, `combat/` (bullets, guns, impact effects, flashbang), `world/` (cover, vision, raid environment) and `debug/` |
+| `data/` | `.tres` Resources (and `.json` data): `items/` (one subfolder per category), `traders/` (offers), `quests/`, `hideout/` (stations), `weapons/` (gun handling), `loot_tables/` (`default.tres`, `containers/`), `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info, loot multipliers) |
 | `assets/` | `models/`, `textures/`, `audio/` (`music/`, `ui/`), `shaders/`, `fonts/` |
 | `tools/` | Helper scripts run outside Godot (placeholder audio generator) |
 
@@ -567,7 +597,7 @@ WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys c
 |---|---|
 | Background | Slowly panning dusk shot of an industrial yard: low orange sun, fog (volumetric in Forward+), drifting dust, street lamps, depth of field. Ambient music loop on the Music bus |
 | Title | Top left |
-| Buttons (left, top to bottom) | **ENTER RAID** (largest, highlighted), CHARACTER, TRADERS, gap, QUIT (asks "Are you sure?") |
+| Buttons (left, top to bottom) | **ENTER RAID** (largest, highlighted), HIDEOUT, CHARACTER, TRADERS, gap, QUIT (asks "Are you sure?") |
 | Settings | Gear icon, bottom right |
 | Profile | Top right: faction, level, roubles, dollars |
 | Feel | Hover/focus slides a button right and makes it glow, with a hover sound; clicks have their own sound. Hovering also takes keyboard focus, so mouse and controller never highlight two buttons |
@@ -578,7 +608,8 @@ WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys c
 | Screen | Shows |
 |---|---|
 | CHARACTER | Gear (every slot from Section 7 with the loaded ammo or how many items are inside, pockets, carried weight and value), stats (faction, level, XP, health, money), skills (Section 12.3, level and progress) and the stash grid side by side. Stash items show at their grid position in their rarity colours with the rarity letter and stack count; hover for details. **INVENTORY** (or Tab) opens the grid inventory (Section 7) with the stash beside it; closing it saves |
-| TRADERS | All traders (Section 10) with loyalty level, reputation, money spent and what the next level needs. Jaeger is locked until his quest. Buying and selling come later |
+| TRADERS | All traders (Section 10) with loyalty level, reputation, money spent and what the next level needs, and tabs: **BUY**, **BARTER** and **TASKS** (Section 11). Requirements show the found-in-raid checkmark when only FIR items count, and how many you have. Jaeger is locked until his quest. Selling comes later |
+| HIDEOUT | Every station (Section 9) with its level, the next level's requirements and UPGRADE, and its crafts (inputs → output, the output drawn with its checkmark) with CRAFT |
 
 ### 16.3 Enter Raid
 
@@ -603,7 +634,7 @@ On first launch the player picks **BEAR** or **USEC** (Section 3); that creates 
 
 ### 16.5 Pause Menu (in raid)
 
-Esc or Start pauses the raid and frees the mouse: **RESUME**, **SETTINGS**, **LEAVE RAID** (asks first), **QUIT GAME** (asks first). Esc / Start / B closes it. It can't be opened once you're dead. Dying shows the death screen (Section 13.5) with **BACK TO MENU**.
+Esc or Start pauses the raid and frees the mouse: **RESUME**, **SETTINGS**, **LEAVE RAID** (asks first; counts as missing in action: a PMC loses everything but the secure container, and nothing becomes found in raid), **QUIT GAME** (asks first). Esc / Start / B closes it. It can't be opened once you're dead. Dying shows the death screen (Section 13.5) with **BACK TO MENU**.
 
 ## 17. Settings
 
@@ -643,3 +674,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Vision (13.6): Project Zomboid-style cone + awareness circle, 2D shadow casting, fog-of-war shader with remembered layout, enemies hidden outside view, low cover blocks only crouched, time of day / dark rooms / flashlight, fog and rain, pain / head injury / flashbang, sound markers, optics and binoculars with camera pull-out, AI on the same rules (scoped PMCs), `vision.tres`; AI vision values moved there from bot profiles |
 | 2026-10-12 | Item system: categories renamed food and junk (same numbers), items in `.tres` or JSON, `loot_weight`, rarity-coloured placeholder icons, 46 new items (52 in all) across every category and rarity, PM pistol. Loot tables: base weights 55 / 25 / 12 / 5 / 2.5 / 0.5, container types and map multipliers (Labs Epic+ ×2), debug roll scene |
 | 2026-10-12 | Grid inventory (Section 7): Tab in raid, CHARACTER → INVENTORY out of raid with the stash; drag and drop, R to turn, stacking, Shift-drag splits, right-click examine, rigs / backpacks / containers with their own grids, rarity-coloured items. Slots are now Primary, Secondary, Pistol (was Holster), Melee, Helmet, Body armor, Rig, Backpack, Secure container (Earpiece and Face cover dropped). Weight slows you from 25 kg and makes you overweight at 40 kg (`inventory.tres`); reloads use rounds you carry. New items: hatchet (melee category), Secure containers Alpha and Beta (55 items). Starter kit adds the Alpha container. Save version 3 (item instances), version 2 saves converted |
+| 2026-10-12 | Found in Raid (Section 2.1): loot picked up, looted from containers and bodies or taken off enemies becomes FIR when you extract (faded checkmark until then); dying, MIA and Run Through give nothing; bought, bartered, quick-buy, insurance and reward items never FIR; crafts always FIR; brought-in items keep their status. Stacks merge only with the same status; containers and magazines keep it per item / per round (UNLOAD). Checkmark with "Found in raid" tooltip, examine status, FIR-only stash filter. Raids now end for real: extract zone (7 s), raid clock, Run Through, raid results written back (PMC death loses all but the secure container; Scav extract moves loot to the stash), LEAVE RAID is MIA, raid result screen, raid XP. In-raid looting: F searches containers and bodies (bots carry lootable kits) and picks up loose items. Traders BUY / BARTER / TASKS, 5 hand-in quests, HIDEOUT with 4 stations and crafts. Save version 4 |

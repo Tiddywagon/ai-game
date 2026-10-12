@@ -5,6 +5,8 @@ extends CanvasLayer
 ## magazine, spare rounds, loaded ammo, reload progress), the aiming reticle and hit markers.
 ## Vision (DESIGN.md §13.6): direction markers for sounds you can't see, a white-out while blinded,
 ## time of day and weather next to the raid name, and the sight in use or the binoculars.
+## Raid (DESIGN.md §2): the time left and the extract under the raid name, an "F  Search ..." prompt
+## when a container, body or item is in reach, and a countdown while extracting.
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -17,11 +19,16 @@ const EMPTY_COLOR := Color(0.85, 0.3, 0.25)
 const MESSAGE_TIME := 2.0
 ## Indexed by CoverBox.CoverMaterial.
 const MATERIAL_NAMES := ["wood", "concrete", "metal"]
+const EXTRACT_COLOR := Color(0.45, 0.95, 0.5)
 
 ## The player whose status is shown.
 @export var player: Player
 
 var _message_time := 0.0
+var _raid: RaidController
+var _raid_line := ""
+var _prompt: Label
+var _extract: Label
 
 @onready var _root: Control = %HudRoot
 @onready var _bottom_left: Control = %BottomLeft
@@ -45,6 +52,8 @@ func _ready() -> void:
 			if Settings.get_value("gameplay", "hit_markers"):
 				_reticle.show_hit_marker(target.is_dead))
 	%SoundMarkers.player = player
+	_prompt = _add_center_label(-210.0, 22, NORMAL_COLOR)
+	_extract = _add_center_label(-470.0, 40, EXTRACT_COLOR)
 	VisionSystem.conditions_changed.connect(_update_raid_info)
 	_update_raid_info()
 	_connect_vision.call_deferred()
@@ -61,9 +70,55 @@ func show_message(text: String, duration := MESSAGE_TIME) -> void:
 func _update_raid_info() -> void:
 	var raid := GameState.raid
 	var map := MapInfo.find(raid.get("map", ""))
-	%RaidInfo.text = "%s  ·  %s  ·  %s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD",
+	_raid_line = "%s  ·  %s  ·  %s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD",
 		"SCAV" if raid.get("side") == "scav" else "PMC", VisionSystem.time_name(VisionSystem.time_of_day).to_upper(),
 		VisionSystem.weather_name(VisionSystem.weather).to_upper()]
+	_update_raid_clock()
+
+
+## The raid name line, plus the time left and where to extract.
+func _update_raid_clock() -> void:
+	if _raid == null:
+		_raid = get_tree().get_first_node_in_group("raid_controller") as RaidController
+	var text := _raid_line
+	if _raid:
+		var seconds := ceili(_raid.time_left)
+		var zones := get_tree().get_nodes_in_group("extract_zones")
+		text += "\n%d:%02d LEFT  ·  EXTRACT: %s" % [seconds / 60, seconds % 60,
+			", ".join(zones.map(func(zone: Node) -> String: return zone.extract_name.to_upper())) if not zones.is_empty() else "NONE"]
+	if %RaidInfo.text != text:
+		%RaidInfo.text = text
+
+
+## The F prompt and the extract countdown.
+func _update_raid_prompts() -> void:
+	var target := player.focused_interactable if player and not player.ui_open and not player.is_dead else null
+	_prompt.visible = target != null
+	if target:
+		_prompt.text = "%s   %s" % [Settings.key_label("interact"), target.interact_text()]
+	var left := _raid.extract_remaining() if _raid else -1.0
+	_extract.visible = left >= 0.0
+	if left >= 0.0:
+		_extract.text = "EXTRACTING  %.1f" % left
+
+
+func _add_center_label(from_bottom: float, size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 6)
+	label.anchor_left = 0.0
+	label.anchor_right = 1.0
+	label.anchor_top = 1.0
+	label.anchor_bottom = 1.0
+	label.offset_top = from_bottom
+	label.offset_bottom = from_bottom + size * 1.6
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.hide()
+	_root.add_child(label)
+	return label
 
 
 func _connect_vision() -> void:
@@ -86,8 +141,10 @@ func _process(delta: float) -> void:
 	%BottomRight.pivot_offset = %BottomRight.size
 	_message_time -= delta
 	_message.visible = _message_time > 0.0
+	_update_raid_clock()
 	if player == null:
 		return
+	_update_raid_prompts()
 	_bar.max_value = player.max_stamina
 	_bar.value = player.stamina
 	_fill.bg_color = EXHAUSTED_COLOR if player.is_exhausted else NORMAL_COLOR

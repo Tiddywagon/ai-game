@@ -4,6 +4,8 @@ extends Control
 ## rarity colours. Drag items to move them (Shift-drag splits a stack); while dragging, the cells under
 ## the item light up green where it fits, amber when it would stack or go inside a container, red when
 ## it can't go there. Right-click examines an item; double-click opens a rig, backpack or container.
+## Hovering an item's checkmark says "Found in raid". With `fir_only`, items that aren't found in raid
+## are dimmed (the stash filter).
 
 signal examine_requested(item: ItemInstance)
 signal open_requested(item: ItemInstance)
@@ -26,6 +28,11 @@ var grid: InventoryGrid:
 		queue_redraw()
 ## The character's inventory, so items can be dragged from here onto equipment slots.
 var inventory: Inventory
+## Dims everything that isn't found in raid.
+var fir_only := false:
+	set(value):
+		fir_only = value
+		queue_redraw()
 
 var _hover := {}
 
@@ -89,7 +96,11 @@ func _gui_input(event: InputEvent) -> void:
 
 func _get_tooltip(at: Vector2) -> String:
 	var item := grid.item_at(cell_at(at)) if grid else null
-	return ItemDraw.tooltip(item) if item else ""
+	return ItemDraw.tooltip_at(item, _rect_of(item), at) if item else ""
+
+
+func _rect_of(item: ItemInstance) -> Rect2:
+	return Rect2(Vector2(item.cell) * CELL, Vector2(item.footprint()) * CELL).grow(-2.0)
 
 
 func _draw() -> void:
@@ -103,8 +114,12 @@ func _draw() -> void:
 		draw_line(Vector2(0, y * CELL), Vector2(area.x, y * CELL), LINE_COLOR)
 	var lifted: ItemInstance = InventoryDrag.current.item if InventoryDrag.current and not InventoryDrag.current.splitting else null
 	for item in grid.items:
-		var rect := Rect2(Vector2(item.cell) * CELL, Vector2(item.footprint()) * CELL).grow(-2.0)
-		ItemDraw.draw(self, item, rect, item.rotated, 0.3 if item == lifted and get_viewport().gui_is_dragging() else 1.0)
+		var alpha := 1.0
+		if item == lifted and get_viewport().gui_is_dragging():
+			alpha = 0.3
+		elif fir_only and not item.fir:
+			alpha = 0.18
+		ItemDraw.draw(self, item, _rect_of(item), item.rotated, alpha)
 	if _hover.is_empty():
 		return
 	var plan: Dictionary = _hover.plan

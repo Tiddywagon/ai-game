@@ -3,9 +3,12 @@ extends PanelContainer
 ## Examining an item (DESIGN.md §7): its icon, name in its rarity colour, rarity and category, size,
 ## weight, value and stack, the stats that matter for its kind (a gun's fire rate and magazine, ammo
 ## damage and penetration, armor class, what meds treat, a container's grid and what's in it) and its
-## description. Right-click any item in the inventory to open it; Esc or CLOSE hides it.
+## description, and whether it's found in raid (with the checkmark). Guns with rounds loaded can be
+## unloaded from here. Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
+## UNLOAD pressed for a gun.
+signal unload_requested(item: ItemInstance)
 
 const TREATMENTS := {"light_bleed": "light bleed", "heavy_bleed": "heavy bleed", "fracture": "fracture",
 	"pain": "pain", "blacked": "blacked limb"}
@@ -17,6 +20,7 @@ var _name: Label
 var _subtitle: Label
 var _stats: GridContainer
 var _description: Label
+var _unload: Button
 
 
 func _ready() -> void:
@@ -62,12 +66,21 @@ func _ready() -> void:
 	_description.custom_minimum_size.x = 420
 	_description.theme_type_variation = &"DimLabel"
 	rows.add_child(_description)
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override("separation", 10)
+	rows.add_child(buttons)
+	_unload = Button.new()
+	_unload.text = "UNLOAD"
+	_unload.custom_minimum_size = Vector2(120, 36)
+	_unload.tooltip_text = "Take the rounds out; each keeps its found-in-raid status"
+	_unload.pressed.connect(func() -> void: unload_requested.emit(item))
+	buttons.add_child(_unload)
 	var close_button := Button.new()
 	close_button.text = "CLOSE"
-	close_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	close_button.custom_minimum_size = Vector2(120, 36)
 	close_button.pressed.connect(close)
-	rows.add_child(close_button)
+	buttons.add_child(close_button)
 	hide()
 
 
@@ -85,10 +98,20 @@ func show_item(examined: ItemInstance) -> void:
 		var label := Label.new()
 		label.theme_type_variation = &"DimLabel"
 		label.text = line[0]
+		_stats.add_child(label)
 		var value := Label.new()
 		value.text = line[1]
-		_stats.add_child(label)
-		_stats.add_child(value)
+		if line[0] == "Found in raid" and ItemDraw.has_fir_mark(item):
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 8)
+			var mark := FirMark.new()
+			mark.pending = item.fir_pending and not item.fir
+			row.add_child(mark)
+			row.add_child(value)
+			_stats.add_child(row)
+		else:
+			_stats.add_child(value)
+	_unload.visible = item.rounds_loaded() > 0
 	_description.text = data.description
 	_description.visible = data.description != ""
 	show()
@@ -126,10 +149,18 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Fire rate", "%d rpm, %s" % [gun.fire_rate, "automatic" if gun.automatic else "semi-automatic"]])
 		lines.append(["Magazine", "%d rounds" % gun.magazine_size])
 		lines.append(["Reload", "%.1f s (empty %.1f s)" % [gun.reload_time, gun.empty_reload_time]])
-		var ammo := ItemDB.get_item(examined.loaded_ammo) if examined.loaded_ammo != "" else null
-		if ammo:
-			var rounds := gun.magazine_size if examined.loaded_rounds < 0 else examined.loaded_rounds
-			lines.append(["Loaded", "%d × %s" % [rounds, ammo.display_name]])
+		var rounds := examined.rounds_loaded()
+		if rounds > 0:
+			var text := "%d × %s" % [rounds, examined.magazine.back().data.display_name]
+			var found := examined.rounds_with_status(true)
+			var pending := examined.rounds_with_status(false, true)
+			if found > 0:
+				text += ", %d found in raid" % found
+			if pending > 0:
+				text += ", %d looted this raid" % pending
+			lines.append(["Loaded", text])
+		else:
+			lines.append(["Loaded", "empty"])
 	if stats.has("caliber") and data.weapon == null:
 		lines.append(["Caliber", str(stats.caliber)])
 	if stats.has("damage"):
@@ -168,4 +199,8 @@ static func stat_lines(examined: ItemInstance) -> Array:
 			lines.append(["Secure", "Kept when you die. No rigs, backpacks or other containers"])
 	if examined.fir:
 		lines.append(["Found in raid", "Yes"])
+	elif examined.fir_pending:
+		lines.append(["Found in raid", "Once you extract with it"])
+	else:
+		lines.append(["Found in raid", "No"])
 	return lines

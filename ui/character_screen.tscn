@@ -153,10 +153,21 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/Stash/Rows"]
+[node name="StashHeader" type="HBoxContainer" parent="Margin/Layout/Columns/Stash/Rows"]
+layout_mode = 2
+
+[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/Stash/Rows/StashHeader"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 theme_type_variation = &"AccentLabel"
+
+[node name="FirFilter" type="CheckButton" parent="Margin/Layout/Columns/Stash/Rows/StashHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Show only items found in raid; the rest are dimmed"
+text = "FIR only"
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/Stash/Rows"]
 layout_mode = 2
@@ -171,5 +182,5 @@ script = ExtResource("2_stash")
 [node name="StashHint" type="Label" parent="Margin/Layout/Columns/Stash/Rows"]
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-text = "Hover an item for details. Open INVENTORY (Tab) to move gear between you and the stash."
+text = "Hover an item for details; the checkmark means found in raid. Open INVENTORY (Tab) to move gear between you and the stash."
 autowrap_mode = 3

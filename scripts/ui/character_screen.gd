@@ -11,6 +11,7 @@ var _inventory_screen: InventoryScreen
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
 	%InventoryButton.pressed.connect(open_inventory)
+	%FirFilter.toggled.connect(func(on: bool) -> void: %StashGrid.fir_only = on)
 	_refresh()
 	%StashTitle.text = "STASH  ·  %d × %d" % [GameState.stash.size.x, GameState.stash.size.y]
 	%InventoryButton.grab_focus.call_deferred()

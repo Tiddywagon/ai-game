@@ -130,11 +130,33 @@ func count_of(id: String) -> int:
 ## Removes up to `amount` of item `id` from the pockets, rig and backpack. Returns how many.
 func take(id: String, amount: int) -> int:
 	var taken := 0
+	for piece in take_pieces(id, amount):
+		taken += piece.count
+	return taken
+
+
+## Like take(), but returns the pieces taken, each keeping its Found-in-Raid status (a reload puts
+## them in the magazine as they are).
+func take_pieces(id: String, amount: int) -> Array[ItemInstance]:
+	var pieces: Array[ItemInstance] = []
+	var taken := 0
 	for grid in ammo_grids():
-		taken += grid.take(id, amount - taken)
+		for piece in grid.take_pieces(id, amount - taken):
+			taken += piece.count
+			pieces.append(piece)
 		if taken >= amount:
 			break
-	return taken
+	return pieces
+
+
+## Every item on the character: equipment, pockets, everything inside them and the rounds in guns.
+func all_items() -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	for item in equipment.values():
+		if item:
+			result.append_array(item.all_items())
+	result.append_array(pockets.all_items())
+	return result
 
 
 ## Puts `item` in the pockets, rig or backpack, wherever it fits. False if it didn't all fit.
@@ -191,8 +213,9 @@ static func from_v2(slots: Dictionary, weapon_ammo: String, pocket_list: Array) 
 		var target := "pistol" if slot == "holster" else slot
 		var item := ItemInstance.create(str(slots[slot])) if str(slots[slot]) != "" else null
 		if item and inventory.equipment.has(target):
-			if item.data.category == ItemData.Category.WEAPON:
+			if item.data.category == ItemData.Category.WEAPON and item.data.weapon:
 				item.loaded_ammo = weapon_ammo
+				item.load_rounds(ItemInstance.full_rounds(weapon_ammo, item.data.weapon.magazine_size))
 			inventory.equip(target, item)
 	for entry in pocket_list:
 		var item := ItemInstance.create(str(entry.get("id", "")), int(entry.get("count", 1)))
@@ -239,8 +262,32 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	return inventory
 
 
-## A gun with a full magazine of `ammo`.
+## A gun with a full magazine of `ammo` (not found in raid).
 static func loaded_gun(id: String, ammo: String) -> ItemInstance:
 	var gun := ItemInstance.create(id)
 	gun.loaded_ammo = ammo
+	if gun.data.weapon:
+		gun.load_rounds(ItemInstance.full_rounds(ammo, gun.data.weapon.magazine_size))
 	return gun
+
+
+## An AI PMC's kit (DESIGN.md §4): an AK-74N with BS, armor, a helmet, a tactical rig with spare BS
+## and a pack with a few finds. What you can take off the body.
+static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
+	if rng == null:
+		rng = RandomNumberGenerator.new()
+	var inventory := Inventory.new()
+	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_bs"))
+	inventory.equip("armor", ItemInstance.create("armor_6b23" if rng.randf() < 0.5 else "paca_armor"))
+	inventory.equip("helmet", ItemInstance.create("zsh_helmet" if rng.randf() < 0.3 else "ssh68_helmet"))
+	var rig := ItemInstance.create("tactical_rig")
+	rig.contents.add(ItemInstance.create("ammo_545_bs", 60))
+	rig.contents.add(ItemInstance.create("ammo_545_bs", rng.randi_range(15, 45)))
+	rig.contents.add(ItemInstance.create("bandage"))
+	inventory.equip("rig", rig)
+	var pack := ItemInstance.create("tourist_pack")
+	for id in ["ai2_medkit", "canned_beef", "water_bottle", "gold_chain", "electric_motor", "weapon_parts"]:
+		if rng.randf() < 0.5:
+			pack.contents.add(ItemInstance.create(id))
+	inventory.equip("backpack", pack)
+	return inventory

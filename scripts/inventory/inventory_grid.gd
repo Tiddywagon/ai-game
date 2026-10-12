@@ -139,22 +139,56 @@ func count_of(id: String) -> int:
 	return total
 
 
-## Removes up to `amount` of item `id`, smallest stacks first. Returns how many were taken.
+## Removes up to `amount` of item `id`. Returns how many were taken.
 func take(id: String, amount: int) -> int:
+	var taken := 0
+	for piece in take_pieces(id, amount):
+		taken += piece.count
+	return taken
+
+
+## Removes up to `amount` of item `id` and returns what was taken, one piece per stack it came from,
+## each keeping its Found-in-Raid status. Uses stacks that aren't found in raid first (FIR items are
+## worth keeping for quests), then the smallest.
+func take_pieces(id: String, amount: int) -> Array[ItemInstance]:
 	var stacks := items.filter(func(item: ItemInstance) -> bool: return item.data.id == id)
-	stacks.sort_custom(func(a: ItemInstance, b: ItemInstance) -> bool: return a.count < b.count)
+	stacks.sort_custom(func(a: ItemInstance, b: ItemInstance) -> bool:
+		return a.count < b.count if a.fir == b.fir else not a.fir)
+	var pieces: Array[ItemInstance] = []
 	var taken := 0
 	for stack: ItemInstance in stacks:
 		if taken >= amount:
 			break
 		var used := mini(stack.count, amount - taken)
-		stack.count -= used
 		taken += used
-		if stack.count == 0:
+		if used == stack.count:
 			items.erase(stack)
+			pieces.append(stack)
+		else:
+			stack.count -= used
+			pieces.append(stack.split_off(used))
 	if taken > 0:
 		changed.emit()
-	return taken
+	return pieces
+
+
+## True if all of `item` would fit: on top of matching stacks and in free space.
+func has_room_for(item: ItemInstance) -> bool:
+	if not accepts(item):
+		return false
+	var room := 0
+	for other in items:
+		if other.can_stack_with(item):
+			room += other.data.max_stack - other.count
+	return room >= item.count or not find_space(item).is_empty()
+
+
+## Everything in the grid, including what's inside containers and loaded in guns, at any depth.
+func all_items() -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	for item in items:
+		result.append_array(item.all_items())
+	return result
 
 
 func weight() -> float:

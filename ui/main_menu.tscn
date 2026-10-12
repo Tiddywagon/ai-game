@@ -146,6 +146,13 @@ script = ExtResource("4_entry")
 primary = true
 font_size = 50
 
+[node name="HideoutButton" type="Button" parent="UI/Menu/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "HIDEOUT"
+script = ExtResource("4_entry")
+
 [node name="CharacterButton" type="Button" parent="UI/Menu/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2

@@ -39,6 +39,11 @@ var stash: InventoryGrid
 var inventory := Inventory.new()
 ## Skill id -> {"level": int, "progress": 0-1 toward the next level}.
 var skills: Dictionary = {}
+## Quest id -> {"state": "active" or "completed", "progress": [handed over so far, per objective]}.
+## Quests not in here haven't been accepted (DESIGN.md §11, QuestLog).
+var quests: Dictionary = {}
+## Hideout station id -> level built (DESIGN.md §9, Hideout). Missing: not built.
+var hideout: Dictionary = {}
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -83,6 +88,8 @@ func _reset(new_faction: Faction) -> void:
 	if FACTION_TRADER.has(faction):
 		trader_loyalty[FACTION_TRADER[faction]]["reputation"] += FACTION_REP_BONUS
 	inventory = Inventory.new()
+	quests = {}
+	hideout = {}
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -105,6 +112,8 @@ func to_dict() -> Dictionary:
 			"trader_loyalty": trader_loyalty.duplicate(true),
 			"inventory": inventory.to_dict(),
 			"skills": skills.duplicate(true),
+			"quests": quests.duplicate(true),
+			"hideout": hideout.duplicate(),
 		},
 		"stash": stash.to_array(),
 	}
@@ -140,6 +149,14 @@ func from_dict(data: Dictionary) -> void:
 	elif has_profile():
 		# Version 1, from before equipment existed: start with the starter kit worn.
 		inventory = Inventory.starter()
+	var saved_quests: Dictionary = profile.get("quests", {})
+	for quest: String in saved_quests:
+		var entry: Dictionary = saved_quests[quest]
+		quests[quest] = {"state": str(entry.get("state", "active")),
+			"progress": entry.get("progress", []).map(func(n: Variant) -> int: return int(n))}
+	var saved_hideout: Dictionary = profile.get("hideout", {})
+	for station: String in saved_hideout:
+		hideout[station] = int(saved_hideout[station])
 	var saved_skills: Dictionary = profile.get("skills", {})
 	for skill: String in saved_skills:
 		if skills.has(skill):

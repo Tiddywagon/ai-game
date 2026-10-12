@@ -1,0 +1,74 @@
+{
+  "_comment": "What each trader sells (buy) and trades (barters), by trader id. Prices in roubles (currency RUB) or dollars (USD). A requirement is {item, count, fir}: fir true means only found-in-raid items count. Nothing bought or bartered is ever found in raid.",
+  "prapor": {
+    "buy": [
+      {"item": "ammo_545_ps", "count": 60, "price": 7800, "currency": "RUB"},
+      {"item": "ammo_545_bs", "count": 30, "price": 21000, "currency": "RUB"},
+      {"item": "ammo_9x18_pst", "count": 50, "price": 4500, "currency": "RUB"},
+      {"item": "ak_74n", "price": 41000, "currency": "RUB"},
+      {"item": "pm_pistol", "price": 12500, "currency": "RUB"},
+      {"item": "hatchet", "price": 14000, "currency": "RUB"}
+    ],
+    "barters": [
+      {"give": [{"item": "bolts", "count": 2, "fir": true}, {"item": "screws", "count": 2}], "get": {"item": "ammo_545_bs", "count": 30}},
+      {"give": [{"item": "weapon_parts", "count": 1}, {"item": "duct_tape", "count": 1}], "get": {"item": "pm_pistol"}}
+    ]
+  },
+  "therapist": {
+    "buy": [
+      {"item": "bandage", "price": 1800, "currency": "RUB"},
+      {"item": "tourniquet", "price": 2600, "currency": "RUB"},
+      {"item": "splint", "price": 3200, "currency": "RUB"},
+      {"item": "painkillers", "price": 6500, "currency": "RUB"},
+      {"item": "ai2_medkit", "price": 5200, "currency": "RUB"},
+      {"item": "water_bottle", "price": 7500, "currency": "RUB"}
+    ],
+    "barters": [
+      {"give": [{"item": "gold_chain", "count": 1, "fir": true}], "get": {"item": "surgical_kit"}},
+      {"give": [{"item": "toilet_paper", "count": 2}], "get": {"item": "bandage"}}
+    ]
+  },
+  "skier": {
+    "buy": [
+      {"item": "red_dot", "price": 18000, "currency": "RUB"},
+      {"item": "foregrip", "price": 9500, "currency": "RUB"},
+      {"item": "dorm_key", "price": 45000, "currency": "RUB"}
+    ],
+    "barters": [
+      {"give": [{"item": "gpu", "count": 1, "fir": true}], "get": {"item": "holo_sight"}},
+      {"give": [{"item": "matches", "count": 2}, {"item": "crackers", "count": 1}], "get": {"item": "ammo_9x18_pst", "count": 50}}
+    ]
+  },
+  "peacekeeper": {
+    "buy": [
+      {"item": "scope_2_4", "price": 420, "currency": "USD"}
+    ],
+    "barters": []
+  },
+  "mechanic": {
+    "buy": [
+      {"item": "weapon_parts", "price": 26000, "currency": "RUB"},
+      {"item": "wires", "price": 6000, "currency": "RUB"}
+    ],
+    "barters": [
+      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 2, "fir": true}], "get": {"item": "scope_2_4"}}
+    ]
+  },
+  "ragman": {
+    "buy": [
+      {"item": "scav_vest", "price": 9000, "currency": "RUB"},
+      {"item": "tactical_rig", "price": 32000, "currency": "RUB"},
+      {"item": "sling_bag", "price": 6500, "currency": "RUB"},
+      {"item": "tourist_pack", "price": 24000, "currency": "RUB"},
+      {"item": "paca_armor", "price": 38000, "currency": "RUB"},
+      {"item": "ssh68_helmet", "price": 21000, "currency": "RUB"}
+    ],
+    "barters": [
+      {"give": [{"item": "duct_tape", "count": 2}, {"item": "wires", "count": 2}], "get": {"item": "tourist_pack"}}
+    ]
+  },
+  "jaeger": {
+    "buy": [],
+    "barters": []
+  }
+}

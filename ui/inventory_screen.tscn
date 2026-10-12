@@ -92,7 +92,7 @@ custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"DimLabel"
-text = "Drag to move  ·  R while dragging: turn  ·  Shift-drag: split (wheel: how many)  ·  Right-click: examine  ·  Double-click: open"
+text = "Drag to move  ·  R while dragging: turn  ·  Shift-drag: split (wheel: how many)  ·  Right-click: examine  ·  Double-click: open  ·  Checkmark: found in raid"
 autowrap_mode = 3
 
 [node name="CloseButton" type="Button" parent="Margin/Layout/Header"]
@@ -148,21 +148,47 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/StashPanel/Rows"]
+[node name="StashHeader" type="HBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
+layout_mode = 2
+
+[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/StashPanel/Rows/StashHeader"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 4
 theme_type_variation = &"AccentLabel"
 text = "STASH"
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Columns/StashPanel/Rows/StashHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="FirFilter" type="CheckButton" parent="Margin/Layout/Columns/StashPanel/Rows/StashHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Show only items found in raid; the rest are dimmed"
+text = "FIR only"
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="StashView" type="Control" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll"]
+[node name="ScrollContent" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StashView" type="Control" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll/ScrollContent"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 0
 script = ExtResource("2_grid")
+
+[node name="LootBody" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll/ScrollContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="Overlay" type="Control" parent="."]
 unique_name_in_owner = true

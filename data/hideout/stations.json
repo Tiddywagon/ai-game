@@ -1,0 +1,44 @@
+[
+  {
+    "id": "generator",
+    "name": "Generator",
+    "description": "Powers the other stations. Runs on fuel.",
+    "levels": [
+      {"level": 1, "roubles": 50000, "requires": [{"item": "fuel_can", "count": 1}]},
+      {"level": 2, "roubles": 0, "requires": [{"item": "fuel_can", "count": 2, "fir": true}, {"item": "wires", "count": 1, "fir": true}]},
+      {"level": 3, "roubles": 0, "requires": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 3, "fir": true}]}
+    ]
+  },
+  {
+    "id": "medstation",
+    "name": "Medstation",
+    "description": "Makes meds from basic supplies.",
+    "levels": [
+      {"level": 1, "roubles": 30000, "requires": [{"item": "bandage", "count": 2}],
+        "crafts": [{"id": "medkit", "inputs": [{"item": "bandage", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "ai2_medkit", "count": 1}}]},
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bandage", "count": 2, "fir": true}, {"item": "tourniquet", "count": 1, "fir": true}],
+        "crafts": [{"id": "surgical_kit", "inputs": [{"item": "ai2_medkit", "count": 2}, {"item": "painkillers", "count": 1}], "output": {"item": "surgical_kit", "count": 1}}]}
+    ]
+  },
+  {
+    "id": "workbench",
+    "name": "Workbench",
+    "description": "Hand-loads ammo and makes parts.",
+    "levels": [
+      {"level": 1, "roubles": 40000, "requires": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}],
+        "crafts": [{"id": "bs_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 1}], "output": {"item": "ammo_545_bs", "count": 30}}]},
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bolts", "count": 5, "fir": true}, {"item": "screws", "count": 3, "fir": true}],
+        "crafts": [{"id": "weapon_parts", "inputs": [{"item": "bolts", "count": 3}, {"item": "wires", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "weapon_parts", "count": 1}}]}
+    ]
+  },
+  {
+    "id": "lavatory",
+    "name": "Lavatory",
+    "description": "Turns scraps into barter goods.",
+    "levels": [
+      {"level": 1, "roubles": 20000, "requires": [{"item": "duct_tape", "count": 1}, {"item": "toilet_paper", "count": 1}],
+        "crafts": [{"id": "duct_tape", "inputs": [{"item": "wires", "count": 2}, {"item": "matches", "count": 1}], "output": {"item": "duct_tape", "count": 1}}]},
+      {"level": 2, "roubles": 0, "requires": [{"item": "duct_tape", "count": 2, "fir": true}, {"item": "toilet_paper", "count": 1, "fir": true}]}
+    ]
+  }
+]

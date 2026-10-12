@@ -16,6 +16,16 @@
 [ext_resource type="Script" path="res://scripts/world/dark_zone.gd" id="14_dark"]
 [ext_resource type="Script" path="res://scripts/world/vision_occluder.gd" id="15_occluder"]
 [ext_resource type="Script" path="res://scripts/ui/inventory/inventory_layer.gd" id="16_inventory"]
+[ext_resource type="Script" path="res://scripts/raid/raid_controller.gd" id="17_raid"]
+[ext_resource type="Script" path="res://scripts/world/extract_zone.gd" id="18_extract"]
+[ext_resource type="Script" path="res://scripts/world/loot_box.gd" id="19_box"]
+[ext_resource type="Script" path="res://scripts/world/loot_pickup.gd" id="20_pickup"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="21_duffle"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/weapon_box.tres" id="22_weapons"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_case.tres" id="23_medical"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/jacket.tres" id="24_jacket"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="25_safe"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/loose_loot.tres" id="26_loose"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -224,6 +234,82 @@ patrol_points = PackedVector3Array(16, 0, -12, 16, 0, -2)
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -12, 0, -12)
 profile = ExtResource("8_pmc")
 
+[node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("17_raid")
+player = NodePath("../Player")
+
+[node name="ExtractNorthEast" type="Area3D" parent="."]
+position = Vector3(17, 0, -17)
+script = ExtResource("18_extract")
+extract_name = "North-east gate"
+
+[node name="Loot" type="Node3D" parent="."]
+
+[node name="DuffleBag" type="Node3D" parent="Loot"]
+position = Vector3(-18.6, 0, 14.3)
+script = ExtResource("19_box")
+container = ExtResource("21_duffle")
+grid_size = Vector2i(4, 3)
+box_size = Vector3(1, 0.45, 0.55)
+color = Color(0.22, 0.27, 0.2, 1)
+
+[node name="WeaponBox" type="Node3D" parent="Loot"]
+position = Vector3(-15, 0, -15)
+script = ExtResource("19_box")
+container = ExtResource("22_weapons")
+grid_size = Vector2i(5, 3)
+box_size = Vector3(1.4, 0.5, 0.6)
+color = Color(0.25, 0.3, 0.22, 1)
+
+[node name="MedicalCase" type="Node3D" parent="Loot"]
+position = Vector3(4.5, 0, 7.5)
+script = ExtResource("19_box")
+container = ExtResource("23_medical")
+grid_size = Vector2i(3, 3)
+box_size = Vector3(0.6, 0.35, 0.45)
+color = Color(0.75, 0.75, 0.72, 1)
+
+[node name="Jacket" type="Node3D" parent="Loot"]
+position = Vector3(14.5, 0, 12.5)
+script = ExtResource("19_box")
+container = ExtResource("24_jacket")
+grid_size = Vector2i(2, 2)
+box_size = Vector3(0.7, 0.12, 0.5)
+color = Color(0.3, 0.32, 0.25, 1)
+
+[node name="Safe" type="Node3D" parent="Loot"]
+position = Vector3(18.6, 0, -9)
+script = ExtResource("19_box")
+container = ExtResource("25_safe")
+grid_size = Vector2i(3, 3)
+box_size = Vector3(0.7, 0.9, 0.7)
+color = Color(0.2, 0.21, 0.23, 1)
+
+[node name="LooseNearSpawn" type="Node3D" parent="Loot"]
+position = Vector3(-6, 0, 15)
+script = ExtResource("20_pickup")
+container = ExtResource("26_loose")
+
+[node name="LooseYard" type="Node3D" parent="Loot"]
+position = Vector3(2, 0, -9)
+script = ExtResource("20_pickup")
+container = ExtResource("26_loose")
+
+[node name="LooseEast" type="Node3D" parent="Loot"]
+position = Vector3(15, 0, 3)
+script = ExtResource("20_pickup")
+container = ExtResource("26_loose")
+
+[node name="LooseWest" type="Node3D" parent="Loot"]
+position = Vector3(-17, 0, 0)
+script = ExtResource("20_pickup")
+container = ExtResource("26_loose")
+
+[node name="LooseNorth" type="Node3D" parent="Loot"]
+position = Vector3(9, 0, -17)
+script = ExtResource("20_pickup")
+container = ExtResource("26_loose")
+
 [node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 fov = 55.0
 current = true
@@ -248,7 +334,7 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
-text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Tab inventory  ·  Esc pause"
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Tab inventory  ·  F search / pick up  ·  extract: green ring, north-east  ·  Esc pause"
 
 [node name="PlayerVision" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("12_vision")

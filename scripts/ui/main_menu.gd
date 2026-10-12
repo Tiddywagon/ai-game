@@ -6,6 +6,7 @@ extends Node
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
 const CHARACTER_SCENE := preload("res://ui/character_screen.tscn")
+const HIDEOUT_SCENE := preload("res://ui/hideout_screen.tscn")
 const TRADERS_SCENE := preload("res://ui/traders_screen.tscn")
 const SETTINGS_SCENE := preload("res://ui/settings_menu.tscn")
 const MUSIC_FADE_IN := 3.0
@@ -27,6 +28,7 @@ func _ready() -> void:
 	_music.play()
 	create_tween().tween_property(_music, "volume_db", 0.0, MUSIC_FADE_IN).set_ease(Tween.EASE_OUT)
 	%EnterRaidButton.pressed.connect(_open.bind(RAID_SETUP_SCENE, %EnterRaidButton))
+	%HideoutButton.pressed.connect(_open.bind(HIDEOUT_SCENE, %HideoutButton))
 	%CharacterButton.pressed.connect(_open.bind(CHARACTER_SCENE, %CharacterButton))
 	%TradersButton.pressed.connect(_open.bind(TRADERS_SCENE, %TradersButton))
 	%SettingsButton.pressed.connect(_open.bind(SETTINGS_SCENE, %SettingsButton))

@@ -1,10 +1,13 @@
 extends Node3D
 ## Test level for movement, cover and combat (DESIGN.md §13). Esc / Start opens the pause menu.
-## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC.
+## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC
+## (and the raid's ending doesn't touch your profile). Search the containers and bodies (F), pick up
+## loose loot, and extract at the green ring in the north-east corner (RaidController).
 ## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS, adds 60 if you have none), F4 AI on/off, F5 heal,
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
+const RESULT_SCREEN := preload("res://ui/raid_result_screen.tscn")
 ## Seconds between dying and the death screen.
 const DEATH_DELAY := 1.5
 const AMMO_TYPES: Array[String] = ["ammo_545_ps", "ammo_545_bs"]
@@ -13,6 +16,7 @@ const AMMO_TYPES: Array[String] = ["ammo_545_ps", "ammo_545_bs"]
 @onready var _hud := $HUD
 @onready var _environment: RaidEnvironment = $RaidEnvironment
 @onready var _vision: PlayerVision = $PlayerVision
+@onready var _raid: RaidController = $Raid
 
 var _start_msec := 0
 
@@ -24,6 +28,7 @@ func _ready() -> void:
 	_apply_raid()
 	_start_msec = Time.get_ticks_msec()
 	_player.died.connect(_on_player_died)
+	_raid.raid_ended.connect(_on_raid_ended)
 
 
 ## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
@@ -51,7 +56,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F3:
 			var ammo: String = AMMO_TYPES[(AMMO_TYPES.find(_player.ammo_id) + 1) % AMMO_TYPES.size()]
 			if _player.inventory.count_of(ammo) == 0:
-				_player.inventory.add(ItemInstance.create(ammo, 60))  # Something to reload with.
+				var spare := ItemInstance.create(ammo, 60)  # Something to reload with.
+				spare.brought_in = true  # A debug gift, not loot.
+				_player.inventory.add(spare)
 			_player.set_ammo(ammo)
 			_player.weapon.spare_rounds = _player.inventory.count_of(ammo)
 			_hud.show_message("Ammo: " + _player.ammo_label())
@@ -90,4 +97,16 @@ func _on_player_died() -> void:
 		_hud.visible = false
 		var screen := DEATH_SCREEN.instantiate()
 		add_child(screen)
-		screen.show_death(_player, raid_seconds))
+		screen.show_death(_player, raid_seconds, _raid.outcome))
+
+
+## Extracted or out of time: the raid result screen over the paused raid.
+func _on_raid_ended(outcome: RaidOutcome) -> void:
+	if outcome.status == RaidOutcome.Status.KILLED:
+		return  # The death screen handles that.
+	$InventoryLayer.close()
+	_hud.visible = false
+	get_tree().paused = true
+	var screen := RESULT_SCREEN.instantiate()
+	add_child(screen)
+	screen.show_outcome(outcome, _raid)

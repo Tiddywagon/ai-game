@@ -47,7 +47,7 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 	if not data is InventoryDrag:
 		return false
 	var drag: InventoryDrag = data
-	if drag.can_equip(slot):
+	if drag.can_equip(inventory, slot):
 		_hover = 1
 	elif item() and drag.can_insert(item()):
 		_hover = 2
@@ -59,7 +59,7 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at: Vector2, data: Variant) -> void:
 	var drag: InventoryDrag = data
-	if not drag.drop_on_slot(slot) and item():
+	if not drag.drop_on_slot(inventory, slot) and item():
 		drag.insert(item())
 	_hover = 0
 	queue_redraw()
@@ -83,8 +83,8 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
-func _get_tooltip(_at: Vector2) -> String:
-	return ItemDraw.tooltip(item()) if item() else "%s: empty" % title
+func _get_tooltip(at: Vector2) -> String:
+	return ItemDraw.tooltip_at(item(), Rect2(Vector2.ZERO, size).grow(-2.0), at) if item() else "%s: empty" % title
 
 
 func _draw() -> void:

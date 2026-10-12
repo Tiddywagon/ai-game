@@ -14,8 +14,9 @@ Top-down 3D survival extraction looter shooter built in Godot 4 with GDScript. T
 On first launch you pick a faction (BEAR or USEC); that creates your profile. From the main menu:
 
 - **ENTER RAID**: pick a map (only Test Yard is playable so far), play as your PMC or as a Scav, check your loadout, then load in.
+- **HIDEOUT**: build and upgrade stations (Generator, Medstation, Workbench, Lavatory) and craft with them.
 - **CHARACTER**: your gear, stats, skills and stash. **INVENTORY** (or Tab) opens the grid inventory with the stash beside it, to move gear between them.
-- **TRADERS**: loyalty levels and what the next one needs.
+- **TRADERS**: loyalty levels and what the next one needs; BUY, BARTER and TASKS (hand-in quests) for each trader.
 - **Settings** (gear icon, bottom right): graphics, audio, controls and key bindings, gameplay, interface and accessibility.
 
 ## Controls
@@ -32,11 +33,14 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 | Shift | L3 | Sprint (uses stamina) |
 | C | B | Crouch / stand: slower and quieter |
 | Tab | Back | Inventory (open / close; moving items needs the mouse for now) |
+| F | Y | Search a container or body, pick up an item |
 | L | — | Flashlight |
 | B | — | Binoculars (right-click to look through them; can't shoot while holding them) |
 | Esc | Start | Pause menu (resume, settings, leave raid, quit) |
 
 **Inventory** (mouse only for now): drag items to move them; the cells underneath turn green where the item fits, amber where it stacks or goes inside a rig or backpack, red where it can't go. **R** while dragging turns it; **Shift**-drag splits a stack in half (the mouse wheel changes how many); **right-click** examines (stats, rarity, value); **double-click** a rig, backpack or case to open it. Drop guns, armor, rigs and so on onto the equipment slots to wear them. Everything you carry has weight: from 25 kg you slow down and sprinting tires you faster; from 40 kg you're overweight and can't sprint or roll (thresholds in `data/config/inventory.tres`).
+
+**Raids and found in raid.** Search containers and bodies with **F** (they open beside your inventory; drag what you want across, or drag gear straight off a body's slots) and pick up loose items. To get out, stand in the green ring in the north-east corner for 7 seconds before the clock (top right) runs out. Anything you looted gets a faded checkmark; if you extract it turns solid: the item is **found in raid** (FIR). Dying, running out of time, LEAVE RAID, or a **Run Through** (extracting within 7 minutes with under 200 raid experience) gives nothing FIR, and as a PMC dying or leaving loses everything except your secure container. Bought, bartered and reward items are never FIR; hideout crafts always are; what you bring in keeps its status. Quests, hideout upgrades and some barters only take FIR items where the requirement shows the checkmark. Hover a checkmark for "Found in raid"; the stash's **FIR only** filter dims the rest; examine a gun to see (or UNLOAD) its rounds by status.
 
 Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
 
@@ -48,7 +52,7 @@ Health works per body part, as in Tarkov: head or thorax at 0 kills, any other p
 
 The ammo count, spare rounds and reload progress are in the bottom-right corner. With **Auto-reload** on (Settings > Gameplay), pulling the trigger on an empty magazine reloads.
 
-Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`; every vision angle, range and multiplier (cones, light, weather, optics, AI) in `data/config/vision.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
+Trader offers live in `data/traders/offers.json`, quests in `data/quests/quests.json`, hideout stations and crafts in `data/hideout/stations.json` (requirements are `{"item", "count", "fir"}`), and extraction, Run Through and raid experience in `data/config/raid.tres`. Roll, cover and bullet numbers live in `data/config/combat.tres`; body-part HP, bleed and fracture chances in `data/config/health.tres`; every vision angle, range and multiplier (cones, light, weather, optics, AI) in `data/config/vision.tres`. Each gun's handling (fire rate, magazine, reload times, spread, recoil) is a `WeaponData` file in `data/weapons/`; add a gun by adding a file there and pointing its item (in `data/items/weapons/`) at it. Your settings are saved in `settings.cfg` and your profile in `savegame.json`, both in Godot's user folder (on Windows: `%APPDATA%\Godot\app_userdata\AI Game\`).
 
 ## Adding items
 

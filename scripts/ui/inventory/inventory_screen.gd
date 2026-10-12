@@ -5,7 +5,9 @@ extends MenuScreen
 ## raid. Drag to move; R turns the item while dragging; Shift-drag splits a stack (the mouse wheel
 ## changes how many); right-click examines; double-click opens a container in its own window. The header
 ## shows the weight you carry and what it does to you. Tab, Esc or CLOSE closes it. In a raid the game
-## keeps running while it's open.
+## keeps running while it's open, and searching a container or body shows it on the right instead of
+## the stash. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
+## of the stash. Guns can be unloaded from the examine panel: the rounds keep their status.
 
 ## Equipment slot layout: two columns of [slot, size in cells].
 const SLOT_COLUMNS := [
@@ -21,24 +23,41 @@ const OVERWEIGHT_COLOR := Color(0.9, 0.32, 0.25)
 var inventory: Inventory
 ## The stash, beside the character out of raid; null in a raid.
 var stash: InventoryGrid
+## In a raid: what's being searched, a container's InventoryGrid or a body's Inventory (or null), and
+## its title.
+var loot: Variant
+var loot_title := ""
 
 var _config: InventoryConfig = preload("res://data/config/inventory.tres")
 var _examine: ItemExaminePanel
 var _shown_grids: Array[InventoryGrid] = []
+var _loot_grids: Array[InventoryGrid] = []
 var _windows := {}
 
 
 func _ready() -> void:
 	%CloseButton.pressed.connect(close)
 	_examine = ItemExaminePanel.new()
+	_examine.unload_requested.connect(unload)
 	%Overlay.add_child(_examine)
 	_build_equipment()
 	_build_containers()
-	%StashPanel.visible = stash != null
-	if stash:
+	%StashPanel.visible = stash != null or loot != null
+	%FirFilter.visible = loot == null
+	%FirFilter.toggled.connect(func(on: bool) -> void: %StashView.fir_only = on)
+	_hook_view(%StashView)
+	%StashView.inventory = inventory
+	if loot is InventoryGrid:
+		%StashTitle.text = loot_title
+		%StashView.grid = loot
+	elif loot is Inventory:
+		%StashTitle.text = loot_title
+		%StashView.hide()
+		%LootBody.show()
+		_build_loot_body()
+		(loot as Inventory).changed.connect(_on_loot_changed)
+	elif stash:
 		%StashTitle.text = "STASH  ·  %d × %d" % [stash.size.x, stash.size.y]
-		_hook_view(%StashView)
-		%StashView.inventory = inventory
 		%StashView.grid = stash
 	inventory.changed.connect(_on_inventory_changed)
 	_update_header()
@@ -138,18 +157,73 @@ func _build_containers() -> void:
 		%Containers.add_child(note)
 
 
-func _add_section(title: String, grid: InventoryGrid) -> void:
+func _add_section(title: String, grid: InventoryGrid, parent: Control = null, owner_inventory: Inventory = null, prefix := "Grid_") -> void:
+	parent = parent if parent else %Containers
 	var label := Label.new()
 	label.theme_type_variation = &"AccentLabel"
 	label.text = title
-	%Containers.add_child(label)
+	parent.add_child(label)
 	var view := InventoryGridView.new()
-	view.name = "Grid_" + str(grid.kind)
+	view.name = prefix + str(grid.kind)
 	_hook_view(view)
-	view.inventory = inventory
+	view.inventory = owner_inventory if owner_inventory else inventory
 	view.grid = grid
 	view.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	%Containers.add_child(view)
+	parent.add_child(view)
+
+
+## A body being searched: its equipment slots, then its pockets, rig and backpack.
+func _build_loot_body() -> void:
+	var body: Inventory = loot
+	for child in %LootBody.get_children():
+		%LootBody.remove_child(child)
+		child.queue_free()
+	_loot_grids = body.grids()
+	var slots := HFlowContainer.new()
+	slots.add_theme_constant_override("h_separation", 12)
+	slots.add_theme_constant_override("v_separation", 6)
+	%LootBody.add_child(slots)
+	for column in SLOT_COLUMNS:
+		for entry in column:
+			var slot: String = entry[0]
+			if slot == "secure":
+				continue  # A body's secure container can't be searched.
+			var box := VBoxContainer.new()
+			var label := Label.new()
+			label.theme_type_variation = &"DimLabel"
+			label.text = _slot_name(slot)
+			box.add_child(label)
+			var view := EquipmentSlotView.new()
+			view.name = "LootSlot_" + slot
+			view.setup(body, slot, _slot_name(slot), entry[1])
+			view.examine_requested.connect(_examine_item)
+			view.open_requested.connect(_open_window)
+			box.add_child(view)
+			slots.add_child(box)
+	_add_section("POCKETS", body.pockets, %LootBody, body, "LootGrid_")
+	for entry in CONTAINER_SLOTS:
+		var item: ItemInstance = body.equipment[entry[0]]
+		if item and item.contents and entry[0] != "secure":
+			_add_section("%s  ·  %s" % [entry[1], item.data.display_name], item.contents, %LootBody, body, "LootGrid_")
+
+
+func _on_loot_changed() -> void:
+	if (loot as Inventory).grids() != _loot_grids:
+		_build_loot_body()
+
+
+## Empties the magazine of `gun`: the rounds go to your pockets, rig or backpack (or the stash), each
+## keeping its found-in-raid status. Rounds with nowhere to go stay loaded.
+func unload(gun: ItemInstance) -> void:
+	for rounds in gun.unload():
+		if inventory.add(rounds) or (stash and stash.add(rounds)):
+			continue
+		gun.load_rounds(rounds)
+	inventory.changed.emit()
+	if stash:
+		stash.changed.emit()
+	if _examine.visible and _examine.item == gun:
+		_examine.show_item(gun)
 
 
 func _hook_view(view: InventoryGridView) -> void:

@@ -130,14 +130,15 @@ func _update() -> void:
 	view = VisionSystem.view_for(player)
 	area = VisionSystem.visibility_polygon(view)
 	_draw_masks()
-	for node in get_tree().get_nodes_in_group("vision_hideable"):
-		var actor := node as Actor
-		if actor == null or actor == player:
+	for node: Node3D in get_tree().get_nodes_in_group("vision_hideable"):
+		if node == player:
 			continue
-		var seen := not enabled or VisionSystem.can_see(view, actor)
-		var id := actor.get_instance_id()
+		var seen := not enabled
+		if not seen:
+			seen = VisionSystem.can_see(view, node) if node is Actor else VisionSystem.can_see_point(view, node.global_position)
+		var id := node.get_instance_id()
 		if _seen.get(id) != seen:
-			actor.set_seen(seen)
+			node.set_seen(seen)
 			_seen[id] = seen
 
 

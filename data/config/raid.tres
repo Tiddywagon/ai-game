@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RaidConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/raid_config.gd" id="1_raid"]
+
+[resource]
+script = ExtResource("1_raid")
+extract_seconds = 7.0
+run_through_seconds = 420.0
+run_through_xp = 200
+xp_scav_kill = 100
+xp_pmc_kill = 300
+xp_looted_item = 10

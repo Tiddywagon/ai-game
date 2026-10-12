@@ -9,7 +9,9 @@ const SAVE_PATH := "user://savegame.json"
 ## Version 2 added equipment, pockets and skills; version 1 saves get the starter kit equipped.
 ## Version 3 stores the inventory as item instances in grids (with container contents and loaded
 ## rounds); version 2 equipment and pockets are converted, and get the Alpha secure container.
-const SAVE_VERSION := 3
+## Version 4 keeps each gun's rounds with their Found-in-Raid status (version 3 rounds load as not
+## found in raid), and adds quests and hideout station levels.
+const SAVE_VERSION := 4
 
 
 func has_save() -> bool:

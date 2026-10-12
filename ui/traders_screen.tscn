@@ -48,6 +48,16 @@ text = "TRADERS"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="Money" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"AccentLabel"
+
+[node name="MoneyGap" type="Control" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+
 [node name="BackButton" type="Button" parent="Margin/Layout/Header"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 48)
@@ -61,7 +71,7 @@ theme_override_constants/separation = 32
 
 [node name="TraderList" type="VBoxContainer" parent="Margin/Layout/Columns"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(460, 0)
+custom_minimum_size = Vector2(380, 0)
 layout_mode = 2
 theme_override_constants/separation = 8
 
@@ -71,7 +81,7 @@ size_flags_horizontal = 3
 
 [node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/Details"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="TraderName" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
 unique_name_in_owner = true
@@ -89,11 +99,14 @@ layout_mode = 2
 theme_type_variation = &"AccentLabel"
 autowrap_mode = 3
 
-[node name="Spacer" type="Control" parent="Margin/Layout/Columns/Details/Rows"]
+[node name="Tabs" type="TabContainer" parent="Margin/Layout/Columns/Details/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Note" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+[node name="Status" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-text = "Buying, selling and bartering open in a later update."
+text = "Nothing you buy, barter for or get as a reward is ever found in raid. Requirements with the checkmark only take found-in-raid items."
+autowrap_mode = 3

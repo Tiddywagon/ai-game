@@ -149,6 +149,19 @@ func can_see(view: VisionView, target: Actor, ignore_cones := false) -> bool:
 	return false
 
 
+## True if `view` sees a spot on the ground (an item lying there): within reach in that light and with
+## a clear sight line.
+func can_see_point(view: VisionView, point: Vector3) -> bool:
+	var origin := Vector2(view.origin.x, view.origin.z)
+	var to := Vector2(point.x, point.z) - origin
+	var distance := to.length()
+	var direction := to / distance if distance > 0.001 else view.facing
+	var light := 1.0 if view.lit_toward(direction) else light_at(point)
+	if distance > view.range_toward(direction, light, config):
+		return false
+	return line_clear(view.space, view.origin, point, view.low)
+
+
 ## True if nothing on the vision layer is between `from` and `to` (feet positions) at eye height:
 ## crouched eye height if `low` (either end crouched), so low cover counts, standing otherwise.
 func line_clear(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, low: bool) -> bool:

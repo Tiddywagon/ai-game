@@ -1,6 +1,7 @@
 extends CanvasLayer
 ## Death screen (DESIGN.md §16.5): says what killed you (who, with what, where it hit, from how far,
-## or what you bled out from), shows your body as it was, and a few raid stats. BACK TO MENU leaves.
+## or what you bled out from), shows your body as it was, a few raid stats and what the death cost
+## (gear lost except the secure container; nothing found in raid). BACK TO MENU leaves.
 
 const MAIN_MENU := "res://ui/main_menu.tscn"
 const FADE_TIME := 0.6
@@ -13,7 +14,7 @@ func _ready() -> void:
 	create_tween().tween_property(%Root, "modulate:a", 1.0, FADE_TIME)
 
 
-func show_death(player: Player, raid_seconds: float) -> void:
+func show_death(player: Player, raid_seconds: float, outcome: RaidOutcome = null) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var lines := describe(player.health.death_cause)
 	%Cause.text = lines[0]
@@ -27,6 +28,13 @@ func show_death(player: Player, raid_seconds: float) -> void:
 	_stat("Side", "Scav" if GameState.raid.get("side") == "scav" else "PMC")
 	_stat("Time in raid", "%d:%02d" % [int(raid_seconds) / 60, int(raid_seconds) % 60])
 	_stat("Kills", str(player.kills))
+	if outcome:
+		_stat("Experience", "+%s" % UiFormat.thousands(outcome.xp))
+		if outcome.side == "pmc":
+			_stat("Gear", "Lost, except your secure container (%s lost)" % UiFormat.money(outcome.lost_value) if outcome.lost_value > 0 else "Lost, except your secure container")
+		else:
+			_stat("Gear", "Scav kit lost; nothing from your stash was at risk")
+		_stat("Found in raid", "Nothing: you have to extract")
 	%MenuButton.grab_focus()
 
 

@@ -65,7 +65,11 @@ func _ask(dialog: ConfirmationDialog) -> void:
 	dialog.get_cancel_button().grab_focus()
 
 
+## Leaving counts as missing in action (DESIGN.md §2): a PMC loses everything but the secure container.
 func _leave_raid() -> void:
+	var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+	if raid:
+		raid.end_raid(RaidOutcome.Status.MIA)
 	get_tree().paused = false
 	GameState.raid = {}
 	get_tree().change_scene_to_file(MAIN_MENU)

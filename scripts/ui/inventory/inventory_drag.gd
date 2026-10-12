@@ -3,7 +3,8 @@ extends RefCounted
 ## An item being dragged in the inventory UI (DESIGN.md §7): what it is, where it came from, how many
 ## are moving (a Shift-drag split takes half; the mouse wheel changes it) and whether it's been turned
 ## with R. It also decides what dropping it somewhere would do, and does it. Nothing moves until the
-## drop succeeds, so letting go anywhere else simply cancels.
+## drop succeeds, so letting go anywhere else simply cancels. Stacks only merge with the same
+## Found-in-Raid status, and a split keeps the status of its stack.
 
 ## The drag in progress, if any (for R and the mouse wheel).
 static var current: InventoryDrag
@@ -12,7 +13,7 @@ static var current: InventoryDrag
 signal updated
 
 var item: ItemInstance
-## Where it came from: a grid, or an equipment slot of `inventory`.
+## Where it came from: a grid, or an equipment slot of `inventory` (yours, or a body's).
 var from_grid: InventoryGrid
 var from_slot := ""
 var inventory: Inventory
@@ -62,7 +63,7 @@ func plan_grid(grid: InventoryGrid, mouse_cell: Vector2i, top_left: Vector2i) ->
 	if under == item and not splitting and from_grid == grid and top_left == item.cell and rotated == item.rotated:
 		return {"action": "stay"}
 	if under and under != item:
-		if under.data == item.data and item.data.max_stack > 1 and under.count < under.data.max_stack:
+		if under.data == item.data and item.data.max_stack > 1 and under.count < under.data.max_stack and under.same_status(item):
 			return {"action": "merge", "target": under}
 		if can_insert(under):
 			return {"action": "insert", "target": under}
@@ -87,8 +88,7 @@ func drop_on_grid(grid: InventoryGrid, plan: Dictionary) -> bool:
 			return insert(plan.target)
 		"place":
 			if splitting:
-				var piece := ItemInstance.create(item.data.id, amount)
-				piece.fir = item.fir
+				var piece := item.split_off(amount)
 				_take_from_source(amount)
 				return grid.place(piece, plan.cell, rotated)
 			if from_grid != grid:
@@ -118,23 +118,23 @@ func insert(target: ItemInstance) -> bool:
 	return moved > 0
 
 
-## True if dropping on equipment `slot` would work (whole items only).
-func can_equip(slot: String) -> bool:
-	if splitting or inventory == null:
+## True if dropping on equipment `slot` of `target` (yours, or a body's) would work (whole items only).
+func can_equip(target: Inventory, slot: String) -> bool:
+	if splitting or target == null:
 		return false
-	if from_slot == slot:
+	if from_slot == slot and target == inventory:
 		return true
-	return inventory.equipment.get(slot) == null and inventory.accepts(slot, item)
+	return target.equipment.get(slot) == null and target.accepts(slot, item)
 
 
-func drop_on_slot(slot: String) -> bool:
-	if not can_equip(slot):
+func drop_on_slot(target: Inventory, slot: String) -> bool:
+	if not can_equip(target, slot):
 		return false
-	if from_slot == slot:
+	if from_slot == slot and target == inventory:
 		return true
 	_remove_from_source()
 	item.rotated = false
-	return inventory.equip(slot, item)
+	return target.equip(slot, item)
 
 
 ## True if `container` (a rig or backpack shown as an item) can take what's being dragged.
@@ -142,8 +142,9 @@ func _fits_inside(container: InventoryGrid) -> bool:
 	if not container.accepts(item):
 		return false
 	var probe := ItemInstance.create(item.data.id, amount)
+	probe.copy_status(item)
 	return not container.find_space(probe).is_empty() or container.items.any(func(other: ItemInstance) -> bool:
-		return other.data == item.data and other.count < other.data.max_stack and item.data.max_stack > 1)
+		return other.can_stack_with(probe))
 
 
 ## The item being moved, or a new stack split off it.
@@ -151,9 +152,7 @@ func _piece() -> ItemInstance:
 	if not splitting:
 		_remove_from_source()
 		return item
-	var piece := ItemInstance.create(item.data.id, amount)
-	piece.fir = item.fir
-	return piece
+	return item.split_off(amount)
 
 
 ## After an insert that didn't take the whole stack, what's left goes back where it was.

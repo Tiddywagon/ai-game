@@ -9,12 +9,21 @@ extends Actor
 ## gun's sight: a scope gives a longer, narrower cone, slows you down and pulls the camera out toward
 ## the aim point. L toggles the flashlight, B takes out or puts away binoculars (no shooting with them).
 ## Inventory (DESIGN.md §7): the gun in hand is the first one in the primary, secondary or pistol slot;
-## spare rounds come from the pockets, rig and backpack and are used up by reloads; everything carried
-## counts toward the weight that slows you. While an inventory screen is open (`ui_open`) you can still
-## walk, but not shoot, aim or move the reticle.
+## spare rounds come from the pockets, rig and backpack and go into the magazine as they are (keeping
+## their Found-in-Raid status); everything carried counts toward the weight that slows you. While an
+## inventory screen is open (`ui_open`) you can still walk, but not shoot, aim or move the reticle.
+## Looting: F uses the nearest container, body or item on the ground in reach. Anything that reaches
+## the inventory and wasn't brought in is claimed as loot: found in raid if you extract (FoundInRaid).
 
 ## Emitted when one of the player's bullets hits someone (hit markers, damage numbers).
 signal hit_landed(target: Actor, damage: float, position: Vector3)
+## Something wants its loot shown beside the inventory: a container's grid or a body's Inventory.
+## `source` is the container, body or other node it belongs to (the panel closes if you walk away).
+signal loot_requested(title: String, loot: Variant, source: Node3D)
+## Loot that just reached the inventory (pending found in raid until you extract).
+signal loot_claimed(items: Array[ItemInstance])
+## Someone this player shot died (for raid XP).
+signal killed(target: Actor)
 
 ## Right stick: how far from the player it puts the reticle, and how fast the reticle gets there.
 const STICK_AIM_RADIUS := 360.0
@@ -25,6 +34,8 @@ const FLASHLIGHT_ENERGY := 8.0
 ## Through a scope the camera leads toward the aim point, but keeps you within this share of the
 ## half-screen from its centre.
 const MAX_LEAD_SCREEN_SHARE := 0.55
+## How close a container, body or item must be to use it with F (metres, flat).
+const INTERACT_RANGE := 2.0
 
 ## Where the reticle is, in viewport pixels.
 var cursor_position := Vector2.ZERO
@@ -44,6 +55,8 @@ var debug_extra_weight := 0.0:
 		_update_weight()
 ## True while an inventory screen is open: walking still works; shooting, aiming and the reticle don't.
 var ui_open := false
+## The nearest thing in reach that F would use (in group "interactables"), or null. The HUD shows it.
+var focused_interactable: Node
 
 var _roll_requested := false
 var _cover_requested := false
@@ -53,6 +66,8 @@ var _reload_requested := false
 var _flashlight: SpotLight3D
 ## The inventory item of the gun in hand.
 var _weapon_item: ItemInstance
+## True while a reload moves rounds from the inventory into the magazine.
+var _loading_rounds := false
 
 
 func _ready() -> void:
@@ -71,7 +86,7 @@ func _ready() -> void:
 	_flashlight.shadow_enabled = true
 	_flashlight.visible = false
 	add_child(_flashlight)
-	weapon.fired.connect(_store_weapon_state)
+	weapon.fired.connect(_on_round_fired)
 	weapon.reload_finished.connect(_on_reload_finished)
 	set_inventory(Inventory.starter())
 
@@ -102,6 +117,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_flashlight(not flashlight_on)
 	elif event.is_action_pressed("binoculars"):
 		set_binoculars(not using_binoculars)
+	elif event.is_action_pressed("interact") and focused_interactable and not is_dead:
+		focused_interactable.interact(self)
 
 
 func _process(delta: float) -> void:
@@ -118,6 +135,7 @@ func _process(delta: float) -> void:
 
 
 func _think(delta: float) -> void:
+	_update_focus()
 	move_input = _input_direction()
 	var moving := not move_input.is_zero_approx()
 	if Settings.is_toggle("sprint_mode"):
@@ -161,12 +179,13 @@ func set_flashlight(on: bool) -> void:
 	_flashlight.visible = on
 
 
-## Carries `new_inventory` from now on: its weight, its gun, its spare rounds.
+## Carries `new_inventory` into the raid from now on: its weight, its gun, its spare rounds. All of it
+## counts as brought in, so none of it turns into found-in-raid loot.
 func set_inventory(new_inventory: Inventory) -> void:
 	if inventory and inventory.changed.is_connected(_on_inventory_changed):
 		inventory.changed.disconnect(_on_inventory_changed)
-	_store_weapon_state()
 	inventory = new_inventory
+	FoundInRaid.mark_brought_in(inventory)
 	inventory.changed.connect(_on_inventory_changed)
 	_update_weight()
 	_sync_weapon(true)
@@ -191,7 +210,37 @@ func is_using_optic() -> bool:
 	return using_binoculars or (weapon.has_gun() and not weapon.is_reloading)
 
 
+## Opens `loot` (a container's InventoryGrid or a body's Inventory) from `source` beside the inventory.
+func open_loot(title: String, loot: Variant, source: Node3D = null) -> void:
+	loot_requested.emit(title, loot, source)
+
+
+## Picks `item` up off the ground into the pockets, rig or backpack. False (with a message) if it
+## didn't all fit; what fit is taken, the rest stays.
+func pick_up(item: ItemInstance) -> bool:
+	if inventory.add(item):
+		return true
+	action_blocked.emit("No room for %s" % item.data.display_name)
+	return false
+
+
+func _update_focus() -> void:
+	focused_interactable = null
+	if is_dead:
+		return
+	var best := INTERACT_RANGE
+	for node: Node3D in get_tree().get_nodes_in_group("interactables"):
+		var offset := node.global_position - global_position
+		var distance := Vector2(offset.x, offset.z).length()
+		if distance <= best and node.can_interact(self):
+			best = distance
+			focused_interactable = node
+
+
 func _on_inventory_changed() -> void:
+	var claimed := FoundInRaid.claim(inventory)
+	if not claimed.is_empty():
+		loot_claimed.emit(claimed)
 	_update_weight()
 	_sync_weapon()
 
@@ -200,27 +249,25 @@ func _update_weight() -> void:
 	carried_weight_kg = (inventory.total_weight() if inventory else 0.0) + debug_extra_weight
 
 
-## Puts the inventory's gun in hand if it changed (or `force`), and recounts the spare rounds.
+## Puts the inventory's gun in hand if it changed (or `force`); the rounds come from its magazine and
+## the spare rounds are recounted.
 func _sync_weapon(force := false) -> void:
+	if _loading_rounds:
+		return
 	var slot := inventory.weapon_slot()
 	var item: ItemInstance = inventory.equipment[slot] if slot != "" else null
 	if force or item != _weapon_item:
-		_store_weapon_state()
 		_weapon_item = item
 		if item == null or item.data.weapon == null:
 			equip_weapon("", "", 0)
 		else:
-			# A gun without rounds loaded takes the first matching ammo you carry, magazine empty.
-			var ammo := item.loaded_ammo if item.loaded_ammo != "" else _carried_ammo_for(item.data.weapon.caliber)
-			equip_weapon(item.data.id, ammo, inventory.count_of(ammo))
+			# A gun without a round type yet takes the first matching ammo you carry.
 			if item.loaded_ammo == "":
-				weapon.rounds = 0
-				item.loaded_ammo = ammo
-				item.loaded_rounds = 0
-			elif item.loaded_rounds >= 0:
-				weapon.rounds = mini(item.loaded_rounds, weapon.data.magazine_size)
+				item.loaded_ammo = _carried_ammo_for(item.data.weapon.caliber)
+			equip_weapon(item.data.id, item.loaded_ammo, inventory.count_of(item.loaded_ammo))
 		weapon.visible = weapon.has_gun() and not using_binoculars
-	elif weapon.has_gun():
+	if weapon.has_gun() and _weapon_item:
+		weapon.rounds = mini(_weapon_item.rounds_loaded(), weapon.data.magazine_size)
 		weapon.spare_rounds = inventory.count_of(ammo_id)
 
 
@@ -232,19 +279,31 @@ func _carried_ammo_for(caliber: String) -> String:
 	return ""
 
 
-## Remembers the rounds in the gun on its inventory item.
-func _store_weapon_state() -> void:
-	if _weapon_item and weapon.has_gun():
-		_weapon_item.loaded_ammo = ammo_id
-		_weapon_item.loaded_rounds = weapon.rounds
+## Swaps the loaded round type, keeping the counts and their status (debug key F3).
+func set_ammo(id: String) -> void:
+	super(id)
+	if _weapon_item:
+		_weapon_item.convert_magazine(id)
+	weapon.spare_rounds = inventory.count_of(id)
 
 
-## The rounds a reload put in the magazine come out of the pockets, rig or backpack.
+func _on_round_fired() -> void:
+	if _weapon_item:
+		_weapon_item.fire_round()
+
+
+## The rounds a reload put in the magazine come out of the pockets, rig or backpack, and go in as
+## they are: found-in-raid rounds stay found in raid.
 func _on_reload_finished() -> void:
-	var used := inventory.count_of(ammo_id) - weapon.spare_rounds
-	_store_weapon_state()
-	if used > 0:
-		inventory.take(ammo_id, used)
+	if _weapon_item == null:
+		return
+	var wanted := weapon.rounds - _weapon_item.rounds_loaded()
+	if wanted > 0:
+		_loading_rounds = true
+		for piece in inventory.take_pieces(ammo_id, wanted):
+			_weapon_item.load_rounds(piece)
+		_loading_rounds = false
+	_sync_weapon()
 
 
 # --- Vision -----------------------------------------------------------------------------------
@@ -320,6 +379,7 @@ func _update_camera_view() -> void:
 func on_hit_landed(target: Actor, damage: float, hit_position: Vector3) -> void:
 	if target.is_dead:
 		kills += 1  # Corpses can't be hit, so this hit was the kill.
+		killed.emit(target)
 	hit_landed.emit(target, damage, hit_position)
 	if Settings.get_value("gameplay", "damage_numbers"):
 		_spawn_damage_number(hit_position, damage)

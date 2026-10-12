@@ -28,6 +28,9 @@ const COVER_RETRY_TIME := 0.5
 ## Untick to freeze the bot in place (it still takes damage).
 @export var ai_enabled := true
 
+## What the bot carries (DESIGN.md §4): a Scav or PMC kit to match its gun. Lootable once it's dead.
+var inventory: Inventory
+
 var state := State.IDLE
 ## The hostile actor being fought, if any.
 var target: Actor
@@ -67,6 +70,9 @@ func _ready() -> void:
 		var material := StandardMaterial3D.new()
 		material.albedo_color = profile.body_color
 		($Body/Capsule as MeshInstance3D).material_override = material
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	inventory = Inventory.pmc_bot(rng) if side == Side.PMC else Inventory.scav(rng)
 	NoiseSystem.noise_emitted.connect(_on_noise)
 	Settings.applied.connect(_update_outline)
 	_update_outline.call_deferred()  # After the player is in the tree.
@@ -84,6 +90,24 @@ func display_name() -> String:
 func die() -> void:
 	super()
 	_update_outline()
+	# The body can be searched: its gun keeps the rounds left in it.
+	var gun: ItemInstance = inventory.equipment[inventory.weapon_slot()] if inventory.weapon_slot() != "" else null
+	if gun and gun.data.weapon:
+		gun.magazine.clear()
+		gun.load_rounds(ItemInstance.full_rounds(ammo_id, weapon.rounds))
+	add_to_group("interactables")
+
+
+func interact_text() -> String:
+	return "Search body (%s)" % display_name()
+
+
+func can_interact(_player: Player) -> bool:
+	return is_dead
+
+
+func interact(player: Player) -> void:
+	player.open_loot("BODY  ·  %s" % display_name().to_upper(), inventory, self)
 
 
 ## Bright outline for high-contrast mode: hostile bots in red-orange, neutral ones in cyan.
