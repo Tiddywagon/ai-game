@@ -1,0 +1,4 @@
+[
+  {"id": "huntsman_700", "name": "Huntsman 700", "description": "Bolt-action 7.62x51 hunting and sniper rifle. A detachable five-round magazine and a rail for any scope.", "category": "weapon", "rarity": "ultra_rare", "size": [5, 1], "weight": 2.1, "value": 58000, "weapon": "res://data/weapons/huntsman_700.tres"},
+  {"id": "leviathan_338", "name": "Leviathan .338", "description": "Magnum bolt-action rifle in .338 Lapua on an aluminium chassis. Anything it hits stays down.", "category": "weapon", "rarity": "legendary", "size": [6, 2], "weight": 2.9, "value": 286500, "weapon": "res://data/weapons/leviathan_338.tres"}
+]

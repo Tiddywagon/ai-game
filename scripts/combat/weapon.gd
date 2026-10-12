@@ -172,7 +172,12 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 	firing_trick_shot = trick_armed
 	trick_armed = false
 	var damage_multiplier := 1.0 + data.trick_damage_bonus if firing_trick_shot else 1.0
-	Ballistics.fire(shooter, origin, direction, ammo, muzzle.global_position, data, damage_multiplier)
+	# Shot shells fire several pellets, each its own round, spread around the aim (chokes tighten it).
+	var pellets := pellet_count(ammo)
+	var pellet_spread := float(ammo.stats.get("pellet_spread", 0.0)) * data.pellet_spread_multiplier
+	for i in pellets:
+		var pellet := cone(direction, pellet_spread) if pellets > 1 else direction
+		Ballistics.fire(shooter, origin, pellet, ammo, muzzle.global_position, data, damage_multiplier, i == 0)
 	recoil_kick += WeaponStats.kick(data, _rng) * (1.0 - clampf(recoil_control, 0.0, 1.0))
 	shot_bloom = minf(shot_bloom + data.bloom_per_shot, data.max_bloom)
 	_since_shot = 0.0
@@ -187,6 +192,11 @@ func pull_trigger(shooter: Actor, origin: Vector3, target: Vector3, extra_spread
 		is_jammed = true
 		jammed.emit()
 	return true
+
+
+## Rounds each shot of `ammo_item` fires: 1, or a shot shell's pellets.
+static func pellet_count(ammo_item: ItemData) -> int:
+	return maxi(int(ammo_item.stats.get("pellets", 1)), 1) if ammo_item else 1
 
 
 ## `direction` turned by the recoil kick: sideways, and up by the climb.

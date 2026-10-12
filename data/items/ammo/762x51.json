@@ -1,0 +1,12 @@
+[
+  {"id": "ammo_762x51_fmj", "name": "7.62x51 FMJ", "description": "Full-power ball round.", "category": "ammo", "rarity": "common", "weight": 0.025, "value": 250, "max_stack": 40,
+   "stats": {"caliber": "7.62x51", "damage": 80, "penetration": 29, "armor_damage": 45}},
+  {"id": "ammo_762x51_sp", "name": "7.62x51 SP", "description": "Soft point hunting round. Hits like a truck, hates armor.", "category": "ammo", "rarity": "uncommon", "weight": 0.025, "value": 280, "max_stack": 40,
+   "stats": {"caliber": "7.62x51", "damage": 102, "penetration": 18, "armor_damage": 30}},
+  {"id": "ammo_762x51_m80", "name": "7.62x51 M80", "description": "Military ball with a steel penetrator.", "category": "ammo", "rarity": "rare", "weight": 0.025, "value": 700, "max_stack": 40,
+   "stats": {"caliber": "7.62x51", "damage": 80, "penetration": 41, "armor_damage": 66}},
+  {"id": "ammo_762x51_m61", "name": "7.62x51 M61", "description": "Armor-piercing round with a hardened steel core.", "category": "ammo", "rarity": "epic", "weight": 0.025, "value": 3000, "max_stack": 40,
+   "stats": {"caliber": "7.62x51", "damage": 70, "penetration": 64, "armor_damage": 83}},
+  {"id": "ammo_762x51_m993", "name": "7.62x51 M993", "description": "Tungsten-carbide penetrator. Nothing in the zone stops it.", "category": "ammo", "rarity": "legendary", "weight": 0.025, "value": 6000, "max_stack": 40,
+   "stats": {"caliber": "7.62x51", "damage": 67, "penetration": 70, "armor_damage": 85}}
+]

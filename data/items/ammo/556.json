@@ -1,0 +1,12 @@
+[
+  {"id": "ammo_556_fmj", "name": "5.56x45 FMJ", "description": "Standard ball round.", "category": "ammo", "rarity": "common", "weight": 0.012, "value": 130, "max_stack": 60,
+   "stats": {"caliber": "5.56x45", "damage": 54, "penetration": 23, "armor_damage": 33}},
+  {"id": "ammo_556_hp", "name": "5.56x45 HP", "description": "Varmint hollow point. Fragments in flesh.", "category": "ammo", "rarity": "uncommon", "weight": 0.012, "value": 140, "max_stack": 60,
+   "stats": {"caliber": "5.56x45", "damage": 68, "penetration": 9, "armor_damage": 16}},
+  {"id": "ammo_556_epr", "name": "5.56x45 EPR", "description": "Enhanced-performance round with an exposed steel tip.", "category": "ammo", "rarity": "rare", "weight": 0.012, "value": 700, "max_stack": 60,
+   "stats": {"caliber": "5.56x45", "damage": 49, "penetration": 44, "armor_damage": 52}},
+  {"id": "ammo_556_ap", "name": "5.56x45 AP", "description": "Tungsten-core armor-piercing round.", "category": "ammo", "rarity": "epic", "weight": 0.012, "value": 2200, "max_stack": 60,
+   "stats": {"caliber": "5.56x45", "damage": 42, "penetration": 53, "armor_damage": 58}},
+  {"id": "ammo_556_ssa", "name": "5.56x45 SSA AP", "description": "Hand-loaded tungsten penetrator. The best 5.56 there is.", "category": "ammo", "rarity": "legendary", "weight": 0.012, "value": 4500, "max_stack": 60,
+   "stats": {"caliber": "5.56x45", "damage": 38, "penetration": 57, "armor_damage": 60}}
+]

@@ -6,7 +6,7 @@ extends RefCounted
 ## drop succeeds, so letting go anywhere else simply cancels. Stacks only merge with the same
 ## Found-in-Raid status, and a split keeps the status of its stack. Out of raid, a weapon part dropped
 ## on a gun is fitted to a free slot it fits (DESIGN.md §12.1); in the modding screen parts are also
-## dragged off a gun's slots.
+## dragged off a gun's slots. Rounds dropped on a gun of their caliber load it (DESIGN.md §6.4).
 
 ## The drag in progress, if any (for R and the mouse wheel).
 static var current: InventoryDrag
@@ -82,6 +82,8 @@ func plan_grid(grid: InventoryGrid, mouse_cell: Vector2i, top_left: Vector2i) ->
 			return {"action": "merge", "target": under}
 		if can_insert(under):
 			return {"action": "insert", "target": under}
+		if can_load(under):
+			return {"action": "load", "target": under}
 		if install_path(under) != "":
 			return {"action": "install", "target": under}
 	var fits := grid.accepts(item) and grid.in_bounds(top_left, footprint())
@@ -105,6 +107,8 @@ func drop_on_grid(grid: InventoryGrid, plan: Dictionary) -> bool:
 			return insert(plan.target)
 		"install":
 			return install(plan.target)
+		"load":
+			return load_into(plan.target)
 		"place":
 			if splitting:
 				var piece := item.split_off(amount)
@@ -135,6 +139,44 @@ func insert(target: ItemInstance) -> bool:
 	elif moved > 0:
 		_take_from_source(moved)
 	return moved > 0
+
+
+## True if the dragged rounds can be loaded into `gun`: its caliber, and either room in its magazine
+## or rounds of another type in it to swap out.
+func can_load(gun: ItemInstance) -> bool:
+	if gun == null or not gun.is_gun() or item.data.category != ItemData.Category.AMMO:
+		return false
+	if str(item.data.stats.get("caliber", "")) != gun.data.weapon.caliber or WeaponMods.capacity(gun) <= 0:
+		return false
+	return gun.rounds_loaded() < WeaponMods.capacity(gun) or gun.magazine.any(func(rounds: ItemInstance) -> bool:
+		return rounds.data != item.data)
+
+
+## Loads the dragged rounds into `gun`, which reloads with them from then on. Rounds of another type
+## come out first, into the grid these came from (else your pockets, rig or backpack); any with nowhere
+## to go stay in, under the new ones. Returns true if anything changed.
+func load_into(gun: ItemInstance) -> bool:
+	if not can_load(gun):
+		return false
+	if gun.magazine.any(func(rounds: ItemInstance) -> bool: return rounds.data != item.data):
+		var kept: Array[ItemInstance] = []
+		for rounds in gun.unload():
+			if rounds.data == item.data or not ((from_grid and from_grid.add(rounds)) or (inventory and inventory.add(rounds))):
+				kept.append(rounds)
+		for rounds in kept:
+			gun.load_rounds(rounds)
+	var moved := mini(amount, WeaponMods.capacity(gun) - gun.rounds_loaded())
+	if moved > 0:
+		var piece := ItemInstance.full_rounds(item.data.id, moved)
+		piece.copy_status(item)
+		_take_from_source(moved)
+		gun.load_rounds(piece)
+	gun.loaded_ammo = item.data.id
+	if from_grid:
+		from_grid.changed.emit()
+	if inventory:
+		inventory.changed.emit()
+	return true
 
 
 ## The free slot on `gun` the dragged part would be fitted to, or "" if it's not a part, there's no

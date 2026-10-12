@@ -1,0 +1,69 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "5.56x45"
+skill = "assault_rifles"
+weapon_class = "assault_rifle"
+fire_rate = 700
+automatic = true
+magazine_size = 30
+reload_time = 2.6
+empty_reload_time = 3.1
+vertical_recoil = 0.4
+horizontal_recoil = 0.3
+recoil_recovery = 8.5
+recovery_delay = 0.06
+camera_kick = 0.09
+base_spread = 0.4
+bloom_per_shot = 0.28
+max_bloom = 3.8
+bloom_recovery = 10.0
+bloom_delay = 0.2
+hip_spread = 1.5
+move_spread = 2.7
+sprint_spread = 1.8
+roll_spread = 5.5
+sway = 0.16
+platform = "halcyon"
+ergonomics = 58
+muzzle_velocity = 940
+slots = Array[Dictionary]([{
+"empty": {
+"horizontal_recoil": 3,
+"vertical_recoil": 6
+},
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"id": "foregrip",
+"kinds": ["foregrip"],
+"name": "Foregrip"
+}, {
+"id": "tactical",
+"kinds": ["tactical"],
+"name": "Tactical"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Top rail"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"barrel": "halcyon_barrel_508",
+"magazine": "stanag_30",
+"muzzle": "muzzle_556_flash_hider"
+}
+durability_per_shot = 0.028

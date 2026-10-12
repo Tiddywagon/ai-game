@@ -1,0 +1,74 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "7.62x54R"
+skill = "lmgs"
+weapon_class = "lmg"
+fire_rate = 650
+automatic = true
+magazine_size = 100
+reload_time = 5.0
+empty_reload_time = 5.8
+vertical_recoil = 0.7
+horizontal_recoil = 0.45
+recoil_recovery = 6.0
+recovery_delay = 0.07
+camera_kick = 0.16
+base_spread = 0.55
+bloom_per_shot = 0.35
+max_bloom = 6.0
+bloom_recovery = 6.0
+bloom_delay = 0.22
+hip_spread = 3.4
+move_spread = 4.8
+sprint_spread = 3.2
+roll_spread = 8.5
+sway = 0.45
+platform = "anvil"
+ergonomics = 22
+muzzle_velocity = 825
+slots = Array[Dictionary]([{
+"empty": {
+"horizontal_recoil": 3,
+"vertical_recoil": 6
+},
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"empty": {
+"ergonomics": 8,
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Side mount"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Feed",
+"required": true
+}])
+default_mods = {
+"barrel": "anvil_barrel_658",
+"magazine": "anvil_box_100",
+"muzzle": "anvil_flash_hider",
+"stock": "anvil_stock_std"
+}
+durability_per_shot = 0.02
+clear_time = 2.2

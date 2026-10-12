@@ -157,6 +157,16 @@ static func fits_text(data: ItemData) -> String:
 	return ", ".join(names) if not names.is_empty() else ", ".join(platforms)
 
 
+## The guns that fire `caliber`, by name.
+static func guns_for_caliber(caliber: String) -> String:
+	var names: Array[String] = []
+	for each in ItemDB.all_items():
+		if each.weapon and each.weapon.caliber == caliber:
+			names.append(each.display_name)
+	names.sort()
+	return ", ".join(names) if not names.is_empty() else "No gun yet"
+
+
 ## [label, value] pairs describing `examined`.
 static func stat_lines(examined: ItemInstance) -> Array:
 	var data := examined.data
@@ -173,7 +183,8 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Stack", "%d / %d" % [examined.count, data.max_stack]])
 	if data.weapon:
 		var gun := WeaponStats.build(examined, GameState.skills)
-		lines.append(["Caliber", gun.caliber])
+		lines.append(["Type", gun.class_title()])
+		lines.append(["Caliber", "%s (%d round types)" % [gun.caliber, ItemDB.ammo_of(gun.caliber).size()]])
 		lines.append(["Fire rate", "%d rpm, %s" % [gun.fire_rate, "automatic" if gun.automatic else "semi-automatic"]])
 		lines.append(["Magazine", "%d rounds" % gun.magazine_size if gun.magazine_size > 0 else "none fitted"])
 		lines.append(["Reload", "%.1f s (empty %.1f s)" % [gun.reload_time, gun.empty_reload_time]])
@@ -203,10 +214,19 @@ static func stat_lines(examined: ItemInstance) -> Array:
 	if stats.has("caliber") and data.weapon == null:
 		lines.append(["Caliber", str(stats.caliber)])
 	if stats.has("damage"):
-		lines.append(["Damage", str(int(stats.damage))])
+		var pellets := Weapon.pellet_count(data)
+		lines.append(["Damage", "%d × %d pellets" % [int(stats.damage), pellets] if pellets > 1 else str(int(stats.damage))])
 	if stats.has("penetration"):
 		lines.append(["Penetration", str(int(stats.penetration))])
-	if stats.has("class"):
+	if stats.has("armor_damage"):
+		lines.append(["Armor damage", "%d%%" % int(stats.armor_damage)])
+	if stats.has("pellet_spread"):
+		lines.append(["Pellet spread", "%s°" % str(stats.pellet_spread)])
+	if stats.has("noise") and data.category == ItemData.Category.AMMO:
+		lines.append(["Heard", "%d%% as far as other rounds" % roundi(float(stats.noise) * 100.0)])
+	if data.category == ItemData.Category.AMMO and stats.has("caliber"):
+		lines.append(["Fits", guns_for_caliber(str(stats.caliber))])
+	if stats.has("class") and data.weapon == null:
 		if data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET]:
 			lines.append(["Armor class", str(int(stats["class"]))])
 		else:

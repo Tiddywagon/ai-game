@@ -1,0 +1,5 @@
+[
+  {"id": "grizzly_74", "name": "Grizzly 74", "description": "5.45x39 squad automatic on the AK pattern: a long heavy barrel and 45-round magazines. Takes AK-74 magazines, grips, stocks and muzzle devices.", "category": "weapon", "rarity": "rare", "size": [6, 2], "weight": 2.68, "value": 34000, "weapon": "res://data/weapons/grizzly_74.tres"},
+  {"id": "bulwark_249", "name": "Bulwark 249", "description": "Belt-fed 5.56x45 light machine gun. A hundred rounds in the box, and it takes STANAG magazines in a pinch.", "category": "weapon", "rarity": "epic", "size": [6, 2], "weight": 4.84, "value": 123300, "weapon": "res://data/weapons/bulwark_249.tres"},
+  {"id": "anvil_pk", "name": "Anvil PK", "description": "Belt-fed 7.62x54R general-purpose machine gun. Shreds cover, armor and anyone behind it.", "category": "weapon", "rarity": "epic", "size": [6, 2], "weight": 4.1, "value": 146500, "weapon": "res://data/weapons/anvil_pk.tres"}
+]

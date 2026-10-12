@@ -92,6 +92,11 @@ var _spin := SpinTracker.new()
 ## Where the reticle points on the ground (aim_point snaps to whoever is under it; this doesn't), for
 ## the spin.
 var _cursor_ground := Vector3.ZERO
+## The last damage number, so the pellets of one shell that hit the same target share it.
+var _last_number: Label3D
+var _last_number_frame := -1
+var _last_number_target: Actor
+var _last_number_damage := 0.0
 
 
 func _ready() -> void:
@@ -345,37 +350,68 @@ func _update_weight() -> void:
 
 
 ## Puts the inventory's gun in hand if it changed (or `force`), with its modded stats, sight and
-## durability; the rounds come from its magazine and the spare rounds are recounted.
+## durability; the rounds come from its magazine and the spare rounds are recounted. The gun reloads
+## with its round type (ItemInstance.loaded_ammo, set by dropping rounds on it) and fires whatever is on
+## top of its magazine.
 func _sync_weapon(force := false) -> void:
 	if _loading_rounds:
 		return
 	var slot := inventory.weapon_slot()
 	var item: ItemInstance = inventory.equipment[slot] if slot != "" else null
+	# A gun without a round type yet takes the first matching ammo you carry.
+	if item and item.data.weapon and item.loaded_ammo == "":
+		item.loaded_ammo = _carried_ammo_for(item.data.weapon.caliber)
 	if force or item != _weapon_item:
 		_weapon_item = item
 		if item == null or item.data.weapon == null:
 			equip_weapon("", "", 0)
 		else:
-			# A gun without a round type yet takes the first matching ammo you carry.
-			if item.loaded_ammo == "":
-				item.loaded_ammo = _carried_ammo_for(item.data.weapon.caliber)
 			trick_window_left = 0.0
 			var stats := WeaponStats.build(item, GameState.skills)
 			equip_weapon(item.data.id, item.loaded_ammo, inventory.count_of(item.loaded_ammo), stats)
 			weapon.optic = stats.optic
 			weapon.durability = item.durability
-		weapon.visible = weapon.has_gun() and not using_binoculars
-	if weapon.has_gun() and _weapon_item:
+	elif item and item.data.weapon and item.loaded_ammo != ammo_id:
+		ammo_id = item.loaded_ammo  # Rounds of another type were loaded into it.
+	if _weapon_item and _weapon_item.data.weapon and weapon.data:
+		_chamber_top_round()
 		weapon.rounds = mini(_weapon_item.rounds_loaded(), weapon.data.magazine_size)
 		weapon.spare_rounds = inventory.count_of(ammo_id)
+	weapon.visible = weapon.has_gun() and not using_binoculars
 
 
-func _carried_ammo_for(caliber: String) -> String:
+## The round the gun fires next: the top of its magazine, else the type it reloads with.
+func _chamber_top_round() -> void:
+	var top: ItemData = null
+	if not _weapon_item.magazine.is_empty():
+		top = _weapon_item.magazine.back().data
+	elif ammo_id != "":
+		top = ItemDB.get_item(ammo_id)
+	if top and top != weapon.ammo:
+		weapon.set_ammo(top)
+
+
+## The first rounds of `caliber` you carry (pockets, rig, backpack), or "".
+func _carried_ammo_for(caliber: String, except := "") -> String:
 	for grid in inventory.ammo_grids():
 		for item in grid.items:
-			if item.data.category == ItemData.Category.AMMO and item.data.stats.get("caliber", "") == caliber:
+			if item.data.category == ItemData.Category.AMMO and item.data.stats.get("caliber", "") == caliber and item.data.id != except:
 				return item.data.id
 	return ""
+
+
+## Reloading with none of the gun's round type left switches to another type of the same caliber you
+## carry (it goes in on top of what's still in the magazine).
+func try_reload() -> bool:
+	if _weapon_item and weapon.has_gun() and not weapon.is_jammed and weapon.spare_rounds == 0 \
+			and weapon.rounds < weapon.data.magazine_size:
+		var other := _carried_ammo_for(weapon.data.caliber, ammo_id)
+		if other != "":
+			_weapon_item.loaded_ammo = other
+			ammo_id = other
+			weapon.spare_rounds = inventory.count_of(other)
+			action_blocked.emit("Loading %s" % ItemDB.get_item(other).display_name)
+	return super()
 
 
 ## Swaps the loaded round type, keeping the counts and their status (debug key F3).
@@ -392,6 +428,7 @@ func _on_round_fired() -> void:
 	if _weapon_item:
 		_weapon_item.fire_round()
 		_weapon_item.durability = maxf(weapon.durability, 0.0)
+		_chamber_top_round()
 
 
 ## Clearing a jam throws the stuck round out of the gun.
@@ -496,7 +533,16 @@ func on_hit_landed(target: Actor, damage: float, hit_position: Vector3) -> void:
 		killed.emit(target)
 	hit_landed.emit(target, damage, hit_position)
 	if Settings.get_value("gameplay", "damage_numbers"):
-		_spawn_damage_number(hit_position, damage)
+		# Pellets from one shell that hit the same target add up into one number.
+		var frame := Engine.get_physics_frames()
+		if is_instance_valid(_last_number) and _last_number_frame == frame and _last_number_target == target:
+			_last_number_damage += damage
+			_last_number.text = str(roundi(_last_number_damage))
+		else:
+			_last_number = _spawn_damage_number(hit_position, damage)
+			_last_number_frame = frame
+			_last_number_target = target
+			_last_number_damage = damage
 
 
 func take_hit(damage: float, from: Actor, hit_position: Vector3) -> void:
@@ -588,7 +634,7 @@ func _spawn_trick_popup(at: Vector3) -> void:
 	tween.chain().tween_callback(label.queue_free)
 
 
-func _spawn_damage_number(at: Vector3, damage: float) -> void:
+func _spawn_damage_number(at: Vector3, damage: float) -> Label3D:
 	var label := Label3D.new()
 	label.text = str(roundi(damage))
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -605,3 +651,4 @@ func _spawn_damage_number(at: Vector3, damage: float) -> void:
 	tween.tween_property(label, "position:y", label.position.y + 0.9, 0.8).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_delay(0.3)
 	tween.chain().tween_callback(label.queue_free)
+	return label

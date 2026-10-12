@@ -14,5 +14,6 @@ max_stack = 60
 stats = {
 "caliber": "5.45x39",
 "damage": 50,
-"penetration": 28
+"penetration": 28,
+"armor_damage": 40
 }

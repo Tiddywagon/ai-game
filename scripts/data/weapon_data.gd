@@ -10,8 +10,9 @@ extends Resource
 @export var caliber := ""
 ## The weapon skill that trains with it and lowers its recoil (GameState.SKILLS), e.g. "assault_rifles".
 @export var skill := ""
-## What kind of gun it is. Bolt-action rifles and DMRs can make 360 trick shots (see "Trick shot").
-@export_enum("assault_rifle", "pistol", "bolt_action", "dmr") var weapon_class := "assault_rifle"
+## What kind of gun it is (CLASS_NAMES). Bolt-action rifles and DMRs can make 360 trick shots (see
+## "Trick shot").
+@export_enum("assault_rifle", "pistol", "bolt_action", "dmr", "smg", "shotgun", "lmg") var weapon_class := "assault_rifle"
 
 @export_group("Firing")
 ## Rounds per minute.
@@ -107,6 +108,8 @@ extends Resource
 @export var velocity_multiplier := 1.0
 @export var malfunction_multiplier := 1.0
 @export var wear_multiplier := 1.0
+## Multiplier on how wide a shotgun's pellets spread (chokes, barrels).
+@export var pellet_spread_multiplier := 1.0
 ## The build's weight (kg, without rounds), and how much more than the gun with its default parts.
 @export var weight := 0.0
 @export var extra_weight := 0.0
@@ -116,11 +119,19 @@ extends Resource
 
 ## Gun classes that can make 360 trick shots.
 const TRICK_SHOT_CLASSES: Array[String] = ["bolt_action", "dmr"]
+## Each class's name, for the examine panel and the weapon tables.
+const CLASS_NAMES := {"pistol": "Pistol", "smg": "Submachine gun", "shotgun": "Shotgun", "assault_rifle": "Assault rifle",
+	"dmr": "Marksman rifle", "bolt_action": "Bolt-action rifle", "lmg": "Light machine gun"}
 
 
 ## True if this gun can make 360 trick shots (a bolt-action rifle or DMR with a damage bonus).
 func allows_trick_shots() -> bool:
 	return weapon_class in TRICK_SHOT_CLASSES and trick_damage_bonus > 0.0
+
+
+## The name of this gun's class, e.g. "Submachine gun".
+func class_title() -> String:
+	return CLASS_NAMES.get(weapon_class, weapon_class.capitalize())
 
 
 ## Seconds between shots.

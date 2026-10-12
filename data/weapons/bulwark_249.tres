@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "5.56x45"
+skill = "lmgs"
+weapon_class = "lmg"
+fire_rate = 750
+automatic = true
+magazine_size = 100
+reload_time = 4.5
+empty_reload_time = 5.2
+vertical_recoil = 0.42
+horizontal_recoil = 0.34
+recoil_recovery = 6.5
+recovery_delay = 0.07
+camera_kick = 0.13
+base_spread = 0.5
+bloom_per_shot = 0.26
+max_bloom = 5.2
+bloom_recovery = 6.5
+bloom_delay = 0.22
+hip_spread = 3.0
+move_spread = 4.5
+sprint_spread = 3.0
+roll_spread = 8.0
+sway = 0.38
+platform = "bulwark"
+ergonomics = 28
+muzzle_velocity = 915
+slots = Array[Dictionary]([{
+"empty": {
+"horizontal_recoil": 3,
+"vertical_recoil": 6
+},
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"empty": {
+"ergonomics": -10,
+"hip_spread": 10
+},
+"id": "handguard",
+"kinds": ["handguard"],
+"name": "Handguard"
+}, {
+"empty": {
+"ergonomics": 8,
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Top cover rail"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Feed",
+"required": true
+}])
+default_mods = {
+"barrel": "bulwark_barrel_465",
+"handguard": "bulwark_handguard_std",
+"magazine": "bulwark_box_100",
+"muzzle": "muzzle_556_flash_hider",
+"stock": "bulwark_stock_std"
+}
+durability_per_shot = 0.02
+clear_time = 2.2

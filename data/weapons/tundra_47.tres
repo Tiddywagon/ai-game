@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "7.62x39"
+skill = "assault_rifles"
+weapon_class = "assault_rifle"
+fire_rate = 600
+automatic = true
+magazine_size = 30
+reload_time = 2.4
+empty_reload_time = 3.0
+vertical_recoil = 0.72
+horizontal_recoil = 0.42
+recoil_recovery = 6.5
+recovery_delay = 0.06
+camera_kick = 0.15
+base_spread = 0.55
+bloom_per_shot = 0.42
+max_bloom = 5.0
+bloom_recovery = 8.5
+bloom_delay = 0.2
+hip_spread = 1.9
+move_spread = 3.1
+sprint_spread = 2.1
+roll_spread = 6.0
+sway = 0.22
+platform = "akm"
+ergonomics = 46
+muzzle_velocity = 715
+slots = Array[Dictionary]([{
+"empty": {
+"horizontal_recoil": 4,
+"vertical_recoil": 8
+},
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"empty": {
+"ergonomics": -10,
+"hip_spread": 10
+},
+"id": "handguard",
+"kinds": ["handguard"],
+"name": "Handguard"
+}, {
+"empty": {
+"ergonomics": -15,
+"hip_spread": 15,
+"horizontal_recoil": 10,
+"recoil_recovery": -10
+},
+"id": "pistol_grip",
+"kinds": ["pistol_grip"],
+"name": "Pistol grip"
+}, {
+"empty": {
+"ergonomics": 8,
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "receiver",
+"kinds": ["receiver"],
+"name": "Dust cover",
+"required": true
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Side mount"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"barrel": "akm_barrel_415",
+"handguard": "ak_handguard_wood",
+"magazine": "akm_mag_30",
+"muzzle": "akm_slant_brake",
+"pistol_grip": "ak_grip_std",
+"receiver": "ak_dust_cover",
+"stock": "akm_stock_wood"
+}
+durability_per_shot = 0.03

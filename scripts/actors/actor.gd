@@ -275,11 +275,15 @@ func set_ammo(id: String) -> void:
 	weapon.set_ammo(ItemDB.get_item(id))
 
 
-## Short ammo description for the HUD, e.g. "5.45x39 PS (pen 28)".
+## Short ammo description for the HUD, e.g. "5.45x39 PS (pen 28)" or "12ga 7mm buckshot (8 pellets, pen 3)".
 func ammo_label() -> String:
 	if weapon.ammo == null:
 		return "no ammo"
-	return "%s (pen %d)" % [weapon.ammo.display_name, int(weapon.ammo.stats.get("penetration", 0))]
+	var pellets := Weapon.pellet_count(weapon.ammo)
+	var penetration := int(weapon.ammo.stats.get("penetration", 0))
+	if pellets > 1:
+		return "%s (%d pellets, pen %d)" % [weapon.ammo.display_name, pellets, penetration]
+	return "%s (pen %d)" % [weapon.ammo.display_name, penetration]
 
 
 ## Starts a reload (or clears a jam), or emits action_blocked with the reason it can't.

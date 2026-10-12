@@ -20,9 +20,11 @@ static var _dim_tracer_material: StandardMaterial3D
 ## (the stats it's fired with, if any) scales the range and the energy kept through wood by its muzzle
 ## velocity, and how far the shot is heard by its noise (a suppressor). `damage_multiplier` scales the
 ## round's damage as it leaves the muzzle (a 360 trick shot), before wood, cover or armor reduce it.
-## Returns {"end": where it stopped, "hit": the Actor hit or null, "passed_through": wood surfaces crossed}.
+## A shot shell calls this once per pellet, with `sound` only on the first, so the shot is heard once;
+## subsonic ammo (its "noise" stat) is heard less far. Returns {"end": where it stopped, "hit": the
+## Actor hit or null, "passed_through": wood surfaces crossed}.
 static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: ItemData, muzzle: Vector3,
-		gun: WeaponData = null, damage_multiplier := 1.0) -> Dictionary:
+		gun: WeaponData = null, damage_multiplier := 1.0, sound := true) -> Dictionary:
 	var config := shooter.config
 	var space := shooter.get_world_3d().direct_space_state
 	var damage := float(ammo.stats.get("damage", 40)) * damage_multiplier
@@ -63,7 +65,9 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 		break
 	_warn_nearby(shooter, origin, result.end)
 	_spawn_tracer(shooter, muzzle, result.end)
-	NoiseSystem.emit_noise(origin, config.gunshot_noise * (gun.noise_multiplier if gun else 1.0), shooter, &"gunshot")
+	if sound:
+		var loudness := (gun.noise_multiplier if gun else 1.0) * float(ammo.stats.get("noise", 1.0))
+		NoiseSystem.emit_noise(origin, config.gunshot_noise * loudness, shooter, &"gunshot")
 	return result
 
 

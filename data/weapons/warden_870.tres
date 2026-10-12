@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "12ga"
+skill = "shotguns"
+weapon_class = "shotgun"
+fire_rate = 70
+automatic = false
+magazine_size = 6
+reload_time = 3.6
+empty_reload_time = 4.2
+vertical_recoil = 1.9
+horizontal_recoil = 0.6
+recoil_recovery = 6.5
+recovery_delay = 0.1
+camera_kick = 0.3
+base_spread = 1.0
+bloom_per_shot = 0.6
+max_bloom = 3.0
+bloom_recovery = 7.0
+bloom_delay = 0.3
+hip_spread = 1.1
+move_spread = 3.0
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.22
+platform = "warden"
+ergonomics = 50
+muzzle_velocity = 400
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Choke"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"id": "handguard",
+"kinds": ["handguard"],
+"name": "Forend",
+"required": true
+}, {
+"empty": {
+"ergonomics": 8,
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Receiver rail"
+}])
+default_mods = {
+"barrel": "warden_barrel_508",
+"handguard": "warden_forend_std",
+"stock": "warden_stock_std"
+}
+durability_per_shot = 0.06

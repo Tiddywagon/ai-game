@@ -1,0 +1,10 @@
+[
+  {"id": "ammo_45_fmj", "name": ".45 ACP FMJ", "description": "Heavy, slow ball round. Hits hard, stops at armor.", "category": "ammo", "rarity": "common", "weight": 0.015, "value": 90, "max_stack": 40,
+   "stats": {"caliber": ".45 ACP", "damage": 66, "penetration": 19, "armor_damage": 35}},
+  {"id": "ammo_45_hp", "name": ".45 ACP HP", "description": "Big hollow point. Brutal on bare flesh.", "category": "ammo", "rarity": "uncommon", "weight": 0.015, "value": 140, "max_stack": 40,
+   "stats": {"caliber": ".45 ACP", "damage": 82, "penetration": 8, "armor_damage": 20}},
+  {"id": "ammo_45_match", "name": ".45 ACP Match", "description": "Match-grade ball with a hardened jacket.", "category": "ammo", "rarity": "rare", "weight": 0.015, "value": 380, "max_stack": 40,
+   "stats": {"caliber": ".45 ACP", "damage": 70, "penetration": 25, "armor_damage": 40}},
+  {"id": "ammo_45_ap", "name": ".45 ACP AP", "description": "Steel-core armor-piercing .45.", "category": "ammo", "rarity": "epic", "weight": 0.015, "value": 1100, "max_stack": 40,
+   "stats": {"caliber": ".45 ACP", "damage": 64, "penetration": 38, "armor_damage": 60}}
+]

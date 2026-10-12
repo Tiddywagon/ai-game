@@ -114,8 +114,8 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 
 | Category | Examples | Key stats |
 |---|---|---|
-| Weapons | Pistols, SMGs, shotguns, ARs, DMRs, bolt-actions | Damage, fire rate, recoil, ergonomics, accuracy, caliber |
-| Ammo | 9x19, 5.45, 5.56, 7.62, 12ga | Damage, penetration, armor damage |
+| Weapons | Pistols, SMGs, shotguns, ARs, DMRs, bolt-actions, LMGs (22 guns, Section 6.4) | Fire rate, recoil, ergonomics, accuracy, caliber (damage comes from the ammo) |
+| Ammo | 9x18, 9x19, .45 ACP, 12ga, 5.45x39, 5.56x45, 7.62x39, 7.62x51, 7.62x54R, .338 Lapua; 3–5 rounds each (Section 6.4) | Damage, penetration, armor damage; pellets for shot shells |
 | Attachments (weapon parts) | Muzzle devices, barrels, handguards, foregrips, stocks, pistol grips, dust covers, sights, lasers, magazines | Vertical and horizontal recoil, recoil recovery, base spread, bloom per shot, max bloom, bloom recovery, hip-fire spread, ergonomics, weight; some also muzzle velocity, aim speed, noise, jam chance, wear, magazine size (Section 12.1) |
 | Armor | Vests (class 1–6) | Class, durability, zones, move penalty |
 | Rigs | Chest rigs, armored rigs | Grid slots, (armor class if armored) |
@@ -256,6 +256,136 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 | Workbench lvl 3 | **Gunsmithing:** add or replace one gunsmith mod using parts and roubles. Can't change Legendaries or reroll bonuses |
 | Scavs / AI PMCs | Their gear rolls too, using their gear tier (Section 4) |
 
+### 6.4 Weapons & Ammo
+
+The starter arsenal: **22 guns** in seven classes, **10 calibers with 3–5 rounds each (45 rounds)** and **183 weapon parts**, all in data files (made-up names, each inspired by a real type of gun). The round decides damage, penetration and armor damage; the gun decides how it handles (Section 12.1) and its parts what that becomes. Bolt-action rifles and DMRs make 360 trick shots (Section 13.4.1).
+
+**Guns** *(tune: `data/weapons/<gun>.tres`; items in `data/items/weapons/`)*. Every gun trains its class's skill: Pistols, SMGs, Shotguns, Assault rifles, Marksman rifles, Bolt-action rifles or Machine guns (Section 12.3). Pistols go in the Pistol slot. Climb / side is the recoil per shot with the parts each gun comes with. Every gun can also turn up as loot (weapon boxes, loose loot), loaded with its caliber's everyday round.
+
+| Gun | Class | Inspired by | Caliber | Fire | Magazine | Ergonomics | Climb / side | Rarity | Where |
+|---|---|---|---|---|---|---|---|---|---|
+| PM pistol | Pistol | Soviet service pistol | 9x18 | 450 rpm semi | 8 | 70 | 1.0° / 0.55° | Uncommon | Prapor |
+| Vektor P9 | Pistol | Polymer-frame striker pistol | 9x19 | 450 rpm semi | 17 | 76 | 0.85° / 0.45° | Uncommon | Peacekeeper |
+| Bastion 45 | Pistol | All-steel .45 single-action | .45 ACP | 400 rpm semi | 8 | 68 | 1.25° / 0.55° | Rare | Peacekeeper |
+| Strelka MP | Pistol | Select-fire machine pistol with a holster stock | 9x18 | 750 rpm auto | 20 | 62 | 0.6° / 0.5° | Rare | Prapor |
+| Hornet SMG | SMG | Roller-delayed SMG | 9x19 | 800 rpm auto | 30 | 66 | 0.32° / 0.26° | Rare | Peacekeeper |
+| Brigand 45 | SMG | Polymer .45 SMG | .45 ACP | 600 rpm auto | 25 | 63 | 0.45° / 0.3° | Rare | Skier |
+| Wasp PDW | SMG | Short-stroke piston PDW | 9x19 | 850 rpm auto | 30 | 70 | 0.3° / 0.27° | Ultra Rare | Peacekeeper |
+| Warden 870 | Shotgun | Pump-action tube shotgun | 12ga | 70 rpm pump | 6 (tube) | 50 | 1.9° / 0.6° | Uncommon | Skier, Jaeger |
+| Tempest S12 | Shotgun | Semi-auto box-fed shotgun on an AK receiver | 12ga | 300 rpm semi | 5 | 46 | 1.6° / 0.55° | Rare | Skier |
+| AK-74N | Assault rifle | 5.45 Kalashnikov | 5.45x39 | 650 rpm auto | 30 | 50 | 0.55° / 0.35° | Rare | Prapor |
+| Tundra 47 | Assault rifle | 7.62x39 stamped Kalashnikov | 7.62x39 | 600 rpm auto | 30 | 46 | 0.72° / 0.42° | Rare | Prapor |
+| Sentinel AR | Assault rifle | Direct-impingement carbine | 5.56x45 | 800 rpm auto | 30 | 56 | 0.45° / 0.28° | Ultra Rare | Peacekeeper |
+| Halcyon B5 | Assault rifle | Bullpup rifle | 5.56x45 | 700 rpm auto | 30 | 58 | 0.4° / 0.3° | Epic | Loot |
+| Partisan | DMR | Semi-auto carbine with a fixed 10-round magazine | 7.62x39 | 350 rpm semi | 10 (fixed) | 45 | 1.0° / 0.35° | Uncommon | Prapor |
+| SVD marksman rifle | DMR | Soviet marksman rifle | 7.62x54R | 300 rpm semi | 10 | 40 | 1.4° / 0.4° | Rare | Prapor |
+| Longbow DMR | DMR | Big-frame AR marksman rifle | 7.62x51 | 400 rpm semi | 20 | 42 | 1.15° / 0.38° | Epic | Loot |
+| Mosin rifle | Bolt-action | Soviet infantry rifle | 7.62x54R | 50 rpm bolt | 5 | 35 | 2.4° / 0.5° | Uncommon | Prapor |
+| Huntsman 700 | Bolt-action | Hunting / police sniper rifle | 7.62x51 | 45 rpm bolt | 5 | 38 | 2.2° / 0.45° | Ultra Rare | Peacekeeper, Jaeger |
+| Leviathan .338 | Bolt-action | Magnum chassis sniper rifle | .338 Lapua | 40 rpm bolt | 5 | 30 | 3.0° / 0.6° | Legendary | Loot (Jaeger barter once he unlocks) |
+| Grizzly 74 | LMG | Kalashnikov squad automatic | 5.45x39 | 600 rpm auto | 45 | 36 | 0.46° / 0.32° | Rare | Prapor |
+| Bulwark 249 | LMG | Belt-fed squad automatic | 5.56x45 | 750 rpm auto | 100 (box) | 28 | 0.42° / 0.34° | Epic | Loot |
+| Anvil PK | LMG | General-purpose machine gun | 7.62x54R | 650 rpm auto | 100 (box) | 22 | 0.7° / 0.45° | Epic | Loot |
+
+**Ammo** *(tune: `data/items/ammo/<caliber>.json`; 5.45 PS and BS are `.tres` files)*. Every gun takes every round of its caliber. In each caliber the cheapest round is Common and the best armor-piercing one Epic or Legendary; in between, hollow points and soft points hit harder but stop at armor, and AP rounds trade damage for penetration. Damage is per round (per pellet for shot shells).
+
+| Caliber | Round | Rarity | Damage | Penetration | Armor damage | Value | Notes |
+|---|---|---|---|---|---|---|---|
+| 9x18 | PM P | Common | 46 | 5 | 20% | 35 ₽ |  |
+| 9x18 | PM PSt | Common | 50 | 12 | 28% | 60 ₽ |  |
+| 9x18 | PM HP | Uncommon | 66 | 3 | 15% | 90 ₽ |  |
+| 9x18 | PM PBM | Epic | 40 | 28 | 55% | 650 ₽ |  |
+| 9x19 | FMJ | Common | 54 | 18 | 30% | 70 ₽ |  |
+| 9x19 | HP | Uncommon | 70 | 6 | 15% | 110 ₽ |  |
+| 9x19 | AP | Rare | 49 | 30 | 55% | 450 ₽ |  |
+| 9x19 | PBP | Epic | 52 | 39 | 65% | 900 ₽ |  |
+| .45 ACP | FMJ | Common | 66 | 19 | 35% | 90 ₽ |  |
+| .45 ACP | HP | Uncommon | 82 | 8 | 20% | 140 ₽ |  |
+| .45 ACP | Match | Rare | 70 | 25 | 40% | 380 ₽ |  |
+| .45 ACP | AP | Epic | 64 | 38 | 60% | 1,100 ₽ |  |
+| 12ga | 7mm buckshot | Common | 37 × 8 | 3 | 20% | 60 ₽ | 3.5° pellet spread |
+| 12ga | magnum buckshot | Uncommon | 50 × 8 | 2 | 22% | 120 ₽ | 4.0° pellet spread |
+| 12ga | slug | Uncommon | 167 | 15 | 45% | 150 ₽ |  |
+| 12ga | flechette | Rare | 25 × 8 | 31 | 33% | 600 ₽ | 2.5° pellet spread |
+| 12ga | AP-20 slug | Epic | 164 | 37 | 65% | 1,400 ₽ |  |
+| 5.45x39 | PS | Common | 50 | 28 | 40% | 120 ₽ |  |
+| 5.45x39 | HP | Uncommon | 62 | 9 | 15% | 150 ₽ |  |
+| 5.45x39 | BT | Rare | 48 | 37 | 50% | 400 ₽ |  |
+| 5.45x39 | BS | Epic | 40 | 45 | 80% | 1,500 ₽ |  |
+| 5.45x39 | PPBS "Needle" | Legendary | 37 | 62 | 90% | 4,000 ₽ |  |
+| 5.56x45 | FMJ | Common | 54 | 23 | 33% | 130 ₽ |  |
+| 5.56x45 | HP | Uncommon | 68 | 9 | 16% | 140 ₽ |  |
+| 5.56x45 | EPR | Rare | 49 | 44 | 52% | 700 ₽ |  |
+| 5.56x45 | AP | Epic | 42 | 53 | 58% | 2,200 ₽ |  |
+| 5.56x45 | SSA AP | Legendary | 38 | 57 | 60% | 4,500 ₽ |  |
+| 7.62x39 | PS | Common | 57 | 35 | 52% | 160 ₽ |  |
+| 7.62x39 | HP | Uncommon | 80 | 15 | 20% | 190 ₽ |  |
+| 7.62x39 | US | Uncommon | 56 | 29 | 35% | 300 ₽ | subsonic: heard 60% as far |
+| 7.62x39 | BP | Epic | 58 | 47 | 63% | 1,800 ₽ |  |
+| 7.62x39 | MAI AP | Legendary | 53 | 58 | 70% | 4,200 ₽ |  |
+| 7.62x51 | FMJ | Common | 80 | 29 | 45% | 250 ₽ |  |
+| 7.62x51 | SP | Uncommon | 102 | 18 | 30% | 280 ₽ |  |
+| 7.62x51 | M80 | Rare | 80 | 41 | 66% | 700 ₽ |  |
+| 7.62x51 | M61 | Epic | 70 | 64 | 83% | 3,000 ₽ |  |
+| 7.62x51 | M993 | Legendary | 67 | 70 | 85% | 6,000 ₽ |  |
+| 7.62x54R | LPS | Common | 81 | 41 | 66% | 300 ₽ |  |
+| 7.62x54R | SP | Uncommon | 92 | 27 | 32% | 320 ₽ |  |
+| 7.62x54R | SNB | Epic | 75 | 62 | 88% | 2,400 ₽ |  |
+| 7.62x54R | BS | Legendary | 72 | 70 | 88% | 5,200 ₽ |  |
+| .338 Lapua | FMJ | Common | 122 | 47 | 83% | 900 ₽ |  |
+| .338 Lapua | UCW | Uncommon | 142 | 32 | 70% | 1,000 ₽ |  |
+| .338 Lapua | TAC-X | Rare | 196 | 18 | 55% | 1,800 ₽ |  |
+| .338 Lapua | AP | Legendary | 115 | 79 | 89% | 9,000 ₽ |  |
+
+| Rule | Detail |
+|---|---|
+| Damage | Taken off the body part hit (Section 13.5). Wood and cover reduce it (Section 13.4) |
+| Penetration | Decides whether a round goes through wood (and, once armor is modelled, through armor of a class) |
+| Armor damage | % of the round's damage taken off the armor's durability when armor stops or slows it. Body armor doesn't protect yet (Section 13.5): the values are ready for it |
+| Shot shells | Buckshot and flechettes fire **8 pellets**, each its own round with the damage and penetration in the table, spread `pellet_spread` degrees around the aim (after recoil and bloom). Chokes and barrels change the pellet spread (a part's `pellet_spread` modifier; a shotgun's stats show it). Slugs are one round. A shell is heard once, and the pellets that hit one target add up into one damage number |
+| Subsonic | A round's `noise` stat scales how far the shot is heard: 7.62x39 US is heard 60% as far (36 m instead of 60), on top of a suppressor |
+| Loading | Drag rounds onto a gun (in a grid or an equipment slot, in raid or out) to load them. Rounds of another type come out first, into the grid the new ones came from (else your pockets, rig or backpack; any with nowhere to go stay in, under the new ones), then the new ones fill the magazine. The gun reloads with that type from then on, and fires whatever is on top of its magazine |
+| Running out | Reloading with none of the gun's round type left switches to another round of the same caliber you carry ("Loading 12ga slug") |
+| Everyday round | Found guns come loaded with their caliber's everyday round (the commonest, then least penetrating: `ItemDB.ammo_of()`). Debug F3 in the test level cycles the gun's caliber |
+| Where | Prapor sells Eastern rounds (9x18 P, 5.45 HP / BT, 7.62x39 PS / US, 7.62x54R SP and LPS), Peacekeeper Western ones for dollars (9x19, .45, 5.56 FMJ / EPR, 7.62x51 FMJ / M80), Skier 9x19 and .45 hollow points, buckshot and slugs, Jaeger (once unlocked) shells, 7.62x51 SP and .338 FMJ. The best AP rounds only come from loot, barters and crafts |
+
+**Weapon parts** *(tune: `data/items/attachments/*.json`)*: what each kind does and how rarity scales it is in Section 12.1. Every gun comes with **standard** parts (Common, no effects), and each platform has upgrades from Common to Legendary. Parts shared between guns: AK-74 grips, handguards and dust covers also fit the Tundra 47, Grizzly 74 and Tempest S12 (stocks the Tundra and Grizzly, 5.45 muzzle devices and magazines the Grizzly); AR grips and stocks fit the Sentinel and the Longbow (grips the Wasp too); STANAG magazines and 5.56 muzzle devices fit the Sentinel, Halcyon and Bulwark; 7.62x54R muzzle devices the Mosin, SVD and Anvil; the 9x18 suppressor the PM and Strelka. Foregrips, tactical devices and sights go in any slot of their kind.
+
+| Fits | Parts (rarity; * = standard, what the gun comes with) |
+|---|---|
+| Vektor P9 | P9 17-round magazine (C*); P9 33-round stick magazine (U); P9 50-round drum (R) |
+| Bastion 45 | Bastion wooden grip panels (C*); Bastion rubber grip (U); Bastion custom grip (E); Bastion 8-round magazine (C*); Bastion 10-round magazine (U) |
+| Strelka MP | Strelka 20-round magazine (C*); Strelka holster stock (U); Strelka wire stock (R) |
+| Vektor P9, Hornet SMG, Wasp PDW | 9mm compensator (U); 9mm suppressor (R) |
+| Bastion 45, Brigand 45 | .45 compensator (R); .45 suppressor (E) |
+| Hornet SMG | Hornet polymer handguard (C*); Hornet tri-rail handguard (R); Hornet fixed stock (C*); Hornet collapsible stock (U); Hornet 30-round magazine (C*); Hornet 50-round drum (E) |
+| Wasp PDW | Wasp 4.5in M-LOK handguard (C*); Wasp 8in M-LOK handguard (U); Wasp folding stock (C*); Wasp telescoping stock (R); Wasp 30-round magazine (C*); Wasp 20-round magazine (U); Wasp 41-round magazine (R) |
+| Brigand 45 | Brigand folding stock (C*); Brigand fixed stock (U); Brigand 25-round magazine (C*); Brigand 35-round magazine (R) |
+| Warden 870, Tempest S12 | 12ga modified choke (C); 12ga full choke (U); 12ga muzzle brake (R); 12ga suppressor (E) |
+| Warden 870 | Warden 20in barrel (C*); Warden 14in breacher barrel (U); Warden 26in vent-rib barrel (R); Warden wooden forend (C*); Warden rail forend (U); Warden wooden stock (C*); Warden pistol-grip stock (U); Warden tactical stock (R) |
+| Tempest S12 | Tempest polymer handguard (C*); Tempest folding stock (C*); Tempest adjustable stock (R); Tempest 5-round magazine (C*); Tempest 12-round magazine (U); Tempest 20-round drum (E) |
+| Sentinel AR, Halcyon B5, Bulwark 249 | 5.56 A2 flash hider (C*); 5.56 compensator (U); 5.56 muzzle brake (R); 5.56 suppressor (E); 5.56 rapid-detach suppressor (L); 5.56 STANAG 30-round magazine (C*); 5.56 STANAG 20-round magazine (U); 5.56 STANAG 40-round magazine (R); 5.56 60-round quad-stack magazine (UR) |
+| Sentinel AR | AR 14.5in barrel (C*); AR 10.5in barrel (U); AR 18in match barrel (UR); AR polymer handguard (C*); AR 9in M-LOK handguard (U); AR 13in free-float handguard (R); AR flat-top upper receiver (C*); AR billet upper receiver (E) |
+| Sentinel AR, Longbow DMR, Wasp PDW | AR A2 pistol grip (C*); AR ergonomic grip (U); AR competition grip (UR) |
+| Sentinel AR, Longbow DMR | AR buffer-tube stock (C*); AR lightweight stock (R); AR precision stock (UR); AR competition stock (L) |
+| Halcyon B5 | B5 20in barrel (C*); B5 16in barrel (U) |
+| Bulwark 249 | Bulwark 465mm barrel (C*); Bulwark para barrel (U); Bulwark polymer handguard (C*); Bulwark rail handguard (R); Bulwark fixed stock (C*); Bulwark collapsible stock (U); Bulwark 100-round box (C*); Bulwark 200-round box (E) |
+| Tundra 47 | AKM slant brake (C*); AKM 415mm barrel (C*); AKM short barrel (U); AKM wooden stock (C*); AKM 30-round magazine (C*); AKM 40-round magazine (U); AKM 75-round drum (UR) |
+| Tundra 47, Partisan | 7.62x39 compensator (U); 7.62x39 muzzle brake (R); 7.62x39 suppressor (E); 7.62x39 competition brake (L) |
+| AK-74N, Tundra 47, Grizzly 74 | AK modern stock (R) |
+| Partisan | Partisan wooden stock (C*); Partisan tactical stock (R) |
+| Longbow DMR | AR-10 flash hider (C*); AR-10 16in barrel (C*); AR-10 20in match barrel (E); Longbow 15in rail handguard (C*); AR-10 20-round magazine (C*); AR-10 10-round magazine (U) |
+| Longbow DMR, Huntsman 700 | 7.62 NATO muzzle brake (R); 7.62 NATO suppressor (E) |
+| Huntsman 700 | Huntsman 24in barrel (C*); Huntsman 26in heavy barrel (UR); Huntsman hunting stock (C*); Huntsman aluminium chassis (E); Huntsman 5-round magazine (C*); Huntsman 10-round magazine (R) |
+| Leviathan .338 | Leviathan muzzle brake (C*); Leviathan 27in barrel (C*); Leviathan 27in match barrel (L); Leviathan folding chassis (C*); Leviathan 5-round magazine (C*); Leviathan 10-round magazine (UR) |
+| Mosin, SVD, Anvil PK | 7.62x54R muzzle brake (U); 7.62x54R suppressor (E) |
+| SVD | SVD 20-round magazine (R) |
+| Anvil PK | Anvil flash hider (C*); Anvil 658mm barrel (C*); Anvil 550mm barrel (U); Anvil skeleton stock (C*); Anvil 100-round box (C*); Anvil 200-round box (E) |
+| Grizzly 74 | Grizzly 590mm barrel (C*); Grizzly wooden handguard (C*); Grizzly club-foot stock (C*); Grizzly 45-round magazine (C*); Grizzly 95-round drum (UR) |
+| Any slot of its kind (rails, sight mounts) | Stubby foregrip (C); Handstop (U); Bipod grip (R); Carbon fibre foregrip (E); Pistol light (C); Infrared laser (R); Mini reflex sight (U); Prism sight (R); 3x combat scope (UR); 1-6x LPVO (L); 5-25x precision scope (L) |
+
+The 40 parts from before (AK-74N, PM, SVD and the rail parts) are listed in Section 12.1.
+
 ## 7. Grid Inventory
 
 | Rule | Detail |
@@ -269,7 +399,7 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 | Containers | Rigs, backpacks and cases have their own grid (`"grid": [w, h]` stat). Drop an item on one to put it inside; double-click one to open it in its own window (e.g. a backpack in the stash). A container only goes inside another when empty, and never inside itself. The secure container takes no rigs, backpacks or containers |
 | Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol |
 | Rarity | Every item's background and border are its rarity colour, with the rarity letter in the corner so colour is never the only cue (colorblind palette aware) |
-| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (gun handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage and penetration, armor class and durability, what meds treat, a container's grid and contents, sight, Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
+| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (a gun's type, caliber and how many round types it takes, handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage (per pellet), penetration, armor damage and the guns it fits, armor class and durability, what meds treat, a container's grid and contents, sight, Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
 | Weapon parts | Out of raid, dropping a part on a gun (in a grid or an equipment slot) fits it to a free slot it fits (the gun lights amber). A gun's weight and value include its parts. Hover a gun for its durability, a part for what it does |
 | Weight | Everything you carry counts, containers with their contents. Up to **25 kg** no effect. 25–40 kg **heavy**: speed falls to 80% and sprinting costs up to 1.5× stamina. **40 kg+ overweight**: no sprinting or combat roll, speed falls to 55% at 65 kg. Shown in the inventory header and the HUD. Values in `data/config/inventory.tres` *(tune)* |
 | Ammo | Spare rounds are counted from the pockets, rig and backpack (not the secure container); a reload takes the rounds it used out of them. Guns remember the rounds loaded |
@@ -321,7 +451,7 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
 
-**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD and 7.62x54R LPS. Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). Selling, trader repair, insurance, LL-gated stock and restocks are planned.
+**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). Selling, trader repair, insurance, LL-gated stock and restocks are planned.
 
 ### Loyalty Levels (LL)
 
@@ -361,21 +491,21 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 
 | System | Detail |
 |---|---|
-| Slot tree | Each gun's `WeaponData` lists its slots. AK-74N: muzzle, barrel, handguard, pistol grip, stock, dust cover (receiver), side mount (sight), magazine. PM: muzzle, grip, magazine. Parts can bring slots of their own: a rail handguard adds a foregrip and a tactical slot (the quad rail a top rail for a sight too), a railed dust cover a top rail. A part taken off keeps whatever is on it. Guns come with their default parts (`default_mods`) |
+| Slot tree | Each gun's `WeaponData` lists its slots. AK-74N: muzzle, barrel, handguard, pistol grip, stock, dust cover (receiver), side mount (sight), magazine. PM: muzzle, grip, magazine. Mosin: muzzle, scope mount. SVD: muzzle, side mount, magazine. The other guns (Section 6.4) have their own: the Sentinel AR's sight goes on its upper receiver's top rail, the Warden 870 has a fixed six-shell tube (no magazine slot) and can't fire without its forend, belt-fed machine guns take ammo boxes in their feed slot. Parts can bring slots of their own: a rail handguard adds a foregrip and a tactical slot (the quad rail a top rail for a sight too), a railed dust cover a top rail. A part taken off keeps whatever is on it. Guns come with their default parts (`default_mods`) |
 | Part kinds | Muzzle device, barrel, handguard, foregrip, stock, pistol grip, receiver, sight, tactical device, magazine |
 | Compatibility | A slot lists the kinds it takes; a part lists the platforms it fits (`"fits": ["ak"]`). Rail parts (foregrips, tactical devices, sights) leave `fits` out and go in any slot of their kind |
 | Handling stats | Every part can change the ten handling stats: **vertical recoil %**, **horizontal recoil %**, **recoil recovery %**, **base spread %**, **bloom per shot %**, **max bloom %**, **bloom recovery %**, **hip-fire spread %**, **ergonomics** (points) and **weight** (% of the part's own weight). What a part does starts from its kind's **profile** (the table below, `data/config/attachment_profiles.json`); a part's own `"handling"` replaces single entries (a skeleton stock trades recoil for ergonomics). The stock parts a gun comes with are "standard": no effects, so a stock gun handles exactly as its `.tres` says |
 | Rarity | A positive profile value is a bonus: that many times the part's rarity strength, **Common 4%, Uncommon 8%, Rare 12%, Ultra Rare 16%, Epic 20%, Legendary 23%** (so most Common bonuses land around 3–5% and Legendary ones around 20–25%; ergonomics: 0.25 points per percent). A negative value is a fixed downside that doesn't grow with rarity (a suppressor's −8 ergonomics). Rarer parts are also lighter. *(tune: `handling.tres`)* |
-| Other effects | A part's own `"modifiers"`: muzzle velocity, aim speed, noise, jam chance, wear, fixed per part with bonuses × 1 / 1.15 / 1.3 / 1.5 / 1.75 / 2 by rarity (an Epic suppressor's −40% noise is −70%). Magazines set the capacity; sights the optic |
+| Other effects | A part's own `"modifiers"`: muzzle velocity, aim speed, noise, jam chance, wear, pellet spread (chokes and shotgun barrels), fixed per part with bonuses × 1 / 1.15 / 1.3 / 1.5 / 1.75 / 2 by rarity (an Epic suppressor's −40% noise is −70%). Magazines set the capacity; sights the optic |
 | Ergonomics | 0–100, handling: each point below the gun's default is 1% more spread while moving, sprinting and rolling, 1% more sway and 1% slower to raise a sight (each point above, 1% better) |
 | Weight | Every kg the build weighs over the gun with its default parts adds 0.35° of sway and makes bloom recover 15% slower (lighter builds the reverse), so stacking every part isn't always best *(tune)* |
-| Skills | The gun's weapon skill (Assault rifles for the AK, Pistols for the PM) takes 0.5% off vertical and horizontal recoil per level, Strength 0.25% per level, up to 15% together (Section 12.3) |
+| Skills | The gun's weapon skill (its class's: Assault rifles for the AK, Pistols for the PM, Section 6.4) takes 0.5% off vertical and horizontal recoil per level, Strength 0.25% per level, up to 15% together (Section 12.3) |
 | Wear | Below 70 durability a gun spreads more, up to +1.5° at 0 *(tune)* |
 | Empty slots | Some slots change the gun while empty: an AK without a stock climbs 45% more, kicks 30% more sideways, recovers 30% slower and blooms 25% wider (but handles +8 ergonomics); without a pistol grip −15 ergonomics, +10% side kick, +15% hip-fire spread; without a muzzle device +8% climb; without a handguard −10 ergonomics, +10% hip-fire spread. Without a barrel, dust cover or magazine it can't fire (HUD: "NO BARREL") |
 | Modding screen | Out of raid, right-click a gun → **MODIFY**. Slot tree on the left (nested slots indented under their part), the gun's stats in the middle, every part you own that fits it on the right (stash, pockets, rig, backpack, inside containers; click a slot to list only its parts). Drag a part onto a slot to fit it (green: fits, red: doesn't); what was in the slot goes to the stash. Drag a part off onto the list, or double-click it, to take it off. Double-click a listed part to fit it to its best slot. Hovering a part, or dragging one over a slot, previews it: the new values with ▲ / ▼ and the change, green if better and red if worse. A smaller magazine sends the rounds that no longer fit to the stash |
 | Recoil pattern | Above the stats: where each shot of a full-auto spray (30 rounds, or a magazine) goes relative to the aim, from the same recoil, recovery and (seeded) side kicks the gun uses in a raid. While previewing, the pattern with the change (amber) is drawn over the current one (grey), with before / after numbers for climb, side kick and recovery |
 | Spread circles | Beside it: the cone at aimed (base spread + wear), hip-fire and full bloom, drawn like the bloom reticle; while previewing the new circles over the old, with before / after numbers and how long full bloom takes to settle |
-| Stats shown | Ergonomics, vertical recoil, horizontal recoil, recoil recovery, base spread, hip-fire spread, bloom per shot, max bloom, bloom recovery, sway, worn spread, muzzle velocity, aim time, how far a shot is heard, magazine, fire rate, weight, durability, jam chance per shot. Skills are included |
+| Stats shown | Ergonomics, vertical recoil, horizontal recoil, recoil recovery, base spread, hip-fire spread, bloom per shot, max bloom, bloom recovery, sway, worn spread, muzzle velocity, aim time, how far a shot is heard, magazine, fire rate, (shotguns: pellet spread,) weight, durability, jam chance per shot. Skills are included |
 | Quick fit | Out of raid, dropping a part on a gun in the inventory fits it to a free slot it fits. There's no modding in a raid |
 | Durability | Guns have durability out of 100 (and a max). Each shot wears it (AK 0.03, PM 0.04, × the parts' wear). Below **85** a gun can jam: chance per shot = 6% × ((85 − durability) / 85)² × the parts' jam modifier, about 1% at 50 and 4.7% at 10 *(tune, per gun in its `.tres`)*. Found guns come worn: loot 60–95, Scav kits 50–85, AI PMC kits 75–95 |
 | Jams | After a shot the next round can fail to feed: the gun won't fire or reload ("JAMMED · R to clear" on the HUD) until **R** clears it, which takes 1.6 s (the reload ring fills) and throws the stuck round out. AI guns in hand don't wear or jam |
@@ -414,7 +544,7 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Sight (any sight slot) | Red dot (R: base spread +0.3; aim speed +2%); holographic (R: ergonomics −2; aim speed +2%); 2-4x (UR: base spread +0.8, ergonomics −3; aim speed −8%); 6-8x (E: base spread +1.2, ergonomics −5; aim speed −15%). You aim through the strongest sight fitted (Section 13.6) |
 | PM | Grip (C, standard) or rubber grip (U: climb and side +0.5, recovery +0.5, ergonomics +1.2); 8-round (C, standard) or 12-round magazine (U: ergonomics −2; jams +10%); suppressor (R: climb +0.6, side +0.5, ergonomics −4; noise −40%, velocity −4%) |
 
-Parts come from Mechanic and Skier (Section 10), weapon boxes and duffle bags, and the guns you find.
+These are the first 40 parts; the other 143 (every new gun's standard parts and upgrades, shared muzzle devices and magazines, more rail parts and sights) are listed in Section 6.4. Parts come from Mechanic, Skier, Peacekeeper and Jaeger (Section 10), weapon boxes and duffle bags, and the guns you find.
 
 ### 12.2 Gear Upgrades
 
@@ -434,7 +564,7 @@ Parts come from Mechanic and Skier (Section 10), weapon boxes and duffle bags, a
 | Vitality | Taking damage | Lower bleed chance |
 | Metabolism | Eating/drinking | Slower energy/hydration drain |
 | Search | Searching containers | Faster search, rarer loot (+% capped) |
-| Weapon class skills | Using weapon type (built: Assault rifles, Pistols, Bolt-action rifles, Marksman rifles) | 0.5% less recoil per level (up to 15% with Strength); reload speed planned. Levelling isn't built yet |
+| Weapon class skills | Using weapon type (built: Pistols, SMGs, Shotguns, Assault rifles, Marksman rifles, Bolt-action rifles, Machine guns) | 0.5% less recoil per level (up to 15% with Strength); reload speed planned. Levelling isn't built yet |
 
 ## 13. Health, Movement & Combat
 
@@ -495,26 +625,28 @@ All of these values live in `data/config/combat.tres`.
 | Aim | At whoever is under the cursor, otherwise level with the gun toward the cursor |
 | Wood | Stops rounds with penetration below 30. Rounds with 30+ go through, keeping 60% damage and losing 15 penetration |
 | Concrete, metal | Stop every round |
-| Noise | Every shot is a 60 m noise, × the gun's noise from its parts (a suppressed AK: 18 m) |
+| Noise | Every shot is a 60 m noise, × the gun's noise from its parts (a suppressed AK: 18 m) × the round's (subsonic 7.62x39 US: 60%) |
 | Health | Body parts for everyone, player and AI (Section 13.5). A round damages the part it lands on |
-| Guns | Each gun's handling is a `WeaponData` file (Section 15), changed by its parts (Section 12.1). Damage and penetration always come from the ammo |
+| Guns | 22 guns in seven classes (Section 6.4). Each gun's handling is a `WeaponData` file (Section 15), changed by its parts (Section 12.1). Damage and penetration always come from the ammo |
+| Shot shells | Buckshot and flechettes fire 8 pellets per shot, each a round of its own, spread around the aim by the shell's pellet spread × the gun's (chokes); slugs fire one (Section 6.4) |
 | Durability and jams | Each shot wears the gun; worn guns jam. A jammed gun won't fire or reload until R clears it (1.6 s; the stuck round is lost). A gun missing a barrel, dust cover or magazine can't fire (Section 12.1) |
 | Fire rate | Rounds per minute. Automatic guns fire while the trigger is held; semi-auto guns fire once per click |
 | Magazine | Each shot uses a round; the magazine fitted sets how many it holds. Can't fire while reloading |
-| Reload (R) | Tactical reload (rounds left) or a slower empty reload (a round has to be chambered). Tops the magazine up from spare rounds of the loaded type. You can move, roll and use cover while reloading |
+| Reload (R) | Tactical reload (rounds left) or a slower empty reload (a round has to be chambered). Tops the magazine up from spare rounds of the gun's round type; with none left it switches to another round of the same caliber you carry. Drag rounds onto a gun to load a different type (Section 6.4). You can move, roll and use cover while reloading |
 | Spare ammo | In a raid: the pocket rounds matching the loaded ammo. Rounds used aren't taken out of your profile yet |
 | Auto-reload | On by default (Settings > Gameplay): pulling the trigger on an empty magazine reloads. Off: the HUD says "Magazine empty: press R to reload". No spare rounds: "Out of ammo" |
 | Recoil | Each shot kicks the aim. **Vertical recoil** is muzzle climb: the aim moves out along the aim direction and rounds fly higher, so a long burst at range ends up over the target's head. **Horizontal recoil** kicks left or right at random. **Recoil recovery** pulls the aim back after each shot (it starts a moment after the shot, so full-auto keeps climbing until recovery and kick balance out). You can counter the side kick by moving the mouse; the reticle shows where the next shot goes. AI fight off part of the kick (Scav 30%, PMC 60%) |
 | Spread (bloom) | Each shot lands at random inside a cone: **base spread** + wear + **bloom** + the shooter's aim error (AI only). Bloom grows with every shot (**bloom per shot**, up to **max bloom**), while moving (full at sprint speed), sprinting, rolling, and when **hip-firing** (until the sight is up: aim time decides how fast it goes). It shrinks at the gun's **bloom recovery** once you stop shooting (a short pause after the last shot) or stop moving. AI always fire aimed |
 | Sway | The aim drifts slowly side to side: the gun's own sway (heavier builds more, less with the sight up) plus injuries (Section 13.5) |
 | Feedback | Muzzle flash with a brief light, a small kick of the gun model and camera shake (scaled with vertical recoil). A burst of particles where a round hits: grey dust (concrete), sparks (metal), splinters (wood), red (a body). The **bloom reticle** is a circle the size of the real spread cone at the aim point, growing and shrinking live; it sits where the next shot goes (the cursor moved by recoil and sway), with a faint dot on the cursor itself while they move it. A ring fills around it while reloading or clearing a jam |
-| HUD | Bottom right: gun name, rounds in the magazine (amber at a third or less, red when empty), magazine size, spare rounds, loaded ammo and penetration, auto/semi, and a reload bar. In red instead of the ammo line: "JAMMED · R to clear", "CLEARING JAM", or a missing part ("NO MAGAZINE") |
+| HUD | Bottom right: gun name, rounds in the magazine (amber at a third or less, red when empty), magazine size, spare rounds, the round in the chamber and its penetration (and pellets), auto/semi, and a reload bar. In red instead of the ammo line: "JAMMED · R to clear", "CLEARING JAM", or a missing part ("NO MAGAZINE") |
 
-| Ammo | Damage | Penetration | Wood |
+| Ammo (examples; every round is in Section 6.4) | Damage | Penetration | Wood |
 |---|---|---|---|
 | 5.45x39 PS | 50 | 28 | Stopped |
 | 5.45x39 BS | 40 | 45 | Goes through (24 damage after) |
 | 7.62x54R LPS | 81 | 41 | Goes through (49 damage after) |
+| 12ga 7mm buckshot | 37 × 8 pellets | 3 | Stopped |
 
 | Gun *(tune, `data/weapons/`)* | Fire rate | Mode | Magazine | Reload / empty | Climb / side kick / recovery | Base spread | Bloom per shot / max / recovery | Hip-fire | Moving / sprint / roll | Sway |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -522,6 +654,8 @@ All of these values live in `data/config/combat.tres`.
 | PM | 450 rpm | Semi | 8 | 1.8 s / 2.3 s | 1.0° / ±0.55° / 9 per s after 0.05 s | 0.8° | +0.8° / +5.0° / 12°/s after 0.2 s | +1.2° | +3.5° / +2.0° / +6.0° | 0.12° |
 | Mosin (bolt-action) | 50 rpm (bolt cycle 1.2 s) | Semi | 5 | 3.2 s / 3.8 s | 2.4° / ±0.5° / 6 per s after 0.1 s | 0.12° | +1.0° / +3.0° / 5°/s after 0.3 s | +3.5° | +4.0° / +2.5° / +7.0° | 0.35° |
 | SVD (DMR) | 300 rpm | Semi | 10 | 2.7 s / 3.3 s | 1.4° / ±0.4° / 7 per s after 0.08 s | 0.2° | +0.7° / +3.5° / 6°/s after 0.25 s | +3.0° | +3.8° / +2.2° / +6.5° | 0.3° |
+
+The other 18 guns follow class templates (pistol, SMG, shotgun, assault rifle, DMR, bolt-action, LMG) with their own fire rate, magazine, recoil, spread and ergonomics (Section 6.4 lists them; every value is in the gun's `.tres`).
 
 ### 13.4.1 360 Trick Shots
 
@@ -616,7 +750,8 @@ All of these values live in `data/config/vision.tres`.
 |---|---|
 | Item data | `ItemData` custom `Resource` (`scripts/data/item_data.gd`): id, display name, description, category (weapon, ammo, attachment, armor, rig, backpack, helmet, meds, food, valuable, junk, key, container, melee), rarity, grid size, weight, base value, max stack, stats, `loot_weight`, an optional `icon`, and for guns a `weapon` (`WeaponData`). Items live in `data/items/<category>/` as either `.tres` files (one item each, made in the Inspector) or `.json` files (one item or a list; keys listed in `ItemData.from_dict()`, see the README). `ItemDB` loads both and reports bad entries with the file name. Enums are saved as numbers in `.tres` files, so only append new values. Exported builds need `*.json` in the export filter |
 | Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. Inventory grids draw them with `ItemDraw` |
-| Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, weapon skill, fire rate, auto/semi, magazine, reload and empty-reload time; recoil (vertical, horizontal, recovery rate and delay, camera kick); spread and bloom (base spread, bloom per shot, max bloom, bloom recovery and delay, hip-fire, moving, sprint and roll spread, sway). Modding fields: platform, ergonomics, muzzle velocity, `slots` and `default_mods`; durability: wear per shot, malfunction threshold, jam chance at 0 durability, time to clear a jam. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
+| Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, weapon skill, class (`weapon_class`: pistol, smg, shotgun, assault_rifle, dmr, bolt_action, lmg), fire rate, auto/semi, magazine, reload and empty-reload time; recoil (vertical, horizontal, recovery rate and delay, camera kick); spread and bloom (base spread, bloom per shot, max bloom, bloom recovery and delay, hip-fire, moving, sprint and roll spread, sway). Modding fields: platform, ergonomics, muzzle velocity, `slots` and `default_mods`; durability: wear per shot, malfunction threshold, jam chance at 0 durability, time to clear a jam. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
+| Content files | Guns: `data/weapons/<gun>.tres` plus their items in `data/items/weapons/<class>.json`; ammo: `data/items/ammo/<caliber>.json` (stats `caliber`, `damage`, `penetration`, `armor_damage`, optional `pellets`, `pellet_spread`, `noise`); parts: `data/items/attachments/<family>_mods.json`. `ItemDB.ammo_of(caliber)` lists a caliber's rounds (commonest first); `LootTable.ammo_for()` picks the everyday one. `Weapon.pull_trigger` fires one `Ballistics.fire` per pellet (`sound` only on the first); `InventoryDrag.can_load()` / `load_into()` load rounds dropped on a gun; `Player` chambers the top round of the magazine and switches round type on reload |
 | Loot tables | `LootTable` Resource, one per container type (`data/loot_tables/*.tres`: base rarity weights, the table's rarity multipliers, categories or an item list, item weights, item count) with `roll_rarity()`, `roll_item()`, `roll()`, `roll_items()` (ready-made, guns loaded) and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: their table, grid size, search time, placeholder look, solid or not, bullet material); maps add `MapInfo.loot_multipliers` |
 | Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid (`fir`, plus raid-only `fir_pending` and `brought_in`), its own `InventoryGrid` for rigs / backpacks / containers, for guns the round type and the magazine (ammo instances bottom to top, so each run of rounds keeps its status), `durability` / `max_durability`, and for guns and parts the parts fitted (`mods`, slot id → `ItemInstance`, nested); saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses and gunsmith mods (`AffixData` / `GunsmithModData` Resources) |
 | Handling tuning | `HandlingConfig` (`data/config/handling.tres`): rarity strength, ergonomics points, the special-modifier rarity factor, ergonomics handling, weight sway and bloom-recovery loss, aimed sway, stance bloom rise, wear spread, recoil jitter, preview shots, skill recoil, stat limits, repair. `data/config/attachment_profiles.json`: each attachment kind's default effects. The `Weapon` node keeps the recoil kick and the bloom (shot and stance) at run time; `Actor.set_stance` each tick feeds it speed, sprint, roll and aim (`aim_blend()`) |
@@ -763,3 +898,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Weapon modding (Section 12.1): slot trees with nested slots (rail handguards and dust covers add foregrip, tactical and top-rail slots), 31 new weapon parts (36 with the sights and foregrip) across muzzle, barrel, handguard, foregrip, stock, pistol grip, receiver, sight, tactical and magazine slots, for the AK-74N and PM. Parts change recoil, ergonomics, spread, muzzle velocity, aim speed, noise, jam chance, wear, weight and magazine size; bonuses grow with rarity (×1 to ×2); empty slots matter (no stock, no barrel). Modding screen out of raid (MODIFY): drag parts onto slots, live stat preview with deltas, REPAIR. Durability: every shot wears the gun, worn guns jam (R clears), found and AI kit guns come worn. Suppressors shorten how far shots are heard; the sight fitted is the one you aim through. Mechanic and Skier sell parts. Gun items now weigh and cost their bare receiver plus their parts (an AK is still 3.2 kg, 30,000). Save version 5 (93 items) |
 | 2026-10-12 | Weapon handling rework (Sections 12.1, 13.4): recoil split into vertical (muzzle climb: the aim moves out along the aim direction and rounds fly higher) and horizontal (random side kick), with recoil recovery pulling the aim back after each shot; bloom replaces recoil spread (grows per shot up to max bloom, while moving, sprinting, rolling and hip-firing; shrinks at bloom recovery); the bloom reticle is now a circle at the kicked aim point. Attachments change ten handling stats from a per-kind profile table (`attachment_profiles.json`) with rarity strength Common 4% to Legendary 23% and fixed downsides; heavier builds sway more and recover bloom slower; low durability adds spread; weapon skills (new: Pistols) and Strength reduce recoil. Modding screen: recoil pattern preview and spread circles with before / after numbers. Tuning in `handling.tres` and the gun `.tres` files. New parts: polymer foregrip and rubberized AK grip (Common), AK competition brake (Legendary) (96 items) |
 | 2026-10-12 | 360 trick shots (Section 13.4.1): sweep the reticle a full turn one way within 1.5 s (rolling or not) with a bolt-action rifle or DMR and a TRICK SHOT READY window opens for 1 s; its first shot deals +50% damage on the round (before armor), fired from the hip with full bloom (no aiming while spinning). Gold hit marker, "360!" popup, sound sting, kill banner, +250 XP and +25 Drip per kill. Drip (new), Trick Shots on the character screen, three trick-shot quests (Showboat, Around the World, Spin Doctor; new quest objective type `trick_kill`). New guns: Mosin (bolt-action) and SVD (DMR) with 7.62x54R LPS and an SVD magazine (100 items); new skills Bolt-action rifles and Marksman rifles. Tuning per gun (`trick_spin_time`, `trick_window`, `trick_damage_bonus`) and in `raid.tres`. Save version 6 |
+| 2026-10-12 | Starter arsenal (Section 6.4; the ammo table referred to as "3.2a" didn't exist in this document, so it was written there): 18 new guns, 22 in all across pistols, SMGs, shotguns, assault rifles, DMRs, bolt-action rifles and LMGs (Vektor P9, Bastion 45, Strelka MP, Hornet SMG, Wasp PDW, Brigand 45, Warden 870, Tempest S12, Sentinel AR, Tundra 47, Halcyon B5, Partisan, Longbow DMR, Huntsman 700, Leviathan .338, Grizzly 74, Bulwark 249, Anvil PK); 10 calibers with 3–5 rounds each (45 rounds; new `armor_damage` stat on every round, Common everyday rounds, Epic/Legendary best AP); 143 new weapon parts (183 in all) with standard parts for every gun and upgrades from Common to Legendary, plus AK, AR, STANAG and caliber parts shared across guns. Shot shells fire 8 pellets (chokes tighten them: new `pellet_spread` part modifier, shown for shotguns), subsonic rounds are quieter (`noise` ammo stat), rounds dragged onto a gun load it, reloading with none of the gun's round type left switches to another of its caliber, found guns come loaded with their caliber's everyday round. Mosin and SVD get a muzzle slot. New weapon classes `smg`, `shotgun`, `lmg` and skills SMGs, Shotguns, Machine guns. Traders sell most of it (Jaeger has hunting stock ready for when he unlocks). 302 items |

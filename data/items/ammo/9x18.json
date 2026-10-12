@@ -1,0 +1,10 @@
+[
+  {"id": "ammo_9x18_p", "name": "9x18 PM P", "description": "Lead-core pistol round. Cheap and soft: fine against the unarmored.", "category": "ammo", "rarity": "common", "weight": 0.01, "value": 35, "max_stack": 50,
+   "stats": {"caliber": "9x18", "damage": 46, "penetration": 5, "armor_damage": 20}},
+  {"id": "ammo_9x18_pst", "name": "9x18 PM PSt", "description": "Steel-core pistol round.", "category": "ammo", "rarity": "common", "weight": 0.01, "value": 60, "max_stack": 50,
+   "stats": {"caliber": "9x18", "damage": 50, "penetration": 12, "armor_damage": 28}},
+  {"id": "ammo_9x18_hp", "name": "9x18 PM HP", "description": "Hollow point. Opens up in flesh, flattens on anything harder.", "category": "ammo", "rarity": "uncommon", "weight": 0.01, "value": 90, "max_stack": 50,
+   "stats": {"caliber": "9x18", "damage": 66, "penetration": 3, "armor_damage": 15}},
+  {"id": "ammo_9x18_pbm", "name": "9x18 PM PBM", "description": "Hardened-steel penetrator in a lacquered case. The only 9x18 that bothers armor.", "category": "ammo", "rarity": "epic", "weight": 0.01, "value": 650, "max_stack": 50,
+   "stats": {"caliber": "9x18", "damage": 40, "penetration": 28, "armor_damage": 55}}
+]

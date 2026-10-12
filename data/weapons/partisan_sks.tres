@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "7.62x39"
+skill = "marksman_rifles"
+weapon_class = "dmr"
+fire_rate = 350
+automatic = false
+magazine_size = 10
+reload_time = 2.8
+empty_reload_time = 3.2
+vertical_recoil = 1.0
+horizontal_recoil = 0.35
+recoil_recovery = 7.5
+recovery_delay = 0.08
+camera_kick = 0.2
+base_spread = 0.26
+bloom_per_shot = 0.55
+max_bloom = 3.4
+bloom_recovery = 6.5
+bloom_delay = 0.25
+hip_spread = 2.6
+move_spread = 3.6
+sprint_spread = 2.2
+roll_spread = 6.5
+sway = 0.27
+platform = "partisan"
+ergonomics = 45
+muzzle_velocity = 735
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"empty": {
+"ergonomics": 8,
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Scout mount"
+}])
+default_mods = {
+"stock": "partisan_stock_wood"
+}
+durability_per_shot = 0.04
+malfunction_threshold = 70.0
+trick_spin_time = 1.5
+trick_window = 1.0
+trick_damage_bonus = 0.5

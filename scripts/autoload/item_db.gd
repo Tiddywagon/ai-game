@@ -40,6 +40,21 @@ func all_items() -> Array[ItemData]:
 	return result
 
 
+## Every round of `caliber` (DESIGN.md §6.4), commonest first, then by penetration and price.
+func ammo_of(caliber: String) -> Array[ItemData]:
+	var result: Array[ItemData] = []
+	for item: ItemData in _items.values():
+		if item.category == ItemData.Category.AMMO and str(item.stats.get("caliber", "")) == caliber:
+			result.append(item)
+	result.sort_custom(func(a: ItemData, b: ItemData) -> bool:
+		if a.rarity != b.rarity:
+			return a.rarity < b.rarity
+		var pen_a := float(a.stats.get("penetration", 0))
+		var pen_b := float(b.stats.get("penetration", 0))
+		return pen_a < pen_b if pen_a != pen_b else a.base_value < b.base_value)
+	return result
+
+
 ## Items of `rarity` that loot can drop (loot_weight above 0), limited to `categories` unless it's empty.
 func lootable(rarity: int, categories: Array = []) -> Array[ItemData]:
 	var result: Array[ItemData] = []

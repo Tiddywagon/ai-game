@@ -3,14 +3,13 @@ extends Node3D
 ## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC
 ## (and the raid's ending doesn't touch your profile). Search the containers and bodies (F), pick up
 ## loose loot, and extract at the green ring in the north-east corner (RaidController).
-## Debug keys: F1 left leg fracture, F2 overweight, F3 swap ammo (PS / BS, adds 60 if you have none), F4 AI on/off, F5 heal,
+## Debug keys: F1 left leg fracture, F2 overweight, F3 next round type for the gun's caliber (adds a stack if you have none), F4 AI on/off, F5 heal,
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
 const RESULT_SCREEN := preload("res://ui/raid_result_screen.tscn")
 ## Seconds between dying and the death screen.
 const DEATH_DELAY := 1.5
-const AMMO_TYPES: Array[String] = ["ammo_545_ps", "ammo_545_bs"]
 
 @onready var _player: Player = $Player
 @onready var _hud := $HUD
@@ -54,9 +53,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_player.debug_extra_weight = 0.0 if _player.is_overweight() else _player.inventory_config.overweight_kg + 10.0
 			_hud.show_message("Carrying %s%s" % [Settings.format_weight(_player.carried_weight_kg), " (overweight)" if _player.is_overweight() else ""])
 		KEY_F3:
-			var ammo: String = AMMO_TYPES[(AMMO_TYPES.find(_player.ammo_id) + 1) % AMMO_TYPES.size()]
+			if not _player.weapon.has_gun():
+				return
+			var types: Array = ItemDB.ammo_of(_player.weapon.data.caliber).map(func(round_type: ItemData) -> String: return round_type.id)
+			var ammo: String = types[(types.find(_player.ammo_id) + 1) % types.size()]
 			if _player.inventory.count_of(ammo) == 0:
-				var spare := ItemInstance.create(ammo, 60)  # Something to reload with.
+				var spare := ItemInstance.create(ammo, ItemDB.get_item(ammo).max_stack)  # Something to reload with.
 				spare.brought_in = true  # A debug gift, not loot.
 				_player.inventory.add(spare)
 			_player.set_ammo(ammo)

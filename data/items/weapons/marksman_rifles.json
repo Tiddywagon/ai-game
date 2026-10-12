@@ -1,0 +1,4 @@
+[
+  {"id": "longbow_dmr", "name": "Longbow DMR", "description": "Semi-auto 7.62x51 marksman rifle on the big AR pattern. Takes AR stocks and grips.", "category": "weapon", "rarity": "epic", "size": [5, 2], "weight": 2.91, "value": 101700, "weapon": "res://data/weapons/longbow_dmr.tres"},
+  {"id": "partisan_sks", "name": "Partisan", "description": "Semi-auto 7.62x39 carbine with a fixed ten-round magazine and a wooden stock. Cheap, sturdy, accurate enough.", "category": "weapon", "rarity": "uncommon", "size": [5, 1], "weight": 3.1, "value": 22000, "weapon": "res://data/weapons/partisan_sks.tres"}
+]

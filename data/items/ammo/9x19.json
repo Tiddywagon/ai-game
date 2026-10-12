@@ -1,0 +1,10 @@
+[
+  {"id": "ammo_9x19_fmj", "name": "9x19 FMJ", "description": "Full metal jacket. The world's most common pistol round.", "category": "ammo", "rarity": "common", "weight": 0.012, "value": 70, "max_stack": 50,
+   "stats": {"caliber": "9x19", "damage": 54, "penetration": 18, "armor_damage": 30}},
+  {"id": "ammo_9x19_hp", "name": "9x19 HP", "description": "Jacketed hollow point. Hard-hitting, useless against armor.", "category": "ammo", "rarity": "uncommon", "weight": 0.012, "value": 110, "max_stack": 50,
+   "stats": {"caliber": "9x19", "damage": 70, "penetration": 6, "armor_damage": 15}},
+  {"id": "ammo_9x19_ap", "name": "9x19 AP", "description": "Steel-core armor-piercing round.", "category": "ammo", "rarity": "rare", "weight": 0.012, "value": 450, "max_stack": 50,
+   "stats": {"caliber": "9x19", "damage": 49, "penetration": 30, "armor_damage": 55}},
+  {"id": "ammo_9x19_pbp", "name": "9x19 PBP", "description": "Tungsten-tipped penetrator. Goes through soft armor and most class 3 plates.", "category": "ammo", "rarity": "epic", "weight": 0.012, "value": 900, "max_stack": 50,
+   "stats": {"caliber": "9x19", "damage": 52, "penetration": 39, "armor_damage": 65}}
+]

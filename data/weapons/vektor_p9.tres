@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "9x19"
+skill = "pistols"
+weapon_class = "pistol"
+fire_rate = 450
+automatic = false
+magazine_size = 17
+reload_time = 1.7
+empty_reload_time = 2.2
+vertical_recoil = 0.85
+horizontal_recoil = 0.45
+recoil_recovery = 10.0
+recovery_delay = 0.05
+camera_kick = 0.08
+base_spread = 0.7
+bloom_per_shot = 0.75
+max_bloom = 4.5
+bloom_recovery = 12.0
+bloom_delay = 0.2
+hip_spread = 1.1
+move_spread = 3.4
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.12
+platform = "vektor"
+ergonomics = 76
+muzzle_velocity = 375
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Optic cut"
+}, {
+"id": "tactical",
+"kinds": ["tactical"],
+"name": "Accessory rail"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"magazine": "vektor_mag_17"
+}
+durability_per_shot = 0.035

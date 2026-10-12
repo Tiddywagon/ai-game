@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "9x18"
+skill = "pistols"
+weapon_class = "pistol"
+fire_rate = 750
+automatic = true
+magazine_size = 20
+reload_time = 2.0
+empty_reload_time = 2.5
+vertical_recoil = 0.6
+horizontal_recoil = 0.5
+recoil_recovery = 9.0
+recovery_delay = 0.05
+camera_kick = 0.07
+base_spread = 0.9
+bloom_per_shot = 0.4
+max_bloom = 5.5
+bloom_recovery = 11.0
+bloom_delay = 0.18
+hip_spread = 1.3
+move_spread = 3.4
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.14
+platform = "strelka"
+ergonomics = 62
+muzzle_velocity = 340
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"magazine": "strelka_mag_20"
+}
+durability_per_shot = 0.035

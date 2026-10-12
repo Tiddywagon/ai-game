@@ -10,11 +10,22 @@
       {"item": "mosin_rifle", "price": 32000, "currency": "RUB"},
       {"item": "svd", "price": 140000, "currency": "RUB"},
       {"item": "ammo_762x54r_lps", "count": 20, "price": 9500, "currency": "RUB"},
-      {"item": "hatchet", "price": 14000, "currency": "RUB"}
+      {"item": "hatchet", "price": 14000, "currency": "RUB"},
+      {"item": "tundra_47", "price": 52000, "currency": "RUB"},
+      {"item": "partisan_sks", "price": 34000, "currency": "RUB"},
+      {"item": "strelka_mp", "price": 31000, "currency": "RUB"},
+      {"item": "grizzly_74", "price": 78000, "currency": "RUB"},
+      {"item": "ammo_9x18_p", "count": 50, "price": 2600, "currency": "RUB"},
+      {"item": "ammo_545_hp", "count": 60, "price": 8000, "currency": "RUB"},
+      {"item": "ammo_545_bt", "count": 60, "price": 31000, "currency": "RUB"},
+      {"item": "ammo_762x39_ps", "count": 40, "price": 8500, "currency": "RUB"},
+      {"item": "ammo_762x39_us", "count": 40, "price": 15500, "currency": "RUB"},
+      {"item": "ammo_762x54r_sp", "count": 20, "price": 8500, "currency": "RUB"}
     ],
     "barters": [
       {"give": [{"item": "bolts", "count": 2, "fir": true}, {"item": "screws", "count": 2}], "get": {"item": "ammo_545_bs", "count": 30}},
-      {"give": [{"item": "weapon_parts", "count": 1}, {"item": "duct_tape", "count": 1}], "get": {"item": "pm_pistol"}}
+      {"give": [{"item": "weapon_parts", "count": 1}, {"item": "duct_tape", "count": 1}], "get": {"item": "pm_pistol"}},
+      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "bolts", "count": 2}], "get": {"item": "ammo_762x39_bp", "count": 20}}
     ]
   },
   "therapist": {
@@ -41,19 +52,55 @@
       {"item": "ak_grip_tactical", "price": 11500, "currency": "RUB"},
       {"item": "ak_stock_skeleton", "price": 9000, "currency": "RUB"},
       {"item": "ak_handguard_quad", "price": 23000, "currency": "RUB"},
-      {"item": "dorm_key", "price": 45000, "currency": "RUB"}
+      {"item": "dorm_key", "price": 45000, "currency": "RUB"},
+      {"item": "brigand_45", "price": 48000, "currency": "RUB"},
+      {"item": "tempest_s12", "price": 66000, "currency": "RUB"},
+      {"item": "warden_870", "price": 31000, "currency": "RUB"},
+      {"item": "foregrip_stubby", "price": 3800, "currency": "RUB"},
+      {"item": "pistol_light", "price": 4500, "currency": "RUB"},
+      {"item": "handstop", "price": 7500, "currency": "RUB"},
+      {"item": "prism_sight", "price": 36000, "currency": "RUB"},
+      {"item": "hornet_stock_collapsible", "price": 9500, "currency": "RUB"},
+      {"item": "brigand_stock_fixed", "price": 9000, "currency": "RUB"},
+      {"item": "wasp_mag_20", "price": 4200, "currency": "RUB"},
+      {"item": "muzzle_9mm_comp", "price": 6500, "currency": "RUB"},
+      {"item": "ammo_9x19_hp", "count": 50, "price": 7000, "currency": "RUB"},
+      {"item": "ammo_45_hp", "count": 40, "price": 7200, "currency": "RUB"},
+      {"item": "ammo_12ga_buck", "count": 20, "price": 1800, "currency": "RUB"},
+      {"item": "ammo_12ga_slug", "count": 20, "price": 4200, "currency": "RUB"}
     ],
     "barters": [
       {"give": [{"item": "gpu", "count": 1, "fir": true}], "get": {"item": "holo_sight"}},
       {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "duct_tape", "count": 2}], "get": {"item": "pm_suppressor"}},
-      {"give": [{"item": "matches", "count": 2}, {"item": "crackers", "count": 1}], "get": {"item": "ammo_9x18_pst", "count": 50}}
+      {"give": [{"item": "matches", "count": 2}, {"item": "crackers", "count": 1}], "get": {"item": "ammo_9x18_pst", "count": 50}},
+      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "duct_tape", "count": 1}], "get": {"item": "muzzle_9mm_suppressor"}}
     ]
   },
   "peacekeeper": {
     "buy": [
-      {"item": "scope_2_4", "price": 420, "currency": "USD"}
+      {"item": "scope_2_4", "price": 420, "currency": "USD"},
+      {"item": "vektor_p9", "price": 120, "currency": "USD"},
+      {"item": "bastion_45", "price": 230, "currency": "USD"},
+      {"item": "hornet_smg", "price": 330, "currency": "USD"},
+      {"item": "sentinel_ar", "price": 690, "currency": "USD"},
+      {"item": "wasp_pdw", "price": 560, "currency": "USD"},
+      {"item": "huntsman_700", "price": 640, "currency": "USD"},
+      {"item": "ammo_9x19_fmj", "count": 50, "price": 30, "currency": "USD"},
+      {"item": "ammo_45_fmj", "count": 40, "price": 30, "currency": "USD"},
+      {"item": "ammo_556_fmj", "count": 60, "price": 60, "currency": "USD"},
+      {"item": "ammo_556_epr", "count": 60, "price": 330, "currency": "USD"},
+      {"item": "ammo_762x51_fmj", "count": 40, "price": 80, "currency": "USD"},
+      {"item": "ammo_762x51_m80", "count": 40, "price": 220, "currency": "USD"},
+      {"item": "stanag_30", "price": 16, "currency": "USD"},
+      {"item": "stanag_40", "price": 85, "currency": "USD"},
+      {"item": "ar_handguard_rail", "price": 80, "currency": "USD"},
+      {"item": "muzzle_556_comp", "price": 55, "currency": "USD"},
+      {"item": "reflex_sight", "price": 75, "currency": "USD"}
     ],
-    "barters": []
+    "barters": [
+      {"give": [{"item": "gpu", "count": 1, "fir": true}], "get": {"item": "sentinel_ar"}},
+      {"give": [{"item": "gold_chain", "count": 2, "fir": true}], "get": {"item": "hornet_smg"}}
+    ]
   },
   "mechanic": {
     "buy": [
@@ -72,12 +119,29 @@
       {"item": "tactical_laser", "price": 15000, "currency": "RUB"},
       {"item": "pm_grip_rubber", "price": 3200, "currency": "RUB"},
       {"item": "pm_mag_12", "price": 5800, "currency": "RUB"},
-      {"item": "svd_mag_10", "price": 4000, "currency": "RUB"}
+      {"item": "svd_mag_10", "price": 4000, "currency": "RUB"},
+      {"item": "akm_mag_30", "price": 2400, "currency": "RUB"},
+      {"item": "akm_mag_40", "price": 9500, "currency": "RUB"},
+      {"item": "ak_stock_modern", "price": 22000, "currency": "RUB"},
+      {"item": "muzzle_762x39_comp", "price": 8500, "currency": "RUB"},
+      {"item": "ar_grip_ergo", "price": 5500, "currency": "RUB"},
+      {"item": "ar_barrel_105", "price": 12500, "currency": "RUB"},
+      {"item": "stanag_20", "price": 4300, "currency": "RUB"},
+      {"item": "ar10_mag_10", "price": 5500, "currency": "RUB"},
+      {"item": "tempest_mag_12", "price": 14500, "currency": "RUB"},
+      {"item": "vektor_mag_33", "price": 8000, "currency": "RUB"},
+      {"item": "bastion_mag_10", "price": 6200, "currency": "RUB"},
+      {"item": "warden_forend_rail", "price": 10500, "currency": "RUB"},
+      {"item": "muzzle_762x54_brake", "price": 9800, "currency": "RUB"},
+      {"item": "huntsman_mag_10", "price": 17500, "currency": "RUB"},
+      {"item": "choke_modified", "price": 3200, "currency": "RUB"}
     ],
     "barters": [
       {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 2, "fir": true}], "get": {"item": "scope_2_4"}},
       {"give": [{"item": "weapon_parts", "count": 2}, {"item": "bolts", "count": 3, "fir": true}], "get": {"item": "ak_barrel_match"}},
-      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 2, "fir": true}], "get": {"item": "ak_suppressor"}}
+      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 2, "fir": true}], "get": {"item": "ak_suppressor"}},
+      {"give": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "wires", "count": 2}], "get": {"item": "ar_handguard_freefloat"}},
+      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 1}], "get": {"item": "bipod_grip"}}
     ]
   },
   "ragman": {
@@ -94,7 +158,21 @@
     ]
   },
   "jaeger": {
-    "buy": [],
-    "barters": []
+    "buy": [
+      {"item": "warden_870", "price": 29000, "currency": "RUB"},
+      {"item": "huntsman_700", "price": 98000, "currency": "RUB"},
+      {"item": "ammo_12ga_buck", "count": 20, "price": 1600, "currency": "RUB"},
+      {"item": "ammo_12ga_magnum", "count": 20, "price": 3200, "currency": "RUB"},
+      {"item": "ammo_12ga_slug", "count": 20, "price": 3900, "currency": "RUB"},
+      {"item": "ammo_762x51_sp", "count": 40, "price": 14500, "currency": "RUB"},
+      {"item": "ammo_338_fmj", "count": 10, "price": 12000, "currency": "RUB"},
+      {"item": "choke_modified", "price": 3000, "currency": "RUB"},
+      {"item": "choke_full", "price": 8500, "currency": "RUB"},
+      {"item": "warden_stock_pistol", "price": 9000, "currency": "RUB"},
+      {"item": "huntsman_stock_hunting", "price": 5000, "currency": "RUB"}
+    ],
+    "barters": [
+      {"give": [{"item": "ledx", "count": 1, "fir": true}], "get": {"item": "leviathan_338"}}
+    ]
   }
 }

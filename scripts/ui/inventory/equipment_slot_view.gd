@@ -50,7 +50,7 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 	var drag: InventoryDrag = data
 	if drag.can_equip(inventory, slot):
 		_hover = 1
-	elif item() and (drag.can_insert(item()) or drag.install_path(item()) != ""):
+	elif item() and (drag.can_insert(item()) or drag.install_path(item()) != "" or drag.can_load(item())):
 		_hover = 2
 	else:
 		_hover = -1
@@ -60,8 +60,8 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at: Vector2, data: Variant) -> void:
 	var drag: InventoryDrag = data
-	if not drag.drop_on_slot(inventory, slot) and item() and not drag.insert(item()):
-		drag.install(item())
+	if not drag.drop_on_slot(inventory, slot) and item() and not drag.insert(item()) and not drag.install(item()):
+		drag.load_into(item())
 	_hover = 0
 	queue_redraw()
 

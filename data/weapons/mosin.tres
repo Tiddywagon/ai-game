@@ -31,6 +31,10 @@ platform = "mosin"
 ergonomics = 35
 muzzle_velocity = 865
 slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
 "id": "sight",
 "kinds": ["sight"],
 "name": "Scope mount"

@@ -1,0 +1,10 @@
+[
+  {"id": "ammo_762x54r_lps", "name": "7.62x54R LPS", "description": "Full-power rifle round with a light steel core. Goes through wood.", "category": "ammo", "rarity": "common", "weight": 0.022, "value": 300, "max_stack": 40,
+   "stats": {"caliber": "7.62x54R", "damage": 81, "penetration": 41, "armor_damage": 66}},
+  {"id": "ammo_762x54r_sp", "name": "7.62x54R SP", "description": "Soft point hunting load.", "category": "ammo", "rarity": "uncommon", "weight": 0.022, "value": 320, "max_stack": 40,
+   "stats": {"caliber": "7.62x54R", "damage": 92, "penetration": 27, "armor_damage": 32}},
+  {"id": "ammo_762x54r_snb", "name": "7.62x54R SNB", "description": "Sniper armor-piercing round.", "category": "ammo", "rarity": "epic", "weight": 0.022, "value": 2400, "max_stack": 40,
+   "stats": {"caliber": "7.62x54R", "damage": 75, "penetration": 62, "armor_damage": 88}},
+  {"id": "ammo_762x54r_bs", "name": "7.62x54R BS", "description": "Tungsten-core armor-piercing round. Ends arguments.", "category": "ammo", "rarity": "legendary", "weight": 0.022, "value": 5200, "max_stack": 40,
+   "stats": {"caliber": "7.62x54R", "damage": 72, "penetration": 70, "armor_damage": 88}}
+]

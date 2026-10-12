@@ -1,0 +1,8 @@
+[
+  {"id": "ammo_545_hp", "name": "5.45x39 HP", "description": "Hunting hollow point. Big wounds on the unarmored.", "category": "ammo", "rarity": "uncommon", "weight": 0.01, "value": 150, "max_stack": 60,
+   "stats": {"caliber": "5.45x39", "damage": 62, "penetration": 9, "armor_damage": 15}},
+  {"id": "ammo_545_bt", "name": "5.45x39 BT", "description": "Steel-core tracer: you can see where it's going.", "category": "ammo", "rarity": "rare", "weight": 0.01, "value": 400, "max_stack": 60,
+   "stats": {"caliber": "5.45x39", "damage": 48, "penetration": 37, "armor_damage": 50}},
+  {"id": "ammo_545_ppbs", "name": "5.45x39 PPBS \"Needle\"", "description": "Experimental tungsten-carbide penetrator. Goes through nearly anything.", "category": "ammo", "rarity": "legendary", "weight": 0.01, "value": 4000, "max_stack": 60,
+   "stats": {"caliber": "5.45x39", "damage": 37, "penetration": 62, "armor_damage": 90}}
+]

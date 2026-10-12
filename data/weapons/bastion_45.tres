@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = ".45 ACP"
+skill = "pistols"
+weapon_class = "pistol"
+fire_rate = 400
+automatic = false
+magazine_size = 8
+reload_time = 1.8
+empty_reload_time = 2.3
+vertical_recoil = 1.25
+horizontal_recoil = 0.55
+recoil_recovery = 9.0
+recovery_delay = 0.05
+camera_kick = 0.1
+base_spread = 0.65
+bloom_per_shot = 0.9
+max_bloom = 5.0
+bloom_recovery = 11.0
+bloom_delay = 0.2
+hip_spread = 1.1
+move_spread = 3.4
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.13
+platform = "bastion"
+ergonomics = 68
+muzzle_velocity = 260
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"empty": {
+"ergonomics": -12,
+"horizontal_recoil": 6,
+"vertical_recoil": 6
+},
+"id": "pistol_grip",
+"kinds": ["pistol_grip"],
+"name": "Grip"
+}, {
+"id": "tactical",
+"kinds": ["tactical"],
+"name": "Accessory rail"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"magazine": "bastion_mag_8",
+"pistol_grip": "bastion_grip_wood"
+}
+durability_per_shot = 0.035

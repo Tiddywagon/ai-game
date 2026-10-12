@@ -1,0 +1,4 @@
+[
+  {"id": "warden_870", "name": "Warden 870", "description": "Pump-action 12ga shotgun with a six-shell tube. Works the action between every shot.", "category": "weapon", "rarity": "uncommon", "size": [5, 1], "weight": 1.8, "value": 12000, "weapon": "res://data/weapons/warden_870.tres"},
+  {"id": "tempest_s12", "name": "Tempest S12", "description": "Gas-operated semi-auto 12ga on an AK-pattern receiver. Takes box magazines, AK grips and handguards.", "category": "weapon", "rarity": "rare", "size": [5, 2], "weight": 2.73, "value": 38700, "weapon": "res://data/weapons/tempest_s12.tres"}
+]

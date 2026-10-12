@@ -25,16 +25,16 @@ const COMBAT_CONFIG: CombatConfig = preload("res://data/config/combat.tres")
 const HANDLING: Array[String] = ["vertical_recoil", "horizontal_recoil", "recoil_recovery", "base_spread", "bloom_per_shot",
 	"max_bloom", "bloom_recovery", "hip_spread", "ergonomics", "weight"]
 ## A part's own fixed modifiers.
-const SPECIAL: Array[String] = ["velocity", "aim_speed", "noise", "malfunction", "durability_loss"]
+const SPECIAL: Array[String] = ["velocity", "aim_speed", "noise", "malfunction", "durability_loss", "pellet_spread"]
 ## +1 if a higher value makes the gun better, -1 if a lower one does.
 const BETTER := {"vertical_recoil": -1, "horizontal_recoil": -1, "recoil_recovery": 1, "base_spread": -1,
 	"bloom_per_shot": -1, "max_bloom": -1, "bloom_recovery": 1, "hip_spread": -1, "ergonomics": 1, "weight": -1,
-	"velocity": 1, "aim_speed": 1, "noise": -1, "malfunction": -1, "durability_loss": -1}
+	"velocity": 1, "aim_speed": 1, "noise": -1, "malfunction": -1, "durability_loss": -1, "pellet_spread": -1}
 const MODIFIER_NAMES := {"vertical_recoil": "Vertical recoil", "horizontal_recoil": "Horizontal recoil",
 	"recoil_recovery": "Recoil recovery", "base_spread": "Base spread", "bloom_per_shot": "Bloom per shot",
 	"max_bloom": "Max bloom", "bloom_recovery": "Bloom recovery", "hip_spread": "Hip-fire spread",
 	"ergonomics": "Ergonomics", "weight": "Weight", "velocity": "Muzzle velocity", "aim_speed": "Aim speed",
-	"noise": "Noise", "malfunction": "Jam chance", "durability_loss": "Wear"}
+	"noise": "Noise", "malfunction": "Jam chance", "durability_loss": "Wear", "pellet_spread": "Pellet spread"}
 
 static var _profiles := {}
 static var _part_effects := {}
@@ -156,6 +156,7 @@ static func build(gun: ItemInstance, skills: Dictionary = {}) -> WeaponData:
 	result.aim_time_multiplier = clampf(handling / maxf(1.0 + sums.aim_speed / 100.0, 0.1), 0.3, 3.0)
 	result.malfunction_multiplier = clampf(1.0 + sums.malfunction / 100.0, 0.1, 4.0)
 	result.wear_multiplier = clampf(1.0 + sums.durability_loss / 100.0, 0.2, 3.0)
+	result.pellet_spread_multiplier = clampf(1.0 + sums.pellet_spread / 100.0, 0.3, 2.0)
 	if not WeaponMods.slot_on(gun, "magazine").is_empty():
 		var magazine := WeaponMods.mod_at(gun, "magazine")
 		result.magazine_size = WeaponMods.capacity_of(magazine.data) if magazine else 0
@@ -260,6 +261,9 @@ static func rows(gun: ItemInstance, skills: Dictionary = {}) -> Array[Dictionary
 			gun.durability / 100.0),
 		_row("malfunction", "Jam chance", jam, "%.2f%% per shot" % jam if jam > 0.0 else "None at this durability", -1, -1.0),
 	]
+	if data.weapon_class == "shotgun":
+		var pellets := data.pellet_spread_multiplier * 100.0
+		result.insert(result.size() - 3, _row("pellet_spread", "Pellet spread", pellets, "%d%% of the shell's" % roundi(pellets), -1, -1.0))
 	for row in result:
 		if row.bar >= 0.0:
 			row.bar = clampf(row.bar, 0.0, 1.0)
@@ -311,6 +315,8 @@ static func format_delta(key: String, delta: float) -> String:
 			text = "%+.2f s" % delta
 		"malfunction":
 			text = "%+.2f%%" % delta
+		"pellet_spread":
+			text = "%+d%%" % roundi(delta)
 		"velocity":
 			text = "%+d m/s" % roundi(delta)
 		"noise":

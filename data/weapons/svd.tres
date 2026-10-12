@@ -31,6 +31,10 @@ platform = "svd"
 ergonomics = 40
 muzzle_velocity = 830
 slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
 "id": "sight",
 "kinds": ["sight"],
 "name": "Side mount"

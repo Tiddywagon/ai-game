@@ -1,0 +1,88 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "12ga"
+skill = "shotguns"
+weapon_class = "shotgun"
+fire_rate = 300
+automatic = false
+magazine_size = 5
+reload_time = 2.6
+empty_reload_time = 3.2
+vertical_recoil = 1.6
+horizontal_recoil = 0.55
+recoil_recovery = 7.0
+recovery_delay = 0.08
+camera_kick = 0.26
+base_spread = 1.1
+bloom_per_shot = 0.7
+max_bloom = 4.0
+bloom_recovery = 8.0
+bloom_delay = 0.25
+hip_spread = 1.2
+move_spread = 3.0
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.24
+platform = "tempest"
+ergonomics = 46
+muzzle_velocity = 410
+slots = Array[Dictionary]([{
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"empty": {
+"ergonomics": -10,
+"hip_spread": 10
+},
+"id": "handguard",
+"kinds": ["handguard"],
+"name": "Handguard"
+}, {
+"empty": {
+"ergonomics": -15,
+"hip_spread": 15,
+"horizontal_recoil": 10,
+"recoil_recovery": -10
+},
+"id": "pistol_grip",
+"kinds": ["pistol_grip"],
+"name": "Pistol grip"
+}, {
+"empty": {
+"ergonomics": 8,
+"horizontal_recoil": 30,
+"max_bloom": 25,
+"recoil_recovery": -30,
+"vertical_recoil": 45
+},
+"id": "stock",
+"kinds": ["stock"],
+"name": "Stock"
+}, {
+"id": "receiver",
+"kinds": ["receiver"],
+"name": "Dust cover",
+"required": true
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Side mount"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"handguard": "tempest_handguard_std",
+"magazine": "tempest_mag_5",
+"pistol_grip": "ak_grip_std",
+"receiver": "ak_dust_cover",
+"stock": "tempest_stock_folding"
+}
+durability_per_shot = 0.05

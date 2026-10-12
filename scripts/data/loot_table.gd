@@ -103,12 +103,10 @@ func roll_items(rng: RandomNumberGenerator, map: MapInfo = null) -> Array[ItemIn
 	return result
 
 
-## The first ammo item for `caliber`, or "".
+## The everyday round for `caliber` (the commonest, least penetrating), or "" if there's none.
 static func ammo_for(caliber: String) -> String:
-	for item in ItemDB.all_items():
-		if item.category == ItemData.Category.AMMO and item.stats.get("caliber", "") == caliber:
-			return item.id
-	return ""
+	var rounds := ItemDB.ammo_of(caliber)
+	return rounds[0].id if not rounds.is_empty() else ""
 
 
 static func _multiplier(multipliers: PackedFloat32Array, rarity: int) -> float:

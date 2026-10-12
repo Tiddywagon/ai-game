@@ -1,0 +1,12 @@
+[
+  {"id": "ammo_762x39_ps", "name": "7.62x39 PS", "description": "Standard steel-core AKM round.", "category": "ammo", "rarity": "common", "weight": 0.016, "value": 160, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 57, "penetration": 35, "armor_damage": 52}},
+  {"id": "ammo_762x39_hp", "name": "7.62x39 HP", "description": "Soft hunting hollow point.", "category": "ammo", "rarity": "uncommon", "weight": 0.016, "value": 190, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 80, "penetration": 15, "armor_damage": 20}},
+  {"id": "ammo_762x39_us", "name": "7.62x39 US", "description": "Subsonic: much quieter, a little weaker.", "category": "ammo", "rarity": "uncommon", "weight": 0.016, "value": 300, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 56, "penetration": 29, "armor_damage": 35, "noise": 0.6}},
+  {"id": "ammo_762x39_bp", "name": "7.62x39 BP", "description": "Armor-piercing round with a hardened steel core.", "category": "ammo", "rarity": "epic", "weight": 0.016, "value": 1800, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 58, "penetration": 47, "armor_damage": 63}},
+  {"id": "ammo_762x39_mai", "name": "7.62x39 MAI AP", "description": "Tungsten-carbide core. Cuts through class 5 plates.", "category": "ammo", "rarity": "legendary", "weight": 0.016, "value": 4200, "max_stack": 40,
+   "stats": {"caliber": "7.62x39", "damage": 53, "penetration": 58, "armor_damage": 70}}
+]

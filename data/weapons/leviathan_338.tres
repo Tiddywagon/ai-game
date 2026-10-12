@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = ".338 Lapua"
+skill = "bolt_action_rifles"
+weapon_class = "bolt_action"
+fire_rate = 40
+automatic = false
+magazine_size = 5
+reload_time = 3.2
+empty_reload_time = 3.9
+vertical_recoil = 3.0
+horizontal_recoil = 0.6
+recoil_recovery = 5.5
+recovery_delay = 0.12
+camera_kick = 0.4
+base_spread = 0.07
+bloom_per_shot = 1.2
+max_bloom = 3.5
+bloom_recovery = 4.5
+bloom_delay = 0.35
+hip_spread = 4.0
+move_spread = 4.5
+sprint_spread = 3.0
+roll_spread = 7.5
+sway = 0.42
+platform = "leviathan"
+ergonomics = 30
+muzzle_velocity = 900
+slots = Array[Dictionary]([{
+"empty": {
+"horizontal_recoil": 8,
+"vertical_recoil": 20
+},
+"id": "muzzle",
+"kinds": ["muzzle"],
+"name": "Muzzle"
+}, {
+"id": "barrel",
+"kinds": ["barrel"],
+"name": "Barrel",
+"required": true
+}, {
+"id": "stock",
+"kinds": ["stock"],
+"name": "Chassis",
+"required": true
+}, {
+"id": "foregrip",
+"kinds": ["foregrip"],
+"name": "Bipod rail"
+}, {
+"id": "sight",
+"kinds": ["sight"],
+"name": "Scope rail"
+}, {
+"id": "magazine",
+"kinds": ["magazine"],
+"name": "Magazine",
+"required": true
+}])
+default_mods = {
+"barrel": "leviathan_barrel_27",
+"magazine": "leviathan_mag_5",
+"muzzle": "leviathan_brake",
+"stock": "leviathan_chassis"
+}
+durability_per_shot = 0.07
+malfunction_threshold = 50.0
+max_malfunction_chance = 0.02
+clear_time = 1.2
+trick_spin_time = 1.5
+trick_window = 1.0
+trick_damage_bonus = 0.5

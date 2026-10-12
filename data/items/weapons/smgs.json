@@ -1,0 +1,5 @@
+[
+  {"id": "hornet_smg", "name": "Hornet SMG", "description": "Roller-delayed 9x19 submachine gun. Smooth, accurate and famously controllable.", "category": "weapon", "rarity": "rare", "size": [3, 2], "weight": 1.88, "value": 32400, "weapon": "res://data/weapons/hornet_smg.tres"},
+  {"id": "wasp_pdw", "name": "Wasp PDW", "description": "Short-stroke piston 9x19 personal defence weapon with an AR-style grip and M-LOK rails.", "category": "weapon", "rarity": "ultra_rare", "size": [3, 2], "weight": 2.07, "value": 54600, "weapon": "res://data/weapons/wasp_pdw.tres"},
+  {"id": "brigand_45", "name": "Brigand 45", "description": "Polymer .45 ACP submachine gun. A slow, heavy hitter with rails everywhere.", "category": "weapon", "rarity": "rare", "size": [3, 2], "weight": 1.92, "value": 29600, "weapon": "res://data/weapons/brigand_45.tres"}
+]

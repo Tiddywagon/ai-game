@@ -7,6 +7,6 @@
    "stats": {"mod": {"kind": "magazine", "fits": ["pm"], "capacity": 8, "standard": true}}},
   {"id": "pm_mag_12", "name": "PM 12-round extended magazine", "description": "Sticks out of the grip. More rounds, more feed trouble.", "category": "attachment", "rarity": "uncommon", "weight": 0.09, "value": 4500,
    "stats": {"mod": {"kind": "magazine", "fits": ["pm"], "capacity": 12, "handling": {"ergonomics": -2}, "modifiers": {"malfunction": 10}}}},
-  {"id": "pm_suppressor", "name": "PM suppressor", "description": "Threaded-barrel can for the Makarov. Much quieter, a little slower.", "category": "attachment", "rarity": "rare", "weight": 0.12, "value": 22000,
-   "stats": {"mod": {"kind": "muzzle", "fits": ["pm"], "handling": {"vertical_recoil": 0.6, "horizontal_recoil": 0.5, "ergonomics": -4}, "modifiers": {"noise": -40, "velocity": -4}}}}
+  {"id": "pm_suppressor", "name": "9x18 suppressor", "description": "Threaded-barrel can for the Makarov and the Strelka. Much quieter, a little slower.", "category": "attachment", "rarity": "rare", "weight": 0.12, "value": 22000,
+   "stats": {"mod": {"kind": "muzzle", "fits": ["pm", "strelka"], "handling": {"vertical_recoil": 0.6, "horizontal_recoil": 0.5, "ergonomics": -4}, "modifiers": {"noise": -40, "velocity": -4}}}}
 ]
