@@ -60,6 +60,9 @@ var hideout: Dictionary = {}
 var energy := START_ENERGY
 var hydration := START_HYDRATION
 var metabolism_time := 0.0
+## Insured items that came back but didn't fit in the stash yet (DESIGN.md §2, Insurance), as
+## ItemInstance.to_dict() entries. Delivered when there's room.
+var insurance_pending: Array = []
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -111,6 +114,7 @@ func _reset(new_faction: Faction) -> void:
 	inventory = Inventory.new()
 	quests = {}
 	hideout = {}
+	insurance_pending = []
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -138,6 +142,7 @@ func to_dict() -> Dictionary:
 			"quests": quests.duplicate(true),
 			"hideout": hideout.duplicate(),
 			"metabolism": {"energy": snappedf(energy, 0.01), "hydration": snappedf(hydration, 0.01), "time": metabolism_time},
+			"insurance_pending": insurance_pending.duplicate(true),
 		},
 		"stash": stash.to_array(),
 	}
@@ -185,6 +190,7 @@ func from_dict(data: Dictionary) -> void:
 		var entry: Dictionary = saved_quests[quest]
 		quests[quest] = {"state": str(entry.get("state", "active")),
 			"progress": entry.get("progress", []).map(func(n: Variant) -> int: return int(n))}
+	insurance_pending = profile.get("insurance_pending", []).duplicate(true)
 	var saved_hideout: Dictionary = profile.get("hideout", {})
 	for station: String in saved_hideout:
 		hideout[station] = int(saved_hideout[station])

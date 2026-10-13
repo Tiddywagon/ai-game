@@ -5,12 +5,17 @@
 [resource]
 script = ExtResource("1_raid")
 extract_seconds = 7.0
+power_delay = 10.0
+spawn_safe_distance = 15.0
 run_through_seconds = 420.0
 run_through_xp = 200
 xp_scav_kill = 100
 xp_pmc_kill = 300
 xp_looted_item = 10
+xp_survived = 300
 xp_trick_kill = 250
 drip_trick_kill = 25
+insurance_rate = 0.1
+insurance_min_price = 1000
 search_base_seconds = 0.35
 search_seconds_per_cell = 0.25

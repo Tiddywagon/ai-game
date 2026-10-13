@@ -1,8 +1,11 @@
 extends Node3D
 ## Test level for movement, cover and combat (DESIGN.md §13). Esc / Start opens the pause menu.
 ## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC
-## (and the raid's ending doesn't touch your profile). Search the containers and bodies (F), pick up
-## loose loot, and extract at the green ring in the north-east corner (RaidController).
+## (and the raid's ending doesn't touch your profile). A raid from ENTER RAID starts at a random spawn
+## point (SpawnPoint). Search the containers and bodies (F), pick up loose loot, and extract: the
+## north-east gate is always open; the sewer manhole is open some raids; the smuggler's car takes
+## roubles; the rope over the east wall needs paracord; the power station gate needs the power switch
+## on the long wall thrown; the Scav checkpoint is for Scavs (RaidController, ExtractZone).
 ## Debug keys: F1 left leg fracture, F2 overweight, F3 next round type for the gun's caliber (adds a stack if you have none), F4 AI on/off, F5 heal (and fill energy and hydration),
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
@@ -111,13 +114,21 @@ func _on_player_died() -> void:
 		_hud.visible = false
 		var screen := DEATH_SCREEN.instantiate()
 		add_child(screen)
-		screen.show_death(_player, raid_seconds, _raid.outcome))
+		screen.show_death(_player, raid_seconds, _raid.outcome)
+		screen.continued.connect(func() -> void:
+			screen.queue_free()
+			_show_summary(_raid.outcome)))
 
 
-## Extracted or out of time: the raid result screen over the paused raid.
+## Extracted or out of time: the raid summary over the paused raid. (Killed: the death screen first,
+## then the summary.)
 func _on_raid_ended(outcome: RaidOutcome) -> void:
 	if outcome.status == RaidOutcome.Status.KILLED:
 		return  # The death screen handles that.
+	_show_summary(outcome)
+
+
+func _show_summary(outcome: RaidOutcome) -> void:
 	$InventoryLayer.close()
 	_hud.visible = false
 	get_tree().paused = true

@@ -44,6 +44,9 @@ var max_durability := 100.0
 var upgrade_level := 0
 ## Meds, food and drink: uses left, or HP left in a medkit (Consumables). Used up at 0.
 var charges := 0.0
+## Insured (DESIGN.md §2, Insurance): lost when you die or go missing, it comes back to the stash
+## (without what was inside it or loaded in it). Coming back ends the insurance.
+var insured := false
 
 
 ## A new instance of item `id` (null if there's no such item), `count` of it (capped to a stack).
@@ -290,6 +293,8 @@ func to_dict() -> Dictionary:
 		result.upgrade = upgrade_level
 	if is_part_used():
 		result.charges = snappedf(charges, 0.01)
+	if insured:
+		result.insured = true
 	return result
 
 
@@ -303,6 +308,7 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 	instance.cell = Vector2i(int(entry.get("x", 0)), int(entry.get("y", 0)))
 	instance.rotated = bool(entry.get("rotated", false))
 	instance.fir = bool(entry.get("fir", false))
+	instance.insured = bool(entry.get("insured", false))
 	instance.loaded_ammo = str(entry.get("loaded_ammo", ""))
 	instance.upgrade_level = clampi(int(entry.get("upgrade", 0)), 0, GearUpgrades.max_level(instance.data))
 	if entry.has("charges") and Consumables.is_consumable(instance.data):

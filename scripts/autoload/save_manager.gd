@@ -13,7 +13,9 @@ const SAVE_PATH := "user://savegame.json"
 ## found in raid), and adds quests and hideout station levels.
 ## Version 5 adds weapon mods and durability (older guns load with their default parts, as new).
 ## Version 6 adds Drip and trick-shot stats (older profiles start at 0).
-const SAVE_VERSION := 6
+## Version 7 adds insurance: insured items and returns waiting for room in the stash (older saves have
+## neither).
+const SAVE_VERSION := 7
 
 
 func has_save() -> bool:

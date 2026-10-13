@@ -50,6 +50,8 @@ func _load_profile() -> void:
 	if GameState.faction == GameState.Faction.NONE and SaveManager.has_save():
 		SaveManager.load_game()
 	var has_profile := GameState.faction != GameState.Faction.NONE
+	if has_profile and not GameState.insurance_pending.is_empty() and Insurance.deliver_pending() > 0:
+		SaveManager.save_game()  # Insured items that were waiting for room in the stash arrived.
 	_faction_picker.visible = not has_profile
 	_menu.visible = has_profile
 	_refresh_profile()

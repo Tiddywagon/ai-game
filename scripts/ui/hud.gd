@@ -5,8 +5,10 @@ extends CanvasLayer
 ## magazine, spare rounds, loaded ammo, reload progress), the aiming reticle and hit markers.
 ## Vision (DESIGN.md §13.6): direction markers for sounds you can't see, a white-out while blinded,
 ## time of day and weather next to the raid name, and the sight in use or the binoculars.
-## Raid (DESIGN.md §2): the time left and the extract under the raid name, an "F  Search ..." prompt
-## when a container, body or item is in reach, and a countdown while extracting.
+## Raid (DESIGN.md §2, §5): the time left under the raid name (amber in the last 5 minutes, red in the
+## last minute), every extract with whether you can use it ("open", "closed this raid", "pay 7,000 ₽",
+## "needs Paracord", "needs power"), an "F  Search ..." prompt when a container, body or item is in
+## reach, and a countdown while extracting (or why the extract you're in won't take you yet).
 ## 360 trick shots (DESIGN.md §13.4): "TRICK SHOT READY" while the window is open, a gold hit marker
 ## and a sound sting for a trick-shot hit, and a kill banner with the bonus experience and Drip.
 ## Consumables (DESIGN.md §13.7): energy and hydration bars under stamina (amber when hungry or
@@ -27,6 +29,11 @@ const MESSAGE_TIME := 2.0
 ## Indexed by CoverBox.CoverMaterial.
 const MATERIAL_NAMES := ["wood", "concrete", "metal"]
 const EXTRACT_COLOR := Color(0.45, 0.95, 0.5)
+const EXTRACT_BLOCKED_COLOR := Color(0.95, 0.72, 0.3)
+const CLOSED_COLOR := Color(0.9, 0.35, 0.3)
+## The raid clock turns amber, then red, with this many seconds left.
+const CLOCK_WARNING := 300.0
+const CLOCK_DANGER := 60.0
 const TRICK_STING := preload("res://assets/audio/sfx/trick_sting.wav")
 ## How long the trick-shot kill banner stays up.
 const BANNER_TIME := 2.6
@@ -125,18 +132,43 @@ func _update_raid_info() -> void:
 	_update_raid_clock()
 
 
-## The raid name line, plus the time left and where to extract.
+## The raid name line and the time left, and the extract list.
 func _update_raid_clock() -> void:
 	if _raid == null:
 		_raid = get_tree().get_first_node_in_group("raid_controller") as RaidController
 	var text := _raid_line
+	var color := NORMAL_COLOR
 	if _raid:
 		var seconds := ceili(_raid.time_left)
-		var zones := get_tree().get_nodes_in_group("extract_zones")
-		text += "\n%d:%02d LEFT  ·  EXTRACT: %s" % [seconds / 60, seconds % 60,
-			", ".join(zones.map(func(zone: Node) -> String: return zone.extract_name.to_upper())) if not zones.is_empty() else "NONE"]
+		text += "\n%d:%02d LEFT" % [seconds / 60, seconds % 60]
+		if _raid.time_left <= CLOCK_DANGER:
+			color = CLOSED_COLOR
+		elif _raid.time_left <= CLOCK_WARNING:
+			color = EXTRACT_BLOCKED_COLOR
 	if %RaidInfo.text != text:
 		%RaidInfo.text = text
+	%RaidInfo.add_theme_color_override("font_color", color)
+	var list := extract_list_text()
+	if %ExtractList.text != list:
+		%ExtractList.text = list
+
+
+## The extract list (BBCode): "EXTRACTS", then each extract's name and status, green when you can use
+## it, amber while a condition isn't met, red when it's closed to you.
+func extract_list_text() -> String:
+	var zones := get_tree().get_nodes_in_group("extract_zones")
+	if zones.is_empty() or _raid == null:
+		return ""
+	var lines := ["[right][b]EXTRACTS[/b]"]
+	for zone: ExtractZone in zones:
+		var status := zone.status_text(player)
+		var color := EXTRACT_COLOR
+		if not zone.open or not zone.allows_side(_raid.side()):
+			color = CLOSED_COLOR
+		elif status != "open":
+			color = EXTRACT_BLOCKED_COLOR
+		lines.append("[color=#%s]%s  ·  %s[/color]" % [color.to_html(false), zone.extract_name, status])
+	return "\n".join(lines) + "[/right]"
 
 
 ## The F prompt, the extract countdown and TRICK SHOT READY.
@@ -149,9 +181,14 @@ func _update_raid_prompts() -> void:
 	if target:
 		_prompt.text = "%s   %s" % [Settings.key_label("interact"), target.interact_text()]
 	var left := _raid.extract_remaining() if _raid else -1.0
-	_extract.visible = left >= 0.0
+	var blocked := _raid.extract_block() if _raid else ""
+	_extract.visible = left >= 0.0 or blocked != ""
 	if left >= 0.0:
 		_extract.text = "EXTRACTING  %.1f" % left
+		_extract.add_theme_color_override("font_color", EXTRACT_COLOR)
+	elif blocked != "":
+		_extract.text = "CAN'T EXTRACT: %s" % blocked.to_upper()
+		_extract.add_theme_color_override("font_color", EXTRACT_BLOCKED_COLOR)
 
 
 func _on_trick_shot_ready() -> void:

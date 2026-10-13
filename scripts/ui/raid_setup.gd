@@ -1,6 +1,7 @@
 extends MenuScreen
-## ENTER RAID flow (DESIGN.md §16.3): map select, then PMC or Scav, then a loadout check, then the
-## loading screen. Back (or Esc / B) steps back; from the map list it returns to the main menu.
+## ENTER RAID flow (DESIGN.md §16.3): map select, then PMC or Scav, then a loadout check (with
+## INSURE GEAR for a PMC: Insurance), then the loading screen. Back (or Esc / B) steps back; from the
+## map list it returns to the main menu.
 
 enum Step { MAP, SIDE, LOADOUT }
 
@@ -13,6 +14,8 @@ var _map: MapInfo
 var _side := "pmc"
 var _loadout: Inventory
 var _map_buttons: Array[Button] = []
+var _insure: Button
+var _insure_note: Label
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]
 @onready var _step_labels: Array[Label] = [%MapStepLabel, %SideStepLabel, %LoadoutStepLabel]
@@ -43,6 +46,16 @@ func _ready() -> void:
 	%ScavButton.focus_entered.connect(_choose_side.bind("scav", false))
 	%BackButton.pressed.connect(_on_cancel)
 	_next.pressed.connect(_on_next)
+	_insure = Button.new()
+	_insure.name = "InsureButton"
+	_insure.custom_minimum_size = Vector2(0, 44)
+	_insure.pressed.connect(_insure_gear)
+	%GearGrid.get_parent().add_child(_insure)
+	_insure_note = Label.new()
+	_insure_note.theme_type_variation = &"DimLabel"
+	_insure_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_insure_note.custom_minimum_size.x = 560
+	%GearGrid.get_parent().add_child(_insure_note)
 	var first_playable := _maps.find_custom(func(map: MapInfo) -> bool: return map.is_playable())
 	_select_map(_maps[maxi(first_playable, 0)])
 	_show_step(Step.MAP)
@@ -112,6 +125,8 @@ func _show_loadout() -> void:
 		var text := "—"
 		if item:
 			text = item.data.display_name
+			if item.insured:
+				text += "  · insured"
 			if item.contents:
 				text += "  (%s)" % _contents_text(item.contents)
 		_add_row(gear, slot[1], text, Palette.rarity_color(item.data.rarity) if item else Color(1, 1, 1, 0.35))
@@ -148,10 +163,38 @@ func _show_loadout() -> void:
 			elif gun.durability < gun.data.weapon.malfunction_threshold:
 				checks.append("Your %s is worn (%d / %d): it may jam. Repair it in the modding screen." % [gun.data.display_name,
 					roundi(gun.durability), roundi(gun.max_durability)])
-		checks.append("If you die, everything you bring is lost.")
+		checks.append("If you die, everything you bring is lost, except your secure container and insured gear.")
 	%Checks.text = "\n".join(checks.map(func(line: String) -> String: return "•  " + line))
 	%Checks.add_theme_color_override("font_color", WARNING_COLOR if _side == "pmc" else MenuEntryButton.TEXT)
 	%RaidSummary.text = "%s  ·  %d min  ·  %s" % [_map.display_name, _map.raid_minutes, "PMC" if _side == "pmc" else "Scav"]
+	_update_insurance()
+
+
+## INSURE GEAR: insures every insurable item you'd take that isn't yet (in the profile, which the
+## loadout is a copy of), for its price; or says everything is.
+func _update_insurance() -> void:
+	_insure.visible = _side == "pmc"
+	_insure_note.visible = _side == "pmc"
+	if _side != "pmc":
+		return
+	var uninsured := Insurance.uninsured(GameState.inventory)
+	var cost := Insurance.total_price(uninsured)
+	if uninsured.is_empty():
+		_insure.text = "ALL GEAR INSURED"
+		_insure.disabled = true
+	else:
+		_insure.text = "INSURE GEAR  ·  %d item%s  ·  %s" % [uninsured.size(), "" if uninsured.size() == 1 else "s", UiFormat.money(cost)]
+		_insure.disabled = GameState.roubles < cost
+	_insure.tooltip_text = "You have %s" % UiFormat.money(GameState.roubles)
+	_insure_note.text = "Insured gear you lose comes back to your stash after the raid (guns with their parts, rigs and backpacks empty). %d%% of an item's value, at least %s each." % [
+		roundi(Insurance.CONFIG.insurance_rate * 100.0), UiFormat.money(Insurance.CONFIG.insurance_min_price)]
+
+
+func _insure_gear() -> void:
+	if Insurance.insure(Insurance.uninsured(GameState.inventory)) == "":
+		SaveManager.save_game()
+	_loadout = GameState.pmc_loadout()
+	_show_loadout()
 
 
 ## "Bandage, 5.45x39 PS ×60" or "empty".

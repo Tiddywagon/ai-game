@@ -38,6 +38,8 @@
 [ext_resource type="Resource" path="res://data/loot_tables/containers/server_rack.tres" id="67_rack"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/drawer.tres" id="68_drawer"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/medical_crate.tres" id="69_medcrate"]
+[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="70_spawn"]
+[ext_resource type="Script" path="res://scripts/world/power_switch.gd" id="71_power"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -246,6 +248,32 @@ patrol_points = PackedVector3Array(16, 0, -12, 16, 0, -2)
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -12, 0, -12)
 profile = ExtResource("8_pmc")
 
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="SouthPocket" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-14, 0, 17)
+script = ExtResource("70_spawn")
+
+[node name="SouthYard" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-4, 0, 14)
+script = ExtResource("70_spawn")
+
+[node name="WestFence" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-16, 0, 8)
+script = ExtResource("70_spawn")
+
+[node name="EastYard" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(15, 0, 1)
+script = ExtResource("70_spawn")
+
+[node name="Centre" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-1, 0, -6)
+script = ExtResource("70_spawn")
+
+[node name="NorthAlley" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-4, 0, -18)
+script = ExtResource("70_spawn")
+
 [node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("17_raid")
 player = NodePath("../Player")
@@ -254,6 +282,46 @@ player = NodePath("../Player")
 position = Vector3(17, 0, -17)
 script = ExtResource("18_extract")
 extract_name = "North-east gate"
+
+[node name="ExtractManhole" type="Area3D" parent="."]
+position = Vector3(0.5, 0, 17)
+script = ExtResource("18_extract")
+extract_name = "Sewer manhole"
+radius = 1.5
+chance = 0.5
+
+[node name="ExtractCar" type="Area3D" parent="."]
+position = Vector3(-16.5, 0, -3.5)
+script = ExtResource("18_extract")
+extract_name = "Smuggler's car"
+radius = 2.0
+price = 7000
+
+[node name="ExtractRope" type="Area3D" parent="."]
+position = Vector3(18, 0, 15)
+script = ExtResource("18_extract")
+extract_name = "Rope over the east wall"
+radius = 1.5
+required_item = "paracord"
+consumes_item = true
+
+[node name="ExtractPower" type="Area3D" parent="."]
+position = Vector3(-18, 0, -18)
+script = ExtResource("18_extract")
+extract_name = "Power station gate"
+radius = 1.6
+needs_power = true
+
+[node name="ExtractScav" type="Area3D" parent="."]
+position = Vector3(17, 0, 9)
+script = ExtResource("18_extract")
+extract_name = "Scav checkpoint"
+radius = 1.6
+sides = "Scav"
+
+[node name="PowerSwitch" type="Node3D" parent="."]
+position = Vector3(10, 0, -6.33)
+script = ExtResource("71_power")
 
 [node name="Loot" type="Node3D" parent="Navigation"]
 
@@ -411,7 +479,7 @@ theme_override_colors/font_color = Color(0.85, 0.85, 0.75, 0.75)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 14
-text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Tab inventory  ·  F search / pick up  ·  extract: green ring, north-east  ·  Esc pause"
+text = "Test level  ·  F1 leg fracture  ·  F2 overweight  ·  F3 ammo  ·  F4 AI  ·  F5 heal  ·  F6 sight  ·  F7 time  ·  F8 weather  ·  F9 flashbang  ·  F10 vision off  ·  Tab inventory  ·  F search / pick up  ·  extracts: list top right  ·  Esc pause"
 
 [node name="PlayerVision" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("12_vision")

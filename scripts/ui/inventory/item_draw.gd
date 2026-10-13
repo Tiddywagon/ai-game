@@ -4,8 +4,9 @@ extends RefCounted
 ## its icon (turned when the item is), a name strip, the stack count and the rarity letter, so colour is
 ## never the only cue, the found-in-raid checkmark in the bottom-right corner (faded while it's only
 ## pending, during a raid) and a gold "+N" for upgraded gear. Meds with several uses show the uses
-## left ("2/3") and medkits their HP left, where a stack shows its count (not on tiny icons). Used by grids, equipment slots,
-## the drag preview and item lists.
+## left ("2/3") and medkits their HP left, where a stack shows its count (not on tiny icons). Insured
+## gear has a blue corner in the top right. Used by grids, equipment slots, the drag preview and item
+## lists.
 
 const TEXT_COLOR := Color(0.92, 0.91, 0.86)
 const NAME_STRIP := 18.0
@@ -15,6 +16,9 @@ const FIR_COLOR := Color(0.93, 0.96, 0.86)
 const FIR_PENDING_ALPHA := 0.35
 ## The "+N" of an upgraded item.
 const UPGRADE_COLOR := Color(1.0, 0.82, 0.35)
+## The corner of insured gear, and its size.
+const INSURED_COLOR := Color(0.35, 0.65, 1.0)
+const INSURED_SIZE := 11.0
 
 
 static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bool, alpha := 1.0, count := -1) -> void:
@@ -40,6 +44,10 @@ static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bo
 	if item.upgrade_level > 0:
 		canvas.draw_string(font, rect.position + Vector2(0, rect.size.y - 5), "+%d" % item.upgrade_level, HORIZONTAL_ALIGNMENT_CENTER,
 			rect.size.x, 12, Color(UPGRADE_COLOR, alpha))
+	if item.insured:
+		var corner_at := rect.position + Vector2(rect.size.x - 2.0, 2.0)
+		canvas.draw_colored_polygon(PackedVector2Array([corner_at, corner_at + Vector2(-INSURED_SIZE, 0), corner_at + Vector2(0, INSURED_SIZE)]),
+			Color(INSURED_COLOR, alpha))
 	var marked := has_fir_mark(item)
 	if marked:
 		draw_fir_mark(canvas, fir_mark_rect(rect), item.fir_pending and not item.fir, alpha)
@@ -100,6 +108,8 @@ static func tooltip(item: ItemInstance) -> String:
 	var needed := ItemUses.summary(item.data.id)
 	if needed != "":
 		lines.append("Needed for: " + needed)
+	if item.insured:
+		lines.append("Insured")
 	if has_fir_mark(item):
 		lines.append(FoundInRaid.status_text(item))
 	lines.append("Right-click: examine" + ("  ·  Double-click: open" if item.contents else ""))

@@ -15,6 +15,8 @@ extends PanelContainer
 ## Barter goods and valuables show their group and tags (DESIGN.md §6.5). Anything a quest, hideout
 ## upgrade, barter, craft or gear upgrade takes shows "Needed for" with a summary; hover it for the
 ## full list (ItemUses).
+## Gear that can be insured (Insurance) says whether it is; out of raid INSURE insures it for its
+## price.
 ## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
@@ -47,6 +49,7 @@ var _chart: AmmoChart
 var _unload: Button
 var _modify: Button
 var _upgrade: Button
+var _insure: Button
 var _use: Button
 var _parts: VBoxContainer
 
@@ -136,6 +139,11 @@ func _ready() -> void:
 	_upgrade.tooltip_text = "Raise its level at the Workbench or Ragman: more durability, room or hearing"
 	_upgrade.pressed.connect(func() -> void: upgrade_requested.emit(item))
 	buttons.add_child(_upgrade)
+	_insure = Button.new()
+	_insure.name = "InsureButton"
+	_insure.custom_minimum_size = Vector2(120, 36)
+	_insure.pressed.connect(_on_insure)
+	buttons.add_child(_insure)
 	var close_button := Button.new()
 	close_button.text = "CLOSE"
 	close_button.custom_minimum_size = Vector2(120, 36)
@@ -180,6 +188,12 @@ func show_item(examined: ItemInstance) -> void:
 	_unload.visible = item.rounds_loaded() > 0
 	_modify.visible = can_modify and item.is_gun()
 	_upgrade.visible = can_modify and GearUpgrades.is_upgradable(data)
+	_insure.visible = can_modify and Insurance.is_insurable(item) and not item.insured
+	if _insure.visible:
+		var cost := Insurance.price(item)
+		_insure.text = "INSURE  %s" % UiFormat.money(cost)
+		_insure.disabled = GameState.roubles < cost
+		_insure.tooltip_text = "If you die or go missing with it, it comes back to your stash" if not _insure.disabled else "Not enough roubles"
 	_use.visible = use_check.is_valid() and Consumables.is_consumable(data)
 	if _use.visible:
 		var reason: String = use_check.call(item)
@@ -195,6 +209,12 @@ func show_item(examined: ItemInstance) -> void:
 		_chart.show_caliber(str(data.stats.get("caliber", "")), data.id)
 	show()
 	_fit.call_deferred()
+
+
+func _on_insure() -> void:
+	if Insurance.insure([item]) == "":
+		SaveManager.save_game()
+	show_item(item)
 
 
 ## A helmet's face shield and headset slots: what's fitted, with TAKE OFF out of raid.
@@ -477,6 +497,8 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Inside", "nothing" if inside.items.is_empty() else "%d items, %s" % [inside.items.size(), Settings.format_weight(inside.weight())]])
 		if stats.get("secure", false):
 			lines.append(["Secure", "Kept when you die. No rigs, backpacks or other containers"])
+	if Insurance.is_insurable(examined):
+		lines.append(["Insurance", "Insured: comes back to your stash if you lose it" if examined.insured else "Not insured (%s)" % UiFormat.money(Insurance.price(examined))])
 	var needed := ItemUses.summary(data.id)
 	if needed != "":
 		lines.append(["Needed for", needed + "  (hover for the list)", ItemUses.tooltip(data.id)])

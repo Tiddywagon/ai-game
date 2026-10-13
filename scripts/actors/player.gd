@@ -461,11 +461,13 @@ func _update_focus() -> void:
 	focused_interactable = null
 	if is_dead:
 		return
-	var best := INTERACT_RANGE
+	var best := INF
 	for node: Node3D in get_tree().get_nodes_in_group("interactables"):
 		var offset := node.global_position - global_position
 		var distance := Vector2(offset.x, offset.z).length()
-		if distance <= best and node.can_interact(self):
+		# Most things are in reach within INTERACT_RANGE; big ones (an extract zone) say how far.
+		var reach: float = node.interact_reach() if node.has_method("interact_reach") else INTERACT_RANGE
+		if distance <= reach and distance < best and node.can_interact(self):
 			best = distance
 			focused_interactable = node
 
