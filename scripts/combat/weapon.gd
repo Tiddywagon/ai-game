@@ -54,6 +54,8 @@ var stance_bloom := 0.0
 var recoil_control := 0.0
 ## Recoil ×, from the holder's stims (DESIGN.md §13.7). The holder sets it every tick.
 var recoil_multiplier := 1.0
+## Reload and jam-clearing speed ×, from the holder's stims (DESIGN.md §13.8).
+var reload_speed := 1.0
 ## 360 trick shot (DESIGN.md §13.4): the next shot deals the gun's trick-shot bonus damage. Set by the
 ## holder when a trick window opens; the first shot uses it up.
 var trick_armed := false
@@ -295,11 +297,11 @@ func _physics_process(delta: float) -> void:
 		else:
 			stance_bloom = maxf(stance_bloom - data.bloom_recovery * delta, _stance_target)
 	if is_reloading:
-		_reload_left -= delta
+		_reload_left -= delta * reload_speed
 		if _reload_left <= 0.0:
 			_finish_reload()
 	if is_clearing:
-		_clear_left -= delta
+		_clear_left -= delta * reload_speed
 		if _clear_left <= 0.0:
 			_finish_clearing()
 	_model.position.z = move_toward(_model.position.z, 0.0, KICK_RETURN * delta)

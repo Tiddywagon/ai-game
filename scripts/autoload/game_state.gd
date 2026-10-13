@@ -18,7 +18,7 @@ const SKILLS := [
 	["strength", "Strength"], ["endurance", "Endurance"], ["vitality", "Vitality"],
 	["metabolism", "Metabolism"], ["search", "Search"], ["assault_rifles", "Assault rifles"], ["pistols", "Pistols"],
 	["bolt_action_rifles", "Bolt-action rifles"], ["marksman_rifles", "Marksman rifles"], ["smgs", "SMGs"],
-	["shotguns", "Shotguns"], ["lmgs", "Machine guns"],
+	["shotguns", "Shotguns"], ["lmgs", "Machine guns"], ["stim_resistance", "Stim resistance"],
 ]
 ## What a new character has in the stash (DESIGN.md §16.4). The worn kit is Inventory.starter().
 const STARTER_STASH := [

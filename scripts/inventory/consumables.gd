@@ -10,7 +10,9 @@ extends RefCounted
 ##   "blacked" (surgery: "restore" share of max HP back, "max_hp_loss" share of max HP gone for the
 ##   raid); "pain" is descriptive (painkillers work through their effect). A medkit pays "costs"
 ##   ({condition: HP}) from its pool for each condition, then heals the part's missing HP from what's left.
-## - "effects": timed effects ({"kind", "value", "duration", "delay", "side"}, BodyHealth.EFFECT_KINDS).
+## - "effects": timed effects ({"kind", "value", "duration", "delay", "side"}; kinds in Stims.effect_kinds()).
+##   Stims ("type": "stim") go through Stims.inject(): side effects shortened by Stim resistance, and
+##   Overdose when too many are taken too fast (DESIGN.md §13.8).
 ## - "energy", "hydration": added at once (negative for side effects).
 ## - "move": walking speed while using it (else ConsumablesConfig.use_move_multiplier).
 ##
@@ -116,13 +118,25 @@ static func apply(item: ItemInstance, health: BodyHealth, part := -1) -> Diction
 	if result.part >= 0:
 		result = _treat(item, health, result.part, true)
 	var data := item.data
-	for effect: Dictionary in data.stats.get("effects", []):
-		health.add_effect(str(effect.kind), float(effect.get("value", 0.0)), float(effect.get("duration", 0.0)),
-			float(effect.get("delay", 0.0)), bool(effect.get("side", false)), data.id)
+	var injected := {}
+	if Stims.is_stim(data):
+		injected = Stims.inject(data, health)
+	else:
+		for effect: Dictionary in data.stats.get("effects", []):
+			health.add_effect(str(effect.kind), float(effect.get("value", 0.0)), float(effect.get("duration", 0.0)),
+				float(effect.get("delay", 0.0)), bool(effect.get("side", false)), data.id)
 	health.feed(float(data.stats.get("energy", 0.0)), float(data.stats.get("hydration", 0.0)))
 	item.charges = maxf(item.charges - float(result.spent), 0.0)
 	result.used_up = item.charges < (1.0 if is_medkit(data) else 0.5)
 	result.text = summary(item, result)
+	if not injected.is_empty():
+		result.overdose = injected.overdose
+		if Stims.buff_delay(data) > 0.0:
+			result.text += "  ·  kicks in in %d s" % roundi(Stims.buff_delay(data))
+		if injected.overdose:
+			result.text += "  ·  OVERDOSE (%d stims in %d min)" % [injected.count, roundi(float(Stims.config().overdose.window) / 60.0)]
+		if int(injected.levels) > 0:
+			result.text += "  ·  Stim resistance level %d" % Skills.level(Stims.RESISTANCE)
 	result.levels = 0
 	if health.metabolism and data.category == ItemData.Category.FOOD:
 		result.levels = train_metabolism(data)
@@ -164,7 +178,7 @@ static func summary(item: ItemInstance, result: Dictionary) -> String:
 		if amount != 0.0:
 			parts.append("%+d %s" % [roundi(amount), key])
 	for effect: Dictionary in data.stats.get("effects", []):
-		if not effect.get("side", false) and float(effect.get("delay", 0.0)) <= 0.0:
+		if not effect.get("side", false) and float(effect.get("delay", 0.0)) <= Stims.buff_delay(data):
 			var label := BodyHealth.effect_label(str(effect.kind), float(effect.get("value", 0.0)))
 			parts.append(label.left(1).to_lower() + label.substr(1))
 	return "%s: %s%s" % [data.display_name, ", ".join(parts) if not parts.is_empty() else "done", where]

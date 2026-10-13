@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/lab_cabinet.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "lab_cabinet"
+display_name = "Lab cabinet"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(4, 3)
+search_time = 1.2
+look = 12
+box_size = Vector3(0.9, 1.6, 0.5)
+color = Color(0.6, 0.66, 0.7, 1)
+solid = true
+cover_material = 2

@@ -293,6 +293,15 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	return inventory
 
 
+## Rolls `table` (LootTable.roll_items()) into the backpack, rig and pockets, wherever it fits: a boss's
+## extra loot (BotProfile.extra_loot). What doesn't fit is skipped.
+func add_loot(table: LootTable, rng: RandomNumberGenerator = null) -> void:
+	if rng == null:
+		rng = RandomNumberGenerator.new()
+	for item in table.roll_items(rng):
+		add(item)
+
+
 ## A gun with its default parts and a full magazine of `ammo` (not found in raid), at `durability`.
 static func loaded_gun(id: String, ammo: String, durability := 100.0) -> ItemInstance:
 	var gun := ItemInstance.create(id)
@@ -330,5 +339,8 @@ static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
 	for id in ["car_medkit", "salewa", "morphine", "wrist_watch", "hard_drive", "ssd_drive", "condensed_milk", "cigarettes"]:
 		if rng.randf() < 0.2:
 			pack.contents.add(ItemInstance.create(id))
+	if rng.randf() < 0.3:
+		var stims := ["adrenaline", "caffeine_injector", "glucose_shot", "coagulant_pen", "propital"]
+		rig.contents.add(ItemInstance.create(stims[rng.randi() % stims.size()]))
 	inventory.equip("backpack", pack)
 	return inventory

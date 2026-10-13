@@ -4,8 +4,8 @@ extends CharacterBody3D
 ## hitbox, health and shooting. Subclasses decide what to do in _think(); Actor carries it out.
 ## The gun is a Weapon node ($Body/Gun) whose stats come from the gun item's WeaponData. Health is a
 ## BodyHealth (seven body parts, bleeds, fractures, pain); bullets hit the part where they land.
-## Its timed effects (stims, painkillers, food; DESIGN.md §13.7) and hunger and thirst change max
-## stamina, stamina recovery, speed, sway and recoil here.
+## Its timed effects (stims, painkillers, food; DESIGN.md §13.7, §13.8) and hunger and thirst change
+## max stamina, stamina recovery, speed, carry weight, sway, recoil, reload speed, noise and vision here.
 ## Vision (DESIGN.md §13.6): subclasses say which cones they see with (vision_cones()); VisionSystem
 ## applies light and weather and traces the sight lines.
 
@@ -180,6 +180,7 @@ func _physics_process(delta: float) -> void:
 	if health.metabolism:
 		health.exertion = metabolism_exertion()
 	weapon.recoil_multiplier = health.recoil_multiplier()
+	weapon.reload_speed = health.reload_multiplier()
 	stamina = minf(stamina, stamina_cap())
 	_think(delta)
 	_roll_cooldown = maxf(_roll_cooldown - delta, 0.0)
@@ -193,6 +194,7 @@ func _physics_process(delta: float) -> void:
 	_update_facing(delta)
 	weapon.set_stance(speed_ratio(), move_state == Move.SPRINT, is_rolling, aim_blend())
 	_update_firing()
+	noise_radius *= health.noise_multiplier()
 	_update_footsteps(delta)
 
 
@@ -205,12 +207,17 @@ func set_crouching(value: bool) -> void:
 
 ## Overweight (DESIGN.md §7): no sprinting or rolling, and slow.
 func is_overweight() -> bool:
-	return carried_weight_kg >= inventory_config.overweight_kg
+	return load_weight() >= inventory_config.overweight_kg
 
 
 ## Carrying enough to slow down a little and tire faster.
 func is_encumbered() -> bool:
-	return carried_weight_kg > inventory_config.encumbered_kg
+	return load_weight() > inventory_config.encumbered_kg
+
+
+## The weight that counts against the thresholds: what you carry, less what stims let you carry.
+func load_weight() -> float:
+	return maxf(carried_weight_kg - health.carry_bonus(), 0.0)
 
 
 ## Why a roll isn't possible right now, or "" if it is.
@@ -246,7 +253,7 @@ func try_roll(direction: Vector3) -> bool:
 	stamina -= config.roll_stamina_cost
 	_regen_cooldown = regen_delay
 	rotation.y = _yaw_toward(_roll_direction)
-	NoiseSystem.emit_noise(global_position, config.roll_noise, self, &"roll")
+	NoiseSystem.emit_noise(global_position, config.roll_noise * health.noise_multiplier(), self, &"roll")
 	return true
 
 
@@ -502,8 +509,13 @@ func has_light_on() -> bool:
 	return false
 
 
-## Pain and head injuries narrow the vision cone (DESIGN.md §13.6), and so do Exhaustion and
-## Dehydration (§13.7).
+## Vision range ×: further on some stims (DESIGN.md §13.8).
+func status_range_multiplier() -> float:
+	return health.vision_range_multiplier()
+
+
+## Pain and head injuries narrow the vision cone (DESIGN.md §13.6), and so do Exhaustion,
+## Dehydration (§13.7) and blurred vision (§13.8).
 func status_cone_multiplier() -> float:
 	var multiplier := health.vision_multiplier()
 	if health.has_pain():
@@ -607,7 +619,7 @@ func _step_free(delta: float) -> void:
 
 	if injured_legs:
 		speed *= health_config.injured_leg_speed
-	speed *= _move_multiplier() * inventory_config.speed_multiplier(carried_weight_kg) * health.speed_multiplier()
+	speed *= _move_multiplier() * inventory_config.speed_multiplier(load_weight()) * health.speed_multiplier()
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(move_input * speed, acceleration * delta)
 	velocity = Vector3(horizontal.x, velocity.y, horizontal.z)
 	_apply_gravity(delta)
@@ -677,7 +689,7 @@ func _apply_gravity(delta: float) -> void:
 
 func _update_stamina(sprinting: bool, delta: float) -> void:
 	if sprinting:
-		stamina = maxf(stamina - sprint_cost * inventory_config.stamina_multiplier(carried_weight_kg) * delta, 0.0)
+		stamina = maxf(stamina - sprint_cost * inventory_config.stamina_multiplier(load_weight()) * health.sprint_cost_multiplier() * delta, 0.0)
 		_regen_cooldown = regen_delay
 	elif _regen_cooldown > 0.0:
 		_regen_cooldown -= delta

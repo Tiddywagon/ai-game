@@ -9,5 +9,6 @@ rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
 rarity_multipliers = PackedFloat32Array(0.8, 1.1, 1.3, 1.5, 1, 1)
 categories = Array[int]([])
 items = PackedStringArray("bandage", "army_bandage", "tourniquet", "cat_tourniquet", "calok_b", "splint", "alu_splint", "painkillers", "ibuprofen", "ai2_medkit", "car_medkit", "salewa", "ifak", "afak", "grizzly", "surgical_kit", "surv12", "morphine", "adrenaline", "propital", "l1_injector", "three_btg", "zagustin", "sj6", "etg_c", "obdolbos", "medical_tools")
+types = PackedStringArray("stim")
 item_weights = {}
 item_count = Vector2i(1, 3)

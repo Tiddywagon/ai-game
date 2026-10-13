@@ -17,23 +17,28 @@
       {"level": 1, "roubles": 30000, "requires": [{"item": "bandage", "count": 2}],
         "crafts": [
           {"id": "medkit", "inputs": [{"item": "bandage", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "ai2_medkit", "count": 1}},
-          {"id": "army_bandage", "inputs": [{"item": "bandage", "count": 2}, {"item": "soap", "count": 1}], "output": {"item": "army_bandage", "count": 1}}
+          {"id": "army_bandage", "inputs": [{"item": "bandage", "count": 2}, {"item": "soap", "count": 1}], "output": {"item": "army_bandage", "count": 1}},
+          {"id": "glucose_shot", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "sugar", "count": 1}], "output": {"item": "glucose_shot", "count": 1}},
+          {"id": "caffeine_injector", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "coffee", "count": 1}], "output": {"item": "caffeine_injector", "count": 1}}
         ]},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bandage", "count": 2, "fir": true}, {"item": "tourniquet", "count": 1, "fir": true}, {"item": "toothpaste", "count": 1, "fir": true}, {"item": "soap", "count": 1, "fir": true}],
         "crafts": [
           {"id": "surgical_kit", "inputs": [{"item": "ai2_medkit", "count": 2}, {"item": "painkillers", "count": 1}], "output": {"item": "surgical_kit", "count": 1}},
           {"id": "calok_b", "inputs": [{"item": "medical_tools", "count": 1}, {"item": "army_bandage", "count": 2}], "output": {"item": "calok_b", "count": 1}},
           {"id": "salewa", "inputs": [{"item": "car_medkit", "count": 1}, {"item": "cat_tourniquet", "count": 1}, {"item": "army_bandage", "count": 1}], "output": {"item": "salewa", "count": 1}},
-          {"id": "morphine", "inputs": [{"item": "painkillers", "count": 2}, {"item": "medical_tools", "count": 1}], "output": {"item": "morphine", "count": 1}}
+          {"id": "morphine", "inputs": [{"item": "painkillers", "count": 2}, {"item": "medical_tools", "count": 1}], "output": {"item": "morphine", "count": 1}},
+          {"id": "electrolyte_booster", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "sugar", "count": 1}], "output": {"item": "electrolyte_booster", "count": 1}},
+          {"id": "coagulant_pen", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "army_bandage", "count": 1}], "output": {"item": "coagulant_pen", "count": 1}},
+          {"id": "bonelock", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "splint", "count": 1}, {"item": "painkillers", "count": 1}], "output": {"item": "bonelock", "count": 1}},
+          {"id": "adrenaline", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "medical_tools", "count": 1}], "output": {"item": "adrenaline", "count": 1}}
         ]},
       {"level": 3, "roubles": 150000, "stations": {"generator": 2}, "requires": [{"item": "medical_tools", "count": 2, "fir": true}, {"item": "toothpaste", "count": 3, "fir": true}, {"item": "soap", "count": 2, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}],
         "crafts": [
           {"id": "afak", "inputs": [{"item": "salewa", "count": 1}, {"item": "calok_b", "count": 1}, {"item": "medical_tools", "count": 1, "fir": true}], "output": {"item": "afak", "count": 1}},
-          {"id": "propital", "inputs": [{"item": "morphine", "count": 1}, {"item": "medical_tools", "count": 1, "fir": true}], "output": {"item": "propital", "count": 1}},
           {"id": "surv12", "inputs": [{"item": "surgical_kit", "count": 1}, {"item": "alu_splint", "count": 1}, {"item": "medical_tools", "count": 2, "fir": true}], "output": {"item": "surv12", "count": 1}},
           {"id": "grizzly", "inputs": [{"item": "afak", "count": 1}, {"item": "salewa", "count": 1}, {"item": "alu_splint", "count": 1}, {"item": "medical_tools", "count": 2, "fir": true}], "output": {"item": "grizzly", "count": 1}},
-          {"id": "etg_c", "inputs": [{"item": "propital", "count": 2}, {"item": "medical_tools", "count": 2, "fir": true}, {"item": "gold_coin", "count": 1, "fir": true}], "output": {"item": "etg_c", "count": 1}},
-          {"id": "obdolbos", "inputs": [{"item": "moonshine", "count": 1, "fir": true}, {"item": "sj6", "count": 1}, {"item": "three_btg", "count": 1}], "output": {"item": "obdolbos", "count": 1}}
+          {"id": "packmule", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 2}, {"item": "medical_tools", "count": 1}], "output": {"item": "packmule", "count": 1}},
+          {"id": "hawkeye", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "medical_tools", "count": 1, "fir": true}], "output": {"item": "hawkeye", "count": 1}}
         ]}
     ]
   },

@@ -1,0 +1,31 @@
+{
+  "_comment": "Stimulant tuning (DESIGN.md §13.8). The stims themselves (buffs, delay, side effects) are items in data/items/meds/stims.json. effects: every effect kind the game knows, with its name and unit (\"\" no value, \"%\" share, \"°\" degrees, \"#\" plain number, \"kg\", \"/min\", \"HP/s\", \"HP/s each part\") and the colour of its HUD icon ring. overdose: injecting `threshold` or more stims within `window` seconds starts an Overdose for `duration` seconds (HP drain from every body part, tremor, blurred vision), each stim past the threshold `extra_per_stim` × worse. resistance: the Stim resistance skill shortens side effects by `per_level` a level up to `max`; injecting a stim earns `points_by_rarity` (Common .. Legendary) skill points. limb_restore_max_hp_loss: share of max HP a limb loses when a stim restores it.",
+  "effects": {
+    "painkiller": {"name": "Painkiller", "unit": "", "about": "No pain; broken or blacked legs can sprint and roll"},
+    "regen": {"name": "Regeneration", "unit": "HP/s each part", "about": "Every damaged body part (not blacked ones) heals this much a second"},
+    "hemostatic": {"name": "Hemostatic", "unit": "", "about": "Bleeds do no damage (they don't stop)"},
+    "bleed_prevention": {"name": "Bleed prevention", "unit": "", "about": "Hits start no new bleeds"},
+    "fracture_prevention": {"name": "Fracture prevention", "unit": "", "about": "Hits break no bones"},
+    "limb_restore": {"name": "Limb restoration", "unit": "%", "about": "When it starts, every blacked limb and the stomach come back at this share of their max HP, losing some max HP"},
+    "stamina": {"name": "Max stamina", "unit": "#", "about": "Extra stamina points"},
+    "stamina_regen": {"name": "Stamina recovery", "unit": "%", "about": "How fast stamina comes back"},
+    "carry_weight": {"name": "Carry weight", "unit": "kg", "about": "Weight you can carry before slowing down or being overweight"},
+    "speed": {"name": "Speed", "unit": "%", "about": "Move speed"},
+    "recoil": {"name": "Recoil", "unit": "%", "about": "Recoil of every shot (negative: less)"},
+    "sway": {"name": "Steady hands", "unit": "°", "about": "Weapon sway (negative: steadier)"},
+    "reload_speed": {"name": "Reload speed", "unit": "%", "about": "How fast reloads and jam clearing go"},
+    "vision_range": {"name": "Vision range", "unit": "%", "about": "How far your vision cone reaches"},
+    "noise": {"name": "Noise", "unit": "%", "about": "How far your footsteps and rolls are heard (negative: quieter)"},
+    "energy_rate": {"name": "Energy", "unit": "/min", "about": "Energy gained (or lost) a minute"},
+    "hydration_rate": {"name": "Hydration", "unit": "/min", "about": "Hydration gained (or lost) a minute"},
+    "tremor": {"name": "Tremor", "unit": "°", "about": "Extra weapon sway"},
+    "blur": {"name": "Blurred vision", "unit": "%", "about": "The view blurs and the vision cone narrows"},
+    "fatigue": {"name": "Fatigue", "unit": "%", "about": "The requested 'exhaustion' effect (named Fatigue so it isn't confused with the 0-energy Exhaustion status): stamina recovers this much slower and sprinting costs this much more"},
+    "toxin": {"name": "Toxicity", "unit": "HP/s", "about": "HP lost a second from the stomach (spreads once it's blacked)"},
+    "hp_drain": {"name": "HP drain", "unit": "HP/s each part", "about": "HP lost a second from every body part (Overdose)"}
+  },
+  "overdose": {"window": 300, "threshold": 3, "duration": 90, "hp_drain": 0.12, "tremor": 2.0, "blur": 0.6, "extra_per_stim": 0.5},
+  "resistance": {"per_level": 0.01, "max": 0.3, "points_by_rarity": [15, 20, 25, 35, 45, 60]},
+  "limb_restore_max_hp_loss": 0.3,
+  "colors": {"buff": "#7fe08a", "pending": "#9aa0a6", "side": "#f07060", "overdose": "#ff4040"}
+}

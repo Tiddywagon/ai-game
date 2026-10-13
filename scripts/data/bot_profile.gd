@@ -49,3 +49,8 @@ extends Resource
 @export_range(0.0, 1.0, 0.05) var dodge_chance: float
 ## Chance to roll into new cover when it's within a roll's reach.
 @export_range(0.0, 1.0, 0.05) var roll_to_cover_chance: float
+
+@export_group("Loot")
+## Extra loot rolled into the bot's pack and pockets (a boss's body: data/loot_tables/boss_body.tres
+## holds valuables and stims). Empty: just its kit.
+@export var extra_loot: LootTable

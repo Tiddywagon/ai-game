@@ -75,7 +75,14 @@
       {"item": "canned_soup", "price": 5500, "currency": "RUB"},
       {"item": "mineral_water", "price": 9900, "currency": "RUB", "ll": 2},
       {"item": "survivor_kit", "price": 17600, "currency": "RUB", "ll": 2},
-      {"item": "isotonic", "price": 21000, "currency": "RUB", "ll": 3}
+      {"item": "isotonic", "price": 21000, "currency": "RUB", "ll": 3},
+      {"item": "glucose_shot", "price": 7500, "currency": "RUB"},
+      {"item": "caffeine_injector", "price": 9000, "currency": "RUB"},
+      {"item": "electrolyte_booster", "price": 16000, "currency": "RUB", "ll": 2},
+      {"item": "coagulant_pen", "price": 20000, "currency": "RUB", "ll": 2},
+      {"item": "bonelock", "price": 24000, "currency": "RUB", "ll": 2},
+      {"item": "empty_injector", "price": 5000, "currency": "RUB"},
+      {"item": "saline_bag", "price": 14500, "currency": "RUB", "ll": 2}
     ],
     "barters": [
       {"give": [{"item": "gold_chain", "count": 1, "fir": true}], "get": {"item": "surgical_kit"}},
@@ -89,7 +96,12 @@
       {"give": [{"item": "gold_coin", "count": 1, "fir": true}, {"item": "ssd_drive", "count": 1}], "get": {"item": "zagustin"}, "ll": 4},
       {"give": [{"item": "moonshine", "count": 1, "fir": true}, {"item": "pocket_watch", "count": 1}], "get": {"item": "sj6"}, "ll": 4},
       {"give": [{"item": "military_hdd", "count": 1, "fir": true}, {"item": "intel_folder", "count": 1, "fir": true}], "get": {"item": "surv12"}, "ll": 4},
-      {"give": [{"item": "coin_collection", "count": 1, "fir": true}, {"item": "medical_tools", "count": 2, "fir": true}], "get": {"item": "grizzly"}, "ll": 4}
+      {"give": [{"item": "coin_collection", "count": 1, "fir": true}, {"item": "medical_tools", "count": 2, "fir": true}], "get": {"item": "grizzly"}, "ll": 4},
+      {"give": [{"item": "gold_coin", "count": 1, "fir": true}, {"item": "saline_bag", "count": 2}], "get": {"item": "quickhands"}, "ll": 3},
+      {"give": [{"item": "ledx", "count": 1, "fir": true}], "get": {"item": "etg_c"}, "ll": 4},
+      {"give": [{"item": "crypto_drive", "count": 1, "fir": true}], "get": {"item": "obdolbos"}, "ll": 4},
+      {"give": [{"item": "ledx", "count": 1, "fir": true}, {"item": "intel_folder", "count": 1, "fir": true}], "get": {"item": "phoenix"}, "ll": 4},
+      {"give": [{"item": "military_hdd", "count": 1, "fir": true}, {"item": "saline_bag", "count": 2}], "get": {"item": "ghost_serum"}, "ll": 3}
     ]
   },
   "skier": {

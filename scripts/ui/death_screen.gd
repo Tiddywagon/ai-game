@@ -72,6 +72,8 @@ static func describe(cause: Dictionary) -> Array[String]:
 			return ["Died of exhaustion", "No energy left: Exhaustion wore every part of you down until your %s gave out." % fatal]
 		"dehydration":
 			return ["Died of thirst", "No hydration left: Dehydration wore every part of you down until your %s gave out." % fatal]
+		"overdose":
+			return ["Overdosed", "Too many stims too fast: the Overdose drained every part of you until your %s gave out." % fatal]
 		"toxin":
 			var item := ItemDB.get_item(str(cause.get("source", "")))
 			return ["Poisoned", "Side effect of %s%s." % [item.display_name if item else "a stimulant",

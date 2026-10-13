@@ -93,6 +93,13 @@ func _build_look() -> void:
 		LootContainer.Look.COUNTER:
 			_box(Vector3(0, size.y + 0.02, 0), Vector3(size.x * 1.05, 0.04, size.z * 1.05), Color(0.82, 0.8, 0.76))  # Top.
 			_box(Vector3(0, size.y * 0.55, front), Vector3(size.x * 0.96, 0.08, 0.01), Color(0.95, 0.8, 0.2))  # Stripe.
+		LootContainer.Look.MEDICINE_CABINET:
+			var red := Color(0.8, 0.12, 0.1)
+			_box(Vector3(0, size.y * 0.6, front - 0.005), Vector3(size.x * 0.32, size.y * 0.09, 0.01), red)  # A red cross.
+			_box(Vector3(0, size.y * 0.6, front - 0.005), Vector3(size.x * 0.09, size.y * 0.32, 0.01), red)
+		LootContainer.Look.LAB_CABINET:
+			_box(Vector3(0, size.y * 0.62, front - 0.005), Vector3(size.x * 0.82, size.y * 0.55, 0.01), Color(0.45, 0.75, 0.85))  # Glass door.
+			_box(Vector3(0, size.y * 0.18, front - 0.005), Vector3(size.x * 0.9, 0.04, 0.01), Color(0.3, 0.85, 0.95))  # Lit stripe.
 		LootContainer.Look.FILING_CABINET:
 			for i in 3:  # Drawers, each with a handle.
 				var y := size.y * (0.2 + 0.31 * i)

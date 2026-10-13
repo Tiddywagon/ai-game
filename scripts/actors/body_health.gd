@@ -38,8 +38,13 @@ var death_cause := {}
 ## Share of each part's max HP lost to surgery (DESIGN.md §13.7), 0 for none.
 var max_hp_loss: Array[float] = []
 ## Timed effects from meds, stims, food and drink: {"kind", "value", "left" (seconds), "delay"
-## (seconds before it starts), "side" (a drawback), "source" (item id)}. See EFFECT_KINDS.
+## (seconds before it starts), "side" (a drawback), "source" (item id, or Stims.OVERDOSE)}. The kinds
+## are listed in data/config/stims.json (Stims.effect_kinds()).
 var effects: Array[Dictionary] = []
+## Seconds this body has been ticking (the stim log's clock), and when each stim was injected (for
+## Overdose: Stims).
+var clock := 0.0
+var stim_log: Array[float] = []
 ## Energy and hydration tuning: set it (the player in a raid) and they drain in tick(). Null: they
 ## stay put and never matter (the AI).
 var metabolism: ConsumablesConfig
@@ -57,27 +62,6 @@ var metabolism_skill := 1.0
 ## Cause of the hit that started each part's bleed, for "bled out" death messages.
 var _bleed_causes: Array[Dictionary] = []
 
-## Effect kinds: [name for a benefit, name for a drawback, unit ("" shows no value, "#" a plain number)].
-## Values add up per kind.
-## painkiller: no pain (and broken legs can sprint and roll); regen: HP/s healed (not blacked parts);
-## hemostatic: bleeds do no damage; stamina: + max stamina; stamina_regen: + share of recovery speed;
-## speed: + share of move speed; recoil: + share of recoil; sway: + degrees of sway; energy_rate,
-## hydration_rate: + per minute; toxin: HP/s lost from the stomach.
-const EFFECT_KINDS := {
-	"painkiller": ["Painkiller", "Painkiller", ""],
-	"regen": ["Regeneration", "Regeneration", "HP/s"],
-	"hemostatic": ["Hemostatic", "Hemostatic", ""],
-	"stamina": ["Max stamina", "Max stamina", "#"],
-	"stamina_regen": ["Fast recovery", "Slow recovery", "%"],
-	"speed": ["Speed", "Slowed", "%"],
-	"recoil": ["Less recoil", "More recoil", "%"],
-	"sway": ["Steady hands", "Tremor", "°"],
-	"energy_rate": ["Energy", "Energy", "/min"],
-	"hydration_rate": ["Hydration", "Hydration", "/min"],
-	"toxin": ["Toxicity", "Toxicity", "HP/s"],
-}
-
-
 func _init(health_config: HealthConfig) -> void:
 	config = health_config
 	heal_all()
@@ -92,6 +76,7 @@ func heal_all() -> void:
 	_bleed_causes.clear()
 	max_hp_loss.clear()
 	effects.clear()
+	stim_log.clear()
 	for part in Part.size():
 		hp.append(config.max_hp(part))
 		bleeds.append(Bleed.NONE)
@@ -130,11 +115,12 @@ func hit(part: int, damage: float, cause: Dictionary) -> void:
 		heavy = config.heavy_bleed_chance * scale
 	if light < 0.0:
 		light = config.light_bleed_chance * scale
-	if bleeds[part] != Bleed.HEAVY and randf() < heavy:
-		_start_bleed(part, Bleed.HEAVY, cause)
-	elif bleeds[part] == Bleed.NONE and randf() < light:
-		_start_bleed(part, Bleed.LIGHT, cause)
-	if is_limb(part) and not fractures[part] and randf() < config.fracture_chance * scale:
+	if not has_effect("bleed_prevention"):
+		if bleeds[part] != Bleed.HEAVY and randf() < heavy:
+			_start_bleed(part, Bleed.HEAVY, cause)
+		elif bleeds[part] == Bleed.NONE and randf() < light:
+			_start_bleed(part, Bleed.LIGHT, cause)
+	if is_limb(part) and not fractures[part] and not has_effect("fracture_prevention") and randf() < config.fracture_chance * scale:
 		fractures[part] = true
 	changed.emit()
 
@@ -159,10 +145,16 @@ func apply_damage(part: int, amount: float, cause: Dictionary) -> void:
 func tick(delta: float) -> void:
 	if is_dead:
 		return
+	clock += delta
 	_tick_effects(delta)
 	var regen := effect_total("regen")
 	if regen > 0.0:
 		_regenerate(regen * delta)
+	var drain := effect_total("hp_drain")
+	if drain > 0.0:
+		_drain_every_part(drain * delta, "overdose")
+		if is_dead:
+			return
 	if not has_effect("hemostatic"):
 		for part in Part.size():
 			match bleeds[part]:
@@ -219,15 +211,18 @@ func restore(part: int, restore_share: float, loss: float) -> bool:
 	return true
 
 
-## Starts a timed effect (see EFFECT_KINDS). One from the same `source` and of the same kind (and
+## Starts a timed effect (kinds: Stims.effect_kinds()). One from the same `source` and of the same kind (and
 ## delay) is replaced, so taking the same stim again refreshes it instead of stacking.
 func add_effect(kind: String, value: float, duration: float, delay := 0.0, side := false, source := "") -> void:
 	for effect in effects:
 		if effect.kind == kind and effect.source == source and source != "" and is_equal_approx(effect.delay_total, delay):
 			effects.erase(effect)
 			break
-	effects.append({"kind": kind, "value": value, "left": duration, "delay": delay, "delay_total": delay, "side": side,
-		"source": source, "duration": duration})
+	var effect := {"kind": kind, "value": value, "left": duration, "delay": delay, "delay_total": delay, "side": side,
+		"source": source, "duration": duration}
+	effects.append(effect)
+	if delay <= 0.0:
+		_on_effect_started(effect)
 	changed.emit()
 
 
@@ -261,9 +256,10 @@ func stamina_bonus() -> float:
 	return effect_total("stamina")
 
 
-## How fast stamina recovers, ×: faster on stims, slower when hungry and slower again when thirsty.
+## How fast stamina recovers, ×: faster on stims, slower with Fatigue, when hungry and again when
+## thirsty.
 func stamina_regen_multiplier() -> float:
-	var multiplier := maxf(1.0 + effect_total("stamina_regen"), 0.1)
+	var multiplier := maxf(1.0 + effect_total("stamina_regen"), 0.1) * maxf(1.0 - effect_total("fatigue"), 0.1)
 	if is_hungry():
 		multiplier *= metabolism.low_stamina_regen
 	if is_thirsty():
@@ -281,10 +277,45 @@ func recoil_multiplier() -> float:
 	return clampf(1.0 + effect_total("recoil"), 0.3, 2.0)
 
 
-## Weapon sway added by effects (a tremor, or steadier hands below 0), Exhaustion and Dehydration,
+## Sprinting's stamina cost, ×: more with Fatigue.
+func sprint_cost_multiplier() -> float:
+	return 1.0 + maxf(effect_total("fatigue"), 0.0)
+
+
+## Extra kilograms you can carry before slowing down (and before being overweight).
+func carry_bonus() -> float:
+	return effect_total("carry_weight")
+
+
+## Reload and jam-clearing speed, ×.
+func reload_multiplier() -> float:
+	return clampf(1.0 + effect_total("reload_speed"), 0.3, 3.0)
+
+
+## Vision range, ×.
+func vision_range_multiplier() -> float:
+	return clampf(1.0 + effect_total("vision_range"), 0.3, 3.0)
+
+
+## How far footsteps and rolls are heard, ×.
+func noise_multiplier() -> float:
+	return clampf(1.0 + effect_total("noise"), 0.1, 3.0)
+
+
+## Blurred-vision effects, 0 to 1.
+func blur_effect() -> float:
+	return clampf(effect_total("blur"), 0.0, 1.0)
+
+
+## True while an Overdose is running.
+func has_overdose() -> bool:
+	return effects.any(func(effect: Dictionary) -> bool: return effect.source == Stims.OVERDOSE and effect.delay <= 0.0)
+
+
+## Weapon sway added by effects (tremor, or steadier hands below 0), Exhaustion and Dehydration,
 ## in degrees.
 func extra_sway() -> float:
-	var amount := effect_total("sway")
+	var amount := effect_total("sway") + effect_total("tremor")
 	if has_exhaustion():
 		amount += metabolism.exhaustion_sway
 	if has_dehydration():
@@ -292,9 +323,9 @@ func extra_sway() -> float:
 	return amount
 
 
-## Vision cone ×: narrower with Exhaustion and again with Dehydration.
+## Vision cone ×: narrower with Exhaustion, again with Dehydration, and with blurred vision.
 func vision_multiplier() -> float:
-	var multiplier := 1.0
+	var multiplier := 1.0 - 0.2 * blur_effect()
 	if has_exhaustion():
 		multiplier *= metabolism.depleted_vision
 	if has_dehydration():
@@ -302,9 +333,10 @@ func vision_multiplier() -> float:
 	return multiplier
 
 
-## How blurred the player's view is, 0 to 1: half for Exhaustion, half for Dehydration.
+## How blurred the player's view is, 0 to 1: half for Exhaustion, half for Dehydration, plus blurred
+## vision from stims and Overdose.
 func blur_amount() -> float:
-	return (0.5 if has_exhaustion() else 0.0) + (0.5 if has_dehydration() else 0.0)
+	return minf((0.5 if has_exhaustion() else 0.0) + (0.5 if has_dehydration() else 0.0) + blur_effect(), 1.0)
 
 
 ## Energy at or below the low threshold.
@@ -435,6 +467,8 @@ func status_lines() -> Array[String]:
 		lines.append("Pain")
 	elif is_hurting():
 		lines.append("Pain (numbed)")
+	if has_overdose():
+		lines.append("Overdose")
 	if metabolism:
 		if has_dehydration():
 			lines.append("Dehydration")
@@ -461,27 +495,14 @@ func effect_lines(drawbacks: bool) -> Array[String]:
 		by_kind[effect.kind] = entry
 	var lines: Array[String] = []
 	for kind: String in by_kind:
-		lines.append("%s %s" % [effect_label(kind, by_kind[kind].value, drawbacks), _clock(by_kind[kind].left)])
+		lines.append("%s %s" % [effect_label(kind, by_kind[kind].value), _clock(by_kind[kind].left)])
 	return lines
 
 
-## "Speed +8%", "Tremor +1.5°", "Energy -20/min", "Painkiller": an effect's name and value.
-static func effect_label(kind: String, value: float, drawback := false) -> String:
-	var names: Array = EFFECT_KINDS.get(kind, [kind.capitalize(), kind.capitalize(), ""])
-	var name: String = names[1] if drawback else names[0]
-	var unit: String = names[2]
-	match unit:
-		"":
-			return name
-		"%":
-			return "%s %+d%%" % [name, roundi(value * 100.0)]
-		"°":
-			return "%s %+.1f°" % [name, value]
-		"#":
-			return "%s %+d" % [name, roundi(value)]
-		"/min":
-			return "%s %+d/min" % [name, roundi(value)]
-	return "%s %+.1f %s" % [name, value, unit] if absf(value) < 10.0 else "%s %+d %s" % [name, roundi(value), unit]
+## "Speed +8%", "Tremor +1.5°", "Energy -20/min", "Painkiller": an effect's name and value
+## (Stims.effect_label()).
+static func effect_label(kind: String, value: float) -> String:
+	return Stims.effect_label(kind, value)
 
 
 static func _clock(seconds: float) -> String:
@@ -517,6 +538,7 @@ func _tick_effects(delta: float) -> void:
 			effect.delay -= delta
 			if effect.delay <= 0.0:
 				expired = true  # Just started: redraw.
+				_on_effect_started(effect)
 			continue
 		effect.left -= delta
 		if effect.left <= 0.0:
@@ -526,14 +548,24 @@ func _tick_effects(delta: float) -> void:
 		changed.emit()
 
 
-## Heals `amount` HP spread evenly over the damaged parts (not blacked ones).
+## An effect's delay is over. Limb restoration acts once, now: every blacked part that isn't the head
+## or thorax comes back at the effect's share of its max HP, losing some max HP (like surgery).
+func _on_effect_started(effect: Dictionary) -> void:
+	if effect.kind == "limb_restore":
+		var loss := float(Stims.config().get("limb_restore_max_hp_loss", 0.3))
+		for part in Part.size():
+			if is_blacked(part) and not is_vital(part):
+				restore(part, float(effect.value), loss)
+
+
+## Heals every damaged part (not blacked ones) by `amount` HP.
 func _regenerate(amount: float) -> void:
 	var damaged: Array[int] = []
 	for part in Part.size():
 		if is_damaged(part):
 			damaged.append(part)
 	for part in damaged:
-		hp[part] = minf(hp[part] + amount / damaged.size(), max_hp(part))
+		hp[part] = minf(hp[part] + amount, max_hp(part))
 	if not damaged.is_empty():
 		changed.emit()
 

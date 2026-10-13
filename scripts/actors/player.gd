@@ -598,7 +598,7 @@ func vision_cones() -> Array[Vector3]:
 	if optic and optic_blend > 0.0:
 		half = lerpf(half, deg_to_rad(optic.cone_degrees) / 2.0, optic_blend)
 		reach = lerpf(reach, reach * optic.range_multiplier, optic_blend)
-	var cones: Array[Vector3] = [Vector3(half * status_cone_multiplier(), reach, 0.0)]
+	var cones: Array[Vector3] = [Vector3(half * status_cone_multiplier(), reach * status_range_multiplier(), 0.0)]
 	if flashlight_on:
 		cones.append(Vector3(deg_to_rad(vision.flashlight_cone_degrees) / 2.0, vision.flashlight_range, 1.0))
 	return cones

@@ -13,5 +13,7 @@
   {"id": "car_battery", "name": "Car battery", "category": "junk", "rarity": "rare", "size": [2, 2], "weight": 7.5, "value": 52000, "description": "Heavy lead-acid battery. The Generator needs one at level 3."},
   {"id": "fuel_conditioner", "name": "Fuel conditioner", "category": "junk", "rarity": "rare", "size": [1, 2], "weight": 1.2, "value": 48000, "description": "Fuel additive. Generator upgrades."},
   {"id": "military_cable", "name": "Military power cable", "category": "junk", "rarity": "rare", "weight": 0.4, "value": 36000, "description": "Armoured power cable. Hideout upgrades and Mechanic barters."},
-  {"id": "kettle", "name": "Kettle", "category": "junk", "rarity": "uncommon", "size": [1, 2], "weight": 0.6, "value": 9000, "description": "Dented aluminium kettle. The Nutrition Unit needs one."}
+  {"id": "kettle", "name": "Kettle", "category": "junk", "rarity": "uncommon", "size": [1, 2], "weight": 0.6, "value": 9000, "description": "Dented aluminium kettle. The Nutrition Unit needs one."},
+  {"id": "empty_injector", "name": "Empty autoinjector", "category": "junk", "rarity": "common", "weight": 0.03, "value": 4500, "description": "Spent autoinjector, still sealed at the needle end. The Medstation refills them into stims."},
+  {"id": "saline_bag", "name": "Saline solution", "category": "junk", "rarity": "uncommon", "size": [1, 2], "weight": 0.5, "value": 13000, "description": "Bag of sterile saline. The Medstation mixes stims with it."}
 ]

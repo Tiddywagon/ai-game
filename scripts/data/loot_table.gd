@@ -21,6 +21,11 @@ const RARITY_COUNT := 6
 @export var categories: Array[ItemData.Category] = []
 ## Only these item ids, when not empty (instead of the categories): a toolbox holds tools.
 @export var items: PackedStringArray = []
+## Also these item types (their "type" stat), on top of the categories or items: a safe also holds
+## stims ("stim").
+@export var types: PackedStringArray = []
+## Weight × for the items only `types` brings in (a safe's stims are a side line: 0.3).
+@export_range(0.0, 10.0, 0.05) var type_weight := 1.0
 ## Extra weight for some items among their rarity, by id (default 1): {"intel_folder": 2.0}.
 @export var item_weights: Dictionary = {}
 ## How many items one roll() gives: a random number from x to y.
@@ -32,6 +37,10 @@ func candidates(rarity: int) -> Array[ItemData]:
 	var result := ItemDB.lootable(rarity, categories if items.is_empty() else [])
 	if not items.is_empty():
 		result = result.filter(func(item: ItemData) -> bool: return item.id in items)
+	if not types.is_empty():
+		for item in ItemDB.lootable(rarity, []):
+			if str(item.stats.get("type", "")) in types and not item in result:
+				result.append(item)
 	return result
 
 
@@ -71,9 +80,18 @@ func roll_item(rng: RandomNumberGenerator, map: MapInfo = null) -> ItemData:
 	var pool := candidates(rarity)
 	var pool_weights := PackedFloat32Array()
 	for item in pool:
-		pool_weights.append(item.loot_weight * float(item_weights.get(item.id, 1.0)))
+		pool_weights.append(item.loot_weight * float(item_weights.get(item.id, 1.0)) * (type_weight if _only_by_type(item) else 1.0))
 	var index := _pick(rng, pool_weights)
 	return pool[index] if index >= 0 else null
+
+
+## True if `item` is in this table only because of its type (not its category or the item list).
+func _only_by_type(item: ItemData) -> bool:
+	if types.is_empty() or not str(item.stats.get("type", "")) in types:
+		return false
+	if not items.is_empty():
+		return not item.id in items
+	return not categories.is_empty() and not item.category in categories
 
 
 ## Fills one container: item_count.x to item_count.y items, each {"id", "count"}. Stackable items

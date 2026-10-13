@@ -77,6 +77,8 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	inventory = Inventory.pmc_bot(rng) if side == Side.PMC else Inventory.scav(rng)
+	if profile and profile.extra_loot:
+		inventory.add_loot(profile.extra_loot, rng)
 	spare_rounds = inventory.count_of(ammo_id)
 	weapon.spare_rounds = spare_rounds
 	weapon.reload_finished.connect(_on_reload_finished)
@@ -226,7 +228,7 @@ func vision_cones() -> Array[Vector3]:
 	var scav := side == Side.SCAV
 	var half := deg_to_rad(vision.scav_cone_degrees if scav else vision.pmc_cone_degrees) / 2.0
 	var reach := vision.scav_range if scav else vision.pmc_range
-	var cones: Array[Vector3] = [Vector3(half * status_cone_multiplier(), reach, 0.0)]
+	var cones: Array[Vector3] = [Vector3(half * status_cone_multiplier(), reach * status_range_multiplier(), 0.0)]
 	var optic := vision.optic(weapon.optic)
 	if optic and optic.range_multiplier > 1.0:
 		cones.append(Vector3(deg_to_rad(optic.cone_degrees) / 2.0, reach * optic.range_multiplier, 0.0))

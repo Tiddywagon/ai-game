@@ -13,6 +13,7 @@ extends CanvasLayer
 ## thirsty, red at 0) with a pulsing warning under them (HUNGRY, THIRSTY, EXHAUSTION, DEHYDRATION), the
 ## view blurring at 0, running effects beside the body (benefits green, drawbacks red, with the time
 ## left), what E would treat, and a progress bar with the item's name while one is being used.
+## Stims (DESIGN.md §13.8): a row of icons over the body with countdown timers (StimIcons).
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -64,6 +65,7 @@ var _use_bar: ProgressBar
 var _hint_time := 0.0
 var _metabolism_warning: Label
 var _blur: ColorRect
+var _stim_icons: StimIcons
 
 @onready var _root: Control = %HudRoot
 @onready var _bottom_left: Control = %BottomLeft
@@ -276,6 +278,13 @@ func _build_consumables() -> void:
 	# Long messages ("Propital ...: regeneration +1.0 HP/s, painkiller") wrap instead of widening the panel.
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_message.custom_minimum_size.x = _bar.custom_minimum_size.x
+	_stim_icons = StimIcons.new()
+	_stim_icons.name = "StimIcons"
+	_stim_icons.health = player.health if player else null
+	_stim_icons.hide()
+	var health_panel: Control = %Silhouette.get_parent().get_parent()
+	_bottom_left.add_child(_stim_icons)
+	_bottom_left.move_child(_stim_icons, health_panel.get_index())
 	var info: VBoxContainer = %StatusList.get_parent()
 	_buffs = _info_label(info, "Buffs", BUFF_COLOR)
 	_drawbacks = _info_label(info, "Drawbacks", DRAWBACK_COLOR)

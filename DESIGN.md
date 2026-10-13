@@ -108,7 +108,7 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 
 **Climate** (`climate`, `energy_drain_multiplier`, `hydration_drain_multiplier` in each map's `.tres`; Section 13.7): Shoreline Resort and Factory are **hot** (hydration drains ×1.5 and ×1.35, energy ×1.1), Woodland is **cold** (energy ×1.15, hydration ×0.9), the rest temperate. The HUD shows HOT or COLD next to the weather.
 
-**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
+**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
 
 ## 6. Items
 
@@ -123,7 +123,7 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Rigs | Chest rigs, armored rigs (class 1–6) | Grid, (armor stats if armored), upgrade level |
 | Backpacks | Daypack → 8×8 raid packs | Grid size, weight, upgrade level |
 | Helmets | Bump caps → class 6 helmets, with face shield and headset slots | Class, durability, ricochet, hearing; face shields (face zone), headsets (hearing) |
-| Meds | Bandages, tourniquets, a hemostat, splints, painkillers, small and large medkits (HP pools), surgical kits, 9 stimulants (Section 13.7) | Use time; uses or HP pool; treats light/heavy bleed, fracture, blacked parts; timed effects and side effects |
+| Meds | Bandages, tourniquets, a hemostat, splints, painkillers, small and large medkits (HP pools), surgical kits, 19 stimulants (Section 13.8) | Use time; uses or HP pool; treats light/heavy bleed, fracture, blacked parts; timed effects and side effects |
 | Food & Drink | Crackers, canned fish, meat and peas, condensed milk, MRE, water, juice, energy drinks, vodka, moonshine (Section 13.7) | Energy, hydration, use time; some have effects |
 | Valuables | Gold chain, watches (wrist, pocket, Roler), coins (silver, gold, rare collection), GPU, hard drives (HDD, SSD, military), Bitcoin, cold-wallet crypto drive, LEDX, flash drive, intelligence folder (Section 13.7) | High sell value, small size; wanted in barters and crafts |
 | Junk / Barter | Bolts, screws, wires, duct tape, batteries (AA, rechargeable, car), fuel and fuel conditioner, matches, lighter, toothpaste, soap, cigarettes, light bulbs, capacitors, circuit boards, gunpowder, WD-40, military cable, kettle, pliers, screwdriver, nails, hose, medical tools (Section 13.7) | Used in barters, crafts, hideout upgrades |
@@ -139,7 +139,7 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Rare | Blue | 12% | ARs, class 3–4 armor, surgical kits |
 | Ultra Rare | Purple | 5% | Good scopes, class 5 armor, stims |
 | Epic | Orange | 2.5% | Bitcoin, GPU, Roler, intelligence folder, AFAK, Surv12, combat stims, high-pen ammo, keycards |
-| Legendary | Gold | 0.5% | LEDX, crypto drive, Grizzly medkit, eTG-c and Obdolbos stims, class 6 armor, boss uniques |
+| Legendary | Gold | 0.5% | LEDX, crypto drive, Grizzly medkit, eTG-c, Obdolbos and Phoenix stims, class 6 armor, boss uniques |
 
 - Rates are per-roll weights for generic loot spawns; sum = 100%.
 - **Modifiers:** container type (safe/jacket/weapon box), map tier (Labs ×2 for Epic+), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
@@ -153,8 +153,10 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Toolbox | Bolts, screws, wires, tape, pliers, screwdriver, nails, hose, weapon parts, electric motor, batteries, light bulbs, capacitors, circuit boards, WD-40, gunpowder, military cable, lighters | 1–3 | 1 / 1 / 1.1 / 1.2 / 1 / 1 | 4×2 | ×1 | No |
 | Jacket | Ammo, meds, food, valuables, junk, keys | 0–2 | 1 / 1 / 1 / 1 / 1 / 1 | 2×2 | ×0.8 | No |
 | Weapon box | Weapons, ammo, attachments | 1–2 | 0.8 / 1 / 1.3 / 1.3 / 1.2 / 1 | 6×3 | ×1.1 | Yes (wood) |
-| Medical bag | Meds and stims (all 26), medical tools | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
-| Safe | Valuables, keys | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 | 3×3 | ×1.4 | Yes (metal) |
+| Medical bag | Meds and stims, medical tools | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
+| Safe | Valuables, keys, stims (×0.3) | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 | 3×3 | ×1.4 | Yes (metal) |
+| Medicine cabinet | Bandages, tourniquets, splints, painkillers, small medkits, Salewa, stims, medical tools, empty autoinjectors (×1.5), saline | 1–3 | 0.9 / 1.1 / 1.3 / 1.4 / 1 / 1 | 3×3 | ×0.9 | Yes (metal) |
+| Lab cabinet | Stims, medical tools, saline (×1.5), empty autoinjectors, LEDX, lab keycard, flash drives, SSDs | 1–3 | 0.4 / 0.8 / 1.3 / 1.8 / 2.5 / 2.5 | 4×3 | ×1.2 | Yes (metal) |
 | Filing cabinet | Keys, flash drives, intelligence folders (×2 likely), paper, matches, gold chains, hard drives, crypto drives, cigarettes, lighters | 1–3 | 1 / 1 / 1.2 / 1.3 / 1.2 / 1 | 4×4 | ×1.2 | Yes (metal) |
 | Duffle bag | Ammo, attachments, meds, valuables, junk | 1–3 | 1 / 1 / 1 / 1 / 1 / 1 | 4×3 | ×1 | No |
 | Fridge | Drinks, canned food, alcohol, field rations | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 3×4 | ×0.8 | Yes (metal) |
@@ -459,7 +461,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 |---|---|---|---|
 | Generator | 3 | Powers stations; consumes fuel | 2× Fuel can, 1× Wires |
 | Stash | 4 | Increases stash size | 500k ₽, Prapor LL2 |
-| Medstation | 3 | Crafts meds | 2× Bandage, 1× Medical tools |
+| Medstation | 3 | Crafts meds and Common–Rare stims | 2× Bandage, 1× Medical tools |
 | Nutrition Unit | 3 | Crafts food/drink; faster energy/hydration refill | 1× Hose, 1× Kettle |
 | Rest Space | 3 | Faster energy/hydration refill between raids | 2× Light bulb, 1× Rechargeable battery |
 | Workbench | 3 | Crafts ammo/attachments; unlocks repair | 5× Bolts, 3× Screws |
@@ -473,7 +475,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, propital, the Surv12 and the Legendary Grizzly, eTG-c and Obdolbos, which traders never sell. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, the Surv12 and the Legendary Grizzly, which traders never sell. It also makes Common to Rare stims from medical supplies (empty autoinjectors, saline, sugar, coffee, bandages, splints, painkillers): Glucose shots and Caffeine autoinjectors at level 1, Electrolyte boosters, Coagulant pens, Bonelock and Adrenaline at level 2, Packmule and Hawkeye at level 3 (Section 13.8); Ultra Rare and better stims are loot and barters only. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
@@ -489,7 +491,7 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
 
-**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Therapist sells meds and food by loyalty level (bandages, the AI-2, car medkit and basic food at LL1; the CAT, ibuprofen, Salewa, morphine and adrenaline at LL2; the CALOK-B, aluminium splint, IFAK, CMS, Aquamari and MREs at LL3) and barters medkits and stims for barter goods and valuables (toothpaste and soap for a car medkit, a Roler for an AFAK, up to a rare coin collection for the Grizzly at LL4; Section 13.7); Prapor, Skier, Mechanic, Jaeger, Ragman and Peacekeeper barter for cigarettes, gunpowder, drives, watches, coins and the rest; Ragman sells the gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials, and upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4); Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
+**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Therapist sells meds and food by loyalty level (bandages, the AI-2, car medkit and basic food at LL1; the CAT, ibuprofen, Salewa, morphine and adrenaline at LL2; the CALOK-B, aluminium splint, IFAK, CMS, Aquamari and MREs at LL3) and barters medkits and stims for barter goods and valuables (toothpaste and soap for a car medkit, a Roler for an AFAK, up to a rare coin collection for the Grizzly at LL4; Section 13.7). As the medic, she sells Common and Uncommon stims, empty autoinjectors and saline, and is the only trader for Epic and Legendary stims, by barter only (Quickhands, Ghost serum, Zagustin, SJ6, eTG-c, Obdolbos, Phoenix; Section 13.8); Prapor, Skier, Mechanic, Jaeger, Ragman and Peacekeeper barter for cigarettes, gunpowder, drives, watches, coins and the rest; Ragman sells the gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials, and upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4); Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
 
 ### Loyalty Levels (LL)
 
@@ -708,6 +710,7 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | Endurance | Sprinting | More stamina |
 | Vitality | Taking damage | Lower bleed chance |
 | Metabolism | Eating/drinking (built: 0.5 points per point of energy or hydration; a level takes 100 points, +10% each) | 1% slower energy/hydration drain per level, up to 50% at level 50 (built, Section 13.7) |
+| Stim resistance | Injecting stims (built: 15–60 points by rarity) | Side effects 1% shorter per level, up to 30% (built, Section 13.8) |
 | Search | Searching containers | Faster search, rarer loot (+% capped) |
 | Weapon class skills | Using weapon type (built: Pistols, SMGs, Shotguns, Assault rifles, Marksman rifles, Bolt-action rifles, Machine guns) | 0.5% less recoil per level (up to 15% with Strength); reload speed planned. Levelling isn't built yet |
 
@@ -716,7 +719,7 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | System | Detail |
 |---|---|
 | Body parts | Head, Thorax (death at 0), Stomach, L/R Arm, L/R Leg (Section 13.5) |
-| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); hungry and thirsty (below 30), Exhaustion and Dehydration (at 0); timed effects from meds, stims and food (Section 13.7) |
+| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); hungry and thirsty (below 30), Exhaustion and Dehydration (at 0); timed effects from meds, stims and food (Sections 13.7, 13.8); Overdose (Section 13.8) |
 | Energy / Hydration | 0–100 each; drain in a raid (hydration twice as fast; more sprinting, rolling, overweight, injured or on hot maps, less crouched or still), carried between raids, refilled in the hideout; below 30 slows stamina recovery, 0 drains HP from every part, shakes the aim and blurs vision (Section 13.7) |
 | Stamina | Sprint, aim stability |
 
@@ -838,12 +841,12 @@ Every actor, player and AI, has the same body. Armor stops rounds before they re
 | Blacked parts | A part at 0 is blacked. Damage it takes from then on, and any damage beyond a part's remaining HP, is multiplied (table) and shared evenly by every part that still has HP, head and thorax included. So limb hits can still kill |
 | Light bleed | Each round has its own chance per hit that reaches flesh (Section 6.4: soft rounds high, AP low; a fragmenting round always). Anything else: 35% at 50 damage, scaled by damage up to ×1.5. Loses 0.5 HP/s from that part |
 | Heavy bleed | The round's own chance (else 12%, same scaling); replaces a light bleed on that part. Loses 1.5 HP/s |
-| Bleeding | Doesn't stop on its own. On a blacked part, bleed damage spreads like any other damage. Bandages stop light bleeds, tourniquets heavy ones, the hemostat and most medkits both; Zagustin pauses the damage (Section 13.7) |
-| Fracture | 25% chance per hit to an arm or leg (same scaling). Leg (fractured or blacked): 70% speed, no sprinting, no rolling (a painkiller allows both). Arm (fractured or blacked): +2° weapon sway each. Splints (and the Grizzly) set it |
+| Bleeding | Doesn't stop on its own. On a blacked part, bleed damage spreads like any other damage. Bandages stop light bleeds, tourniquets heavy ones, the hemostat and most medkits both; Zagustin pauses the damage and Coagulant and Zagustin stop new bleeds (Section 13.8) |
+| Fracture | 25% chance per hit to an arm or leg (same scaling). Leg (fractured or blacked): 70% speed, no sprinting, no rolling (a painkiller allows both). Arm (fractured or blacked): +2° weapon sway each. Splints (and the Grizzly) set it; Bonelock and Phoenix stop new fractures (Section 13.8) |
 | Pain | While any part is fractured or blacked, unless a painkiller is working ("Pain (numbed)"). +1° weapon sway; for the player, dark red tunnel vision at the screen edges (pulsing; steady with "reduce flashing") |
 | Weapon sway | The aim drifts slowly left and right by up to the total sway (injuries plus the gun's own, Section 13.4), on top of spread. The player sees it as the bloom reticle shifting |
-| HUD | Bottom left: body silhouette (seen from behind), each part filled green → amber → red by its HP, black with a red outline when blacked; drops for bleeds (two for heavy), a crack for fractures, a flash on the part that was hit. Next to it, total HP, a list of conditions, the running effects (benefits green, drawbacks red, with time left) and what E would treat; energy and water bars under stamina; a USING bar above the player (Section 13.7) |
-| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it; "Died of exhaustion", "Died of thirst" or "Poisoned" by a stim), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
+| HUD | Bottom left: body silhouette (seen from behind), each part filled green → amber → red by its HP, black with a red outline when blacked; drops for bleeds (two for heavy), a crack for fractures, a flash on the part that was hit. Next to it, total HP, a list of conditions, the running effects (benefits green, drawbacks red, with time left) and what E would treat; above it a row of stim icons with countdown timers (Section 13.8); energy and water bars under stamina; a USING bar above the player (Section 13.7) |
+| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it; "Died of exhaustion", "Died of thirst", "Poisoned" by a stim or "Overdosed"), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
 
 All of these values live in `data/config/health.tres`.
 
@@ -913,8 +916,8 @@ Meds treat the body of Section 13.5, stims trade a few minutes of buffs for side
 | CALOK-B hemostatic applicator | Rare | 1×1 | light bleed, heavy bleed | 3 | 2.0 s | — |
 | Immobilizing splint | Common | 1×1 | fracture | 1 | 5.0 s | — |
 | Aluminium splint | Rare | 1×1 | fracture | 3 | 3.0 s | — |
-| Analgin painkillers | Uncommon | 1×1 | pain | 4 | 3.0 s | painkiller 1:35 |
-| Ibuprofen tablets | Rare | 1×1 | pain | 6 | 3.0 s | painkiller 4:00; side effect: hydration -2/min 4:00 |
+| Analgin painkillers | Uncommon | 1×1 | pain | 4 | 3.0 s | Painkiller 1:35 |
+| Ibuprofen tablets | Rare | 1×1 | pain | 6 | 3.0 s | Painkiller 4:00; side effect: Hydration -2/min 4:00 |
 | AI-2 medkit | Common | 1×1 | heals missing HP | 100 HP | 2.0 s | — |
 | Car first aid kit | Uncommon | 2×1 | light bleed (50 HP), heals missing HP | 220 HP | 3.0 s | — |
 | Salewa first aid kit | Rare | 1×2 | light bleed (45 HP), heavy bleed (175 HP), heals missing HP | 400 HP | 3.0 s | — |
@@ -924,29 +927,7 @@ Meds treat the body of Section 13.5, stims trade a few minutes of buffs for side
 | CMS surgical kit | Rare | 2×1 | blacked part | 3 | 14.0 s | back at 35% HP, −35% max HP for the raid; walk at 30% |
 | Surv12 field surgical kit | Epic | 3×1 | blacked part | 8 | 10.0 s | back at 50% HP, −20% max HP for the raid; walk at 40% |
 
-| Stim (injector, 1×1, 2 s) | Rarity | Effects | Side effects |
-|---|---|---|---|
-| Adrenaline injector | Rare | stamina recovery +50% 1:00, painkiller 1:00 | sway +1.5° 0:30 after 1:00, hydration -10 |
-| Morphine injector | Rare | painkiller 5:00 | hydration -15 |
-| Propital regenerative stimulant | Ultra Rare | regeneration 1 HP/s 4:00, painkiller 4:00 | sway +1.5° 0:30 after 4:00 |
-| L1 norepinephrine injector | Ultra Rare | max stamina +30 2:00, speed +6% 2:00, painkiller 2:00 | energy -10, hydration -20 |
-| 3-(b-TG) stimulant | Ultra Rare | recoil -15% 4:00, sway -0.5° 4:00 | sway +1.5° 0:40 after 4:00, hydration -10 |
-| Zagustin hemostatic drug | Epic | hemostatic 3:00 | sway +1.0° 0:40 after 3:00, hydration -15 |
-| SJ6 TGLabs combat stimulant | Epic | max stamina +40 4:00, stamina recovery +50% 4:00, speed +8% 4:00 | sway +2.0° 1:00 after 4:00, energy -20/min 1:00 after 4:00, hydration -20/min 1:00 after 4:00 |
-| Obdolbos 2 cocktail injector | Legendary | max stamina +50 5:00, stamina recovery +100% 5:00, speed +12% 5:00, recoil -20% 5:00, painkiller 5:00 | hydration -6/min 5:00, toxin 0.4 HP/s 1:00 after 5:00, sway +2.5° 1:00 after 5:00 |
-| eTG-change regenerative stimulant | Legendary | regeneration 6 HP/s 1:00 | energy -40/min 1:00, hydration -25/min 1:00 |
-
-| Effect | What it does |
-|---|---|
-| Painkiller | No pain; broken legs can sprint and roll |
-| Regeneration | Heals X HP/s spread over the damaged parts (not blacked ones) |
-| Hemostatic | Bleeds do no damage (they don't stop) |
-| Max stamina / stamina recovery | + stamina points / + recovery speed |
-| Speed | Move speed |
-| Recoil | Recoil of every shot (−15% = 15% less) |
-| Sway | Weapon sway in degrees: a tremor (+) or steadier hands (−) |
-| Energy / hydration | Extra drain (or gain) per minute |
-| Toxin | HP/s lost from the stomach (spreads once it's blacked) |
+Stimulants (single-use injectors with delayed buffs and side effects, stacking and Overdose) have their own section: 13.8.
 
 **Energy and hydration**
 
@@ -983,24 +964,24 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 | Apple juice | Common | 1×2 | +10 | +25 | 2 | 3.0 s | — |
 | Water bottle | Common | 1×2 | — | +30 | 2 | 3.0 s | — |
 | Field ration pack | Common | 1×2 | +20 | +15 | 3 | 4.0 s | — |
-| Coffee | Uncommon | 1×1 | +8 | -4 | 4 | 2.0 s | stamina recovery +10% 3:00 |
+| Coffee | Uncommon | 1×1 | +8 | -4 | 4 | 2.0 s | Stamina recovery +10% 3:00 |
 | Birch sap | Uncommon | 1×2 | +8 | +28 | 2 | 3.0 s | — |
-| Black tea | Uncommon | 1×2 | +5 | +20 | 3 | 4.0 s | sway -0.3° 2:00 |
-| Energy drink | Uncommon | 1×1 | +10 | +35 | 1 | 3.0 s | stamina recovery +20% 2:00 |
-| Mineral water | Uncommon | 1×2 | — | +45 | 1 | 3.0 s | stamina recovery +10% 2:00 |
+| Black tea | Uncommon | 1×2 | +5 | +20 | 3 | 4.0 s | Steady hands -0.3° 2:00 |
+| Energy drink | Uncommon | 1×1 | +10 | +35 | 1 | 3.0 s | Stamina recovery +20% 2:00 |
+| Mineral water | Uncommon | 1×2 | — | +45 | 1 | 3.0 s | Stamina recovery +10% 2:00 |
 | Buckwheat | Uncommon | 1×1 | +40 | +5 | 1 | 6.0 s | — |
-| Honey | Uncommon | 1×1 | +15 | -3 | 3 | 3.0 s | stamina recovery +10% 1:00 |
+| Honey | Uncommon | 1×1 | +15 | -3 | 3 | 3.0 s | Stamina recovery +10% 1:00 |
 | Water ration | Uncommon | 1×1 | — | +35 | 1 | 3.0 s | — |
 | Tushonka | Uncommon | 1×1 | +45 | -12 | 1 | 4.0 s | — |
 | Condensed milk | Uncommon | 1×1 | +25 | -5 | 2 | 3.0 s | — |
 | Beef stew | Uncommon | 1×1 | +60 | -10 | 1 | 5.0 s | — |
-| Vodka | Uncommon | 1×2 | — | -8 | 3 | 3.0 s | painkiller 1:30; side effect: sway +1.0° 1:30 |
+| Vodka | Uncommon | 1×2 | — | -8 | 3 | 3.0 s | Painkiller 1:30; side effect: Tremor +1.0° 1:30 |
 | Survivor's emergency kit | Uncommon | 1×2 | +25 | +25 | 2 | 5.0 s | — |
-| Isotonic drink | Rare | 1×2 | +10 | +40 | 1 | 3.0 s | max stamina +10 3:00; stamina recovery +30% 3:00 |
-| Hot Rod energy drink | Rare | 1×1 | +20 | +30 | 1 | 3.0 s | max stamina +20 5:00; stamina recovery +30% 5:00; side effect: sway +0.5° 5:00 |
+| Isotonic drink | Rare | 1×2 | +10 | +40 | 1 | 3.0 s | Max stamina +10 3:00; Stamina recovery +30% 3:00 |
+| Hot Rod energy drink | Rare | 1×1 | +20 | +30 | 1 | 3.0 s | Max stamina +20 5:00; Stamina recovery +30% 5:00; side effect: Tremor +0.5° 5:00 |
 | Aquamari bottle with filter | Rare | 1×2 | — | +50 | 2 | 4.0 s | — |
 | MRE ration pack | Rare | 1×2 | +75 | +15 | 1 | 6.0 s | — |
-| Moonshine | Ultra Rare | 1×2 | — | -15 | 2 | 4.0 s | painkiller 5:00; side effect: sway +2.0° 5:00; side effect: speed -5% 5:00 |
+| Moonshine | Ultra Rare | 1×2 | — | -15 | 2 | 4.0 s | Painkiller 5:00; side effect: Tremor +2.0° 5:00; side effect: Speed -5% 5:00 |
 
 **Where food spawns**
 
@@ -1026,7 +1007,7 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 | Antique pocket watch | Rare | 1×1 | 38,000 | barters (Therapist) |
 | SSD drive | Rare | 1×1 | 46,000 | barters (Peacekeeper, Skier, Therapist) |
 | Secure flash drive | Rare | 1×1 | 85,000 | sells |
-| Antique gold coin | Ultra Rare | 1×1 | 88,000 | barters (Therapist); crafts (Medstation) |
+| Antique gold coin | Ultra Rare | 1×1 | 88,000 | barters (Therapist) |
 | Bronze lion | Ultra Rare | 2×2 | 95,000 | barters (Ragman) |
 | Encrypted military hard drive | Ultra Rare | 1×1 | 120,000 | barters (Peacekeeper, Therapist) |
 | Roler Submariner gold wrist watch | Epic | 1×1 | 210,000 | barters (Peacekeeper, Therapist) |
@@ -1034,8 +1015,8 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 | Rare coin collection | Epic | 2×1 | 260,000 | barters (Therapist) |
 | Physical bitcoin | Epic | 1×1 | 300,000 | sells |
 | Graphics card | Epic | 2×1 | 420,000 | barters (Peacekeeper, Skier); crafts (Workbench) |
-| LEDX Skin Transilluminator | Legendary | 1×1 | 900,000 | barters (Jaeger) |
-| Cold-wallet crypto drive | Legendary | 1×1 | 1,100,000 | sells |
+| LEDX Skin Transilluminator | Legendary | 1×1 | 900,000 | barters (Jaeger, Therapist) |
+| Cold-wallet crypto drive | Legendary | 1×1 | 1,100,000 | barters (Therapist) |
 
 **Barter goods** (junk) are for barters, crafts and hideout upgrades.
 
@@ -1051,6 +1032,7 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 | Toilet paper | Common | 1×1 | 3,500 | barters (Therapist); crafts (Lavatory); upgrades (Lavatory 1, Lavatory 2) |
 | Screwdriver | Common | 1×1 | 3,500 | barters (Mechanic) |
 | Pack of nails | Common | 1×1 | 4,000 | barters (Jaeger); upgrades (Rest Space 1) |
+| Empty autoinjector | Common | 1×1 | 4,500 | crafts (Medstation) |
 | Pliers | Common | 1×1 | 5,000 | barters (Mechanic) |
 | Screw nuts | Common | 1×1 | 6,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
 | Wires | Common | 1×1 | 7,000 | barters (Mechanic, Ragman); crafts (Lavatory, Workbench); upgrades (Generator 2, Generator 3, Workbench 3) |
@@ -1059,6 +1041,7 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 | Kettle | Uncommon | 1×2 | 9,000 | upgrades (Nutrition Unit 1, Nutrition Unit 2, Nutrition Unit 3) |
 | WD-40 can | Uncommon | 1×1 | 11,000 | barters (Mechanic); crafts (Lavatory) |
 | Capacitors | Uncommon | 1×1 | 12,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 3) |
+| Saline solution | Uncommon | 1×2 | 13,000 | barters (Therapist); crafts (Medstation) |
 | Rechargeable battery | Uncommon | 1×1 | 14,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 2, Rest Space 2) |
 | Corrugated hose | Uncommon | 2×1 | 14,000 | barters (Jaeger); crafts (Nutrition Unit); upgrades (Nutrition Unit 1, Nutrition Unit 3) |
 | Printed circuit board | Uncommon | 1×1 | 15,000 | barters (Mechanic); upgrades (Rest Space 3) |
@@ -1072,6 +1055,69 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 | Electric motor | Rare | 2×2 | 55,000 | barters (Mechanic); crafts (Workbench); upgrades (Generator 3, Workbench 3) |
 
 All of this is data: meds and stims in `data/items/meds/`, food and drink in `data/items/food/`, valuables in `data/items/valuables/`, barter goods in `data/items/junk/`; use, energy and hydration tuning in `data/config/consumables.tres`.
+
+### 13.8 Stimulants *(tune)*
+
+Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of 0–5 s before the buffs start). Each has buffs with a duration and side effects that run during the buffs or kick in after them. The stims are items in `data/items/meds/stims.json` (every buff, side effect, delay, rarity and value); effect names and units, Overdose and Stim resistance are tuned in `data/config/stims.json`. (The request's stim table came through as a "[paste the table]" placeholder: the table below is the 9 stims the game already had, retuned for this system, plus 10 originals.)
+
+| Rule | Detail |
+|---|---|
+| Delay | The buffs and "during" side effects start the stim's delay after the injection; "after" side effects start when its longest buff ends |
+| Stacking | Different stims stack (two speed buffs add up). The same stim again refreshes its effects instead of doubling them |
+| Overdose | 3 or more stims within 5 min: **Overdose** for 90 s: every body part loses 0.12 HP/s, +2.0° tremor and blurred vision (60%). Each stim past the threshold makes it 50% worse and restarts it. It can kill ("Overdosed"). Injections older than the window don't count |
+| Stim resistance | New skill: each injection trains it (15 / 20 / 25 / 35 / 45 / 60 points by rarity, Common to Legendary); each level makes side effects 1% shorter, up to 30%. Buffs are untouched. Shown on the character screen and in the examine panel ("1:00 (1:15 before Stim resistance)") |
+| HUD | A row of icons over the body: each stim's icon with a ring for its phase (grey: waiting for its delay, "in 3"; green: buffs running; red: only side effects left) and the time until that phase ends; a red OD icon while an Overdose runs. Buffs and side effects are also listed with their numbers beside the body |
+| Examine | Kicks in (delay), every buff and side effect with its number and duration, whether a side effect runs during or after the buffs, energy and hydration at once, and the Overdose rule |
+| Where they spawn | Medical bags and the new **medicine cabinet** (medical POIs), the new **lab cabinet** (labs; Epic and Legendary ×2.5), safes (stims weigh ×0.3 next to valuables and keys), and boss bodies (`data/loot_tables/boss_body.tres`, rolled into a bot's kit through its profile's `extra_loot`; ready for when bosses are added). AI PMCs carry a cheap stim 30% of the time. Epic and Legendary stims drop half as often as other items of their rarity |
+| Traders | Therapist (the medic) sells Common and Uncommon stims, empty autoinjectors and saline, and barters the Epic and Legendary ones for valuables: Quickhands, Ghost serum (LL3), Zagustin, SJ6, eTG-c, Obdolbos, Phoenix (LL4). She never sells Epic or Legendary stims |
+| Medstation | Crafts Common to Rare stims from medical supplies (empty autoinjectors, saline solution, sugar, coffee, bandages, splints, painkillers, medical tools): Glucose shot and Caffeine autoinjector (level 1), Electrolyte booster, Coagulant pen, Bonelock and Adrenaline (level 2), Packmule and Hawkeye (level 3), plus Morphine. Ultra Rare and better stims are loot and barters only |
+
+| Stim | Rarity | Delay | Buffs | Side effects during | Side effects after | Value (₽) |
+|---|---|---|---|---|---|---|
+| Glucose shot | Common | 1 s | Stamina recovery +15% 2:00, energy +10 at once | Hydration -5/min 2:00 | — | 6,500 |
+| Caffeine autoinjector | Common | 2 s | Max stamina +10 3:00, Stamina recovery +20% 3:00 | Tremor +0.5° 3:00 | Fatigue +25% 1:00 | 8,000 |
+| Electrolyte booster | Uncommon | 1 s | Stamina recovery +15% 4:00, hydration +20 at once | Energy -3/min 4:00 | — | 14,000 |
+| Coagulant pen | Uncommon | 2 s | Bleed prevention 3:00 | Speed -5% 3:00 | Tremor +0.8° 0:30 | 18,000 |
+| Bonelock injector | Uncommon | 3 s | Fracture prevention 4:00, Painkiller 1:00 | Stamina recovery -20% 4:00 | — | 21,000 |
+| Adrenaline injector | Rare | 0 s | Stamina recovery +50% 1:00, Max stamina +10 1:00, Painkiller 1:00 | hydration -10 at once | Tremor +1.5° 0:30, Fatigue +30% 1:00 | 28,000 |
+| Morphine injector | Rare | 2 s | Painkiller 5:00 | Blurred vision +20% 1:00, hydration -15 at once | — | 30,000 |
+| Packmule injector | Rare | 2 s | Carry weight +15 kg 5:00, Max stamina +15 5:00 | Energy -6/min 5:00 | Fatigue +40% 1:30 | 34,000 |
+| Hawkeye ocular injector | Rare | 4 s | Vision range +25% 4:00, Steady hands -0.4° 4:00 | — | Blurred vision +35% 0:45 | 38,000 |
+| Propital regenerative stimulant | Ultra Rare | 3 s | Regeneration +1.0 HP/s each part 4:00, Painkiller 4:00 | — | Tremor +1.5° 0:30 | 62,000 |
+| L1 norepinephrine injector | Ultra Rare | 1 s | Max stamina +30 2:00, Speed +6% 2:00, Painkiller 2:00 | energy -10 at once, hydration -20 at once | Fatigue +40% 1:00 | 70,000 |
+| Ghost serum | Ultra Rare | 3 s | Noise -40% 3:00, Speed +4% 3:00 | Hydration -6/min 3:00 | Tremor +1.0° 0:40 | 85,000 |
+| 3-(b-TG) stimulant | Ultra Rare | 2 s | Recoil -15% 4:00, Steady hands -0.5° 4:00 | hydration -10 at once | Tremor +1.5° 0:40 | 90,000 |
+| Zagustin hemostatic drug | Epic | 2 s | Hemostatic 3:00, Bleed prevention 3:00 | hydration -15 at once | Tremor +1.0° 0:40 | 120,000 |
+| SJ6 TGLabs combat stimulant | Epic | 2 s | Max stamina +40 4:00, Stamina recovery +50% 4:00, Speed +8% 4:00 | — | Tremor +2.0° 1:00, Energy -20/min 1:00, Hydration -20/min 1:00, Fatigue +50% 1:00 | 150,000 |
+| Quickhands stimulant | Epic | 2 s | Reload speed +30% 4:00, Recoil -10% 4:00, Steady hands -0.3° 4:00 | hydration -10 at once | Tremor +1.8° 1:00, Fatigue +40% 1:00 | 160,000 |
+| Obdolbos 2 cocktail injector | Legendary | 5 s | Max stamina +50 5:00, Stamina recovery +100% 5:00, Speed +12% 5:00, Recoil -20% 5:00, Painkiller 5:00, Noise -20% 5:00, Reload speed +15% 5:00 | Hydration -6/min 5:00 | Toxicity +0.4 HP/s 1:00, Tremor +2.5° 1:00, Blurred vision +50% 1:00 | 380,000 |
+| eTG-change regenerative stimulant | Legendary | 3 s | Regeneration +3.0 HP/s each part 1:00 | Energy -40/min 1:00, Hydration -25/min 1:00 | Blurred vision +30% 0:30 | 420,000 |
+| Phoenix compound | Legendary | 5 s | Limb restoration +40% 0:05, Regeneration +0.5 HP/s each part 2:00, Painkiller 2:00, Fracture prevention 2:00 | — | Blurred vision +40% 1:00, Energy -20/min 1:00, Hydration -20/min 1:00 | 480,000 |
+
+| Effect | Unit | What it does |
+|---|---|---|
+| Painkiller (`painkiller`) | — | No pain; broken or blacked legs can sprint and roll |
+| Regeneration (`regen`) | HP/s each part | Every damaged body part (not blacked ones) heals this much a second |
+| Hemostatic (`hemostatic`) | — | Bleeds do no damage (they don't stop) |
+| Bleed prevention (`bleed_prevention`) | — | Hits start no new bleeds |
+| Fracture prevention (`fracture_prevention`) | — | Hits break no bones |
+| Limb restoration (`limb_restore`) | % | When it starts, every blacked limb and the stomach come back at this share of their max HP, losing some max HP |
+| Max stamina (`stamina`) | # | Extra stamina points |
+| Stamina recovery (`stamina_regen`) | % | How fast stamina comes back |
+| Carry weight (`carry_weight`) | kg | Weight you can carry before slowing down or being overweight |
+| Speed (`speed`) | % | Move speed |
+| Recoil (`recoil`) | % | Recoil of every shot (negative: less) |
+| Steady hands (`sway`) | ° | Weapon sway (negative: steadier) |
+| Reload speed (`reload_speed`) | % | How fast reloads and jam clearing go |
+| Vision range (`vision_range`) | % | How far your vision cone reaches |
+| Noise (`noise`) | % | How far your footsteps and rolls are heard (negative: quieter) |
+| Energy (`energy_rate`) | /min | Energy gained (or lost) a minute |
+| Hydration (`hydration_rate`) | /min | Hydration gained (or lost) a minute |
+| Tremor (`tremor`) | ° | Extra weapon sway |
+| Blurred vision (`blur`) | % | The view blurs and the vision cone narrows |
+| Fatigue (`fatigue`) | % | The requested 'exhaustion' effect (named Fatigue so it isn't confused with the 0-energy Exhaustion status): stamina recovers this much slower and sprinting costs this much more |
+| Toxicity (`toxin`) | HP/s | HP lost a second from the stomach (spreads once it's blacked) |
+| HP drain (`hp_drain`) | HP/s each part | HP lost a second from every body part (Overdose) |
 
 ## 14. Economy
 
@@ -1244,3 +1290,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Gear and gear upgrades (Section 12.2): armor classes 1–6 across 13 vests, 7 armored rigs and 10 helmets (penetration and durability as in Section 6.4), new zones (face for frontal head hits, arms for the heaviest suits), helmet face shield and headset slots (7 face shields, 6 headsets; helmets muffle hearing, headsets amplify it for the player's sound markers and AI hearing), armored rigs that can't be worn with body armor, plain rigs and backpacks from 3×1 to 8×8: 47 new gear items across every rarity, plus 5 upgrade materials. Upgrades +1…+5 (max by rarity: Common +1 … Epic/Legendary +5) at Ragman (by loyalty level) or the Workbench (by its level, cheaper): +10% durability and −4% blunt per level for armor, +6% ricochet for helmets and face shields, lighter and roomier rigs and backpacks, +5% hearing for headsets; roubles plus barter items per level (`data/config/gear_upgrades.json`). UPGRADE in the examine panel, Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES; "+N" on upgraded items. 359 items |
 | 2026-10-13 | Consumables (Section 13.7): meds that work (bandages and army bandages stop light bleeds, Esmarch and CAT tourniquets heavy ones, the CALOK-B hemostat either; splints set fractures; painkillers numb pain and let broken legs sprint; AI-2 and car (small) and Salewa, IFAK, AFAK and Grizzly (large) medkits with HP pools that pay for bleeds and heal one part a use; CMS and Surv12 surgery restores blacked parts at a max HP cost), 9 stimulants with timed effects (regeneration, painkiller, hemostatic, stamina, speed, recoil, sway) and side effects (tremor, thirst, hunger, toxin). Every item has a use time and can be interrupted (shooting, rolling, sprinting, reloading, aiming, a hit, E); E quick-treats with what's in your pockets, rig and secure container; USE in the examine panel. Energy and hydration drain in raids (faster sprinting), make you hungry or thirsty when low and hurt at 0, carry over between raids and recover out of raid; 14 foods and drinks. New valuables (watches, coins, hard drives, crypto drive) and barter goods (batteries, fuel conditioner, toothpaste, soap, cigarettes, lighter and more) in barters, crafts and hideout upgrades; Medstation level 3, Nutrition Unit; best meds and valuables Epic or Legendary. HUD energy and water bars, effects, E hint, use bar; uses left on items; `consumables.tres`. 412 items. Save adds energy and hydration |
 | 2026-10-13 | Energy and hydration system (Section 13.7). The request's food table came through as a "[paste the table]" placeholder, so the table was built from the items it named (crackers, sugar, jerky, vodka, moonshine, water, coffee, energy drink, Field ration pack, Survivor's emergency kit) and the existing food, plus 15 originals: 34 foods and drinks with per-use energy and hydration, uses, use time, rarity, size and side effects. Drain: −1 energy / −2 hydration a minute walking, × activity (still 0.5, crouched 0.75, sprint 2, roll 3), load, injuries and the map's climate (hot Shoreline Resort and Factory, cold Woodland); below 30 slower stamina recovery and a HUD warning (was 25, with sway); at 0 Exhaustion / Dehydration drain HP from every body part (was the stomach), add sway and blur and narrow vision. Hideout refill 0.5 a minute, faster with the Nutrition Unit (now 3 levels, 14 crafts from junk) and the new Rest Space. Metabolism skill levels from eating and drinking (new `Skills`). Food containers: fridge, kitchen cabinet, store shelf, gas station counter (placed in the Test Yard); crates and duffle bags no longer hold food; Scavs always carry a snack. Hover preview of energy and hydration on food. Crafts that make several non-stacking items give them all. 432 items |
+| 2026-10-13 | Stimulant system (Section 13.8; the request's stim table came through as a "[paste the table]" placeholder, so the 9 existing stims were kept and retuned, plus 10 originals: Glucose shot, Caffeine autoinjector, Electrolyte booster, Coagulant pen, Bonelock, Packmule, Hawkeye, Ghost serum, Quickhands, Phoenix compound). Every stim has a 0-5 s delay, buffs with durations and side effects during or after them; new effects: per-part regeneration, max stamina, stamina recovery, carry weight, reload speed, vision range, noise, bleed and fracture prevention, limb restoration, energy and hydration rates, tremor, blurred vision, fatigue (the requested exhaustion). Stims stack; 3+ in 5 min starts an Overdose (HP drain, tremor, blur; "Overdosed" death). HUD stim icons with countdown timers; examine lists every buff and side effect with numbers. Medicine and lab cabinets (Test Yard has one of each), stims in safes (×0.3), a boss-body loot table and `BotProfile.extra_loot` for bosses; AI PMCs sometimes carry one. Therapist (the medic; there is no Medic trader) sells Common/Uncommon stims and barters the Epic and Legendary ones; Medstation crafts Common to Rare stims from medical supplies (new: empty autoinjector, saline solution). Stim resistance skill shortens side effects. `data/config/stims.json`. 444 items |

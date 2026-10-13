@@ -307,15 +307,47 @@ static func consumable_lines(examined: ItemInstance) -> Array:
 			roundi(float(stats.restore) * 100.0), roundi(float(stats.get("max_hp_loss", 0.0)) * 100.0)]])
 	lines.append(["Use time", "%.1f s, walking at %d%% speed" % [Consumables.use_time(data), roundi(Consumables.move_multiplier(data) * 100.0)]])
 	for key in ["energy", "hydration"]:
-		if stats.has(key):
+		if stats.has(key) and not Stims.is_stim(data):
 			lines.append([key.capitalize(), "%+d" % int(stats[key])])
+	if Stims.is_stim(data):
+		lines.append_array(stim_lines(data))
+		return lines
 	for effect: Dictionary in stats.get("effects", []):
 		var side := bool(effect.get("side", false))
-		var text := "%s for %s" % [BodyHealth.effect_label(str(effect.kind), float(effect.get("value", 0.0)), side),
+		var text := "%s for %s" % [BodyHealth.effect_label(str(effect.kind), float(effect.get("value", 0.0))),
 			BodyHealth._clock(float(effect.get("duration", 0.0)))]
 		if float(effect.get("delay", 0.0)) > 0.0:
 			text += ", after %s" % BodyHealth._clock(float(effect.delay))
 		lines.append(["Side effect" if side else "Effect", text])
+	return lines
+
+
+## A stim (DESIGN.md §13.8): when it kicks in, each buff with its number and duration, each side
+## effect (during or after the buffs; shortened by your Stim resistance), and the overdose rule.
+static func stim_lines(data: ItemData) -> Array:
+	var lines := []
+	var delay := Stims.buff_delay(data)
+	lines.append(["Kicks in", "%d s after the injection" % roundi(delay) if delay > 0.0 else "at once"])
+	var shorten := Stims.side_effect_multiplier()
+	for effect: Dictionary in data.stats.get("effects", []):
+		var side := bool(effect.get("side", false))
+		var seconds := float(effect.get("duration", 0.0))
+		var text := Stims.effect_label(str(effect.kind), float(effect.get("value", 0.0)))
+		if not side:
+			text += " for %s" % BodyHealth._clock(seconds)
+			lines.append(["Buff", text])
+			continue
+		text += " for %s" % BodyHealth._clock(seconds * shorten)
+		if shorten < 1.0:
+			text += " (%s before Stim resistance)" % BodyHealth._clock(seconds)
+		text += ", after the buffs" if str(effect.get("when", "")) == "after" else ", during the buffs"
+		lines.append(["Side effect", text])
+	for key in ["energy", "hydration"]:
+		var amount := float(data.stats.get(key, 0.0))
+		if amount != 0.0:
+			lines.append(["Side effect" if amount < 0.0 else "Buff", "%s %+d at once" % [key.capitalize(), roundi(amount)]])
+	lines.append(["Overdose", "%d or more stims within %d min: HP drain, tremor, blurred vision" % [Stims.overdose_threshold(),
+		roundi(float(Stims.config().get("overdose", {}).get("window", 300.0)) / 60.0)]])
 	return lines
 
 
