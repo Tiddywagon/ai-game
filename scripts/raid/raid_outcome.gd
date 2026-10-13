@@ -112,7 +112,9 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	outcome.kills = raid_kills
 	outcome.kill_list = details.get("kill_list", [])
 	outcome.extract_name = str(details.get("extract", ""))
-	var secured: Array[ItemInstance] = inventory.equipment.secure.all_items() if inventory.equipment.secure else []
+	var secured: Array[ItemInstance] = []
+	if inventory.equipment.secure:
+		secured = inventory.equipment.secure.all_items()
 	var own_value := 0
 	for item in inventory.all_items():
 		if item.fir_pending and not item.brought_in:
