@@ -34,6 +34,10 @@
 [ext_resource type="Resource" path="res://data/loot_tables/containers/gas_station.tres" id="63_gas"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/medicine_cabinet.tres" id="64_medcab"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/lab_cabinet.tres" id="65_labcab"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/pc.tres" id="66_pc"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/server_rack.tres" id="67_rack"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/drawer.tres" id="68_drawer"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_crate.tres" id="69_medcrate"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -322,6 +326,26 @@ container = ExtResource("64_medcab")
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 5, 0, -19.5)
 script = ExtResource("19_box")
 container = ExtResource("65_labcab")
+
+[node name="PC" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 19.5, 0, -2.2)
+script = ExtResource("19_box")
+container = ExtResource("66_pc")
+
+[node name="ServerRack" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 19.3, 0, -3.5)
+script = ExtResource("19_box")
+container = ExtResource("67_rack")
+
+[node name="Drawer" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -19.5, 0, 3.5)
+script = ExtResource("19_box")
+container = ExtResource("68_drawer")
+
+[node name="MedicalCrate" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1, 0, -19.45)
+script = ExtResource("19_box")
+container = ExtResource("69_medcrate")
 
 [node name="LooseNearSpawn" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-6, 0, 15.3)

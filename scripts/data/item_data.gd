@@ -15,7 +15,7 @@ const CATEGORY_NAMES: Array[String] = ["weapon", "ammo", "attachment", "armor", 
 const RARITY_IDS: Array[String] = ["common", "uncommon", "rare", "ultra_rare", "epic", "legendary"]
 ## Keys a JSON item may have.
 const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rarity", "size", "weight", "value",
-	"max_stack", "stats", "weapon", "icon", "loot_weight"]
+	"max_stack", "stats", "weapon", "icon", "loot_weight", "group", "tags"]
 
 ## Unique id used by code and save files, e.g. "ak_74n". Match the file name and never rename it.
 @export var id: String = ""
@@ -40,6 +40,12 @@ const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rari
 @export var icon: Texture2D
 ## How often loot tables pick this item compared with others of the same rarity; 0 = never from loot.
 @export_range(0.0, 100.0, 0.1) var loot_weight: float = 1.0
+## Barter goods and valuables (DESIGN.md §6.5): the item's group, one of the groups in
+## data/config/item_groups.json ("Hardware", "Electronics", "Jewelry"...). Empty for other items.
+@export var group: String = ""
+## Lower-case tags describing what it is ("electronics", "flammable", "jewelry", "valuable"...).
+## Loot tables can roll by group or tag: a toolbox rolls Hardware and Tools, a safe anything "valuable".
+@export var tags: PackedStringArray = []
 
 
 ## The icon, or a generated placeholder coloured by rarity (follows the colorblind palette).
@@ -51,10 +57,15 @@ func category_name() -> String:
 	return CATEGORY_NAMES[category]
 
 
+func has_tag(tag: String) -> bool:
+	return tag in tags
+
+
 ## Builds an item from a JSON object. Keys: id, name, description, category (a CATEGORY_NAMES entry),
 ## rarity (a RARITY_IDS entry; "Ultra Rare" works too), size ([width, height]), weight (kg), value
 ## (roubles), max_stack, stats ({...}), weapon (path to a WeaponData .tres), icon (path to an image),
-## loot_weight. Only id, name, category and rarity are required. Returns null (and reports why) if the
+## loot_weight, group ("Hardware"), tags (["metal", "building"]). Only id, name, category and rarity are
+## required. Returns null (and reports why) if the
 ## data is invalid. `source` names the file in error messages.
 static func from_dict(data: Dictionary, source: String) -> ItemData:
 	for key in ["id", "name", "category", "rarity"]:
@@ -88,6 +99,13 @@ static func from_dict(data: Dictionary, source: String) -> ItemData:
 	item.max_stack = maxi(int(data.get("max_stack", 1)), 1)
 	item.stats = data.get("stats", {})
 	item.loot_weight = maxf(float(data.get("loot_weight", 1.0)), 0.0)
+	item.group = str(data.get("group", ""))
+	var tags: Variant = data.get("tags", [])
+	if not tags is Array:
+		push_error("ItemDB: %s: \"%s\" tags must be a list of strings" % [source, item.id])
+		return null
+	for tag: Variant in tags:
+		item.tags.append(str(tag).to_lower())
 	for key in ["weapon", "icon"]:
 		if data.has(key):
 			var resource := load(str(data[key]))

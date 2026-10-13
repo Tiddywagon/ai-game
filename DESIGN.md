@@ -108,7 +108,7 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 
 **Climate** (`climate`, `energy_drain_multiplier`, `hydration_drain_multiplier` in each map's `.tres`; Section 13.7): Shoreline Resort and Factory are **hot** (hydration drains ×1.5 and ×1.35, energy ×1.1), Woodland is **cold** (energy ×1.15, hydration ×0.9), the rest temperate. The HUD shows HOT or COLD next to the weather.
 
-**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
+**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
 
 ## 6. Items
 
@@ -125,8 +125,8 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Helmets | Bump caps → class 6 helmets, with face shield and headset slots | Class, durability, ricochet, hearing; face shields (face zone), headsets (hearing) |
 | Meds | Bandages, tourniquets, a hemostat, splints, painkillers, small and large medkits (HP pools), surgical kits, 19 stimulants (Section 13.8) | Use time; uses or HP pool; treats light/heavy bleed, fracture, blacked parts; timed effects and side effects |
 | Food & Drink | Crackers, canned fish, meat and peas, condensed milk, MRE, water, juice, energy drinks, vodka, moonshine (Section 13.7) | Energy, hydration, use time; some have effects |
-| Valuables | Gold chain, watches (wrist, pocket, Roler), coins (silver, gold, rare collection), GPU, hard drives (HDD, SSD, military), Bitcoin, cold-wallet crypto drive, LEDX, flash drive, intelligence folder (Section 13.7) | High sell value, small size; wanted in barters and crafts |
-| Junk / Barter | Bolts, screws, wires, duct tape, batteries (AA, rechargeable, car), fuel and fuel conditioner, matches, lighter, toothpaste, soap, cigarettes, light bulbs, capacitors, circuit boards, gunpowder, WD-40, military cable, kettle, pliers, screwdriver, nails, hose, medical tools (Section 13.7) | Used in barters, crafts, hideout upgrades |
+| Valuables | 27: jewelry (watches, chains, rings, a diamond necklace), currency (coins, banknotes, banded dollars, a gold bar, Bitcoin), tech (drives, GPU, crypto drive), collectibles (bronze lion, medal, camera, icon, jeweled egg), intel (folder, satellite phone), LEDX (Section 6.5) | Group, tags, value by rarity (5k ₽ Common to 1M+ Legendary); wanted in quests, barters and crafts |
+| Junk / Barter | 56 in 13 groups: hardware, tools, electronics, tech, household, medical supply, fuel, military, materials (bolts, wrenches, batteries, RAM, server blades, soap, blood sets, propane, thermite, aramid fabric, a tank battery...; Section 6.5) | Group, tags, value by rarity; used in quests, barters, crafts, hideout and gear upgrades ("Needed for" when examined) |
 | Keys | Room keys, keycards | Uses, unlocks loot rooms/extracts |
 | Containers | Ammo case, item case, Secure container (2x2 → 3x4) | Internal grid |
 
@@ -138,31 +138,35 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Uncommon | Green | 25% | Basic meds, class 2 armor, pistols |
 | Rare | Blue | 12% | ARs, class 3–4 armor, surgical kits |
 | Ultra Rare | Purple | 5% | Good scopes, class 5 armor, stims |
-| Epic | Orange | 2.5% | Bitcoin, GPU, Roler, intelligence folder, AFAK, Surv12, combat stims, high-pen ammo, keycards |
-| Legendary | Gold | 0.5% | LEDX, crypto drive, Grizzly medkit, eTG-c, Obdolbos and Phoenix stims, class 6 armor, boss uniques |
+| Epic | Orange | 2.5% | Bitcoin, GPU, Roler, intelligence folder, diamond necklace, thermal imaging module, AFAK, Surv12, combat stims, high-pen ammo, keycards |
+| Legendary | Gold | 0.5% | LEDX, crypto drive, jeweled egg, tank battery, Grizzly medkit, eTG-c, Obdolbos and Phoenix stims, class 6 armor, boss uniques |
 
 - Rates are per-roll weights for generic loot spawns; sum = 100%.
 - **Modifiers:** container type (safe/jacket/weapon box), map tier (Labs ×2 for Epic+), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
 
-**How a roll works:** every container type has its **own loot table** (`data/loot_tables/<type>.tres`; loose loot uses `loose_loot.tres`). Weight of each rarity = base weight (55 / 25 / 12 / 5 / 2.5 / 0.5) × the table's rarity multipliers × the map's multiplier. Pick a rarity by weight, then an item of that rarity the table can hold: its item list if it has one (a toolbox holds tools), else its categories (a medical bag holds meds). Each item's `loot_weight` and the table's `item_weights` set how often it comes up among its rarity; `loot_weight` 0 = never from loot (quest items, boss uniques). If a table can't hold any item of some rarity (a medical bag has no Epic meds), that rarity's weight is 0, so the other rarities share its chance. Stackable items (ammo) come as a partial stack (a fifth to a half of a full stack); guns come loaded.
+**How a roll works:** every container type has its **own loot table** (`data/loot_tables/<type>.tres`; loose loot uses `loose_loot.tres`). Weight of each rarity = base weight (55 / 25 / 12 / 5 / 2.5 / 0.5) × the table's rarity multipliers × the map's multiplier. Pick a rarity by weight, then an item of that rarity the table can hold: anything in its item list, of its categories, of its groups or with one of its tags (a toolbox holds Hardware and Tools, a safe anything tagged `valuable`; Section 6.5), all together. Each item's `loot_weight` and the table's `item_weights` set how often it comes up among its rarity; `loot_weight` 0 = never from loot (quest items, boss uniques). If a table can't hold any item of some rarity (a medical bag has no Epic meds), that rarity's weight is 0, so the other rarities share its chance. Stackable items (ammo) come as a partial stack (a fifth to a half of a full stack); guns come loaded.
 
 | Container *(tune)* | Holds | Items | Rarity multipliers (C / U / R / UR / E / L) | Grid | Search time | Solid |
 |---|---|---|---|---|---|---|
 | Loose loot (on the ground) | Anything | 1 (70% of spots) | 1 / 1 / 1 / 1 / 1 / 1 | — | — | — |
 | Crate | Ammo, junk, melee | 1–4 | 1.1 / 1 / 1 / 0.9 / 0.8 / 0.6 | 5×4 | ×1 | Yes (wood) |
-| Toolbox | Bolts, screws, wires, tape, pliers, screwdriver, nails, hose, weapon parts, electric motor, batteries, light bulbs, capacitors, circuit boards, WD-40, gunpowder, military cable, lighters | 1–3 | 1 / 1 / 1.1 / 1.2 / 1 / 1 | 4×2 | ×1 | No |
-| Jacket | Ammo, meds, food, valuables, junk, keys | 0–2 | 1 / 1 / 1 / 1 / 1 / 1 | 2×2 | ×0.8 | No |
-| Weapon box | Weapons, ammo, attachments | 1–2 | 0.8 / 1 / 1.3 / 1.3 / 1.2 / 1 | 6×3 | ×1.1 | Yes (wood) |
-| Medical bag | Meds and stims, medical tools | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
-| Safe | Valuables, keys, stims (×0.3) | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 | 3×3 | ×1.4 | Yes (metal) |
-| Medicine cabinet | Bandages, tourniquets, splints, painkillers, small medkits, Salewa, stims, medical tools, empty autoinjectors (×1.5), saline | 1–3 | 0.9 / 1.1 / 1.3 / 1.4 / 1 / 1 | 3×3 | ×0.9 | Yes (metal) |
+| Toolbox | Hardware and Tools (Section 6.5; pliers and screwdrivers ×1.5) | 1–3 | 1 / 1 / 1.1 / 1.2 / 1 / 1 | 4×2 | ×1 | No |
+| Jacket | Ammo, meds, food, keys; Household, Jewelry and Currency (×2.5) | 0–2 | 1 / 1 / 1 / 1 / 1 / 1 | 2×2 | ×0.8 | No |
+| Weapon box | Weapons, ammo, attachments; anything tagged `valuable` (×0.25) | 1–2 | 0.8 / 1 / 1.3 / 1.3 / 1.2 / 1 | 6×3 | ×1.1 | Yes (wood) |
+| Medical bag | Meds and stims; Medical supply (×0.6) | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
+| Safe | Anything tagged `valuable`, keys, stims (×0.3) | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 | 3×3 | ×1.4 | Yes (metal) |
+| Medicine cabinet | Bandages, tourniquets, splints, painkillers, small medkits, Salewa, stims; Medical supply (empty autoinjectors ×1.5) | 1–3 | 0.9 / 1.1 / 1.3 / 1.4 / 1 / 1 | 3×3 | ×0.9 | Yes (metal) |
 | Lab cabinet | Stims, medical tools, saline (×1.5), empty autoinjectors, LEDX, lab keycard, flash drives, SSDs | 1–3 | 0.4 / 0.8 / 1.3 / 1.8 / 2.5 / 2.5 | 4×3 | ×1.2 | Yes (metal) |
-| Filing cabinet | Keys, flash drives, intelligence folders (×2 likely), paper, matches, gold chains, hard drives, crypto drives, cigarettes, lighters | 1–3 | 1 / 1 / 1.2 / 1.3 / 1.2 / 1 | 4×4 | ×1.2 | Yes (metal) |
+| Filing cabinet | Keys, flash drives, intelligence folders (×2 likely), paper, matches, gold chains, hard drives, crypto drives, cigarettes, lighters; Intel | 1–3 | 1 / 1 / 1.2 / 1.3 / 1.2 / 1 | 4×4 | ×1.2 | Yes (metal) |
 | Duffle bag | Ammo, attachments, meds, valuables, junk | 1–3 | 1 / 1 / 1 / 1 / 1 / 1 | 4×3 | ×1 | No |
 | Fridge | Drinks, canned food, alcohol, field rations | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 3×4 | ×0.8 | Yes (metal) |
 | Kitchen cabinet | Dry and canned food, combo rations, matches, lighters, soap, kettles | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 4×3 | ×1 | Yes (wood) |
 | Store shelf | Snacks, food, drinks, combo rations, cigarettes, hygiene, batteries, bulbs | 2–5 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 5×3 | ×1.1 | Yes (metal) |
 | Gas station counter | Energy and sports drinks, water, coffee, snacks, combo rations, cigarettes, lighters, batteries, WD-40, fuel conditioner | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 4×3 | ×1 | Yes (metal) |
+| PC | Electronics and Tech (power cords, RAM, hard drives ×1.5) | 1–2 | 1 / 1 / 1.1 / 1.2 / 1.1 / 1 | 2×3 | ×1.1 | No |
+| Server rack | Electronics and Tech (server blades ×2.5, SSDs and military cable ×1.5) | 1–3 | 0.5 / 0.9 / 1.3 / 1.7 / 2 / 1.6 | 3×4 | ×1.3 | Yes (metal) |
+| Chest of drawers | Household, Jewelry and Currency | 1–3 | 1 / 1 / 1.05 / 1.1 / 1 / 1 | 4×2 | ×1 | Yes (wood) |
+| Medical crate | Meds (stims included) and Medical supply | 2–4 | 0.8 / 1.1 / 1.3 / 1.5 / 1.2 / 1 | 5×3 | ×1.1 | Yes (wood) |
 
 Solid containers block movement and bullets (wood ones can be shot through) and the AI paths around them.
 
@@ -425,6 +429,151 @@ Every piece of armor, with its class, zones, durability and blunt share, is in S
 
 The 40 parts from before (AK-74N, PM, SVD and the rail parts) are listed in Section 12.1.
 
+### 6.5 Barter Goods & Valuables *(tune)*
+
+Barter goods (junk, 56 items) and valuables (27) are what you sell, barter, craft with and build the hideout from. Every one has a **group** (`"group"`) and a list of **tags** (`"tags"`) in its data file, and a base value set by its rarity. The request's item table came through as a "[paste the table]" placeholder, so the existing barter goods and valuables were given groups, tags and values in the new bands, plus 20 new barter goods and 10 new valuables (marked *new* below).
+
+**Value bands** (`value_bands` in `data/config/item_groups.json`; the game warns about an item outside its band):
+
+| Rarity | Base value |
+|---|---|
+| Common | 5,000 – 25,000 ₽ |
+| Uncommon | 25,000 – 60,000 ₽ |
+| Rare | 60,000 – 150,000 ₽ |
+| Ultra Rare | 150,000 – 400,000 ₽ |
+| Epic | 400,000 – 1,000,000 ₽ |
+| Legendary | 1,000,000 ₽ and up |
+
+**Groups** (one per item; `data/config/item_groups.json`):
+
+| Group | What | Barter goods | Valuables |
+|---|---|---|---|
+| Hardware | Fasteners, tape, hoses, oil: building and repair stuff | 8 | 0 |
+| Tools | Hand and power tools | 5 | 0 |
+| Electronics | Wires, batteries, boards, radios and motors | 13 | 0 |
+| Tech | Computer parts and data: drives, memory, GPUs, server blades | 3 | 6 |
+| Household | Hygiene, smokes, lighters, kitchen things | 9 | 0 |
+| Jewelry | Watches, chains, rings, necklaces | 0 | 6 |
+| Currency | Coins, notes, gold and bitcoin | 0 | 7 |
+| Collectibles | Statues, medals, icons and other antiques | 0 | 5 |
+| Intel | Documents and secure comms | 0 | 2 |
+| Medical supply | Medical tools and supplies that aren't meds | 6 | 1 |
+| Fuel | Fuel and gas | 3 | 0 |
+| Military | Weapon parts, powder, charges and military kit | 4 | 0 |
+| Materials | Fabrics, resin and ceramics for gear upgrades | 5 | 0 |
+
+**Tags** (any number per item, lower case): `metal`, `building`, `adhesive`, `plumbing`, `lubricant`, `tool`, `electronics`, `cable`, `copper`, `battery`, `computer`, `data`, `radio`, `optics`, `glass`, `fragile`, `heavy`, `hygiene`, `cleaning`, `paper`, `tobacco`, `fire`, `flammable`, `explosive`, `fuel`, `gas`, `liquid`, `chemical`, `kitchen`, `cloth`, `rope`, `ballistic`, `weapon`, `military`, `medical`, `jewelry`, `watch`, `gold`, `silver`, `gem`, `currency`, `antique`, `religious`, `wood`, `intel`, `valuable`. `valuable` marks every valuable and a few precious barter goods (thermal imaging module, encrypted field transmitter).
+
+**Where they spawn.** A loot table rolls the items in its item list, of its categories, of its **groups**, with any of its **tags** or of its types, all together (`groups`, `tags`, `tag_weight` in `data/loot_tables/*.tres`; `tag_weight` makes the group/tag items a side line):
+
+| Container | Rolls |
+|---|---|
+| Toolbox | Hardware and Tools |
+| PC *(new)* | Electronics and Tech (power cords, RAM and hard drives ×1.5) |
+| Server rack *(new)* | Electronics and Tech, rarer (server blades ×2.5) |
+| Jacket | Household, Jewelry and Currency (×2.5), plus ammo, meds, food and keys |
+| Chest of drawers *(new)* | Household, Jewelry and Currency |
+| Medical crate *(new)* | Medical supply and meds |
+| Medical bag, medicine cabinet | Their meds and stims, plus Medical supply |
+| Safe | Anything tagged `valuable`, keys, stims (×0.3) |
+| Weapon box | Weapons, ammo and attachments, plus anything tagged `valuable` (×0.25) |
+| Boss body | Anything tagged `valuable`, and stims |
+| Filing cabinet | Its keys, drives and papers, plus Intel |
+| Crate, duffle bag | Any barter goods (by category) |
+
+**Needed for.** Examining an item shows **Needed for** with a summary ("1 quest, 2 hideout upgrades, 3 barters"); hover it for the full list: every quest that asks for it (with the count and whether it must be found in raid), every hideout level that needs it, every trader barter and hideout craft that takes it, and the gear upgrades that use it. Completed quests and hideout levels already built drop out. Valuables nothing needs say "Nothing: it's worth its value". Hovering an item in the inventory shows the summary too (`ItemUses`).
+
+**New uses.** Two quests: Clinic Supplies (Therapist, after Shortage: 2 medical blood sets and an ophthalmoscope, found in raid) and Server Room (Mechanic, after Gunsmith part 0: 3 RAM modules, 2 power cords, a cordless drill). Hideout upgrades now also want a pressure gauge (Generator 2), medical blood sets (Medstation 3), an adjustable wrench (Workbench 2), a cordless drill (Workbench 3), bleach (Lavatory 2), a propane tank (Nutrition Unit 2) and power cords (Rest Space 3). New crafts: bleach (Lavatory 1), hex nuts (Workbench 1), a multitool (Workbench 2), blood sets (Medstation 2), thermite and a server blade (Workbench 3). New barters at every trader take the new items (a gold bar for an SVD, banded dollars for a Sentinel AR, a defibrillator for a Surv12, the jeweled egg or a tank battery for a Leviathan .338, and more). Trader prices for barter goods rose with their values.
+
+| Barter good | Group | Rarity | Size | Value (₽) | Tags | Needed for |
+|---|---|---|---|---|---|---|
+| Pack of nails | Hardware | Common | 1×1 | 6,000 | metal, building | upgrades (Rest Space 1); barters (Jaeger) |
+| Hex nuts *(new)* | Hardware | Common | 1×1 | 6,500 | metal, building | crafts (Workbench) |
+| Screw nuts | Hardware | Common | 1×1 | 7,000 | metal, building | quests (Scrap Run); upgrades (Workbench 1, Workbench 2); barters (Mechanic, Prapor); crafts (Workbench); gear upgrades (headsets) |
+| Bolts | Hardware | Common | 1×1 | 8,000 | metal, building | quests (Scrap Run); upgrades (Workbench 1, Workbench 2); barters (Mechanic, Prapor); crafts (Workbench); gear upgrades (armor) |
+| Duct tape | Hardware | Common | 1×1 | 11,000 | building, adhesive | quests (Textile); upgrades (Lavatory 1, Lavatory 2, Rest Space 1); barters (Prapor, Ragman, Skier); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); gear upgrades (armor, rigs and backpacks, every Workbench upgrade) |
+| WD-40 can | Hardware | Uncommon | 1×1 | 26,000 | chemical, flammable, lubricant | barters (Mechanic); crafts (Lavatory, Workbench) |
+| Corrugated hose | Hardware | Uncommon | 2×1 | 29,000 | building, plumbing | upgrades (Nutrition Unit 1, Nutrition Unit 3); barters (Jaeger); crafts (Nutrition Unit) |
+| Pressure gauge *(new)* | Hardware | Uncommon | 1×1 | 31,000 | metal, plumbing, fragile | upgrades (Generator 2) |
+| Screwdriver | Tools | Common | 1×1 | 7,000 | tool, metal | barters (Mechanic); crafts (Workbench); gear upgrades (headsets) |
+| Pliers | Tools | Common | 1×1 | 9,000 | tool, metal | barters (Mechanic); crafts (Workbench) |
+| Adjustable wrench *(new)* | Tools | Common | 1×2 | 14,000 | tool, metal | upgrades (Workbench 2); barters (Jaeger) |
+| Multitool *(new)* | Tools | Uncommon | 1×1 | 44,000 | tool, metal | barters (Skier) |
+| Cordless drill *(new)* | Tools | Rare | 2×1 | 96,000 | tool, electronics, battery | quests (Server Room); upgrades (Workbench 3) |
+| AA battery | Electronics | Common | 1×1 | 6,000 | electronics, battery | crafts (Workbench) |
+| Light bulb | Electronics | Common | 1×1 | 6,000 | electronics, glass, fragile | upgrades (Medstation 3, Nutrition Unit 2, Rest Space 1, Rest Space 2) |
+| Power cord *(new)* | Electronics | Common | 1×1 | 8,500 | electronics, cable, copper | quests (Server Room); upgrades (Rest Space 3); crafts (Workbench) |
+| Wires | Electronics | Common | 1×1 | 9,000 | electronics, cable, copper | quests (Gunsmith, Part 0); upgrades (Generator 2, Generator 3, Workbench 3); barters (Mechanic, Ragman); crafts (Lavatory, Workbench); gear upgrades (headsets) |
+| Capacitors | Electronics | Uncommon | 1×1 | 27,000 | electronics | upgrades (Nutrition Unit 3); barters (Mechanic); crafts (Workbench) |
+| Printed circuit board | Electronics | Uncommon | 1×1 | 33,000 | electronics, computer | upgrades (Rest Space 3); barters (Mechanic); crafts (Workbench) |
+| Rechargeable battery | Electronics | Uncommon | 1×1 | 34,000 | electronics, battery | upgrades (Nutrition Unit 2, Rest Space 2); barters (Mechanic); crafts (Workbench) |
+| Military power cable | Electronics | Rare | 1×1 | 68,000 | electronics, cable, military | upgrades (Workbench 3, Rest Space 3); barters (Mechanic, Prapor) |
+| Car battery | Electronics | Rare | 2×2 | 92,000 | electronics, battery, heavy | upgrades (Generator 3) |
+| Electric motor | Electronics | Rare | 2×2 | 98,000 | electronics, metal, heavy | upgrades (Generator 3, Workbench 3); barters (Mechanic); crafts (Workbench) |
+| VHF radio transmitter *(new)* | Electronics | Rare | 1×2 | 118,000 | electronics, military, radio | barters (Mechanic) |
+| Encrypted field transmitter *(new)* | Electronics | Epic | 1×2 | 820,000 | electronics, military, radio, intel, valuable | barters (Mechanic) |
+| Military tank battery *(new)* | Electronics | Legendary | 3×2 | 1,250,000 | electronics, battery, military, heavy | barters (Mechanic) |
+| RAM module *(new)* | Tech | Uncommon | 1×1 | 36,000 | electronics, computer | quests (Server Room); barters (Mechanic); crafts (Workbench) |
+| Server blade *(new)* | Tech | Ultra Rare | 2×1 | 240,000 | electronics, computer, data | barters (Mechanic) |
+| Thermal imaging module *(new)* | Tech | Epic | 1×1 | 640,000 | electronics, military, optics, valuable | barters (Peacekeeper) |
+| Toothpaste | Household | Common | 1×1 | 5,000 | hygiene | upgrades (Medstation 2, Medstation 3, Lavatory 2, Nutrition Unit 3); barters (Ragman, Therapist); crafts (Lavatory) |
+| Soap | Household | Common | 1×1 | 5,000 | hygiene | upgrades (Medstation 2, Medstation 3, Lavatory 2, Rest Space 2); barters (Ragman, Therapist); crafts (Lavatory, Medstation) |
+| Toilet paper | Household | Common | 1×1 | 5,000 | hygiene, paper, flammable | quests (Textile); upgrades (Lavatory 1, Lavatory 2); barters (Therapist); crafts (Lavatory) |
+| Lighter | Household | Common | 1×1 | 5,500 | fire, flammable | upgrades (Nutrition Unit 1); barters (Jaeger, Prapor, Ragman); crafts (Nutrition Unit) |
+| Matches | Household | Common | 1×1 | 5,500 | fire, flammable | barters (Jaeger, Skier); crafts (Lavatory, Nutrition Unit) |
+| Cigarettes | Household | Common | 1×1 | 6,500 | tobacco, flammable | barters (Prapor, Ragman, Skier, Therapist) |
+| Bleach *(new)* | Household | Common | 1×2 | 7,000 | chemical, cleaning, hygiene | upgrades (Lavatory 2) |
+| Sewing kit *(new)* | Household | Common | 1×1 | 9,500 | cloth, tool | barters (Ragman) |
+| Kettle | Household | Uncommon | 1×2 | 25,000 | metal, kitchen | upgrades (Nutrition Unit 1, Nutrition Unit 2, Nutrition Unit 3) |
+| Empty autoinjector | Medical supply | Common | 1×1 | 8,000 | medical | crafts (Medstation) |
+| Medical blood set *(new)* | Medical supply | Uncommon | 1×1 | 27,000 | medical | quests (Clinic Supplies); upgrades (Medstation 3); barters (Therapist) |
+| Saline solution | Medical supply | Uncommon | 1×2 | 28,000 | medical, liquid | barters (Therapist); crafts (Medstation) |
+| Medical tools | Medical supply | Uncommon | 1×1 | 42,000 | medical, metal | upgrades (Medstation 3); barters (Therapist); crafts (Medstation) |
+| Ophthalmoscope *(new)* | Medical supply | Rare | 1×1 | 125,000 | medical, electronics, optics | quests (Clinic Supplies); barters (Therapist) |
+| Portable defibrillator *(new)* | Medical supply | Ultra Rare | 2×2 | 310,000 | medical, electronics, battery | barters (Therapist) |
+| Propane tank *(new)* | Fuel | Uncommon | 2×2 | 48,000 | fuel, flammable, gas, metal, heavy | upgrades (Nutrition Unit 2); barters (Jaeger) |
+| Fuel can | Fuel | Uncommon | 2×2 | 52,000 | fuel, flammable, liquid | upgrades (Generator 1, Generator 2) |
+| Fuel conditioner | Fuel | Rare | 1×2 | 84,000 | fuel, chemical, flammable | upgrades (Generator 3); barters (Jaeger) |
+| Weapon parts | Military | Uncommon | 2×1 | 38,000 | weapon, metal | quests (Gunsmith, Part 0); upgrades (Workbench 3); barters (Mechanic, Prapor); crafts (Workbench) |
+| Gunpowder "Kite" | Military | Uncommon | 1×1 | 40,000 | explosive, flammable | barters (Prapor); crafts (Workbench) |
+| Thermite charge *(new)* | Military | Rare | 1×2 | 88,000 | explosive, flammable, metal | barters (Prapor) |
+| Military gyroscope *(new)* | Military | Ultra Rare | 1×1 | 280,000 | electronics, military, optics | barters (Mechanic) |
+| Paracord | Materials | Common | 1×1 | 7,500 | cloth, rope | gear upgrades (rigs and backpacks) |
+| Ripstop fabric | Materials | Common | 1×1 | 9,000 | cloth | barters (Ragman); gear upgrades (rigs and backpacks) |
+| Aramid fabric | Materials | Uncommon | 1×1 | 36,000 | cloth, ballistic | gear upgrades (armor) |
+| Epoxy resin | Materials | Rare | 1×1 | 64,000 | chemical, adhesive | gear upgrades (armor, rigs and backpacks) |
+| Ceramic plate shards | Materials | Ultra Rare | 1×1 | 175,000 | ballistic, fragile | gear upgrades (armor) |
+
+| Valuable | Group | Rarity | Size | Value (₽) | Tags | Needed for |
+|---|---|---|---|---|---|---|
+| Hard drive | Tech | Uncommon | 1×1 | 45,000 | electronics, computer, data, valuable | upgrades (Rest Space 3); barters (Skier) |
+| SSD drive | Tech | Rare | 1×1 | 105,000 | electronics, computer, data, valuable | barters (Peacekeeper, Skier, Therapist); crafts (Workbench) |
+| Secure flash drive | Tech | Rare | 1×1 | 135,000 | electronics, data, intel, valuable | gear upgrades (headsets) |
+| Encrypted military hard drive | Tech | Ultra Rare | 1×1 | 330,000 | electronics, computer, data, military, intel, valuable | barters (Peacekeeper, Therapist) |
+| Graphics card | Tech | Epic | 2×1 | 900,000 | electronics, computer, valuable | barters (Peacekeeper, Skier); crafts (Workbench); gear upgrades (headsets) |
+| Cold-wallet crypto drive | Tech | Legendary | 1×1 | 1,650,000 | electronics, data, currency, valuable | barters (Therapist) |
+| Silver signet ring *(new)* | Jewelry | Uncommon | 1×1 | 32,000 | jewelry, silver, valuable | barters (Skier) |
+| Old wrist watch | Jewelry | Uncommon | 1×1 | 38,000 | jewelry, watch, valuable | barters (Skier, Therapist) |
+| Gold chain | Jewelry | Rare | 1×1 | 72,000 | jewelry, gold, valuable | barters (Peacekeeper, Prapor, Skier, Therapist); crafts (Workbench) |
+| Antique pocket watch | Jewelry | Rare | 1×1 | 88,000 | jewelry, watch, silver, antique, valuable | barters (Therapist) |
+| Roler Submariner gold wrist watch | Jewelry | Epic | 1×1 | 480,000 | jewelry, watch, gold, valuable | barters (Peacekeeper, Therapist) |
+| Diamond necklace *(new)* | Jewelry | Epic | 1×1 | 720,000 | jewelry, gold, gem, valuable | barters (Therapist) |
+| Pre-war banknotes *(new)* | Currency | Common | 1×1 | 14,000 | currency, paper, valuable | barters (Prapor) |
+| Old silver coin | Currency | Uncommon | 1×1 | 30,000 | currency, silver, antique, valuable | barters (Skier) |
+| Banded dollars *(new)* | Currency | Rare | 1×1 | 115,000 | currency, paper, valuable | barters (Peacekeeper) |
+| Antique gold coin | Currency | Ultra Rare | 1×1 | 210,000 | currency, gold, antique, valuable | barters (Therapist) |
+| Gold bar (100 g) *(new)* | Currency | Ultra Rare | 1×1 | 360,000 | currency, gold, valuable | barters (Prapor) |
+| Rare coin collection | Currency | Epic | 2×1 | 640,000 | currency, antique, valuable | barters (Therapist) |
+| Physical bitcoin | Currency | Epic | 1×1 | 780,000 | currency, gold, valuable | — |
+| Order of the Red Star *(new)* | Collectibles | Uncommon | 1×1 | 46,000 | antique, metal, military, valuable | barters (Jaeger, Prapor) |
+| Vintage rangefinder camera *(new)* | Collectibles | Rare | 1×1 | 78,000 | antique, optics, fragile, valuable | barters (Skier) |
+| Bronze lion | Collectibles | Ultra Rare | 2×2 | 260,000 | antique, metal, heavy, valuable | barters (Ragman) |
+| Antique icon *(new)* | Collectibles | Ultra Rare | 1×2 | 290,000 | antique, religious, wood, valuable | barters (Ragman) |
+| Imperial jeweled egg *(new)* | Collectibles | Legendary | 1×1 | 2,600,000 | jewelry, gold, gem, antique, fragile, valuable | barters (Jaeger) |
+| Intelligence folder | Intel | Epic | 2×1 | 520,000 | paper, intel, valuable | barters (Therapist) |
+| Encrypted satellite phone *(new)* | Intel | Epic | 1×2 | 560,000 | electronics, military, radio, intel, valuable | barters (Skier) |
+| LEDX Skin Transilluminator | Medical supply | Legendary | 1×1 | 1,400,000 | medical, electronics, optics, valuable | barters (Jaeger, Therapist) |
+
 ## 7. Grid Inventory
 
 | Rule | Detail |
@@ -438,7 +587,7 @@ The 40 parts from before (AK-74N, PM, SVD and the rail parts) are listed in Sect
 | Containers | Rigs, backpacks and cases have their own grid (`"grid": [w, h]` stat). Drop an item on one to put it inside; double-click one to open it in its own window (e.g. a backpack in the stash). A container only goes inside another when empty, and never inside itself. The secure container takes no rigs, backpacks or containers |
 | Slots | Primary weapon, Secondary weapon, Pistol, Melee, Helmet, Body armor, Tactical rig, Backpack, Secure container, plus Pockets (4 × 1×1). Pistols (`"class": "pistol"`) go only in the Pistol slot, other guns in Primary / Secondary. The gun in hand is the primary, else the secondary, else the pistol. An armored rig and body armor don't go together. Face shields and headsets go on the helmet (Section 12.2) |
 | Rarity | Every item's background and border are its rarity colour, with the rarity letter in the corner so colour is never the only cue (colorblind palette aware) |
-| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (a gun's type, caliber and how many round types it takes, handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage (per pellet), penetration, armor damage, velocity, fragmentation, bleeds, recoil, accuracy, ricochet, tracer and the guns it fits, with an ammo chart of its caliber beside the stats (a gun shows its caliber's too, Section 6.4); armor class, what it covers and its durability and durability, what meds treat, a container's grid and contents, sight, Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
+| Examine | Right-click: icon, name in its rarity colour, rarity, category, size, weight, value, stack, and what matters for its kind (a gun's type, caliber and how many round types it takes, handling with its parts, durability and jam chance, loaded rounds; a weapon part's kind, the guns it fits and what it changes; ammo damage (per pellet), penetration, armor damage, velocity, fragmentation, bleeds, recoil, accuracy, ricochet, tracer and the guns it fits, with an ammo chart of its caliber beside the stats (a gun shows its caliber's too, Section 6.4); armor class, what it covers and its durability and durability, what meds treat, a container's grid and contents, sight; a barter good's or valuable's group and tags; **Needed for**: the quests, hideout upgrades, barters, crafts and gear upgrades that take it, summed up, with the full list on hover (Section 6.5); Found in Raid). Out of raid a gun's panel has **MODIFY** (Section 12.1). *Planned:* unknown items must be examined first to reveal their name and value |
 | Weapon parts | Out of raid, dropping a part on a gun (in a grid or an equipment slot) fits it to a free slot it fits (the gun lights amber). A gun's weight and value include its parts. Hover a gun for its durability, a part for what it does |
 | Weight | Everything you carry counts, containers with their contents. Up to **25 kg** no effect. 25–40 kg **heavy**: speed falls to 80% and sprinting costs up to 1.5× stamina. **40 kg+ overweight**: no sprinting or combat roll, speed falls to 55% at 65 kg. Shown in the inventory header and the HUD. Values in `data/config/inventory.tres` *(tune)* |
 | Ammo | Spare rounds are counted from the pockets, rig and backpack (not the secure container); a reload takes the rounds it used out of them. Guns remember the rounds loaded |
@@ -475,7 +624,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, the Surv12 and the Legendary Grizzly, which traders never sell. It also makes Common to Rare stims from medical supplies (empty autoinjectors, saline, sugar, coffee, bandages, splints, painkillers): Glucose shots and Caffeine autoinjectors at level 1, Electrolyte boosters, Coagulant pens, Bonelock and Adrenaline at level 2, Packmule and Hawkeye at level 3 (Section 13.8); Ultra Rare and better stims are loot and barters only. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, the Surv12 and the Legendary Grizzly, which traders never sell. It also makes Common to Rare stims from medical supplies (empty autoinjectors, saline, sugar, coffee, bandages, splints, painkillers): Glucose shots and Caffeine autoinjectors at level 1, Electrolyte boosters, Coagulant pens, Bonelock and Adrenaline at level 2, Packmule and Hawkeye at level 3 (Section 13.8); Ultra Rare and better stims are loot and barters only. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. New barter goods (Section 6.5) are needed too: a pressure gauge (Generator 2), medical blood sets (Medstation 3), an adjustable wrench and a cordless drill (Workbench 2 and 3), bleach (Lavatory 2), a propane tank (Nutrition Unit 2), power cords (Rest Space 3); and crafted: bleach (Lavatory 1), hex nuts (Workbench 1), a multitool (Workbench 2), blood sets (Medstation 2), thermite and server blades (Workbench 3). Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
@@ -515,7 +664,7 @@ Stock restocks every 1 h *(tune)*; some items have per-restock limits.
 
 Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked, may require FIR) → turn-in → rewards. Some rewards unlock trader items or barters.
 
-**Built so far** (`data/quests/quests.json`, the trader's TASKS tab): hand-in quests. Accept, then HAND OVER per objective (part now, the rest later) from the stash and your character, including inside containers; FIR objectives only take items with the checkmark. TURN IN when everything is handed over: roubles, experience, reputation with the trader, and reward items in the stash (never FIR). Prior-quest prerequisites work. Five quests: Scrap Run (Prapor), Shortage and Sanitary Standards (Therapist), Textile (Ragman), Gunsmith Part 0 (Mechanic).
+**Built so far** (`data/quests/quests.json`, the trader's TASKS tab): hand-in quests. Accept, then HAND OVER per objective (part now, the rest later) from the stash and your character, including inside containers; FIR objectives only take items with the checkmark. TURN IN when everything is handed over: roubles, experience, reputation with the trader, and reward items in the stash (never FIR). Prior-quest prerequisites work. Seven quests: Scrap Run (Prapor), Shortage, Sanitary Standards and Clinic Supplies (Therapist), Textile (Ragman), Gunsmith Part 0 and Server Room (Mechanic). Examining an item lists the open quests that want it (Section 6.5).
 
 **Kill objectives** (`data/quests/trick_shots.json`): `{"type": "trick_kill", "count", "target": "pmc" / "scav", "weapon_class": "bolt_action" / "dmr"}` counts 360 trick-shot kills (Section 13.4) matching the filters, added up at the end of each raid while the quest is active, whether you survive or not; the TASKS tab shows them with a gold "360" and the count so far. Rewards can include Drip.
 
@@ -996,65 +1145,9 @@ Values below are per use; negative values drain that stat. Combo rations (Field 
 
 **Nutrition Unit crafts** (found in raid): level 1: energy drink ×2 (water + sugar + coffee), black tea (water + sugar + lighter), field ration ×2 (crackers ×2, jerky, water, tape), water ration ×2, Aquamari (water ×2 + hose), MRE; level 2 (generator 1): kvass ×2 (rye bread + sugar + water), buckwheat ×2 (sugar + water + matches ×2), Hot Rod, vodka, moonshine; level 3 (generator 2; found-in-raid hoses, kettle, capacitors, toothpaste): Survivor's emergency kit ×2, isotonic drink ×2, chocolate ×3.
 
-**Valuables** sell high and are wanted in barters and crafts; the best are Epic and Legendary.
+Valuables and barter goods (junk), with their groups, tags, values and what needs them, are in Section 6.5.
 
-| Valuable | Rarity | Size | Value (₽) | Wanted for |
-|---|---|---|---|---|
-| Old silver coin | Uncommon | 1×1 | 12,000 | barters (Skier) |
-| Old wrist watch | Uncommon | 1×1 | 15,000 | barters (Skier, Therapist) |
-| Hard drive | Uncommon | 1×1 | 18,000 | barters (Skier); upgrades (Rest Space 3) |
-| Gold chain | Rare | 1×1 | 30,000 | barters (Peacekeeper, Prapor, Skier, Therapist); crafts (Workbench) |
-| Antique pocket watch | Rare | 1×1 | 38,000 | barters (Therapist) |
-| SSD drive | Rare | 1×1 | 46,000 | barters (Peacekeeper, Skier, Therapist) |
-| Secure flash drive | Rare | 1×1 | 85,000 | sells |
-| Antique gold coin | Ultra Rare | 1×1 | 88,000 | barters (Therapist) |
-| Bronze lion | Ultra Rare | 2×2 | 95,000 | barters (Ragman) |
-| Encrypted military hard drive | Ultra Rare | 1×1 | 120,000 | barters (Peacekeeper, Therapist) |
-| Roler Submariner gold wrist watch | Epic | 1×1 | 210,000 | barters (Peacekeeper, Therapist) |
-| Intelligence folder | Epic | 2×1 | 240,000 | barters (Therapist) |
-| Rare coin collection | Epic | 2×1 | 260,000 | barters (Therapist) |
-| Physical bitcoin | Epic | 1×1 | 300,000 | sells |
-| Graphics card | Epic | 2×1 | 420,000 | barters (Peacekeeper, Skier); crafts (Workbench) |
-| LEDX Skin Transilluminator | Legendary | 1×1 | 900,000 | barters (Jaeger, Therapist) |
-| Cold-wallet crypto drive | Legendary | 1×1 | 1,100,000 | barters (Therapist) |
-
-**Barter goods** (junk) are for barters, crafts and hideout upgrades.
-
-| Barter good | Rarity | Size | Value (₽) | Used in |
-|---|---|---|---|---|
-| Matches | Common | 1×1 | 2,000 | barters (Jaeger, Skier); crafts (Lavatory, Nutrition Unit) |
-| Lighter | Common | 1×1 | 2,500 | barters (Jaeger, Prapor, Ragman); crafts (Nutrition Unit); upgrades (Nutrition Unit 1) |
-| Soap | Common | 1×1 | 2,800 | barters (Ragman, Therapist); crafts (Medstation); upgrades (Lavatory 2, Medstation 2, Medstation 3, Rest Space 2) |
-| Toothpaste | Common | 1×1 | 3,000 | barters (Ragman, Therapist); crafts (Lavatory); upgrades (Lavatory 2, Medstation 2, Medstation 3, Nutrition Unit 3) |
-| Cigarettes | Common | 1×1 | 3,000 | barters (Prapor, Ragman, Skier, Therapist) |
-| Light bulb | Common | 1×1 | 3,200 | upgrades (Medstation 3, Nutrition Unit 2, Rest Space 1, Rest Space 2) |
-| AA battery | Common | 1×1 | 3,500 | crafts (Workbench) |
-| Toilet paper | Common | 1×1 | 3,500 | barters (Therapist); crafts (Lavatory); upgrades (Lavatory 1, Lavatory 2) |
-| Screwdriver | Common | 1×1 | 3,500 | barters (Mechanic) |
-| Pack of nails | Common | 1×1 | 4,000 | barters (Jaeger); upgrades (Rest Space 1) |
-| Empty autoinjector | Common | 1×1 | 4,500 | crafts (Medstation) |
-| Pliers | Common | 1×1 | 5,000 | barters (Mechanic) |
-| Screw nuts | Common | 1×1 | 6,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
-| Wires | Common | 1×1 | 7,000 | barters (Mechanic, Ragman); crafts (Lavatory, Workbench); upgrades (Generator 2, Generator 3, Workbench 3) |
-| Bolts | Common | 1×1 | 8,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
-| Duct tape | Common | 1×1 | 9,000 | barters (Prapor, Ragman, Skier); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); upgrades (Lavatory 1, Lavatory 2, Rest Space 1) |
-| Kettle | Uncommon | 1×2 | 9,000 | upgrades (Nutrition Unit 1, Nutrition Unit 2, Nutrition Unit 3) |
-| WD-40 can | Uncommon | 1×1 | 11,000 | barters (Mechanic); crafts (Lavatory) |
-| Capacitors | Uncommon | 1×1 | 12,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 3) |
-| Saline solution | Uncommon | 1×2 | 13,000 | barters (Therapist); crafts (Medstation) |
-| Rechargeable battery | Uncommon | 1×1 | 14,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 2, Rest Space 2) |
-| Corrugated hose | Uncommon | 2×1 | 14,000 | barters (Jaeger); crafts (Nutrition Unit); upgrades (Nutrition Unit 1, Nutrition Unit 3) |
-| Printed circuit board | Uncommon | 1×1 | 15,000 | barters (Mechanic); upgrades (Rest Space 3) |
-| Weapon parts | Uncommon | 2×1 | 15,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 3) |
-| Gunpowder "Kite" | Uncommon | 1×1 | 18,000 | barters (Prapor); crafts (Workbench) |
-| Medical tools | Uncommon | 1×1 | 19,000 | barters (Therapist); crafts (Medstation); upgrades (Medstation 3) |
-| Fuel can | Uncommon | 2×2 | 30,000 | upgrades (Generator 1, Generator 2) |
-| Military power cable | Rare | 1×1 | 36,000 | barters (Mechanic, Prapor); upgrades (Rest Space 3, Workbench 3) |
-| Fuel conditioner | Rare | 1×2 | 48,000 | barters (Jaeger); upgrades (Generator 3) |
-| Car battery | Rare | 2×2 | 52,000 | upgrades (Generator 3) |
-| Electric motor | Rare | 2×2 | 55,000 | barters (Mechanic); crafts (Workbench); upgrades (Generator 3, Workbench 3) |
-
-All of this is data: meds and stims in `data/items/meds/`, food and drink in `data/items/food/`, valuables in `data/items/valuables/`, barter goods in `data/items/junk/`; use, energy and hydration tuning in `data/config/consumables.tres`.
+All of this is data: meds and stims in `data/items/meds/`, food and drink in `data/items/food/`; use, energy and hydration tuning in `data/config/consumables.tres`.
 
 ### 13.8 Stimulants *(tune)*
 
@@ -1126,6 +1219,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Currencies | Roubles (₽), Dollars ($); **Drip** (style points from 360 trick-shot kills and trick-shot quests; nothing spends it yet) |
 | Sources | Trader sells, quest rewards, crafting, Bitcoin farm |
 | Sinks | Trader buys, insurance, repairs, hideout upgrades, paid extracts |
+| Item values | Barter goods and valuables are worth a band by rarity: Common 5k–25k ₽, Uncommon 25k–60k, Rare 60k–150k, Ultra Rare 150k–400k, Epic 400k–1M, Legendary 1M+ (Section 6.5) |
 | FIR | Required for most quest hand-ins and hideout upgrades |
 | Starting money | 500,000 ₽ and 0 $ for a new character *(tune)* |
 
@@ -1139,7 +1233,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Content files | Guns: `data/weapons/<gun>.tres` plus their items in `data/items/weapons/<class>.json`; ammo: `data/items/ammo/<caliber>.json` (stats `caliber`, `damage`, `penetration`, `armor_damage`, `fragmentation`, `velocity`, `recoil`, `accuracy`, `ricochet`, `light_bleed`, `heavy_bleed`, optional `pellets`, `pellet_spread`, `noise`, `tracer`); armor: `class`, `durability`, `zones`, `material`, `blunt`, `ricochet`, `destructibility`; parts: `data/items/attachments/<family>_mods.json`. `ItemDB.ammo_of(caliber)` lists a caliber's rounds (commonest first); `LootTable.ammo_for()` picks the everyday one. `Weapon.pull_trigger` fires one `Ballistics.fire` per pellet (`sound` only on the first); `InventoryDrag.can_load()` / `load_into()` load rounds dropped on a gun; `Player` chambers the top round of the magazine and switches round type on reload |
 | Gear and upgrades | Helmets use the mod slot tree (`WeaponMods`: `slots_of()` reads a helmet's `"slots"`, `platform_of()` its `"platform"`, `install_defaults()` its `"default_mods"`; `has_slots()`, `is_gear_mod()`); face shields and headsets are attachment items with a `"mod"` stat of kind `face_shield` / `headset`. `ArmorRules.armor_for(gear, part, frontal)` checks face shields before helmets (`is_frontal()`), `Actor.hearing_multiplier()` adds up helmet hearing. `Inventory.accepts()` keeps body armor and armored rigs apart. `GearUpgrades` (`scripts/progression/`, data in `data/config/gear_upgrades.json`): groups, max level, effects (`blunt()`, `ricochet()`, `hearing()`, `weight_multiplier()`, `grid_size()`, `apply()`), sources and limits, `cost()`, `block_reason()`, `upgrade()`, `owned()`. `ItemInstance.upgrade_level` (saved as `"upgrade"`) and `title()`. UI: `GearUpgradeRow` (`scripts/ui/`), `GearUpgradePanel` (`scripts/ui/inventory/`, from the examine panel's UPGRADE), Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES |
 | Armor and rounds | `ArmorRules` (`scripts/combat/`): resistance, penetration chance, `resolve()` (penetration, ricochet, blunt, wear, fragmentation, bleed chances) and `effectiveness()` for the charts. `Actor.take_hit(damage, from, position, shot)` resolves a round (`ArmorRules.shot()`) against `worn_gear()` and returns the outcome, which `Ballistics` passes to `on_hit_landed()` (`Player.last_hit` drives the armor hit marker). `BodyHealth.hit` takes the round's bleed chances from the cause. `WeaponStats.shot_speed()` gives a round's speed out of a gun; `Weapon.ammo_recoil()` / `ammo_spread()` apply the round's recoil and accuracy. Armor `ItemInstance`s keep their durability (`is_armor()`, `has_durability()`). `AmmoChart` (`scripts/ui/`) draws the charts; `Trading.offer_level()`, `loyalty_block_reason()` and `update_loyalty()` gate offers by loyalty level |
-| Loot tables | `LootTable` Resource, one per container type (`data/loot_tables/*.tres`: base rarity weights, the table's rarity multipliers, categories or an item list, item weights, item count) with `roll_rarity()`, `roll_item()`, `roll()`, `roll_items()` (ready-made, guns loaded) and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: their table, grid size, search time, placeholder look, solid or not, bullet material); maps add `MapInfo.loot_multipliers` |
+| Loot tables | `LootTable` Resource, one per container type (`data/loot_tables/*.tres`: base rarity weights, the table's rarity multipliers, categories, an item list, item groups and tags with their side-line weight, types, item weights, item count) with `roll_rarity()`, `roll_item()`, `roll()`, `roll_items()` (ready-made, guns loaded) and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: their table, grid size, search time, placeholder look, solid or not, bullet material); maps add `MapInfo.loot_multipliers` |
 | Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid (`fir`, plus raid-only `fir_pending` and `brought_in`), its own `InventoryGrid` for rigs / backpacks / containers, for guns the round type and the magazine (ammo instances bottom to top, so each run of rounds keeps its status), `durability` / `max_durability`, and for guns and parts the parts fitted (`mods`, slot id → `ItemInstance`, nested); saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses and gunsmith mods (`AffixData` / `GunsmithModData` Resources) |
 | Handling tuning | `HandlingConfig` (`data/config/handling.tres`): rarity strength, ergonomics points, the special-modifier rarity factor, ergonomics handling, weight sway and bloom-recovery loss, aimed sway, stance bloom rise, wear spread, recoil jitter, preview shots, skill recoil, stat limits, repair. `data/config/attachment_profiles.json`: each attachment kind's default effects. The `Weapon` node keeps the recoil kick and the bloom (shot and stance) at run time; `Actor.set_stance` each tick feeds it speed, sprint, roll and aim (`aim_blend()`) |
 | Trick shots | `SpinTracker` (`scripts/combat/`): feeds on the aim direction each tick and reports a full one-way turn within the spin time. `Player` runs it (`spin_progress()`, `is_spinning()`, `trick_window_left`, signals `trick_shot_ready` and `trick_shot_hit`) and arms the `Weapon` (`trick_armed`; `firing_trick_shot` is true while that shot's hits land); `Ballistics.fire(..., damage_multiplier)` scales the round. `RaidController` adds the bonus XP and Drip and lists the kills for quests (`QuestLog.record_trick_kills()` at settle); `GameState.drip` and `GameState.trick_shots` keep them. HUD: TRICK SHOT READY, banner, sting (`assets/audio/sfx/trick_sting.wav`, from `tools/make_placeholder_audio.py`); reticle: spin ring, gold marker |
@@ -1147,6 +1241,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Found in raid | `FoundInRaid` (`scripts/inventory/`): where items come from (`Source`: trader, flea market, quick-buy, insurance, barter, quest reward, craft, starter) and `make()` with the right status; `mark_brought_in()` at raid start, `claim()` when loot reaches the player's inventory (on `Inventory.changed`), `resolve()` at the end |
 | Raid | `RaidController` (`scripts/raid/`, a node in the map): clock, raid experience, extraction (`ExtractZone`, `scripts/world/`), ending. `RaidOutcome` settles it (FIR, keep / lose gear, Scav transfer, XP, save). `RaidConfig` (`data/config/raid.tres`): extract time, Run Through limits, XP, search timing. Interactables are in group `interactables` with `interact_text()`, `can_interact()`, `interact()`: `LootBox` (a container of a `LootContainer` type), `LootPickup` (loose item), dead `Bot`s (their `inventory`). `LootSearch` (`scripts/inventory/`) reveals hidden items one by one; the inventory screen runs it while the loot is open (`ItemInstance.hidden`, raid only). The result screen is `ui/raid_result_screen.tscn` |
 | Progression | `scripts/progression/`: `Requirement` (item, count, fir), `ItemSearch` (count / take from the stash and character, FIR-only where required), `Trading` (`data/traders/offers.json`), `QuestLog` (`data/quests/*.json`, progress in `GameState.quests`), `Hideout` (`data/hideout/stations.json`, levels in `GameState.hideout`). Screens: TRADERS tabs, `ui/hideout_screen.tscn`; shared widgets `RequirementRow`, `ItemCell`, `FirMark` |
+| Item groups and uses | `ItemData.group` and `tags` (JSON `"group"`, `"tags"`); `ItemGroups` (`scripts/data/`) reads `data/config/item_groups.json` (groups, tags, value bands) and checks every barter good and valuable at load (`problems()`, warnings). `ItemUses` (`scripts/progression/`): `of(id)` lists the quests, hideout upgrades, barters, crafts and gear upgrades that take an item, `summary()` and `tooltip()` for the examine panel's Needed for line and the inventory hover text |
 | Inventory | Data (`scripts/inventory/`, no UI): `InventoryGrid` (placement, rotation, stacking, what may go inside what, weight, save), `Inventory` (equipment slots + pockets: slot rules, weight, ammo count / take, starter and Scav kits), `InventoryConfig` (`data/config/inventory.tres`: stash size, weight thresholds). UI (`scripts/ui/inventory/`): `InventoryScreen` (`ui/inventory_screen.tscn`), `InventoryGridView`, `EquipmentSlotView`, `InventoryDrag` (what a drop would do, and doing it), `InventoryDragPreview`, `ItemDraw`, `ItemExaminePanel`; `InventoryLayer` opens it in a raid. Built on Godot's GUI drag & drop (`_get_drag_data` / `_can_drop_data` / `_drop_data`). The player's weight, gun and spare rounds follow its `Inventory` (`Player.set_inventory()`) |
 | Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, quests, hideout levels, stash grid; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
 | Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 6 adds Drip and trick-shot stats (older profiles start at 0). Version 5 saves each gun's parts (nested, each with its FIR status) and durability; older guns load with their default parts at full durability. Version 4 keeps each gun's magazine as runs of rounds with their FIR status, and adds quests and hideout levels (version 3 rounds load as not found in raid). Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
@@ -1291,3 +1386,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-13 | Consumables (Section 13.7): meds that work (bandages and army bandages stop light bleeds, Esmarch and CAT tourniquets heavy ones, the CALOK-B hemostat either; splints set fractures; painkillers numb pain and let broken legs sprint; AI-2 and car (small) and Salewa, IFAK, AFAK and Grizzly (large) medkits with HP pools that pay for bleeds and heal one part a use; CMS and Surv12 surgery restores blacked parts at a max HP cost), 9 stimulants with timed effects (regeneration, painkiller, hemostatic, stamina, speed, recoil, sway) and side effects (tremor, thirst, hunger, toxin). Every item has a use time and can be interrupted (shooting, rolling, sprinting, reloading, aiming, a hit, E); E quick-treats with what's in your pockets, rig and secure container; USE in the examine panel. Energy and hydration drain in raids (faster sprinting), make you hungry or thirsty when low and hurt at 0, carry over between raids and recover out of raid; 14 foods and drinks. New valuables (watches, coins, hard drives, crypto drive) and barter goods (batteries, fuel conditioner, toothpaste, soap, cigarettes, lighter and more) in barters, crafts and hideout upgrades; Medstation level 3, Nutrition Unit; best meds and valuables Epic or Legendary. HUD energy and water bars, effects, E hint, use bar; uses left on items; `consumables.tres`. 412 items. Save adds energy and hydration |
 | 2026-10-13 | Energy and hydration system (Section 13.7). The request's food table came through as a "[paste the table]" placeholder, so the table was built from the items it named (crackers, sugar, jerky, vodka, moonshine, water, coffee, energy drink, Field ration pack, Survivor's emergency kit) and the existing food, plus 15 originals: 34 foods and drinks with per-use energy and hydration, uses, use time, rarity, size and side effects. Drain: −1 energy / −2 hydration a minute walking, × activity (still 0.5, crouched 0.75, sprint 2, roll 3), load, injuries and the map's climate (hot Shoreline Resort and Factory, cold Woodland); below 30 slower stamina recovery and a HUD warning (was 25, with sway); at 0 Exhaustion / Dehydration drain HP from every body part (was the stomach), add sway and blur and narrow vision. Hideout refill 0.5 a minute, faster with the Nutrition Unit (now 3 levels, 14 crafts from junk) and the new Rest Space. Metabolism skill levels from eating and drinking (new `Skills`). Food containers: fridge, kitchen cabinet, store shelf, gas station counter (placed in the Test Yard); crates and duffle bags no longer hold food; Scavs always carry a snack. Hover preview of energy and hydration on food. Crafts that make several non-stacking items give them all. 432 items |
 | 2026-10-13 | Stimulant system (Section 13.8; the request's stim table came through as a "[paste the table]" placeholder, so the 9 existing stims were kept and retuned, plus 10 originals: Glucose shot, Caffeine autoinjector, Electrolyte booster, Coagulant pen, Bonelock, Packmule, Hawkeye, Ghost serum, Quickhands, Phoenix compound). Every stim has a 0-5 s delay, buffs with durations and side effects during or after them; new effects: per-part regeneration, max stamina, stamina recovery, carry weight, reload speed, vision range, noise, bleed and fracture prevention, limb restoration, energy and hydration rates, tremor, blurred vision, fatigue (the requested exhaustion). Stims stack; 3+ in 5 min starts an Overdose (HP drain, tremor, blur; "Overdosed" death). HUD stim icons with countdown timers; examine lists every buff and side effect with numbers. Medicine and lab cabinets (Test Yard has one of each), stims in safes (×0.3), a boss-body loot table and `BotProfile.extra_loot` for bosses; AI PMCs sometimes carry one. Therapist (the medic; there is no Medic trader) sells Common/Uncommon stims and barters the Epic and Legendary ones; Medstation crafts Common to Rare stims from medical supplies (new: empty autoinjector, saline solution). Stim resistance skill shortens side effects. `data/config/stims.json`. 444 items |
+| 2026-10-13 | Barter goods and valuables (Section 6.5; the request's item table came through as a "[paste the table]" placeholder, so the existing items were kept and extended): every junk and valuable item has a `group` (13: Hardware, Tools, Electronics, Tech, Household, Jewelry, Currency, Collectibles, Intel, Medical supply, Fuel, Military, Materials) and `tags` (electronics, flammable, jewelry, valuable...), and a base value in its rarity's band (Common 5k–25k ₽ ... Legendary 1M+; `data/config/item_groups.json`). 20 new barter goods and 10 new valuables across every rarity. Loot tables roll by group and tag (`groups`, `tags`, `tag_weight`): toolboxes Hardware/Tools, new PCs and server racks Electronics/Tech, jackets and new chests of drawers Household/Jewelry/Currency, new medical crates Medical supply, safes, weapon boxes and boss bodies anything tagged valuable; the Test Yard has one of each new container. Examine shows group, tags and **Needed for** (quests, hideout upgrades, barters, crafts, gear upgrades; full list on hover), the inventory hover sums it up. Two new quests, new barters at every trader, hideout upgrades and crafts that use the new items; trader prices for barter goods follow their values. 474 items |

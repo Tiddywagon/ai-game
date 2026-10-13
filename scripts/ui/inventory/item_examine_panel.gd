@@ -12,6 +12,9 @@ extends PanelContainer
 ## Meds, stims, food and drink (DESIGN.md §13.7) show what they treat, their HP pool or uses left, use
 ## time, energy and hydration and their effects and side effects; USE uses one (in a raid: on you,
 ## over its use time; out of raid: food and drink only). Disabled, its tooltip says why.
+## Barter goods and valuables show their group and tags (DESIGN.md §6.5). Anything a quest, hideout
+## upgrade, barter, craft or gear upgrade takes shows "Needed for" with a summary; hover it for the
+## full list (ItemUses).
 ## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
@@ -158,6 +161,12 @@ func show_item(examined: ItemInstance) -> void:
 		_stats.add_child(label)
 		var value := Label.new()
 		value.text = line[1]
+		if line[0] == "Needed for" and line.size() > 2:
+			value.name = "NeededFor"
+			value.tooltip_text = line[2]
+			value.mouse_filter = Control.MOUSE_FILTER_STOP
+			value.mouse_default_cursor_shape = Control.CURSOR_HELP
+			value.add_theme_color_override("font_color", Color(0.95, 0.8, 0.45))
 		if line[0] == "Found in raid" and ItemDraw.has_fir_mark(item):
 			var row := HBoxContainer.new()
 			row.add_theme_constant_override("separation", 8)
@@ -365,6 +374,10 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Value", UiFormat.money(examined.value())])
 	if data.max_stack > 1:
 		lines.append(["Stack", "%d / %d" % [examined.count, data.max_stack]])
+	if data.group != "":
+		lines.append(["Group", data.group])
+	if not data.tags.is_empty():
+		lines.append(["Tags", ", ".join(data.tags)])
 	if data.weapon:
 		var gun := WeaponStats.build(examined, GameState.skills)
 		lines.append(["Type", gun.class_title()])
@@ -464,6 +477,11 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Inside", "nothing" if inside.items.is_empty() else "%d items, %s" % [inside.items.size(), Settings.format_weight(inside.weight())]])
 		if stats.get("secure", false):
 			lines.append(["Secure", "Kept when you die. No rigs, backpacks or other containers"])
+	var needed := ItemUses.summary(data.id)
+	if needed != "":
+		lines.append(["Needed for", needed + "  (hover for the list)", ItemUses.tooltip(data.id)])
+	elif ItemGroups.applies_to(data):
+		lines.append(["Needed for", "Nothing: it's worth its value"])
 	if examined.fir:
 		lines.append(["Found in raid", "Yes"])
 	elif examined.fir_pending:

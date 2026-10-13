@@ -10,4 +10,6 @@ description = "Rare medical device. Worth a fortune to the right trader."
 category = 9
 rarity = 5
 weight_kg = 0.03
-base_value = 900000
+base_value = 1400000
+group = "Medical supply"
+tags = PackedStringArray("medical", "electronics", "optics", "valuable")

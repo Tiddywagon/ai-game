@@ -77,7 +77,8 @@ static func draw_unknown(canvas: CanvasItem, rect: Rect2, progress := -1.0) -> v
 
 
 ## Hover text for an item. Food, drinks and stims that change energy or hydration preview it, e.g.
-## "Energy 62 → 77 (+15)  ·  Hydration 40 → 35 (−5)" (Consumables.preview_text()).
+## "Energy 62 → 77 (+15)  ·  Hydration 40 → 35 (−5)" (Consumables.preview_text()); anything quests,
+## the hideout, barters or gear upgrades take says so ("Needed for: 1 quest, 2 barters", ItemUses).
 static func tooltip(item: ItemInstance) -> String:
 	var lines := [item.title() + (" ×%d" % item.count if item.count > 1 else ""),
 		"%s  ·  %s  ·  %s" % [Palette.RARITY_NAMES[item.data.rarity], Settings.format_weight(item.weight()), UiFormat.money(item.value())]]
@@ -96,6 +97,9 @@ static func tooltip(item: ItemInstance) -> String:
 		lines.append("Upgrade +%d of +%d" % [item.upgrade_level, GearUpgrades.max_level(item.data)])
 	elif WeaponMods.is_mod(item.data):
 		lines.append(ModPartRow.summary(item.data))
+	var needed := ItemUses.summary(item.data.id)
+	if needed != "":
+		lines.append("Needed for: " + needed)
 	if has_fir_mark(item):
 		lines.append(FoundInRaid.status_text(item))
 	lines.append("Right-click: examine" + ("  ·  Double-click: open" if item.contents else ""))

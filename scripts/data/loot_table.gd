@@ -5,10 +5,12 @@ extends Resource
 ## the ground and default.tres, the plain base table.
 ##
 ## A roll picks a rarity by weight: the base weights × this table's rarity multipliers × the map's (Labs
-## doubles Epic and Legendary). Then it picks an item of that rarity the table allows (its item list, or
-## its categories, or anything), weighted by each item's loot_weight × the table's item_weights.
-## Rarities with nothing allowed in them get no weight, so the others share their chance. Pass a
-## RandomNumberGenerator for repeatable results.
+## doubles Epic and Legendary). Then it picks an item of that rarity the table allows, weighted by each
+## item's loot_weight × the table's item_weights. A table allows every item in its item list, of its
+## categories, of its groups, with any of its tags or of its types (all of them together; anything if
+## it has none of these): a toolbox rolls the Hardware and Tools groups, a safe anything tagged
+## "valuable" (DESIGN.md §6.5). Rarities with nothing allowed in them get no weight, so the others
+## share their chance. Pass a RandomNumberGenerator for repeatable results.
 
 const RARITY_COUNT := 6
 
@@ -17,12 +19,17 @@ const RARITY_COUNT := 6
 @export var rarity_weights: PackedFloat32Array = [55.0, 25.0, 12.0, 5.0, 2.5, 0.5]
 ## This table's boost (or cut) per rarity: a safe drops rarer loot than a crate. Missing entries are 1.
 @export var rarity_multipliers: PackedFloat32Array = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-## Item categories it can roll (ItemData.Category). Empty: any category.
+## Item categories it can roll (ItemData.Category).
 @export var categories: Array[ItemData.Category] = []
-## Only these item ids, when not empty (instead of the categories): a toolbox holds tools.
+## These item ids: a medical bag holds bandages, medkits...
 @export var items: PackedStringArray = []
-## Also these item types (their "type" stat), on top of the categories or items: a safe also holds
-## stims ("stim").
+## Items of these groups (ItemData.group, DESIGN.md §6.5): a toolbox rolls "Hardware" and "Tools".
+@export var groups: PackedStringArray = []
+## Items with any of these tags (ItemData.tags): a safe rolls anything "valuable".
+@export var tags: PackedStringArray = []
+## Weight × for the items only `groups` or `tags` bring in (a weapon box's valuables are a side line).
+@export_range(0.0, 10.0, 0.05) var tag_weight := 1.0
+## Items of these types (their "type" stat): a safe also holds stims ("stim").
 @export var types: PackedStringArray = []
 ## Weight × for the items only `types` brings in (a safe's stims are a side line: 0.3).
 @export_range(0.0, 10.0, 0.05) var type_weight := 1.0
@@ -34,14 +41,23 @@ const RARITY_COUNT := 6
 
 ## Items of `rarity` this table can roll (loot_weight above 0).
 func candidates(rarity: int) -> Array[ItemData]:
-	var result := ItemDB.lootable(rarity, categories if items.is_empty() else [])
-	if not items.is_empty():
-		result = result.filter(func(item: ItemData) -> bool: return item.id in items)
-	if not types.is_empty():
-		for item in ItemDB.lootable(rarity, []):
-			if str(item.stats.get("type", "")) in types and not item in result:
-				result.append(item)
-	return result
+	var anything := categories.is_empty() and items.is_empty() and groups.is_empty() and tags.is_empty() and types.is_empty()
+	return ItemDB.lootable(rarity, []).filter(func(item: ItemData) -> bool: return anything or _source(item) != "")
+
+
+## Why this table holds `item`: "list" (its item list or categories), "tag" (only its groups or tags),
+## "type" (only its types) or "" (it doesn't).
+func _source(item: ItemData) -> String:
+	if item.id in items or item.category in categories:
+		return "list"
+	if item.group in groups:
+		return "tag"
+	for tag in tags:
+		if item.has_tag(tag):
+			return "tag"
+	if str(item.stats.get("type", "")) in types:
+		return "type"
+	return ""
 
 
 ## Weight of each rarity on `map` (null for no map): base × table × map, 0 where nothing can drop.
@@ -80,18 +96,11 @@ func roll_item(rng: RandomNumberGenerator, map: MapInfo = null) -> ItemData:
 	var pool := candidates(rarity)
 	var pool_weights := PackedFloat32Array()
 	for item in pool:
-		pool_weights.append(item.loot_weight * float(item_weights.get(item.id, 1.0)) * (type_weight if _only_by_type(item) else 1.0))
+		var source := _source(item)
+		var side_line := tag_weight if source == "tag" else type_weight if source == "type" else 1.0
+		pool_weights.append(item.loot_weight * float(item_weights.get(item.id, 1.0)) * side_line)
 	var index := _pick(rng, pool_weights)
 	return pool[index] if index >= 0 else null
-
-
-## True if `item` is in this table only because of its type (not its category or the item list).
-func _only_by_type(item: ItemData) -> bool:
-	if types.is_empty() or not str(item.stats.get("type", "")) in types:
-		return false
-	if not items.is_empty():
-		return not item.id in items
-	return not categories.is_empty() and not item.category in categories
 
 
 ## Fills one container: item_count.x to item_count.y items, each {"id", "count"}. Stackable items

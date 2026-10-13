@@ -5,7 +5,7 @@
     "description": "Powers the other stations. Runs on fuel.",
     "levels": [
       {"level": 1, "roubles": 50000, "requires": [{"item": "fuel_can", "count": 1}]},
-      {"level": 2, "roubles": 0, "requires": [{"item": "fuel_can", "count": 2, "fir": true}, {"item": "wires", "count": 1, "fir": true}]},
+      {"level": 2, "roubles": 0, "requires": [{"item": "fuel_can", "count": 2, "fir": true}, {"item": "wires", "count": 1, "fir": true}, {"item": "pressure_gauge", "count": 1, "fir": true}]},
       {"level": 3, "roubles": 0, "requires": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 3, "fir": true}, {"item": "car_battery", "count": 1, "fir": true}, {"item": "fuel_conditioner", "count": 1, "fir": true}]}
     ]
   },
@@ -30,9 +30,10 @@
           {"id": "electrolyte_booster", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "sugar", "count": 1}], "output": {"item": "electrolyte_booster", "count": 1}},
           {"id": "coagulant_pen", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "army_bandage", "count": 1}], "output": {"item": "coagulant_pen", "count": 1}},
           {"id": "bonelock", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "splint", "count": 1}, {"item": "painkillers", "count": 1}], "output": {"item": "bonelock", "count": 1}},
-          {"id": "adrenaline", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "medical_tools", "count": 1}], "output": {"item": "adrenaline", "count": 1}}
+          {"id": "adrenaline", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "medical_tools", "count": 1}], "output": {"item": "adrenaline", "count": 1}},
+          {"id": "blood_set", "inputs": [{"item": "empty_injector", "count": 1}, {"item": "saline_bag", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "blood_set", "count": 2}}
         ]},
-      {"level": 3, "roubles": 150000, "stations": {"generator": 2}, "requires": [{"item": "medical_tools", "count": 2, "fir": true}, {"item": "toothpaste", "count": 3, "fir": true}, {"item": "soap", "count": 2, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}],
+      {"level": 3, "roubles": 150000, "stations": {"generator": 2}, "requires": [{"item": "medical_tools", "count": 2, "fir": true}, {"item": "toothpaste", "count": 3, "fir": true}, {"item": "soap", "count": 2, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "blood_set", "count": 2, "fir": true}],
         "crafts": [
           {"id": "afak", "inputs": [{"item": "salewa", "count": 1}, {"item": "calok_b", "count": 1}, {"item": "medical_tools", "count": 1, "fir": true}], "output": {"item": "afak", "count": 1}},
           {"id": "surv12", "inputs": [{"item": "surgical_kit", "count": 1}, {"item": "alu_splint", "count": 1}, {"item": "medical_tools", "count": 2, "fir": true}], "output": {"item": "surv12", "count": 1}},
@@ -48,8 +49,11 @@
     "description": "Hand-loads ammo, makes parts and upgrades gear.",
     "levels": [
       {"level": 1, "roubles": 40000, "requires": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}],
-        "crafts": [{"id": "bs_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 1}], "output": {"item": "ammo_545_bs", "count": 30}}]},
-      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bolts", "count": 5, "fir": true}, {"item": "screws", "count": 3, "fir": true}],
+        "crafts": [
+          {"id": "bs_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 1}], "output": {"item": "ammo_545_bs", "count": 30}},
+          {"id": "hex_nuts", "inputs": [{"item": "bolts", "count": 1}, {"item": "screws", "count": 1}], "output": {"item": "hex_nuts", "count": 2}}
+        ]},
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bolts", "count": 5, "fir": true}, {"item": "screws", "count": 3, "fir": true}, {"item": "adjustable_wrench", "count": 1, "fir": true}],
         "crafts": [
           {"id": "weapon_parts", "inputs": [{"item": "bolts", "count": 3}, {"item": "wires", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "weapon_parts", "count": 1}},
           {"id": "pbp_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}, {"item": "wires", "count": 1}], "output": {"item": "ammo_9x19_pbp", "count": 30}},
@@ -57,9 +61,10 @@
           {"id": "bp_rounds", "inputs": [{"item": "bolts", "count": 3}, {"item": "screws", "count": 2}, {"item": "weapon_parts", "count": 1}], "output": {"item": "ammo_762x39_bp", "count": 30}},
           {"id": "bt_rounds", "inputs": [{"item": "gunpowder", "count": 1}, {"item": "bolts", "count": 1}], "output": {"item": "ammo_545_bt", "count": 30}},
           {"id": "circuit_board", "inputs": [{"item": "capacitors", "count": 2}, {"item": "wires", "count": 2}], "output": {"item": "circuit_board", "count": 1}},
-          {"id": "rechargeable_battery", "inputs": [{"item": "aa_battery", "count": 3}, {"item": "wires", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "rechargeable_battery", "count": 1}}
+          {"id": "rechargeable_battery", "inputs": [{"item": "aa_battery", "count": 3}, {"item": "wires", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "rechargeable_battery", "count": 1}},
+          {"id": "multitool", "inputs": [{"item": "pliers", "count": 1}, {"item": "screwdriver", "count": 1}, {"item": "hex_nuts", "count": 2}], "output": {"item": "multitool", "count": 1}}
         ]},
-      {"level": 3, "roubles": 250000, "stations": {"generator": 2}, "requires": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 4, "fir": true}, {"item": "military_cable", "count": 1, "fir": true}],
+      {"level": 3, "roubles": 250000, "stations": {"generator": 2}, "requires": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 4, "fir": true}, {"item": "military_cable", "count": 1, "fir": true}, {"item": "cordless_drill", "count": 1, "fir": true}],
         "crafts": [
           {"id": "ppbs_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "bolts", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_545_ppbs", "count": 30}},
           {"id": "ssa_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "bolts", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_556_ssa", "count": 30}},
@@ -67,7 +72,9 @@
           {"id": "m993_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "bolts", "count": 3}], "output": {"item": "ammo_762x51_m993", "count": 20}},
           {"id": "bs54_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "screws", "count": 3}], "output": {"item": "ammo_762x54r_bs", "count": 20}},
           {"id": "ap338_rounds", "inputs": [{"item": "weapon_parts", "count": 3, "fir": true}, {"item": "gpu", "count": 1, "fir": true}], "output": {"item": "ammo_338_ap", "count": 10}},
-          {"id": "military_cable", "inputs": [{"item": "wires", "count": 4}, {"item": "duct_tape", "count": 2}, {"item": "rechargeable_battery", "count": 1}], "output": {"item": "military_cable", "count": 1}}
+          {"id": "military_cable", "inputs": [{"item": "wires", "count": 4}, {"item": "duct_tape", "count": 2}, {"item": "rechargeable_battery", "count": 1}], "output": {"item": "military_cable", "count": 1}},
+          {"id": "thermite", "inputs": [{"item": "gunpowder", "count": 1}, {"item": "wd40", "count": 1}, {"item": "bolts", "count": 2}], "output": {"item": "thermite", "count": 1}},
+          {"id": "server_blade", "inputs": [{"item": "circuit_board", "count": 2}, {"item": "ram_stick", "count": 2}, {"item": "ssd_drive", "count": 1}, {"item": "power_cord", "count": 1}], "output": {"item": "server_blade", "count": 1}}
         ]}
     ]
   },
@@ -79,9 +86,10 @@
       {"level": 1, "roubles": 20000, "requires": [{"item": "duct_tape", "count": 1}, {"item": "toilet_paper", "count": 1}],
         "crafts": [
           {"id": "duct_tape", "inputs": [{"item": "wires", "count": 2}, {"item": "matches", "count": 1}], "output": {"item": "duct_tape", "count": 1}},
-          {"id": "soap", "inputs": [{"item": "toilet_paper", "count": 2}, {"item": "toothpaste", "count": 1}], "output": {"item": "soap", "count": 1}}
+          {"id": "soap", "inputs": [{"item": "toilet_paper", "count": 2}, {"item": "toothpaste", "count": 1}], "output": {"item": "soap", "count": 1}},
+          {"id": "bleach", "inputs": [{"item": "soap", "count": 2}, {"item": "toilet_paper", "count": 1}], "output": {"item": "bleach", "count": 1}}
         ]},
-      {"level": 2, "roubles": 0, "requires": [{"item": "duct_tape", "count": 2, "fir": true}, {"item": "toilet_paper", "count": 1, "fir": true}, {"item": "toothpaste", "count": 1, "fir": true}, {"item": "soap", "count": 1, "fir": true}],
+      {"level": 2, "roubles": 0, "requires": [{"item": "duct_tape", "count": 2, "fir": true}, {"item": "toilet_paper", "count": 1, "fir": true}, {"item": "toothpaste", "count": 1, "fir": true}, {"item": "soap", "count": 1, "fir": true}, {"item": "bleach", "count": 1, "fir": true}],
         "crafts": [
           {"id": "hose", "inputs": [{"item": "duct_tape", "count": 2}, {"item": "wd40", "count": 1}], "output": {"item": "hose", "count": 1}},
           {"id": "cigarettes", "inputs": [{"item": "toilet_paper", "count": 1}, {"item": "matches", "count": 1}], "output": {"item": "cigarettes", "count": 1}}
@@ -102,7 +110,7 @@
           {"id": "aquamari", "inputs": [{"item": "water_bottle", "count": 2}, {"item": "hose", "count": 1}], "output": {"item": "aquamari", "count": 1}},
           {"id": "mre", "inputs": [{"item": "canned_beef", "count": 1}, {"item": "crackers", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "mre", "count": 1}}
         ]},
-      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "kettle", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "rechargeable_battery", "count": 1, "fir": true}],
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "kettle", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "rechargeable_battery", "count": 1, "fir": true}, {"item": "propane_tank", "count": 1, "fir": true}],
         "crafts": [
           {"id": "kvass", "inputs": [{"item": "rye_bread", "count": 1}, {"item": "sugar", "count": 1}, {"item": "water_bottle", "count": 1}], "output": {"item": "kvass", "count": 2}},
           {"id": "buckwheat", "inputs": [{"item": "sugar", "count": 1}, {"item": "water_bottle", "count": 1}, {"item": "matches", "count": 2}], "output": {"item": "buckwheat", "count": 2}},
@@ -125,7 +133,7 @@
     "levels": [
       {"level": 1, "roubles": 30000, "requires": [{"item": "light_bulb", "count": 2}, {"item": "nails", "count": 3}, {"item": "duct_tape", "count": 1}]},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "rechargeable_battery", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "soap", "count": 2, "fir": true}]},
-      {"level": 3, "roubles": 120000, "stations": {"generator": 2, "nutrition_unit": 2}, "requires": [{"item": "military_cable", "count": 1, "fir": true}, {"item": "circuit_board", "count": 2, "fir": true}, {"item": "hard_drive", "count": 1, "fir": true}]}
+      {"level": 3, "roubles": 120000, "stations": {"generator": 2, "nutrition_unit": 2}, "requires": [{"item": "military_cable", "count": 1, "fir": true}, {"item": "circuit_board", "count": 2, "fir": true}, {"item": "hard_drive", "count": 1, "fir": true}, {"item": "power_cord", "count": 2, "fir": true}]}
     ]
   }
 ]

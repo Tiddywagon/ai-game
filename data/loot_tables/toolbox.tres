@@ -8,7 +8,8 @@ display_name = "Toolbox"
 rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
 rarity_multipliers = PackedFloat32Array(1, 1, 1.1, 1.2, 1, 1)
 categories = Array[int]([])
-items = PackedStringArray("bolts", "screws", "wires", "duct_tape", "pliers", "screwdriver", "nails", "hose", "weapon_parts", "electric_motor", "aa_battery", "rechargeable_battery", "light_bulb", "capacitors", "circuit_board", "wd40", "gunpowder", "military_cable", "lighter")
+items = PackedStringArray()
+groups = PackedStringArray("Hardware", "Tools")
 item_weights = {
 "pliers": 1.5,
 "screwdriver": 1.5

@@ -53,5 +53,30 @@
       {"type": "hand_in", "item": "wires", "count": 2, "fir": false}
     ],
     "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.03, "items": [{"item": "foregrip", "count": 1}]}
+  },
+  {
+    "id": "clinic_supplies",
+    "name": "Clinic Supplies",
+    "trader": "therapist",
+    "requires": ["shortage"],
+    "description": "The field clinic runs on whatever you bring. IV sets and a working eye scope, found out there, sealed.",
+    "objectives": [
+      {"type": "hand_in", "item": "blood_set", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "ophthalmoscope", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 90000, "xp": 4200, "reputation": 0.03, "items": [{"item": "salewa", "count": 1}]}
+  },
+  {
+    "id": "server_room",
+    "name": "Server Room",
+    "trader": "mechanic",
+    "requires": ["gunsmith_0"],
+    "description": "I'm building a rig and the shops are empty. Memory, power cords and a drill to get into the racks.",
+    "objectives": [
+      {"type": "hand_in", "item": "ram_stick", "count": 3, "fir": true},
+      {"type": "hand_in", "item": "power_cord", "count": 2, "fir": false},
+      {"type": "hand_in", "item": "cordless_drill", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 120000, "xp": 5000, "reputation": 0.03, "items": [{"item": "scope_2_4", "count": 1}]}
   }
 ]

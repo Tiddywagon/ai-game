@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/pc.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "pc"
+display_name = "PC"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(2, 3)
+search_time = 1.1
+look = 13
+box_size = Vector3(0.22, 0.48, 0.48)
+color = Color(0.16, 0.17, 0.19, 1)
+cover_material = 2

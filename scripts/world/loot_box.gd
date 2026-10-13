@@ -100,6 +100,31 @@ func _build_look() -> void:
 		LootContainer.Look.LAB_CABINET:
 			_box(Vector3(0, size.y * 0.62, front - 0.005), Vector3(size.x * 0.82, size.y * 0.55, 0.01), Color(0.45, 0.75, 0.85))  # Glass door.
 			_box(Vector3(0, size.y * 0.18, front - 0.005), Vector3(size.x * 0.9, 0.04, 0.01), Color(0.3, 0.85, 0.95))  # Lit stripe.
+		LootContainer.Look.PC:
+			_box(Vector3(0, size.y * 0.82, front - 0.005), Vector3(size.x * 0.7, 0.03, 0.01), dark.lightened(0.3))  # Drive bay.
+			_box(Vector3(size.x * 0.25, size.y * 0.66, front - 0.008), Vector3(0.025, 0.025, 0.01), Color(0.3, 0.9, 0.4))  # Power light.
+			_box(Vector3(size.x / 2.0 + 0.003, size.y * 0.5, 0), Vector3(0.006, size.y * 0.6, size.z * 0.6), Color(0.3, 0.32, 0.36))  # Side vent.
+		LootContainer.Look.SERVER_RACK:
+			for i in 7:  # Rack units, each with a row of status lights.
+				var y := size.y * (0.1 + 0.12 * i)
+				_box(Vector3(0, y, front - 0.005), Vector3(size.x * 0.86, size.y * 0.09, 0.01), Color(0.2, 0.21, 0.24))
+				for x in [-0.3, -0.24, -0.18]:
+					_box(Vector3(x * size.x, y, front - 0.012), Vector3(0.02, 0.02, 0.01),
+						Color(0.3, 0.9, 0.4) if (i + int(x * 50.0)) % 3 != 0 else Color(0.95, 0.6, 0.15))
+		LootContainer.Look.DRAWER:
+			for i in 3:  # Drawers, each with two knobs.
+				var y := size.y * (0.18 + 0.29 * i)
+				_box(Vector3(0, y + size.y * 0.13, front), Vector3(size.x * 0.94, 0.015, 0.01), dark)
+				for x in [-0.25, 0.25]:
+					_box(Vector3(x * size.x, y, front - 0.01), Vector3(0.04, 0.04, 0.03), Color(0.8, 0.68, 0.35))
+			_box(Vector3(0, size.y + 0.015, 0), Vector3(size.x * 1.03, 0.03, size.z * 1.04), color.darkened(0.2))  # Top.
+		LootContainer.Look.MEDICAL_CRATE:
+			var red := Color(0.8, 0.12, 0.1)
+			_box(Vector3(0, size.y + 0.005, 0), Vector3(size.x * 0.82, 0.01, size.z * 0.82), Color(0.9, 0.9, 0.88))  # White panel...
+			_box(Vector3(0, size.y + 0.01, 0), Vector3(size.z * 0.5, 0.01, size.z * 0.15), red)  # ...with a red cross.
+			_box(Vector3(0, size.y + 0.01, 0), Vector3(size.z * 0.15, 0.01, size.z * 0.5), red)
+			for x in [-0.45, 0.45]:  # Carry handles.
+				_box(Vector3(x * size.x, size.y * 0.6, front - 0.02), Vector3(0.1, 0.03, 0.04), dark)
 		LootContainer.Look.FILING_CABINET:
 			for i in 3:  # Drawers, each with a handle.
 				var y := size.y * (0.2 + 0.31 * i)

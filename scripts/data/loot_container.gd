@@ -2,13 +2,15 @@ class_name LootContainer
 extends Resource
 ## A type of container to search in a raid (DESIGN.md §6.2): a crate, toolbox, jacket, weapon box,
 ## medical bag, safe, filing cabinet or duffle bag, and the food spots: fridge, kitchen cabinet, store
-## shelf and gas station counter; and the medical and lab spots where stims turn up: medicine cabinet and lab
-## cabinet. Says what it rolls (its own LootTable), how big its
+## shelf and gas station counter; the medical and lab spots where stims turn up: medicine cabinet and lab
+## cabinet; and the spots that roll barter goods and valuables by group (§6.5): PC, server rack, chest of
+## drawers and medical crate. Says what it rolls (its own LootTable), how big its
 ## grid is, how long searching it takes, and how the placeholder looks. One .tres per type in
 ## data/loot_tables/containers/; LootBox puts one in a map.
 
 ## Saved as numbers in the .tres files: only add new looks at the end.
-enum Look { BOX, CRATE, TOOLBOX, JACKET, MEDICAL_BAG, SAFE, FILING_CABINET, FRIDGE, SHELF, KITCHEN_CABINET, COUNTER, MEDICINE_CABINET, LAB_CABINET }
+enum Look { BOX, CRATE, TOOLBOX, JACKET, MEDICAL_BAG, SAFE, FILING_CABINET, FRIDGE, SHELF, KITCHEN_CABINET, COUNTER, MEDICINE_CABINET, LAB_CABINET,
+	PC, SERVER_RACK, DRAWER, MEDICAL_CRATE }
 
 @export var id := ""
 @export var display_name := ""

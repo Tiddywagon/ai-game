@@ -19,6 +19,8 @@ func _ready() -> void:
 		_by_rarity.append([])
 	for item: ItemData in _items.values():
 		_by_rarity[item.rarity].append(item)
+		for problem in ItemGroups.problems(item):
+			push_warning("ItemDB: " + problem)
 	print("ItemDB: loaded %d items" % _items.size())
 
 

@@ -1,7 +1,7 @@
 [
-  {"id": "ripstop_fabric", "name": "Ripstop fabric", "description": "A roll of tear-resistant nylon. Used to upgrade rigs and backpacks.", "category": "junk", "rarity": "common", "size": [1, 1], "weight": 0.3, "value": 7000},
-  {"id": "paracord", "name": "Paracord", "description": "Thirty metres of parachute cord. Used to upgrade rigs and backpacks.", "category": "junk", "rarity": "common", "size": [1, 1], "weight": 0.2, "value": 5000},
-  {"id": "aramid_fabric", "name": "Aramid fabric", "description": "Ballistic fabric for patching and reinforcing armor.", "category": "junk", "rarity": "uncommon", "size": [1, 1], "weight": 0.4, "value": 18000},
-  {"id": "epoxy_resin", "name": "Epoxy resin", "description": "Two-part resin. Bonds plates and frames.", "category": "junk", "rarity": "rare", "size": [1, 1], "weight": 0.5, "value": 30000},
-  {"id": "ceramic_shards", "name": "Ceramic plate shards", "description": "Ballistic ceramic from broken plates. The best armor upgrades need it.", "category": "junk", "rarity": "ultra_rare", "size": [1, 1], "weight": 0.8, "value": 52000}
+  {"id": "ripstop_fabric", "name": "Ripstop fabric", "category": "junk", "rarity": "common", "weight": 0.3, "value": 9000, "group": "Materials", "tags": ["cloth"], "description": "A roll of tear-resistant nylon. Used to upgrade rigs and backpacks."},
+  {"id": "paracord", "name": "Paracord", "category": "junk", "rarity": "common", "weight": 0.2, "value": 7500, "group": "Materials", "tags": ["cloth", "rope"], "description": "Thirty metres of parachute cord. Used to upgrade rigs and backpacks."},
+  {"id": "aramid_fabric", "name": "Aramid fabric", "category": "junk", "rarity": "uncommon", "weight": 0.4, "value": 36000, "group": "Materials", "tags": ["cloth", "ballistic"], "description": "Ballistic fabric for patching and reinforcing armor."},
+  {"id": "epoxy_resin", "name": "Epoxy resin", "category": "junk", "rarity": "rare", "weight": 0.5, "value": 64000, "group": "Materials", "tags": ["chemical", "adhesive"], "description": "Two-part resin. Bonds plates and frames."},
+  {"id": "ceramic_shards", "name": "Ceramic plate shards", "category": "junk", "rarity": "ultra_rare", "weight": 0.8, "value": 175000, "group": "Materials", "tags": ["ballistic", "fragile"], "description": "Ballistic ceramic from broken plates. The best armor upgrades need it."}
 ]
