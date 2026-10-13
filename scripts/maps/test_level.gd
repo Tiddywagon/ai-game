@@ -3,7 +3,7 @@ extends Node3D
 ## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC
 ## (and the raid's ending doesn't touch your profile). Search the containers and bodies (F), pick up
 ## loose loot, and extract at the green ring in the north-east corner (RaidController).
-## Debug keys: F1 left leg fracture, F2 overweight, F3 next round type for the gun's caliber (adds a stack if you have none), F4 AI on/off, F5 heal,
+## Debug keys: F1 left leg fracture, F2 overweight, F3 next round type for the gun's caliber (adds a stack if you have none), F4 AI on/off, F5 heal (and fill energy and hydration),
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
@@ -31,11 +31,18 @@ func _ready() -> void:
 
 
 ## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
-## player gets the starter kit.
+## player gets the starter kit. A PMC brings the profile's energy and hydration (DESIGN.md §13.7); a
+## Scav starts full.
 func _apply_raid() -> void:
 	var raid := GameState.raid
+	var tuning := Consumables.CONFIG
 	if raid.get("side") == "scav":
 		_player.side = Actor.Side.SCAV
+		_player.health.start_metabolism(tuning, tuning.max_energy, tuning.max_hydration)
+	else:
+		Consumables.recover_profile()
+		_player.health.start_metabolism(tuning, GameState.energy, GameState.hydration)
+	_player.health.metabolism_skill = 1.0 - tuning.drain_reduction_per_level * int(GameState.skills.get("metabolism", {}).get("level", 0))
 	var loadout: Variant = raid.get("loadout")
 	_player.set_inventory(loadout if loadout is Inventory else Inventory.starter())
 
@@ -73,7 +80,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F5:
 			if not _player.is_dead:
 				_player.health.heal_all()
-				_hud.show_message("Healed")
+				_player.health.feed(INF, INF)
+				_hud.show_message("Healed, fed and watered")
 		KEY_F6:
 			var sights := VisionConfig.Optic.BINOCULARS  # Every optic before the binoculars fits a gun.
 			_player.weapon.optic = (_player.weapon.optic + 1) % sights

@@ -9,7 +9,9 @@ extends MenuScreen
 ## the stash: its items turn up one by one while it's open (LootSearch), and the title counts them. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
 ## of the stash. Guns can be unloaded from the examine panel: the rounds keep their status. Out of raid,
 ## MODIFY there opens the modding screen (WeaponModScreen), and dropping a weapon part on a gun fits it
-## to a free slot.
+## to a free slot. Meds, stims, food and drink have USE in the examine panel (DESIGN.md §13.7): in a
+## raid the player uses it over its use time (the header shows progress; the game goes on); out of
+## raid food and drink go straight to the profile's energy and hydration. The header shows both.
 
 ## Equipment slot layout: two columns of [slot, size in cells].
 const SLOT_COLUMNS := [
@@ -31,6 +33,8 @@ var loot: Variant
 var loot_title := ""
 ## Searching `loot` (its unsearched items are revealed while this screen is open), or null.
 var loot_search: LootSearch
+## In a raid: the player whose inventory this is (items are used on them). Null out of raid.
+var user: Player
 
 var _config: InventoryConfig = preload("res://data/config/inventory.tres")
 var _examine: ItemExaminePanel
@@ -38,6 +42,10 @@ var _shown_grids: Array[InventoryGrid] = []
 var _loot_grids: Array[InventoryGrid] = []
 var _loot_views: Array[InventoryGridView] = []
 var _windows := {}
+var _body_label: Label
+var _use_label: Label
+var _use_message := ""
+var _use_message_time := 0.0
 
 
 func _ready() -> void:
@@ -47,6 +55,8 @@ func _ready() -> void:
 	_examine.modify_requested.connect(open_modding)
 	_examine.upgrade_requested.connect(open_upgrade)
 	_examine.part_removal_requested.connect(take_off_part)
+	_examine.use_requested.connect(use_item)
+	_examine.use_check = _use_reason
 	_examine.can_modify = stash != null
 	InventoryDrag.mods_allowed = stash != null
 	%Overlay.add_child(_examine)
@@ -70,11 +80,17 @@ func _ready() -> void:
 		%StashTitle.text = "STASH  ·  %d × %d" % [stash.size.x, stash.size.y]
 		%StashView.grid = stash
 	inventory.changed.connect(_on_inventory_changed)
+	_build_body_status()
+	if user:
+		user.item_use_ended.connect(_on_use_ended)
+	elif stash:
+		Consumables.recover_profile()
 	_update_header()
 	_update_loot_title()
 
 
 func _process(delta: float) -> void:
+	_update_body_status(delta)
 	if loot_search == null or get_tree().paused:
 		return
 	var was_done := loot_search.is_done()
@@ -112,6 +128,10 @@ func _input(event: InputEvent) -> void:
 			InventoryDrag.current.change_amount(1 if wheel.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
 			get_viewport().set_input_as_handled()
 			return
+	if user and user.using_item and event.is_action_pressed("use_item"):
+		user.cancel_use("Stopped using %s" % user.using_item.data.display_name)
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("toggle_inventory") or event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 		if get_viewport().gui_is_dragging():
 			return
@@ -268,6 +288,78 @@ func unload(gun: ItemInstance) -> void:
 		stash.changed.emit()
 	if _examine.visible and _examine.item == gun:
 		_examine.show_item(gun)
+
+
+## Uses a med, stim, food or drink: in a raid, the player starts using it (the examine panel closes);
+## out of raid, food and drink feed the profile at once (and the game is saved).
+func use_item(item: ItemInstance) -> void:
+	if user:
+		if user.start_use(item):
+			_examine.close()
+		return
+	var holder := inventory.holder_of(item)
+	if holder == null and stash:
+		holder = stash.find_holder(item)
+	var result := Consumables.use_in_profile(item, holder)
+	_show_use_message(str(result.get("text", result.get("reason", ""))))
+	if not result.ok:
+		return
+	_examine.close()
+	inventory.changed.emit()
+	if holder:
+		holder.changed.emit()
+	SaveManager.save_game()
+
+
+func _use_reason(item: ItemInstance) -> String:
+	if user:
+		return user.use_block_reason(item)
+	return Consumables.profile_block_reason(item) if stash else "Can't be used here"
+
+
+func _on_use_ended(_item: ItemInstance, _finished: bool, text: String) -> void:
+	if text != "":
+		_show_use_message(text)
+
+
+func _show_use_message(text: String) -> void:
+	_use_message = text
+	_use_message_time = 3.0
+
+
+## Energy and hydration (the player's in a raid, the profile's out of raid), and what's being used.
+func _build_body_status() -> void:
+	var box := VBoxContainer.new()
+	box.name = "BodyStatus"
+	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	box.add_theme_constant_override("separation", 2)
+	%ValueLabel.add_sibling(box)
+	_body_label = Label.new()
+	_body_label.name = "Metabolism"
+	box.add_child(_body_label)
+	_use_label = Label.new()
+	_use_label.name = "UseStatus"
+	_use_label.theme_type_variation = &"DimLabel"
+	box.add_child(_use_label)
+
+
+func _update_body_status(delta: float) -> void:
+	if _body_label == null:
+		return
+	var tuning := Consumables.CONFIG
+	var energy := user.health.energy if user else GameState.energy
+	var hydration := user.health.hydration if user else GameState.hydration
+	_body_label.text = "ENERGY  %d / %d    WATER  %d / %d" % [ceili(energy), roundi(tuning.max_energy), ceili(hydration), roundi(tuning.max_hydration)]
+	var low := energy <= tuning.low_threshold or hydration <= tuning.low_threshold
+	_body_label.add_theme_color_override("font_color", HEAVY_COLOR if low else MenuEntryButton.TEXT)
+	_use_message_time -= delta
+	if user and user.using_item:
+		_use_label.text = "Using %s  ·  %.1f s  ·  %s to stop" % [user.using_item.data.display_name, maxf(user.use_time_left, 0.0),
+			Settings.key_label("use_item")]
+	elif _use_message_time > 0.0:
+		_use_label.text = _use_message
+	else:
+		_use_label.text = ""
 
 
 ## Opens the upgrade dialog for `item` over the inventory (out of raid only).

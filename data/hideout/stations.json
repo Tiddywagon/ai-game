@@ -6,18 +6,35 @@
     "levels": [
       {"level": 1, "roubles": 50000, "requires": [{"item": "fuel_can", "count": 1}]},
       {"level": 2, "roubles": 0, "requires": [{"item": "fuel_can", "count": 2, "fir": true}, {"item": "wires", "count": 1, "fir": true}]},
-      {"level": 3, "roubles": 0, "requires": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 3, "fir": true}]}
+      {"level": 3, "roubles": 0, "requires": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 3, "fir": true}, {"item": "car_battery", "count": 1, "fir": true}, {"item": "fuel_conditioner", "count": 1, "fir": true}]}
     ]
   },
   {
     "id": "medstation",
     "name": "Medstation",
-    "description": "Makes meds from basic supplies.",
+    "description": "Makes meds and stimulants from basic supplies.",
     "levels": [
       {"level": 1, "roubles": 30000, "requires": [{"item": "bandage", "count": 2}],
-        "crafts": [{"id": "medkit", "inputs": [{"item": "bandage", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "ai2_medkit", "count": 1}}]},
-      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bandage", "count": 2, "fir": true}, {"item": "tourniquet", "count": 1, "fir": true}],
-        "crafts": [{"id": "surgical_kit", "inputs": [{"item": "ai2_medkit", "count": 2}, {"item": "painkillers", "count": 1}], "output": {"item": "surgical_kit", "count": 1}}]}
+        "crafts": [
+          {"id": "medkit", "inputs": [{"item": "bandage", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "ai2_medkit", "count": 1}},
+          {"id": "army_bandage", "inputs": [{"item": "bandage", "count": 2}, {"item": "soap", "count": 1}], "output": {"item": "army_bandage", "count": 1}}
+        ]},
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "bandage", "count": 2, "fir": true}, {"item": "tourniquet", "count": 1, "fir": true}, {"item": "toothpaste", "count": 1, "fir": true}, {"item": "soap", "count": 1, "fir": true}],
+        "crafts": [
+          {"id": "surgical_kit", "inputs": [{"item": "ai2_medkit", "count": 2}, {"item": "painkillers", "count": 1}], "output": {"item": "surgical_kit", "count": 1}},
+          {"id": "calok_b", "inputs": [{"item": "medical_tools", "count": 1}, {"item": "army_bandage", "count": 2}], "output": {"item": "calok_b", "count": 1}},
+          {"id": "salewa", "inputs": [{"item": "car_medkit", "count": 1}, {"item": "cat_tourniquet", "count": 1}, {"item": "army_bandage", "count": 1}], "output": {"item": "salewa", "count": 1}},
+          {"id": "morphine", "inputs": [{"item": "painkillers", "count": 2}, {"item": "medical_tools", "count": 1}], "output": {"item": "morphine", "count": 1}}
+        ]},
+      {"level": 3, "roubles": 150000, "stations": {"generator": 2}, "requires": [{"item": "medical_tools", "count": 2, "fir": true}, {"item": "toothpaste", "count": 3, "fir": true}, {"item": "soap", "count": 2, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}],
+        "crafts": [
+          {"id": "afak", "inputs": [{"item": "salewa", "count": 1}, {"item": "calok_b", "count": 1}, {"item": "medical_tools", "count": 1, "fir": true}], "output": {"item": "afak", "count": 1}},
+          {"id": "propital", "inputs": [{"item": "morphine", "count": 1}, {"item": "medical_tools", "count": 1, "fir": true}], "output": {"item": "propital", "count": 1}},
+          {"id": "surv12", "inputs": [{"item": "surgical_kit", "count": 1}, {"item": "alu_splint", "count": 1}, {"item": "medical_tools", "count": 2, "fir": true}], "output": {"item": "surv12", "count": 1}},
+          {"id": "grizzly", "inputs": [{"item": "afak", "count": 1}, {"item": "salewa", "count": 1}, {"item": "alu_splint", "count": 1}, {"item": "medical_tools", "count": 2, "fir": true}], "output": {"item": "grizzly", "count": 1}},
+          {"id": "etg_c", "inputs": [{"item": "propital", "count": 2}, {"item": "medical_tools", "count": 2, "fir": true}, {"item": "gold_coin", "count": 1, "fir": true}], "output": {"item": "etg_c", "count": 1}},
+          {"id": "obdolbos", "inputs": [{"item": "moonshine", "count": 1, "fir": true}, {"item": "sj6", "count": 1}, {"item": "three_btg", "count": 1}], "output": {"item": "obdolbos", "count": 1}}
+        ]}
     ]
   },
   {
@@ -32,16 +49,20 @@
           {"id": "weapon_parts", "inputs": [{"item": "bolts", "count": 3}, {"item": "wires", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "weapon_parts", "count": 1}},
           {"id": "pbp_rounds", "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}, {"item": "wires", "count": 1}], "output": {"item": "ammo_9x19_pbp", "count": 30}},
           {"id": "ap20_slugs", "inputs": [{"item": "bolts", "count": 3}, {"item": "duct_tape", "count": 1}], "output": {"item": "ammo_12ga_ap20", "count": 10}},
-          {"id": "bp_rounds", "inputs": [{"item": "bolts", "count": 3}, {"item": "screws", "count": 2}, {"item": "weapon_parts", "count": 1}], "output": {"item": "ammo_762x39_bp", "count": 30}}
+          {"id": "bp_rounds", "inputs": [{"item": "bolts", "count": 3}, {"item": "screws", "count": 2}, {"item": "weapon_parts", "count": 1}], "output": {"item": "ammo_762x39_bp", "count": 30}},
+          {"id": "bt_rounds", "inputs": [{"item": "gunpowder", "count": 1}, {"item": "bolts", "count": 1}], "output": {"item": "ammo_545_bt", "count": 30}},
+          {"id": "circuit_board", "inputs": [{"item": "capacitors", "count": 2}, {"item": "wires", "count": 2}], "output": {"item": "circuit_board", "count": 1}},
+          {"id": "rechargeable_battery", "inputs": [{"item": "aa_battery", "count": 3}, {"item": "wires", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "rechargeable_battery", "count": 1}}
         ]},
-      {"level": 3, "roubles": 250000, "stations": {"generator": 2}, "requires": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 4, "fir": true}],
+      {"level": 3, "roubles": 250000, "stations": {"generator": 2}, "requires": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "wires", "count": 4, "fir": true}, {"item": "military_cable", "count": 1, "fir": true}],
         "crafts": [
           {"id": "ppbs_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "bolts", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_545_ppbs", "count": 30}},
           {"id": "ssa_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "bolts", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_556_ssa", "count": 30}},
           {"id": "mai_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "screws", "count": 4}, {"item": "gold_chain", "count": 1, "fir": true}], "output": {"item": "ammo_762x39_mai", "count": 30}},
           {"id": "m993_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "bolts", "count": 3}], "output": {"item": "ammo_762x51_m993", "count": 20}},
           {"id": "bs54_rounds", "inputs": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "screws", "count": 3}], "output": {"item": "ammo_762x54r_bs", "count": 20}},
-          {"id": "ap338_rounds", "inputs": [{"item": "weapon_parts", "count": 3, "fir": true}, {"item": "gpu", "count": 1, "fir": true}], "output": {"item": "ammo_338_ap", "count": 10}}
+          {"id": "ap338_rounds", "inputs": [{"item": "weapon_parts", "count": 3, "fir": true}, {"item": "gpu", "count": 1, "fir": true}], "output": {"item": "ammo_338_ap", "count": 10}},
+          {"id": "military_cable", "inputs": [{"item": "wires", "count": 4}, {"item": "duct_tape", "count": 2}, {"item": "rechargeable_battery", "count": 1}], "output": {"item": "military_cable", "count": 1}}
         ]}
     ]
   },
@@ -51,8 +72,34 @@
     "description": "Turns scraps into barter goods.",
     "levels": [
       {"level": 1, "roubles": 20000, "requires": [{"item": "duct_tape", "count": 1}, {"item": "toilet_paper", "count": 1}],
-        "crafts": [{"id": "duct_tape", "inputs": [{"item": "wires", "count": 2}, {"item": "matches", "count": 1}], "output": {"item": "duct_tape", "count": 1}}]},
-      {"level": 2, "roubles": 0, "requires": [{"item": "duct_tape", "count": 2, "fir": true}, {"item": "toilet_paper", "count": 1, "fir": true}]}
+        "crafts": [
+          {"id": "duct_tape", "inputs": [{"item": "wires", "count": 2}, {"item": "matches", "count": 1}], "output": {"item": "duct_tape", "count": 1}},
+          {"id": "soap", "inputs": [{"item": "toilet_paper", "count": 2}, {"item": "toothpaste", "count": 1}], "output": {"item": "soap", "count": 1}}
+        ]},
+      {"level": 2, "roubles": 0, "requires": [{"item": "duct_tape", "count": 2, "fir": true}, {"item": "toilet_paper", "count": 1, "fir": true}, {"item": "toothpaste", "count": 1, "fir": true}, {"item": "soap", "count": 1, "fir": true}],
+        "crafts": [
+          {"id": "hose", "inputs": [{"item": "duct_tape", "count": 2}, {"item": "wd40", "count": 1}], "output": {"item": "hose", "count": 1}},
+          {"id": "cigarettes", "inputs": [{"item": "toilet_paper", "count": 1}, {"item": "matches", "count": 1}], "output": {"item": "cigarettes", "count": 1}}
+        ]}
+    ]
+  },
+  {
+    "id": "nutrition_unit",
+    "name": "Nutrition Unit",
+    "description": "Filters water, packs rations and brews drinks.",
+    "levels": [
+      {"level": 1, "roubles": 25000, "requires": [{"item": "hose", "count": 1}, {"item": "kettle", "count": 1}, {"item": "lighter", "count": 1}],
+        "crafts": [
+          {"id": "aquamari", "inputs": [{"item": "water_bottle", "count": 2}, {"item": "hose", "count": 1}], "output": {"item": "aquamari", "count": 1}},
+          {"id": "mre", "inputs": [{"item": "canned_beef", "count": 1}, {"item": "crackers", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "mre", "count": 1}},
+          {"id": "emergency_water", "inputs": [{"item": "water_bottle", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "emergency_water", "count": 2}}
+        ]},
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "kettle", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "rechargeable_battery", "count": 1, "fir": true}],
+        "crafts": [
+          {"id": "hot_rod", "inputs": [{"item": "energy_drink", "count": 2}, {"item": "condensed_milk", "count": 1}], "output": {"item": "hot_rod", "count": 1}},
+          {"id": "vodka", "inputs": [{"item": "crackers", "count": 3}, {"item": "water_bottle", "count": 1}, {"item": "lighter", "count": 1}], "output": {"item": "vodka", "count": 1}},
+          {"id": "moonshine", "inputs": [{"item": "condensed_milk", "count": 2}, {"item": "water_bottle", "count": 2}, {"item": "lighter", "count": 1}], "output": {"item": "moonshine", "count": 1}}
+        ]}
     ]
   }
 ]

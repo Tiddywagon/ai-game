@@ -25,8 +25,13 @@ const STARTER_STASH := [
 	{"id": "ak_74n", "x": 0, "y": 0}, {"id": "ammo_545_ps", "x": 5, "y": 0, "count": 60},
 	{"id": "ammo_545_ps", "x": 6, "y": 0, "count": 60}, {"id": "bandage", "x": 7, "y": 0},
 	{"id": "bandage", "x": 8, "y": 0}, {"id": "bandage", "x": 9, "y": 0}, {"id": "bolts", "x": 5, "y": 1},
-	{"id": "bolts", "x": 6, "y": 1},
+	{"id": "bolts", "x": 6, "y": 1}, {"id": "tourniquet", "x": 7, "y": 1}, {"id": "splint", "x": 8, "y": 1},
+	{"id": "ai2_medkit", "x": 9, "y": 1}, {"id": "water_bottle", "x": 0, "y": 2}, {"id": "crackers", "x": 1, "y": 2},
+	{"id": "crackers", "x": 2, "y": 2},
 ]
+## A new character starts with full energy and hydration (DESIGN.md §13.7).
+const START_ENERGY := 100.0
+const START_HYDRATION := 100.0
 
 var faction: Faction = Faction.NONE
 var level: int = 1
@@ -50,6 +55,11 @@ var skills: Dictionary = {}
 var quests: Dictionary = {}
 ## Hideout station id -> level built (DESIGN.md §9, Hideout). Missing: not built.
 var hideout: Dictionary = {}
+## The PMC's energy and hydration (DESIGN.md §13.7): carried from raid to raid, recovering over real
+## time out of raid (Consumables.recover_profile()), from `metabolism_time` (Unix seconds, 0: not yet).
+var energy := START_ENERGY
+var hydration := START_HYDRATION
+var metabolism_time := 0.0
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -88,6 +98,9 @@ func _reset(new_faction: Faction) -> void:
 	dollars = START_DOLLARS
 	drip = 0
 	trick_shots = {"hits": 0, "kills": 0}
+	energy = START_ENERGY
+	hydration = START_HYDRATION
+	metabolism_time = 0.0
 	var config: InventoryConfig = load("res://data/config/inventory.tres")
 	stash = InventoryGrid.new(config.stash_size, &"stash")
 	trader_loyalty = {}
@@ -124,6 +137,7 @@ func to_dict() -> Dictionary:
 			"skills": skills.duplicate(true),
 			"quests": quests.duplicate(true),
 			"hideout": hideout.duplicate(),
+			"metabolism": {"energy": snappedf(energy, 0.01), "hydration": snappedf(hydration, 0.01), "time": metabolism_time},
 		},
 		"stash": stash.to_array(),
 	}
@@ -139,6 +153,10 @@ func from_dict(data: Dictionary) -> void:
 	roubles = int(profile.get("roubles", roubles))
 	dollars = int(profile.get("dollars", dollars))
 	drip = int(profile.get("drip", 0))
+	var saved_metabolism: Dictionary = profile.get("metabolism", {})
+	energy = float(saved_metabolism.get("energy", START_ENERGY))
+	hydration = float(saved_metabolism.get("hydration", START_HYDRATION))
+	metabolism_time = float(saved_metabolism.get("time", 0.0))
 	var saved_tricks: Dictionary = profile.get("trick_shots", {})
 	trick_shots = {"hits": int(saved_tricks.get("hits", 0)), "kills": int(saved_tricks.get("kills", 0))}
 

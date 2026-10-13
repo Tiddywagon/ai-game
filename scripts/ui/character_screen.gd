@@ -80,6 +80,12 @@ func _fill_stats() -> void:
 	_row(grid, "Experience", UiFormat.thousands(GameState.xp), Color.WHITE)
 	var health: HealthConfig = load("res://data/config/health.tres")
 	_row(grid, "Health", "%d HP over 7 body parts" % health.max_total(), Color.WHITE)
+	Consumables.recover_profile()
+	var tuning := Consumables.CONFIG
+	var low := GameState.energy <= tuning.low_threshold or GameState.hydration <= tuning.low_threshold
+	_row(grid, "Energy / water", "%d / %d  ·  %d / %d  (+%s an hour out of raid)" % [ceili(GameState.energy), roundi(tuning.max_energy),
+		ceili(GameState.hydration), roundi(tuning.max_hydration), str(roundi(tuning.recovery_per_minute * 60.0))],
+		Color(0.95, 0.7, 0.3) if low else Color.WHITE)
 	_row(grid, "Roubles", UiFormat.money(GameState.roubles), Color.WHITE)
 	_row(grid, "Dollars", UiFormat.money(GameState.dollars, "USD"), Color.WHITE)
 	_row(grid, "Drip", UiFormat.thousands(GameState.drip), Player.TRICK_COLOR)

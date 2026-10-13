@@ -3,7 +3,9 @@ extends RefCounted
 ## Draws one inventory item into a rectangle (DESIGN.md §7): the rarity-coloured background and border,
 ## its icon (turned when the item is), a name strip, the stack count and the rarity letter, so colour is
 ## never the only cue, the found-in-raid checkmark in the bottom-right corner (faded while it's only
-## pending, during a raid) and a gold "+N" for upgraded gear. Used by grids, equipment slots, the drag preview and item lists.
+## pending, during a raid) and a gold "+N" for upgraded gear. Meds with several uses show the uses
+## left ("2/3") and medkits their HP left, where a stack shows its count (not on tiny icons). Used by grids, equipment slots,
+## the drag preview and item lists.
 
 const TEXT_COLOR := Color(0.92, 0.91, 0.86)
 const NAME_STRIP := 18.0
@@ -42,10 +44,17 @@ static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bo
 	if marked:
 		draw_fir_mark(canvas, fir_mark_rect(rect), item.fir_pending and not item.fir, alpha)
 	var shown := item.count if count < 0 else count
+	var corner := ""
 	if shown > 1 or item.data.max_stack > 1:
+		corner = str(shown)
+	elif Consumables.is_consumable(item.data) and Consumables.max_charges(item.data) > 1.0 and rect.size.y >= 40.0:
+		corner = str(ceili(item.charges)) if Consumables.is_medkit(item.data) else "%d/%d" % [roundi(item.charges), roundi(Consumables.max_charges(item.data))]
+	if corner != "":
 		# Right-aligned in the corner, or just above the checkmark.
 		var baseline := rect.size.y - (FIR_SIZE + 7.0 if marked else 5.0)
-		canvas.draw_string(font, rect.position + Vector2(0, baseline), str(shown), HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x - 5, 13, Color(TEXT_COLOR, alpha))
+		var used := item.is_part_used()
+		canvas.draw_string(font, rect.position + Vector2(0, baseline), corner, HORIZONTAL_ALIGNMENT_RIGHT, rect.size.x - 5, 13,
+			Color(Color(1.0, 0.78, 0.45) if used else TEXT_COLOR, alpha))
 	if item.contents and not item.contents.items.is_empty():
 		# A small dot: there's something inside.
 		canvas.draw_circle(rect.position + Vector2(rect.size.x - 8, NAME_STRIP + 10), 3.5, Color(TEXT_COLOR, 0.8 * alpha))
@@ -75,6 +84,10 @@ static func tooltip(item: ItemInstance) -> String:
 		lines.append("Durability %.1f / %.1f" % [item.durability, item.max_durability])
 	elif item.is_armor():
 		lines.append("Class %d  ·  durability %.1f / %.1f" % [int(item.data.stats["class"]), item.durability, item.max_durability])
+	if Consumables.is_medkit(item.data):
+		lines.append("%d / %d HP left" % [ceili(item.charges), roundi(Consumables.max_charges(item.data))])
+	elif Consumables.is_consumable(item.data) and Consumables.max_charges(item.data) > 1.0:
+		lines.append("%d / %d uses left" % [roundi(item.charges), roundi(Consumables.max_charges(item.data))])
 	if GearUpgrades.is_upgradable(item.data):
 		lines.append("Upgrade +%d of +%d" % [item.upgrade_level, GearUpgrades.max_level(item.data)])
 	elif WeaponMods.is_mod(item.data):

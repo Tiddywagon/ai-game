@@ -4,6 +4,8 @@ extends CharacterBody3D
 ## hitbox, health and shooting. Subclasses decide what to do in _think(); Actor carries it out.
 ## The gun is a Weapon node ($Body/Gun) whose stats come from the gun item's WeaponData. Health is a
 ## BodyHealth (seven body parts, bleeds, fractures, pain); bullets hit the part where they land.
+## Its timed effects (stims, painkillers, food; DESIGN.md §13.7) and hunger and thirst change max
+## stamina, stamina recovery, speed, sway and recoil here.
 ## Vision (DESIGN.md §13.6): subclasses say which cones they see with (vision_cones()); VisionSystem
 ## applies light and weather and traces the sight lines.
 
@@ -175,6 +177,9 @@ func _physics_process(delta: float) -> void:
 		return
 	_sway_time += delta
 	blind_time = maxf(blind_time - delta, 0.0)
+	health.exertion = health.metabolism.sprint_drain_multiplier if health.metabolism and move_state == Move.SPRINT else 1.0
+	weapon.recoil_multiplier = health.recoil_multiplier()
+	stamina = minf(stamina, stamina_cap())
 	_think(delta)
 	_roll_cooldown = maxf(_roll_cooldown - delta, 0.0)
 	if is_rolling:
@@ -301,6 +306,11 @@ func try_reload() -> bool:
 	return weapon.reload()
 
 
+## Max stamina right now: more on some stims.
+func stamina_cap() -> float:
+	return max_stamina + health.stamina_bonus()
+
+
 ## How fast the actor is moving, 1 = sprint speed.
 func speed_ratio() -> float:
 	return Vector2(velocity.x, velocity.z).length() / sprint_speed
@@ -393,10 +403,10 @@ func display_name() -> String:
 	return "Scav" if side == Side.SCAV else "PMC"
 
 
-## Current weapon sway in degrees (left/right): from fractured or blacked arms, pain, and the gun
-## itself (weapon_sway()).
+## Current weapon sway in degrees (left/right): from fractured or blacked arms, pain, the gun itself
+## (weapon_sway()), and a tremor from stims or thirst (or steadier hands from some stims).
 func aim_sway_degrees() -> float:
-	var amount := health.injured_arms() * health_config.arm_sway + weapon_sway()
+	var amount := health.injured_arms() * health_config.arm_sway + weapon_sway() + health.extra_sway()
 	if health.has_pain():
 		amount += health_config.pain_sway
 	if amount <= 0.0:
@@ -546,8 +556,9 @@ func visible_point_of(other: Actor) -> Variant:
 func _step_free(delta: float) -> void:
 	var moving := not move_input.is_zero_approx()
 	var injured_legs := health.injured_legs() > 0
-	# Shooting stops a sprint, and so does a fractured or blacked leg; sprinting from a crouch stands you up.
-	var sprint_held := moving and sprint_input and not fire_input and not injured_legs and _can_sprint() and not is_overweight()
+	# Shooting stops a sprint, and so does a fractured or blacked leg (unless a painkiller numbs it);
+	# sprinting from a crouch stands you up.
+	var sprint_held := moving and sprint_input and not fire_input and health.leg_problem() == "" and _can_sprint() and not is_overweight()
 	if sprint_held and is_crouching:
 		is_crouching = false
 	var sprinting := sprint_held and not is_exhausted
@@ -572,7 +583,7 @@ func _step_free(delta: float) -> void:
 
 	if injured_legs:
 		speed *= health_config.injured_leg_speed
-	speed *= _move_multiplier() * inventory_config.speed_multiplier(carried_weight_kg)
+	speed *= _move_multiplier() * inventory_config.speed_multiplier(carried_weight_kg) * health.speed_multiplier()
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(move_input * speed, acceleration * delta)
 	velocity = Vector3(horizontal.x, velocity.y, horizontal.z)
 	_apply_gravity(delta)
@@ -647,7 +658,7 @@ func _update_stamina(sprinting: bool, delta: float) -> void:
 	elif _regen_cooldown > 0.0:
 		_regen_cooldown -= delta
 	else:
-		stamina = minf(stamina + regen_rate * delta, max_stamina)
+		stamina = minf(stamina + regen_rate * health.stamina_regen_multiplier() * delta, stamina_cap())
 		if is_exhausted and stamina >= recover_threshold:
 			is_exhausted = false
 	if stamina == 0.0:

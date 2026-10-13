@@ -121,10 +121,10 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Rigs | Chest rigs, armored rigs (class 1–6) | Grid, (armor stats if armored), upgrade level |
 | Backpacks | Daypack → 8×8 raid packs | Grid size, weight, upgrade level |
 | Helmets | Bump caps → class 6 helmets, with face shield and headset slots | Class, durability, ricochet, hearing; face shields (face zone), headsets (hearing) |
-| Meds | Bandage, tourniquet, splint, medkit, surgical kit, painkillers, stims | Heals HP / fixes bleed, fracture; uses |
-| Food & Drink | Crackers, canned meat, water, energy drink | Energy, hydration |
-| Valuables | Gold chain, Bitcoin, LEDX, GPU, secure flash drive, intelligence folder | High sell value, small size |
-| Junk / Barter | Bolts, screws, wires, duct tape, fuel, pliers, screwdriver, nails, hose, medical tools | Used in barters, crafts, hideout upgrades |
+| Meds | Bandages, tourniquets, a hemostat, splints, painkillers, small and large medkits (HP pools), surgical kits, 9 stimulants (Section 13.7) | Use time; uses or HP pool; treats light/heavy bleed, fracture, blacked parts; timed effects and side effects |
+| Food & Drink | Crackers, canned fish, meat and peas, condensed milk, MRE, water, juice, energy drinks, vodka, moonshine (Section 13.7) | Energy, hydration, use time; some have effects |
+| Valuables | Gold chain, watches (wrist, pocket, Roler), coins (silver, gold, rare collection), GPU, hard drives (HDD, SSD, military), Bitcoin, cold-wallet crypto drive, LEDX, flash drive, intelligence folder (Section 13.7) | High sell value, small size; wanted in barters and crafts |
+| Junk / Barter | Bolts, screws, wires, duct tape, batteries (AA, rechargeable, car), fuel and fuel conditioner, matches, lighter, toothpaste, soap, cigarettes, light bulbs, capacitors, circuit boards, gunpowder, WD-40, military cable, kettle, pliers, screwdriver, nails, hose, medical tools (Section 13.7) | Used in barters, crafts, hideout upgrades |
 | Keys | Room keys, keycards | Uses, unlocks loot rooms/extracts |
 | Containers | Ammo case, item case, Secure container (2x2 → 3x4) | Internal grid |
 
@@ -136,8 +136,8 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Uncommon | Green | 25% | Basic meds, class 2 armor, pistols |
 | Rare | Blue | 12% | ARs, class 3–4 armor, surgical kits |
 | Ultra Rare | Purple | 5% | Good scopes, class 5 armor, stims |
-| Epic | Orange | 2.5% | Bitcoin, GPU, high-pen ammo, keycards |
-| Legendary | Gold | 0.5% | LEDX, class 6 armor, boss uniques |
+| Epic | Orange | 2.5% | Bitcoin, GPU, Roler, intelligence folder, AFAK, Surv12, combat stims, high-pen ammo, keycards |
+| Legendary | Gold | 0.5% | LEDX, crypto drive, Grizzly medkit, eTG-c and Obdolbos stims, class 6 armor, boss uniques |
 
 - Rates are per-roll weights for generic loot spawns; sum = 100%.
 - **Modifiers:** container type (safe/jacket/weapon box), map tier (Labs ×2 for Epic+), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
@@ -148,12 +148,12 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 |---|---|---|---|---|---|---|
 | Loose loot (on the ground) | Anything | 1 (70% of spots) | 1 / 1 / 1 / 1 / 1 / 1 | — | — | — |
 | Crate | Ammo, food, junk, melee | 1–4 | 1.1 / 1 / 1 / 0.9 / 0.8 / 0.6 | 5×4 | ×1 | Yes (wood) |
-| Toolbox | Bolts, screws, wires, tape, pliers, screwdriver, nails, hose, weapon parts, electric motor | 1–3 | 1 / 1 / 1.1 / 1.2 / 1 / 1 | 4×2 | ×1 | No |
+| Toolbox | Bolts, screws, wires, tape, pliers, screwdriver, nails, hose, weapon parts, electric motor, batteries, light bulbs, capacitors, circuit boards, WD-40, gunpowder, military cable, lighters | 1–3 | 1 / 1 / 1.1 / 1.2 / 1 / 1 | 4×2 | ×1 | No |
 | Jacket | Ammo, meds, food, valuables, junk, keys | 0–2 | 1 / 1 / 1 / 1 / 1 / 1 | 2×2 | ×0.8 | No |
 | Weapon box | Weapons, ammo, attachments | 1–2 | 0.8 / 1 / 1.3 / 1.3 / 1.2 / 1 | 6×3 | ×1.1 | Yes (wood) |
-| Medical bag | Meds, medical tools | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
+| Medical bag | Meds and stims (all 26), medical tools | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
 | Safe | Valuables, keys | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 | 3×3 | ×1.4 | Yes (metal) |
-| Filing cabinet | Keys, flash drives, intelligence folders (×2 likely), paper, matches, gold chains | 1–3 | 1 / 1 / 1.2 / 1.3 / 1.2 / 1 | 4×4 | ×1.2 | Yes (metal) |
+| Filing cabinet | Keys, flash drives, intelligence folders (×2 likely), paper, matches, gold chains, hard drives, crypto drives, cigarettes, lighters | 1–3 | 1 / 1 / 1.2 / 1.3 / 1.2 / 1 | 4×4 | ×1.2 | Yes (metal) |
 | Duffle bag | Ammo, attachments, meds, food, valuables, junk | 1–3 | 1 / 1 / 1 / 1 / 1 / 1 | 4×3 | ×1 | No |
 
 Solid containers block movement and bullets (wood ones can be shot through) and the AI paths around them.
@@ -466,7 +466,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench and Lavatory. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory and Nutrition Unit. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, propital, the Surv12 and the Legendary Grizzly, eTG-c and Obdolbos, which traders never sell. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) filters water (Aquamari), packs MREs and water rations, and at level 2 brews Hot Rod, vodka and moonshine. Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
@@ -482,7 +482,7 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
 
-**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Ragman sells the gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials, and upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4); Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
+**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Therapist sells meds and food by loyalty level (bandages, the AI-2, car medkit and basic food at LL1; the CAT, ibuprofen, Salewa, morphine and adrenaline at LL2; the CALOK-B, aluminium splint, IFAK, CMS, Aquamari and MREs at LL3) and barters medkits and stims for barter goods and valuables (toothpaste and soap for a car medkit, a Roler for an AFAK, up to a rare coin collection for the Grizzly at LL4; Section 13.7); Prapor, Skier, Mechanic, Jaeger, Ragman and Peacekeeper barter for cigarettes, gunpowder, drives, watches, coins and the rest; Ragman sells the gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials, and upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4); Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Selling, trader repair, insurance and restocks are planned.
 
 ### Loyalty Levels (LL)
 
@@ -700,7 +700,7 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | Strength | Carrying weight, melee | Carry more, throw farther; 0.25% less recoil per level |
 | Endurance | Sprinting | More stamina |
 | Vitality | Taking damage | Lower bleed chance |
-| Metabolism | Eating/drinking | Slower energy/hydration drain |
+| Metabolism | Eating/drinking | 1% slower energy/hydration drain per level (built, Section 13.7; levelling isn't built yet) |
 | Search | Searching containers | Faster search, rarer loot (+% capped) |
 | Weapon class skills | Using weapon type (built: Pistols, SMGs, Shotguns, Assault rifles, Marksman rifles, Bolt-action rifles, Machine guns) | 0.5% less recoil per level (up to 15% with Strength); reload speed planned. Levelling isn't built yet |
 
@@ -709,8 +709,8 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | System | Detail |
 |---|---|
 | Body parts | Head, Thorax (death at 0), Stomach, L/R Arm, L/R Leg (Section 13.5) |
-| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); dehydration, exhaustion later |
-| Energy / Hydration | Drain over time; 0 = HP loss |
+| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); hungry, thirsty, starving, dehydrated; timed effects from meds, stims and food (Section 13.7) |
+| Energy / Hydration | 100 each; drain in a raid, carried between raids; low slows stamina or shakes the aim, 0 = stomach HP loss (Section 13.7) |
 | Stamina | Sprint, aim stability |
 
 ### 13.1 Movement *(tune)*
@@ -813,7 +813,7 @@ A risk / reward move for bolt-action rifles and DMRs (`WeaponData.weapon_class` 
 
 ### 13.5 Health & Status Effects *(tune)*
 
-Every actor, player and AI, has the same body. Armor stops rounds before they reach it (Section 6.4). There are no meds yet.
+Every actor, player and AI, has the same body. Armor stops rounds before they reach it (Section 6.4); meds, stims and food treat and change it (Section 13.7).
 
 | Part | HP | At 0 HP | Damage spread when blacked |
 |---|---|---|---|
@@ -831,12 +831,12 @@ Every actor, player and AI, has the same body. Armor stops rounds before they re
 | Blacked parts | A part at 0 is blacked. Damage it takes from then on, and any damage beyond a part's remaining HP, is multiplied (table) and shared evenly by every part that still has HP, head and thorax included. So limb hits can still kill |
 | Light bleed | Each round has its own chance per hit that reaches flesh (Section 6.4: soft rounds high, AP low; a fragmenting round always). Anything else: 35% at 50 damage, scaled by damage up to ×1.5. Loses 0.5 HP/s from that part |
 | Heavy bleed | The round's own chance (else 12%, same scaling); replaces a light bleed on that part. Loses 1.5 HP/s |
-| Bleeding | Doesn't stop on its own. On a blacked part, bleed damage spreads like any other damage. Treatment comes with meds |
-| Fracture | 25% chance per hit to an arm or leg (same scaling). Leg (fractured or blacked): 70% speed, no sprinting, no rolling. Arm (fractured or blacked): +2° weapon sway each |
-| Pain | While any part is fractured or blacked. +1° weapon sway; for the player, dark red tunnel vision at the screen edges (pulsing; steady with "reduce flashing") |
+| Bleeding | Doesn't stop on its own. On a blacked part, bleed damage spreads like any other damage. Bandages stop light bleeds, tourniquets heavy ones, the hemostat and most medkits both; Zagustin pauses the damage (Section 13.7) |
+| Fracture | 25% chance per hit to an arm or leg (same scaling). Leg (fractured or blacked): 70% speed, no sprinting, no rolling (a painkiller allows both). Arm (fractured or blacked): +2° weapon sway each. Splints (and the Grizzly) set it |
+| Pain | While any part is fractured or blacked, unless a painkiller is working ("Pain (numbed)"). +1° weapon sway; for the player, dark red tunnel vision at the screen edges (pulsing; steady with "reduce flashing") |
 | Weapon sway | The aim drifts slowly left and right by up to the total sway (injuries plus the gun's own, Section 13.4), on top of spread. The player sees it as the bloom reticle shifting |
-| HUD | Bottom left: body silhouette (seen from behind), each part filled green → amber → red by its HP, black with a red outline when blacked; drops for bleeds (two for heavy), a crack for fractures, a flash on the part that was hit. Next to it, total HP and a list of active effects |
-| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
+| HUD | Bottom left: body silhouette (seen from behind), each part filled green → amber → red by its HP, black with a red outline when blacked; drops for bleeds (two for heavy), a crack for fractures, a flash on the part that was hit. Next to it, total HP, a list of conditions, the running effects (benefits green, drawbacks red, with time left) and what E would treat; energy and water bars under stamina; a USING bar above the player (Section 13.7) |
+| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it; "Starved", "Died of thirst" or "Poisoned" by a stim), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
 
 All of these values live in `data/config/health.tres`.
 
@@ -873,6 +873,159 @@ The camera lead always keeps you within the middle 55% of the screen. The gun's 
 **Raid conditions:** each raid has a time of day (day, dusk, night) and weather (clear, fog, rain), set on the map's `RaidEnvironment` (sun, ambient light, fog, rain). The HUD shows both next to the map name. In the test yard F7 and F8 cycle them.
 
 All of these values live in `data/config/vision.tres`.
+
+### 13.7 Meds, Stims, Food & Metabolism *(tune)*
+
+Meds treat the body of Section 13.5, stims trade a few minutes of buffs for side effects, and food and drink keep energy and hydration up. Every one of them takes time to use, and that time can be interrupted.
+
+**Using items**
+
+| Rule | Detail |
+|---|---|
+| Use time | Every med, stim, food and drink has one (2 s for an injector, 3 s for a bandage, 14 s for CMS surgery). While using, you walk at 65% speed (surgery 30–40%) and can't sprint, shoot, aim or reload. The HUD shows **USING …** with a bar above the player; the inventory header shows it too |
+| Interrupted | Shooting, rolling, sprinting, reloading or aiming (they go ahead), a hit that does damage, the item leaving your inventory, or the use key again. Nothing happens and nothing is used up |
+| Quick treatment (E, `use_item`) | Treats the worst problem with what's **in your pockets, rig or secure container** (not the backpack): heavy bleed, light bleed, fracture, pain, lost HP, blacked part, then thirst and hunger (at 60% or less). Dedicated items before medkits, cheaper first, part-used first; stims and anything with a side effect are never picked for you. The HUD shows what E would do ("E  Bandage: light bleed (left arm)") or that you have nothing for it |
+| From the inventory | Examine (right-click) → **USE**: any med, stim, food or drink you carry, backpack included (not straight out of a container or body: take it first). Disabled with the reason as its tooltip ("No light bleed to treat") |
+| Where it goes | A med picks the body part that needs it most: heavy bleeds first, then light bleeds, fractures and blacked parts (legs before the stomach and arms), then missing HP. Checked again when the use finishes |
+| Uses and HP pools | Multi-use items count down their uses ("2/3" on the item); medkits spend their HP pool (HP left on the item, amber once opened). A part-used item is worth its share of uses left. Saved per item |
+| Bleeds | Bandages stop one light bleed, tourniquets one heavy bleed (anywhere), the CALOK-B hemostat either |
+| Fractures | Splints set one fracture |
+| Painkillers | For their duration: no pain (no sway or tunnel vision from it) and a fractured or blacked leg can sprint and roll again (still at 70% speed). The fracture is still there: "Pain (numbed)" |
+| Medkits | One body part a use: stop its bleeds the kit can treat (paying the listed HP from the pool), set its fracture (Grizzly), then heal its missing HP from what's left. Can't heal a blacked part |
+| Surgery | On a blacked stomach, arm or leg: it comes back at a share of its max HP, but its max HP drops for the rest of the raid (repeat surgery lowers it further). Bleeds and fractures there still need treating |
+| Effects | Stims, painkillers and some food and drink start timed effects: listed beside the body on the HUD (benefits green, drawbacks red, with time left) and on the death screen. Taking the same item again refreshes its effects instead of stacking them; different items stack. Side effects often start when the buffs end |
+| Out of raid | Only food and drink can be used (on the profile's energy and hydration, instantly); meds and stims say "Only in a raid" |
+| AI | Bots don't use items yet; they carry them as loot |
+
+| Med | Rarity | Size | Treats (one body part a use) | Uses / HP | Use time | Notes |
+|---|---|---|---|---|---|---|
+| Bandage | Common | 1×1 | light bleed | 1 | 3.0 s | — |
+| Army bandage | Uncommon | 1×1 | light bleed | 2 | 2.5 s | — |
+| Esmarch tourniquet | Common | 1×1 | heavy bleed | 1 | 4.0 s | — |
+| CAT tourniquet | Uncommon | 1×1 | heavy bleed | 2 | 3.0 s | — |
+| CALOK-B hemostatic applicator | Rare | 1×1 | light bleed, heavy bleed | 3 | 2.0 s | — |
+| Immobilizing splint | Common | 1×1 | fracture | 1 | 5.0 s | — |
+| Aluminium splint | Rare | 1×1 | fracture | 3 | 3.0 s | — |
+| Analgin painkillers | Uncommon | 1×1 | pain | 4 | 3.0 s | painkiller 1:35 |
+| Ibuprofen tablets | Rare | 1×1 | pain | 6 | 3.0 s | painkiller 4:00; side effect: hydration -2/min 4:00 |
+| AI-2 medkit | Common | 1×1 | heals missing HP | 100 HP | 2.0 s | — |
+| Car first aid kit | Uncommon | 2×1 | light bleed (50 HP), heals missing HP | 220 HP | 3.0 s | — |
+| Salewa first aid kit | Rare | 1×2 | light bleed (45 HP), heavy bleed (175 HP), heals missing HP | 400 HP | 3.0 s | — |
+| IFAK individual first aid kit | Ultra Rare | 1×1 | light bleed (30 HP), heavy bleed (210 HP), heals missing HP | 300 HP | 2.5 s | — |
+| AFAK tactical first aid kit | Epic | 1×1 | light bleed (30 HP), heavy bleed (170 HP), heals missing HP | 400 HP | 2.0 s | — |
+| Grizzly medical kit | Legendary | 2×2 | light bleed (40 HP), heavy bleed (130 HP), fracture (50 HP), heals missing HP | 1800 HP | 5.0 s | — |
+| CMS surgical kit | Rare | 2×1 | blacked part | 3 | 14.0 s | back at 35% HP, −35% max HP for the raid; walk at 30% |
+| Surv12 field surgical kit | Epic | 3×1 | blacked part | 8 | 10.0 s | back at 50% HP, −20% max HP for the raid; walk at 40% |
+
+| Stim (injector, 1×1, 2 s) | Rarity | Effects | Side effects |
+|---|---|---|---|
+| Adrenaline injector | Rare | stamina recovery +50% 1:00, painkiller 1:00 | sway +1.5° 0:30 after 1:00, hydration -10 |
+| Morphine injector | Rare | painkiller 5:00 | hydration -15 |
+| Propital regenerative stimulant | Ultra Rare | regeneration 1 HP/s 4:00, painkiller 4:00 | sway +1.5° 0:30 after 4:00 |
+| L1 norepinephrine injector | Ultra Rare | max stamina +30 2:00, speed +6% 2:00, painkiller 2:00 | energy -10, hydration -20 |
+| 3-(b-TG) stimulant | Ultra Rare | recoil -15% 4:00, sway -0.5° 4:00 | sway +1.5° 0:40 after 4:00, hydration -10 |
+| Zagustin hemostatic drug | Epic | hemostatic 3:00 | sway +1.0° 0:40 after 3:00, hydration -15 |
+| SJ6 TGLabs combat stimulant | Epic | max stamina +40 4:00, stamina recovery +50% 4:00, speed +8% 4:00 | sway +2.0° 1:00 after 4:00, energy -20/min 1:00 after 4:00, hydration -20/min 1:00 after 4:00 |
+| Obdolbos 2 cocktail injector | Legendary | max stamina +50 5:00, stamina recovery +100% 5:00, speed +12% 5:00, recoil -20% 5:00, painkiller 5:00 | hydration -6/min 5:00, toxin 0.4 HP/s 1:00 after 5:00, sway +2.5° 1:00 after 5:00 |
+| eTG-change regenerative stimulant | Legendary | regeneration 6 HP/s 1:00 | energy -40/min 1:00, hydration -25/min 1:00 |
+
+| Effect | What it does |
+|---|---|
+| Painkiller | No pain; broken legs can sprint and roll |
+| Regeneration | Heals X HP/s spread over the damaged parts (not blacked ones) |
+| Hemostatic | Bleeds do no damage (they don't stop) |
+| Max stamina / stamina recovery | + stamina points / + recovery speed |
+| Speed | Move speed |
+| Recoil | Recoil of every shot (−15% = 15% less) |
+| Sway | Weapon sway in degrees: a tremor (+) or steadier hands (−) |
+| Energy / hydration | Extra drain (or gain) per minute |
+| Toxin | HP/s lost from the stomach (spreads once it's blacked) |
+
+**Energy and hydration**
+
+| Rule | Detail |
+|---|---|
+| Max | 100 each. A new character starts full |
+| Drain | In a raid: −1.2 energy and −1.8 hydration per minute, twice as fast while sprinting, less with the Metabolism skill (1% per level). Stims and food change it (above) |
+| Hungry / thirsty | At 25 or less. Hungry: stamina recovers at 60% speed. Thirsty: +1.5° weapon sway. On the status list |
+| Starving / dehydrated | At 0: −0.12 HP/s (starving) and −0.2 HP/s (dehydrated) from the stomach; once it's blacked the damage spreads (Section 13.5), so it can kill ("Starved", "Died of thirst") |
+| Between raids | A PMC's energy and hydration carry over from raid to raid (at least 30 each after dying) and recover by 1 per real minute out of raid; eat and drink from the stash. A Scav starts full and doesn't touch the PMC's |
+| HUD | Energy and water bars under stamina (amber when low, red at 0); the inventory header and character screen show both |
+
+| Food / drink | Rarity | Size | Energy | Hydration | Use time | Effects |
+|---|---|---|---|---|---|---|
+| Crackers | Common | 1×1 | +15 | -5 | 3.0 s | — |
+| Green peas | Common | 1×1 | +25 | +10 | 4.0 s | — |
+| Sprats | Common | 1×1 | +30 | -10 | 4.0 s | — |
+| Apple juice | Common | 1×2 | +15 | +40 | 4.0 s | — |
+| Water bottle | Common | 1×2 | — | +60 | 4.0 s | — |
+| Energy drink | Uncommon | 1×1 | +10 | +40 | 3.0 s | stamina recovery +20% 2:00 |
+| Water ration | Uncommon | 1×1 | — | +35 | 3.0 s | — |
+| Condensed milk | Uncommon | 1×1 | +50 | -10 | 5.0 s | — |
+| Beef stew | Uncommon | 1×1 | +60 | -10 | 5.0 s | — |
+| Vodka | Uncommon | 1×2 | — | -15 | 4.0 s | painkiller 2:00; side effect: sway +1.5° 2:00 |
+| Hot Rod energy drink | Rare | 1×1 | +20 | +30 | 3.0 s | max stamina +20 5:00; stamina recovery +30% 5:00; side effect: sway +0.5° 5:00 |
+| Aquamari bottle with filter | Rare | 1×2 | — | +100 | 5.0 s | — |
+| MRE ration pack | Rare | 1×2 | +75 | +15 | 6.0 s | — |
+| Moonshine | Ultra Rare | 1×2 | — | -20 | 4.0 s | painkiller 5:00; side effect: sway +2.0° 5:00; side effect: speed -5% 5:00 |
+
+**Valuables** sell high and are wanted in barters and crafts; the best are Epic and Legendary.
+
+| Valuable | Rarity | Size | Value (₽) | Wanted for |
+|---|---|---|---|---|
+| Old silver coin | Uncommon | 1×1 | 12,000 | barters (Skier) |
+| Old wrist watch | Uncommon | 1×1 | 15,000 | barters (Skier, Therapist) |
+| Hard drive | Uncommon | 1×1 | 18,000 | barters (Skier) |
+| Gold chain | Rare | 1×1 | 30,000 | barters (Peacekeeper, Prapor, Skier, Therapist); crafts (Workbench) |
+| Antique pocket watch | Rare | 1×1 | 38,000 | barters (Therapist) |
+| SSD drive | Rare | 1×1 | 46,000 | barters (Peacekeeper, Skier, Therapist) |
+| Secure flash drive | Rare | 1×1 | 85,000 | sells |
+| Antique gold coin | Ultra Rare | 1×1 | 88,000 | barters (Therapist); crafts (Medstation) |
+| Bronze lion | Ultra Rare | 2×2 | 95,000 | barters (Ragman) |
+| Encrypted military hard drive | Ultra Rare | 1×1 | 120,000 | barters (Peacekeeper, Therapist) |
+| Roler Submariner gold wrist watch | Epic | 1×1 | 210,000 | barters (Peacekeeper, Therapist) |
+| Intelligence folder | Epic | 2×1 | 240,000 | barters (Therapist) |
+| Rare coin collection | Epic | 2×1 | 260,000 | barters (Therapist) |
+| Physical bitcoin | Epic | 1×1 | 300,000 | sells |
+| Graphics card | Epic | 2×1 | 420,000 | barters (Peacekeeper, Skier); crafts (Workbench) |
+| LEDX Skin Transilluminator | Legendary | 1×1 | 900,000 | barters (Jaeger) |
+| Cold-wallet crypto drive | Legendary | 1×1 | 1,100,000 | sells |
+
+**Barter goods** (junk) are for barters, crafts and hideout upgrades.
+
+| Barter good | Rarity | Size | Value (₽) | Used in |
+|---|---|---|---|---|
+| Matches | Common | 1×1 | 2,000 | barters (Jaeger, Skier); crafts (Lavatory) |
+| Lighter | Common | 1×1 | 2,500 | barters (Jaeger, Prapor, Ragman); crafts (Nutrition Unit); upgrades (Nutrition Unit 1) |
+| Soap | Common | 1×1 | 2,800 | barters (Ragman, Therapist); crafts (Medstation); upgrades (Lavatory 2, Medstation 2, Medstation 3) |
+| Toothpaste | Common | 1×1 | 3,000 | barters (Ragman, Therapist); crafts (Lavatory); upgrades (Lavatory 2, Medstation 2, Medstation 3) |
+| Cigarettes | Common | 1×1 | 3,000 | barters (Prapor, Ragman, Skier, Therapist) |
+| Light bulb | Common | 1×1 | 3,200 | upgrades (Medstation 3, Nutrition Unit 2) |
+| AA battery | Common | 1×1 | 3,500 | crafts (Workbench) |
+| Toilet paper | Common | 1×1 | 3,500 | barters (Therapist); crafts (Lavatory); upgrades (Lavatory 1, Lavatory 2) |
+| Screwdriver | Common | 1×1 | 3,500 | barters (Mechanic) |
+| Pack of nails | Common | 1×1 | 4,000 | barters (Jaeger) |
+| Pliers | Common | 1×1 | 5,000 | barters (Mechanic) |
+| Screw nuts | Common | 1×1 | 6,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
+| Wires | Common | 1×1 | 7,000 | barters (Mechanic, Ragman); crafts (Lavatory, Workbench); upgrades (Generator 2, Generator 3, Workbench 3) |
+| Bolts | Common | 1×1 | 8,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
+| Duct tape | Common | 1×1 | 9,000 | barters (Prapor, Ragman, Skier); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); upgrades (Lavatory 1, Lavatory 2) |
+| Kettle | Uncommon | 1×2 | 9,000 | upgrades (Nutrition Unit 1, Nutrition Unit 2) |
+| WD-40 can | Uncommon | 1×1 | 11,000 | barters (Mechanic); crafts (Lavatory) |
+| Capacitors | Uncommon | 1×1 | 12,000 | barters (Mechanic); crafts (Workbench) |
+| Rechargeable battery | Uncommon | 1×1 | 14,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 2) |
+| Corrugated hose | Uncommon | 2×1 | 14,000 | barters (Jaeger); crafts (Nutrition Unit); upgrades (Nutrition Unit 1) |
+| Printed circuit board | Uncommon | 1×1 | 15,000 | barters (Mechanic) |
+| Weapon parts | Uncommon | 2×1 | 15,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 3) |
+| Gunpowder "Kite" | Uncommon | 1×1 | 18,000 | barters (Prapor); crafts (Workbench) |
+| Medical tools | Uncommon | 1×1 | 19,000 | barters (Therapist); crafts (Medstation); upgrades (Medstation 3) |
+| Fuel can | Uncommon | 2×2 | 30,000 | upgrades (Generator 1, Generator 2) |
+| Military power cable | Rare | 1×1 | 36,000 | barters (Mechanic, Prapor); upgrades (Workbench 3) |
+| Fuel conditioner | Rare | 1×2 | 48,000 | barters (Jaeger); upgrades (Generator 3) |
+| Car battery | Rare | 2×2 | 52,000 | upgrades (Generator 3) |
+| Electric motor | Rare | 2×2 | 55,000 | barters (Mechanic); crafts (Workbench); upgrades (Generator 3, Workbench 3) |
+
+All of this is data: meds and stims in `data/items/meds/`, food and drink in `data/items/food/`, valuables in `data/items/valuables/`, barter goods in `data/items/junk/`; use, energy and hydration tuning in `data/config/consumables.tres`.
 
 ## 14. Economy
 
@@ -941,7 +1094,7 @@ All of these values live in `data/config/vision.tres`.
 | `move_forward` / `move_back` | W / S | `reload` | R |
 | `move_left` / `move_right` | A / D | `toggle_inventory` | Tab |
 | `shoot` | Left mouse | `interact` | F |
-| `aim` | Right mouse (hold): peek from cover | `use_item` | E |
+| `aim` | Right mouse (hold): peek from cover | `use_item` | E: quick treatment (Section 13.7) |
 | `roll` | Space | `take_cover` | Q |
 | `pause` | Esc | `aim_left/right/up/down` | Right stick (controller only) |
 | `hotkey_1` … `hotkey_5` | 1–5 | `sprint` | Shift (hold) |
@@ -991,7 +1144,7 @@ On first launch the player picks **BEAR** or **USEC** (Section 3); that creates 
 |---|---|
 | Equipped | AK-74N loaded with 5.45x39 PS, Secure container Alpha (2×2) |
 | Pockets | 60 × 5.45x39 PS, 1 bandage |
-| Stash | AK-74N, 2 × 60 5.45x39 PS, 3 bandages, 2 bolts |
+| Stash | AK-74N, 2 × 60 5.45x39 PS, 3 bandages, a tourniquet, a splint, an AI-2 medkit, a bottle of water, 2 packs of crackers, 2 bolts |
 
 ### 16.5 Pause Menu (in raid)
 
@@ -1043,3 +1196,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Starter arsenal (Section 6.4; the ammo table referred to as "3.2a" didn't exist in this document, so it was written there): 18 new guns, 22 in all across pistols, SMGs, shotguns, assault rifles, DMRs, bolt-action rifles and LMGs (Vektor P9, Bastion 45, Strelka MP, Hornet SMG, Wasp PDW, Brigand 45, Warden 870, Tempest S12, Sentinel AR, Tundra 47, Halcyon B5, Partisan, Longbow DMR, Huntsman 700, Leviathan .338, Grizzly 74, Bulwark 249, Anvil PK); 10 calibers with 3–5 rounds each (45 rounds; new `armor_damage` stat on every round, Common everyday rounds, Epic/Legendary best AP); 143 new weapon parts (183 in all) with standard parts for every gun and upgrades from Common to Legendary, plus AK, AR, STANAG and caliber parts shared across guns. Shot shells fire 8 pellets (chokes tighten them: new `pellet_spread` part modifier, shown for shotguns), subsonic rounds are quieter (`noise` ammo stat), rounds dragged onto a gun load it, reloading with none of the gun's round type left switches to another of its caliber, found guns come loaded with their caliber's everyday round. Mosin and SVD get a muzzle slot. New weapon classes `smg`, `shotgun`, `lmg` and skills SMGs, Shotguns, Machine guns. Traders sell most of it (Jaeger has hunting stock ready for when he unlocks). 302 items |
 | 2026-10-12 | Ammo rework (Section 6.4; the request's ammo table didn't come through, a "[paste the table]" placeholder, so the rounds in Section 6.4 were kept and extended): every round now has fragmentation, velocity, recoil, accuracy, ricochet and light/heavy bleed chances on top of damage, penetration and armor damage (50 rounds, 4–6 per caliber; 5.45 PS and BS moved into `545.json`); 5 new tracer rounds (9x19, 5.56, 7.62x39, 7.62x51, 7.62x54R; 5.45 BT is one too). Armor works: helmets and vests stop rounds on the parts they cover by penetration against class and wear, push blunt damage through or let them ricochet, and wear down (durability saved per item). Soft rounds fragment and bleed, AP rounds get through armor for less flesh damage. Velocity sets range, damage falloff and energy through wood; rounds change recoil and spread. Ammo charts (examine panel for guns and rounds; new AMMO tab on the trader screen) compare every round of a caliber with armor class 1–6 squares. Ammo offers need trader loyalty (LL1 cheap, LL3–4 AP; Legendary rounds aren't sold); loyalty levels now rise when you meet their requirements. Workbench level 3 crafts the Legendary AP rounds. Armor hit marker and damage numbers. 307 items |
 | 2026-10-12 | Gear and gear upgrades (Section 12.2): armor classes 1–6 across 13 vests, 7 armored rigs and 10 helmets (penetration and durability as in Section 6.4), new zones (face for frontal head hits, arms for the heaviest suits), helmet face shield and headset slots (7 face shields, 6 headsets; helmets muffle hearing, headsets amplify it for the player's sound markers and AI hearing), armored rigs that can't be worn with body armor, plain rigs and backpacks from 3×1 to 8×8: 47 new gear items across every rarity, plus 5 upgrade materials. Upgrades +1…+5 (max by rarity: Common +1 … Epic/Legendary +5) at Ragman (by loyalty level) or the Workbench (by its level, cheaper): +10% durability and −4% blunt per level for armor, +6% ricochet for helmets and face shields, lighter and roomier rigs and backpacks, +5% hearing for headsets; roubles plus barter items per level (`data/config/gear_upgrades.json`). UPGRADE in the examine panel, Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES; "+N" on upgraded items. 359 items |
+| 2026-10-13 | Consumables (Section 13.7): meds that work (bandages and army bandages stop light bleeds, Esmarch and CAT tourniquets heavy ones, the CALOK-B hemostat either; splints set fractures; painkillers numb pain and let broken legs sprint; AI-2 and car (small) and Salewa, IFAK, AFAK and Grizzly (large) medkits with HP pools that pay for bleeds and heal one part a use; CMS and Surv12 surgery restores blacked parts at a max HP cost), 9 stimulants with timed effects (regeneration, painkiller, hemostatic, stamina, speed, recoil, sway) and side effects (tremor, thirst, hunger, toxin). Every item has a use time and can be interrupted (shooting, rolling, sprinting, reloading, aiming, a hit, E); E quick-treats with what's in your pockets, rig and secure container; USE in the examine panel. Energy and hydration drain in raids (faster sprinting), make you hungry or thirsty when low and hurt at 0, carry over between raids and recover out of raid; 14 foods and drinks. New valuables (watches, coins, hard drives, crypto drive) and barter goods (batteries, fuel conditioner, toothpaste, soap, cigarettes, lighter and more) in barters, crafts and hideout upgrades; Medstation level 3, Nutrition Unit; best meds and valuables Epic or Legendary. HUD energy and water bars, effects, E hint, use bar; uses left on items; `consumables.tres`. 412 items. Save adds energy and hydration |

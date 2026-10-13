@@ -43,6 +43,7 @@ func open(loot: Variant = null, title := "", source: Node3D = null) -> void:
 		close()
 	_screen = SCREEN.instantiate()
 	_screen.inventory = player.inventory
+	_screen.user = player
 	_screen.loot = loot
 	_screen.loot_title = title
 	_screen.loot_search = source.get("search") if source else null

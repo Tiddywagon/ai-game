@@ -22,6 +22,8 @@ func show_death(player: Player, raid_seconds: float, outcome: RaidOutcome = null
 	%Detail.visible = lines[1] != ""
 	%Silhouette.health = player.health
 	var statuses := player.health.status_lines()
+	statuses.append_array(player.health.effect_lines(false))
+	statuses.append_array(player.health.effect_lines(true))
 	%Statuses.text = "\n".join(statuses) if not statuses.is_empty() else "No status effects"
 	var map := MapInfo.find(GameState.raid.get("map", ""))
 	_stat("Map", map.display_name if map else "Test Yard")
@@ -66,6 +68,14 @@ static func describe(cause: Dictionary) -> Array[String]:
 				if source.get("weapon", "") != "":
 					detail += " (%s)" % source.weapon
 			return ["Bled out", detail + "."]
+		"starvation":
+			return ["Starved", "No energy left: your stomach gave out%s." % (", and it spread to your %s" % fatal if fatal != "stomach" else "")]
+		"dehydration":
+			return ["Died of thirst", "No hydration left: your stomach gave out%s." % (", and it spread to your %s" % fatal if fatal != "stomach" else "")]
+		"toxin":
+			var item := ItemDB.get_item(str(cause.get("source", "")))
+			return ["Poisoned", "Side effect of %s%s." % [item.display_name if item else "a stimulant",
+				", spreading to your %s" % fatal if fatal != "stomach" else ""]]
 	return ["Killed in action", ""]
 
 

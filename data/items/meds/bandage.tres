@@ -6,11 +6,13 @@
 script = ExtResource("1_ooxp0")
 id = "bandage"
 display_name = "Bandage"
-description = "Stops a light bleed."
+description = "Plain gauze bandage. Stops one light bleed."
 category = 7
 weight_kg = 0.05
 base_value = 2000
 stats = {
 "treats": ["light_bleed"],
+"type": "bandage",
+"use_time": 3.0,
 "uses": 1
 }

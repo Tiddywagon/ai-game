@@ -161,6 +161,26 @@ func all_items() -> Array[ItemInstance]:
 	return result
 
 
+## The grid on the character holding `item` (pockets, rig, backpack, secure container or a case inside
+## one of them), or null.
+func holder_of(item: ItemInstance) -> InventoryGrid:
+	for grid in grids():
+		var holder := grid.find_holder(item)
+		if holder:
+			return holder
+	return null
+
+
+## Takes `item` out of whichever grid on the character holds it (a used-up med). False if it isn't here.
+func remove_item(item: ItemInstance) -> bool:
+	var holder := holder_of(item)
+	if holder == null:
+		return false
+	holder.remove(item)
+	changed.emit()  # Also when it was inside a case, whose grid isn't watched.
+	return true
+
+
 ## Puts `item` in the pockets, rig or backpack, wherever it fits. False if it didn't all fit.
 func add(item: ItemInstance) -> bool:
 	for grid in ammo_grids():
@@ -242,8 +262,8 @@ static func starter() -> Inventory:
 
 
 ## A random Scav kit (DESIGN.md §4, §16.3): an AK-74N with PS, a Scav vest with 90 spare rounds,
-## sometimes a helmet, a hatchet or a sling bag of junk, and odds and ends in the pockets. Nothing from
-## the stash. Also what AI Scavs carry (and drop).
+## sometimes a helmet, a hatchet or a sling bag of food and junk, and odds and ends (a bandage, junk,
+## cigarettes, a snack) in the pockets. Nothing from the stash. Also what AI Scavs carry (and drop).
 static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
@@ -259,11 +279,11 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 		inventory.equip("melee", ItemInstance.create("hatchet"))
 	if rng.randf() < 0.4:
 		var bag := ItemInstance.create("sling_bag")
-		for id in ["crackers", "bolts", "duct_tape", "screwdriver"].slice(0, rng.randi_range(1, 4)):
+		for id in ["crackers", "bolts", "duct_tape", "screwdriver", "sprats", "cigarettes"].slice(0, rng.randi_range(1, 6)):
 			bag.contents.add(ItemInstance.create(id))
 		inventory.equip("backpack", bag)
-	for id in ["bandage", "bolts", "matches", "screws"]:
-		if rng.randf() < 0.4:
+	for id in ["bandage", "bolts", "matches", "screws", "cigarettes", "toothpaste", "crackers", "aa_battery"]:
+		if rng.randf() < 0.3:
 			inventory.pockets.add(ItemInstance.create(id))
 	return inventory
 
@@ -279,8 +299,8 @@ static func loaded_gun(id: String, ammo: String, durability := 100.0) -> ItemIns
 
 
 ## An AI PMC's kit (DESIGN.md §4): an AK-74N with BS, sometimes a PM pistol, armor, a helmet, a
-## tactical rig with 90 spare BS rounds and a bandage, a pack with a few finds and meds in the pockets.
-## What you can take off the body.
+## tactical rig with 90 spare BS rounds and a bandage, a pack with a few finds (meds, food, valuables)
+## and meds in the pockets. What you can take off the body.
 static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
@@ -301,6 +321,9 @@ static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
 	var pack := ItemInstance.create("tourist_pack")
 	for id in ["ai2_medkit", "canned_beef", "water_bottle", "gold_chain", "electric_motor", "weapon_parts"]:
 		if rng.randf() < 0.5:
+			pack.contents.add(ItemInstance.create(id))
+	for id in ["car_medkit", "salewa", "morphine", "wrist_watch", "hard_drive", "ssd_drive", "condensed_milk", "cigarettes"]:
+		if rng.randf() < 0.2:
 			pack.contents.add(ItemInstance.create(id))
 	inventory.equip("backpack", pack)
 	return inventory

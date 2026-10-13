@@ -44,6 +44,15 @@ func survived() -> bool:
 	return status == Status.SURVIVED or status == Status.RUN_THROUGH
 
 
+## A PMC's energy and hydration go back to the profile at the end of a raid (DESIGN.md §13.7); after
+## dying, at least ConsumablesConfig.after_death_minimum of each. Out of raid they recover from now on.
+static func keep_metabolism(health: BodyHealth, died: bool) -> void:
+	var floor_value := Consumables.CONFIG.after_death_minimum if died else 0.0
+	GameState.energy = maxf(health.energy, floor_value)
+	GameState.hydration = maxf(health.hydration, floor_value)
+	GameState.metabolism_time = Time.get_unix_time_from_system()
+
+
 ## Total base value of the items that became found in raid.
 func found_value() -> int:
 	var total := 0

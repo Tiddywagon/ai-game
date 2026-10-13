@@ -18,6 +18,11 @@ extends Actor
 ## full turn around the player in one direction (within the gun's spin time, rolling or not) opens a
 ## TRICK SHOT READY window; the first shot in it deals bonus damage. No aiming while spinning or while
 ## the window is open: the shot is fired from the hip, with full hip-fire bloom.
+## Meds, stims, food and drink (DESIGN.md §13.7): E (use_item) treats the worst problem with what's in
+## the pockets, rig or secure container (Consumables.quick_pick()); the inventory's USE uses any item
+## you carry. Each takes its use time, walking slowly (no sprinting, shooting, aiming or reloading).
+## Shooting, rolling, sprinting, reloading, aiming, a hit that does damage, losing the item or E again
+## interrupts it: nothing happens and nothing is used up. Energy and hydration drain while in a raid.
 
 ## Emitted when one of the player's bullets hits someone (hit markers, damage numbers).
 signal hit_landed(target: Actor, damage: float, position: Vector3)
@@ -30,6 +35,10 @@ signal loot_claimed(items: Array[ItemInstance])
 signal killed(target: Actor)
 ## A full spin opened a 360 trick shot window (DESIGN.md §13.4).
 signal trick_shot_ready
+## Started using `item` (a med, stim, food or drink) for `seconds`.
+signal item_use_started(item: ItemInstance, seconds: float)
+## Using `item` ended: `finished` with what it did in `text`, or interrupted (`text` says why).
+signal item_use_ended(item: ItemInstance, finished: bool, text: String)
 ## A trick shot hit `target` (and killed it, if `killed`).
 signal trick_shot_hit(target: Actor, damage: float, position: Vector3, killed: bool)
 
@@ -101,6 +110,12 @@ var _last_number: Label3D
 var _last_number_frame := -1
 var _last_number_target: Actor
 var _last_number_damage := 0.0
+## The item being used (DESIGN.md §13.7), the body part it's meant for (-1: it picks), and the time
+## left and in all.
+var using_item: ItemInstance
+var _use_part := -1
+var use_time_left := 0.0
+var use_time_total := 0.0
 
 
 func _ready() -> void:
@@ -122,6 +137,7 @@ func _ready() -> void:
 	weapon.fired.connect(_on_round_fired)
 	weapon.reload_finished.connect(_on_reload_finished)
 	weapon.jam_cleared.connect(_on_jam_cleared)
+	health.start_metabolism(Consumables.CONFIG, GameState.energy, GameState.hydration)
 	set_inventory(Inventory.starter())
 
 
@@ -153,6 +169,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_binoculars(not using_binoculars)
 	elif event.is_action_pressed("interact") and focused_interactable and not is_dead:
 		focused_interactable.interact(self)
+	elif event.is_action_pressed("use_item") and not is_dead:
+		if using_item:
+			cancel_use("Stopped using %s" % using_item.data.display_name)
+		else:
+			quick_use()
 
 
 func _process(delta: float) -> void:
@@ -183,10 +204,12 @@ func _think(delta: float) -> void:
 	if using_binoculars and Input.is_action_just_pressed("shoot") and not ui_open:
 		action_blocked.emit("Put the binoculars away to shoot (%s)" % Settings.key_label("binoculars"))
 	auto_reload = Settings.get_value("gameplay", "auto_reload")
+	peek_input = (_aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")) and not ui_open
+	if using_item:
+		_update_use(delta, moving)
 	if _reload_requested:
 		_reload_requested = false
 		try_reload()
-	peek_input = (_aim_toggled if Settings.is_toggle("aim_mode") else Input.is_action_pressed("aim")) and not ui_open
 	_update_aim()
 	_update_trick_shot(delta)
 	var transition := VisionSystem.config.optic_transition_time
@@ -314,6 +337,112 @@ func _update_trick_shot(delta: float) -> void:
 		trick_shot_ready.emit()
 
 
+# --- Using items (DESIGN.md §13.7) ---------------------------------------------------------------
+
+## Starts using `item` (on body part `part`, or wherever it's needed): false (with the reason in
+## action_blocked) if it can't be used now.
+func start_use(item: ItemInstance, part := -1) -> bool:
+	var reason := use_block_reason(item)
+	if reason != "":
+		action_blocked.emit(reason)
+		return false
+	if using_item:
+		cancel_use("")
+	using_item = item
+	_use_part = part
+	use_time_total = Consumables.use_time(item.data)
+	use_time_left = use_time_total
+	_sprint_toggled = false
+	_aim_toggled = false
+	weapon.release_trigger()
+	item_use_started.emit(item, use_time_total)
+	return true
+
+
+## Why `item` can't be used now, or "".
+func use_block_reason(item: ItemInstance) -> String:
+	if is_dead:
+		return "Dead"
+	if item == null or not Consumables.is_consumable(item.data):
+		return "Can't be used"
+	if inventory.holder_of(item) == null:
+		return "Take it first"
+	if is_rolling:
+		return "Can't use items mid-roll"
+	if weapon.is_reloading or weapon.is_clearing:
+		return "Can't use items while reloading"
+	if not ui_open and (fire_input or peek_input or move_state == Move.SPRINT):
+		return "Can't use items while %s" % ("shooting" if fire_input else ("aiming" if peek_input else "sprinting"))
+	return Consumables.block_reason(item, health)
+
+
+## Stops using the item: nothing happens and nothing is used up. `reason` goes to the HUD ("" for none).
+func cancel_use(reason: String) -> void:
+	if using_item == null:
+		return
+	var item := using_item
+	using_item = null
+	use_time_left = 0.0
+	item_use_ended.emit(item, false, reason)
+	if reason != "":
+		action_blocked.emit(reason)
+
+
+## E: treats the worst problem with what's in reach (Consumables.quick_pick()).
+func quick_use() -> bool:
+	var pick := Consumables.quick_pick(inventory, health)
+	if not pick.has("item"):
+		action_blocked.emit(str(pick.reason))
+		return false
+	return start_use(pick.item, int(pick.part))
+
+
+## 0 to 1 through the item being used.
+func use_progress() -> float:
+	return 1.0 - use_time_left / use_time_total if using_item and use_time_total > 0.0 else 0.0
+
+
+## Shooting, rolling, sprinting, reloading or aiming stops the use (and goes ahead); otherwise the use
+## counts down and then takes effect.
+func _update_use(delta: float, moving: bool) -> void:
+	var interrupt := ""
+	if fire_input:
+		interrupt = "shooting"
+	elif _roll_requested:
+		interrupt = "rolling"
+	elif sprint_input and moving:
+		interrupt = "sprinting"
+	elif _reload_requested:
+		interrupt = "reloading"
+	elif peek_input:
+		interrupt = "aiming"
+	if interrupt != "":
+		cancel_use("%s interrupted: %s" % [using_item.data.display_name, interrupt])
+		return
+	use_time_left -= delta
+	if use_time_left <= 0.0:
+		_finish_use()
+
+
+func _finish_use() -> void:
+	var item := using_item
+	using_item = null
+	use_time_left = 0.0
+	var result := Consumables.apply(item, health, _use_part)
+	if not result.ok:
+		item_use_ended.emit(item, false, str(result.reason))
+		action_blocked.emit("%s: %s" % [item.data.display_name, result.reason])
+		return
+	if result.used_up:
+		inventory.remove_item(item)
+	else:
+		var holder := inventory.holder_of(item)
+		if holder:
+			holder.changed.emit()  # Redraw the uses left.
+	item_use_ended.emit(item, true, str(result.text))
+	action_blocked.emit(str(result.text))
+
+
 ## Opens `loot` (a container's InventoryGrid or a body's Inventory) from `source` beside the inventory.
 func open_loot(title: String, loot: Variant, source: Node3D = null) -> void:
 	loot_requested.emit(title, loot, source)
@@ -342,6 +471,8 @@ func _update_focus() -> void:
 
 
 func _on_inventory_changed() -> void:
+	if using_item and inventory.holder_of(using_item) == null:
+		cancel_use("%s interrupted: it's not on you any more" % using_item.data.display_name)
 	var claimed := FoundInRaid.claim(inventory)
 	if not claimed.is_empty():
 		loot_claimed.emit(claimed)
@@ -492,17 +623,21 @@ func has_light_on() -> bool:
 
 func die() -> void:
 	optic_blend = 0.0
+	cancel_use("")
 	super()
 
 
 func _move_multiplier() -> float:
 	var optic := VisionSystem.config.optic(current_optic())
-	return lerpf(1.0, optic.move_multiplier, optic_blend) if optic else 1.0
+	var multiplier := lerpf(1.0, optic.move_multiplier, optic_blend) if optic else 1.0
+	if using_item:
+		multiplier *= Consumables.move_multiplier(using_item.data)
+	return multiplier
 
 
-## No sprinting while looking through a sight (iron sights don't count).
+## No sprinting while looking through a sight (iron sights don't count) or using an item.
 func _can_sprint() -> bool:
-	return optic_blend <= 0.0 or current_optic() == VisionConfig.Optic.IRON_SIGHTS
+	return using_item == null and (optic_blend <= 0.0 or current_optic() == VisionConfig.Optic.IRON_SIGHTS)
 
 
 ## Through a scope the camera pulls out and leads toward the aim point, so the longer view is on screen.
@@ -553,6 +688,8 @@ func on_hit_landed(target: Actor, damage: float, hit_position: Vector3, outcome:
 func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
 	var outcome := super(damage, from, hit_position, shot)
 	_shake_camera(HIT_SHAKE)
+	if using_item and float(outcome.get("damage", 0.0)) > 0.0 and Consumables.CONFIG.hits_interrupt:
+		cancel_use("%s interrupted: hit" % using_item.data.display_name)
 	return outcome
 
 

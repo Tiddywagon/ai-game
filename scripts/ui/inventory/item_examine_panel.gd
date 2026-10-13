@@ -9,6 +9,9 @@ extends PanelContainer
 ## rounds also show an ammo chart beside the stats: every round of the caliber compared (AmmoChart).
 ## Armor shows its class, what it covers and its durability; helmets their face shield and headset
 ## (TAKE OFF out of raid); upgradable gear its level, and out of raid UPGRADE opens GearUpgradePanel.
+## Meds, stims, food and drink (DESIGN.md §13.7) show what they treat, their HP pool or uses left, use
+## time, energy and hydration and their effects and side effects; USE uses one (in a raid: on you,
+## over its use time; out of raid: food and drink only). Disabled, its tooltip says why.
 ## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
@@ -20,6 +23,8 @@ signal modify_requested(item: ItemInstance)
 signal upgrade_requested(item: ItemInstance)
 ## TAKE OFF pressed for the part in slot `path` of `item` (a helmet's face shield or headset).
 signal part_removal_requested(item: ItemInstance, path: String)
+## USE pressed for a med, stim, food or drink.
+signal use_requested(item: ItemInstance)
 
 const TREATMENTS := {"light_bleed": "light bleed", "heavy_bleed": "heavy bleed", "fracture": "fracture",
 	"pain": "pain", "blacked": "blacked limb"}
@@ -27,6 +32,8 @@ const TREATMENTS := {"light_bleed": "light bleed", "heavy_bleed": "heavy bleed",
 var item: ItemInstance
 ## Guns can be modded from here (out of raid).
 var can_modify := false
+## Why an item can't be used right now ("" if it can): set by the inventory. Unset: no USE button.
+var use_check: Callable
 
 var _icon: TextureRect
 var _name: Label
@@ -37,6 +44,7 @@ var _chart: AmmoChart
 var _unload: Button
 var _modify: Button
 var _upgrade: Button
+var _use: Button
 var _parts: VBoxContainer
 
 
@@ -99,6 +107,12 @@ func _ready() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	buttons.add_theme_constant_override("separation", 10)
 	rows.add_child(buttons)
+	_use = Button.new()
+	_use.name = "UseButton"
+	_use.text = "USE"
+	_use.custom_minimum_size = Vector2(120, 36)
+	_use.pressed.connect(func() -> void: use_requested.emit(item))
+	buttons.add_child(_use)
 	_unload = Button.new()
 	_unload.text = "UNLOAD"
 	_unload.custom_minimum_size = Vector2(120, 36)
@@ -157,6 +171,11 @@ func show_item(examined: ItemInstance) -> void:
 	_unload.visible = item.rounds_loaded() > 0
 	_modify.visible = can_modify and item.is_gun()
 	_upgrade.visible = can_modify and GearUpgrades.is_upgradable(data)
+	_use.visible = use_check.is_valid() and Consumables.is_consumable(data)
+	if _use.visible:
+		var reason: String = use_check.call(item)
+		_use.disabled = reason != ""
+		_use.tooltip_text = reason if reason != "" else "Takes %.1f s" % Consumables.use_time(data)
 	_build_parts()
 	_description.text = data.description
 	_description.visible = data.description != ""
@@ -265,6 +284,41 @@ static func guns_for_caliber(caliber: String) -> String:
 	return ", ".join(names) if not names.is_empty() else "No gun yet"
 
 
+## A med, stim, food or drink: what it treats (and what that costs a medkit), its HP pool or uses left,
+## surgery, use time, energy and hydration, and each effect (side effects marked).
+static func consumable_lines(examined: ItemInstance) -> Array:
+	var data := examined.data
+	var stats := data.stats
+	var lines := []
+	if stats.has("type"):
+		lines.append(["Type", {"stim": "Stimulant", "medkit": "Medkit", "surgical": "Surgical kit", "hemostat": "Hemostatic"}.get(
+			str(stats.type), str(stats.type).capitalize())])
+	var treated: Array = Consumables.treats(data).map(func(what: String) -> String:
+		var price := Consumables.cost(data, what)
+		return TREATMENTS.get(what, what) + (" (%d HP)" % roundi(price) if price > 0.0 else ""))
+	if not treated.is_empty():
+		lines.append(["Treats", ", ".join(treated)])
+	if Consumables.is_medkit(data):
+		lines.append(["HP pool", "%d / %d: heals one body part a use" % [ceili(examined.charges), int(stats.hp)]])
+	elif Consumables.max_charges(data) > 1.0:
+		lines.append(["Uses", "%d / %d" % [roundi(examined.charges), int(stats.uses)]])
+	if stats.has("restore"):
+		lines.append(["Surgery", "back at %d%% HP; the part loses %d%% of its max HP for the raid" % [
+			roundi(float(stats.restore) * 100.0), roundi(float(stats.get("max_hp_loss", 0.0)) * 100.0)]])
+	lines.append(["Use time", "%.1f s, walking at %d%% speed" % [Consumables.use_time(data), roundi(Consumables.move_multiplier(data) * 100.0)]])
+	for key in ["energy", "hydration"]:
+		if stats.has(key):
+			lines.append([key.capitalize(), "%+d" % int(stats[key])])
+	for effect: Dictionary in stats.get("effects", []):
+		var side := bool(effect.get("side", false))
+		var text := "%s for %s" % [BodyHealth.effect_label(str(effect.kind), float(effect.get("value", 0.0)), side),
+			BodyHealth._clock(float(effect.get("duration", 0.0)))]
+		if float(effect.get("delay", 0.0)) > 0.0:
+			text += ", after %s" % BodyHealth._clock(float(effect.delay))
+		lines.append(["Side effect" if side else "Effect", text])
+	return lines
+
+
 ## [label, value] pairs describing `examined`.
 static func stat_lines(examined: ItemInstance) -> Array:
 	var data := examined.data
@@ -337,17 +391,8 @@ static func stat_lines(examined: ItemInstance) -> Array:
 			", stops nothing" if examined.durability <= 0.0 else (", resists %d" % roundi(ArmorRules.resistance(int(stats["class"]), worn)) if worn < 1.0 else "")]])
 	elif stats.has("durability"):
 		lines.append(["Durability", str(int(stats.durability))])
-	if stats.has("treats"):
-		var treated: Array = stats.treats.map(func(what: String) -> String: return TREATMENTS.get(what, what))
-		lines.append(["Treats", ", ".join(treated)])
-	if stats.has("heals"):
-		lines.append(["Heals", "%d HP" % int(stats.heals)])
-	if stats.has("uses"):
-		lines.append(["Uses", str(int(stats.uses))])
-	if stats.has("energy"):
-		lines.append(["Energy", "+%d" % int(stats.energy)])
-	if stats.has("hydration"):
-		lines.append(["Hydration", "+%d" % int(stats.hydration)])
+	if Consumables.is_consumable(data):
+		lines.append_array(consumable_lines(examined))
 	if stats.has("optic"):
 		var optic := VisionSystem.config.optic(int(stats.optic))
 		if optic:

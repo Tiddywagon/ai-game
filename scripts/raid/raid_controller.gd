@@ -83,6 +83,8 @@ func leave_extract(zone: ExtractZone) -> void:
 func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 	if outcome:
 		return outcome
+	if is_real_raid() and GameState.raid.get("side", "pmc") == "pmc":
+		RaidOutcome.keep_metabolism(player.health, status == RaidOutcome.Status.KILLED or status == RaidOutcome.Status.MIA)
 	outcome = RaidOutcome.settle(status, GameState.raid.get("side", "pmc"), player.inventory, elapsed, xp,
 		player.kills, is_real_raid(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip})
 	raid_ended.emit(outcome)

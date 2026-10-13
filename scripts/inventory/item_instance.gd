@@ -42,6 +42,8 @@ var max_durability := 100.0
 ## Gear upgrade level, 0 to +5 (GearUpgrades): more durability, less blunt damage, more room or better
 ## hearing, depending on the item.
 var upgrade_level := 0
+## Meds, food and drink: uses left, or HP left in a medkit (Consumables). Used up at 0.
+var charges := 0.0
 
 
 ## A new instance of item `id` (null if there's no such item), `count` of it (capped to a stack).
@@ -57,6 +59,8 @@ static func create(id: String, amount := 1) -> ItemInstance:
 	if grid.size() == 2:
 		instance.contents = InventoryGrid.new(Vector2i(int(grid[0]), int(grid[1])), _grid_kind(item_data), instance)
 	WeaponMods.install_defaults(instance)
+	if Consumables.is_consumable(item_data):
+		instance.charges = Consumables.max_charges(item_data)
 	if instance.is_armor():
 		instance.max_durability = float(item_data.stats.get("durability", 100.0))
 		instance.durability = instance.max_durability
@@ -93,7 +97,7 @@ func same_status(other: ItemInstance) -> bool:
 ## Same item type that stacks, with room to spare, and the same Found-in-Raid status.
 func can_stack_with(other: ItemInstance) -> bool:
 	return other != self and other.data == data and data.max_stack > 1 and count < data.max_stack and same_status(other) \
-		and not hidden and not other.hidden
+		and not hidden and not other.hidden and is_equal_approx(charges, other.charges)
 
 
 ## A new stack of `amount` taken off this one's status (the caller takes the count off this one).
@@ -140,9 +144,13 @@ func weight_without_rounds() -> float:
 	return total
 
 
-## Base value of the stack, plus whatever is inside, the rounds loaded and the mods.
+## Base value of the stack, plus whatever is inside, the rounds loaded and the mods. A part-used med
+## is worth its share of uses (or HP) left.
 func value() -> int:
-	var total := data.base_value * count + (contents.value() if contents else 0)
+	var unit := data.base_value
+	if is_part_used():
+		unit = roundi(unit * charges / Consumables.max_charges(data))
+	var total := unit * count + (contents.value() if contents else 0)
 	for rounds in magazine:
 		total += rounds.value()
 	for mod: ItemInstance in mods.values():
@@ -164,6 +172,11 @@ func is_armor() -> bool:
 ## Guns and armor wear and keep their durability.
 func has_durability() -> bool:
 	return is_gun() or is_armor()
+
+
+## A med, food or drink with some of its uses (or HP) gone.
+func is_part_used() -> bool:
+	return Consumables.is_consumable(data) and charges < Consumables.max_charges(data) - 0.001
 
 
 # --- Magazine ---------------------------------------------------------------------------------
@@ -275,6 +288,8 @@ func to_dict() -> Dictionary:
 		result.max_durability = snappedf(max_durability, 0.001)
 	if upgrade_level > 0:
 		result.upgrade = upgrade_level
+	if is_part_used():
+		result.charges = snappedf(charges, 0.01)
 	return result
 
 
@@ -290,6 +305,8 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 	instance.fir = bool(entry.get("fir", false))
 	instance.loaded_ammo = str(entry.get("loaded_ammo", ""))
 	instance.upgrade_level = clampi(int(entry.get("upgrade", 0)), 0, GearUpgrades.max_level(instance.data))
+	if entry.has("charges") and Consumables.is_consumable(instance.data):
+		instance.charges = clampf(float(entry.charges), 0.0, Consumables.max_charges(instance.data))
 	if instance.upgrade_level > 0:
 		GearUpgrades.apply(instance)
 	if entry.has("mods"):

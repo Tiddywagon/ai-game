@@ -8,7 +8,7 @@ display_name = "Filing cabinet"
 rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
 rarity_multipliers = PackedFloat32Array(1, 1, 1.2, 1.3, 1.2, 1)
 categories = Array[int]([])
-items = PackedStringArray("dorm_key", "office_key", "marked_key", "lab_keycard", "intel_folder", "flash_drive", "toilet_paper", "matches", "gold_chain")
+items = PackedStringArray("dorm_key", "office_key", "marked_key", "lab_keycard", "intel_folder", "flash_drive", "toilet_paper", "matches", "gold_chain", "hard_drive", "ssd_drive", "military_hdd", "crypto_drive", "cigarettes", "lighter")
 item_weights = {
 "intel_folder": 2.0,
 "flash_drive": 2.0,

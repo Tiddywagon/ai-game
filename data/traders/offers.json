@@ -32,7 +32,11 @@
     "barters": [
       {"give": [{"item": "bolts", "count": 2, "fir": true}, {"item": "screws", "count": 2}], "get": {"item": "ammo_545_bs", "count": 30}, "ll": 3},
       {"give": [{"item": "weapon_parts", "count": 1}, {"item": "duct_tape", "count": 1}], "get": {"item": "pm_pistol"}},
-      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "bolts", "count": 2}], "get": {"item": "ammo_762x39_bp", "count": 20}, "ll": 3}
+      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "bolts", "count": 2}], "get": {"item": "ammo_762x39_bp", "count": 20}, "ll": 3},
+      {"give": [{"item": "cigarettes", "count": 4}, {"item": "lighter", "count": 1}], "get": {"item": "ammo_545_ps", "count": 60}},
+      {"give": [{"item": "vodka", "count": 1}, {"item": "cigarettes", "count": 2}], "get": {"item": "ammo_9x18_pst", "count": 50}},
+      {"give": [{"item": "gunpowder", "count": 2}, {"item": "bolts", "count": 2}], "get": {"item": "ammo_545_bt", "count": 60}, "ll": 2},
+      {"give": [{"item": "military_cable", "count": 1, "fir": true}, {"item": "gunpowder", "count": 2}], "get": {"item": "ammo_762x39_bp", "count": 20}, "ll": 3}
     ]
   },
   "therapist": {
@@ -42,11 +46,40 @@
       {"item": "splint", "price": 3200, "currency": "RUB"},
       {"item": "painkillers", "price": 6500, "currency": "RUB"},
       {"item": "ai2_medkit", "price": 5200, "currency": "RUB"},
-      {"item": "water_bottle", "price": 7500, "currency": "RUB"}
+      {"item": "water_bottle", "price": 7500, "currency": "RUB"},
+      {"item": "army_bandage", "price": 5200, "currency": "RUB"},
+      {"item": "car_medkit", "price": 13500, "currency": "RUB"},
+      {"item": "cat_tourniquet", "price": 10500, "currency": "RUB", "ll": 2},
+      {"item": "ibuprofen", "price": 26000, "currency": "RUB", "ll": 2},
+      {"item": "salewa", "price": 36000, "currency": "RUB", "ll": 2},
+      {"item": "morphine", "price": 34000, "currency": "RUB", "ll": 2},
+      {"item": "adrenaline", "price": 32000, "currency": "RUB", "ll": 2},
+      {"item": "calok_b", "price": 25000, "currency": "RUB", "ll": 3},
+      {"item": "alu_splint", "price": 28000, "currency": "RUB", "ll": 3},
+      {"item": "ifak", "price": 52000, "currency": "RUB", "ll": 3},
+      {"item": "surgical_kit", "price": 48000, "currency": "RUB", "ll": 3},
+      {"item": "crackers", "price": 2800, "currency": "RUB"},
+      {"item": "green_peas", "price": 4500, "currency": "RUB"},
+      {"item": "sprats", "price": 5000, "currency": "RUB"},
+      {"item": "apple_juice", "price": 6800, "currency": "RUB"},
+      {"item": "emergency_water", "price": 11000, "currency": "RUB"},
+      {"item": "condensed_milk", "price": 12500, "currency": "RUB", "ll": 2},
+      {"item": "aquamari", "price": 29000, "currency": "RUB", "ll": 3},
+      {"item": "mre", "price": 34000, "currency": "RUB", "ll": 3}
     ],
     "barters": [
       {"give": [{"item": "gold_chain", "count": 1, "fir": true}], "get": {"item": "surgical_kit"}},
-      {"give": [{"item": "toilet_paper", "count": 2}], "get": {"item": "bandage"}}
+      {"give": [{"item": "toilet_paper", "count": 2}], "get": {"item": "bandage"}},
+      {"give": [{"item": "toothpaste", "count": 2}, {"item": "soap", "count": 1}], "get": {"item": "car_medkit"}},
+      {"give": [{"item": "cigarettes", "count": 2}, {"item": "toothpaste", "count": 1}], "get": {"item": "painkillers"}},
+      {"give": [{"item": "vodka", "count": 2}, {"item": "cigarettes", "count": 2}], "get": {"item": "morphine"}, "ll": 2},
+      {"give": [{"item": "medical_tools", "count": 1}, {"item": "soap", "count": 2}], "get": {"item": "salewa"}, "ll": 2},
+      {"give": [{"item": "wrist_watch", "count": 1, "fir": true}, {"item": "medical_tools", "count": 1}], "get": {"item": "ifak"}, "ll": 3},
+      {"give": [{"item": "roler", "count": 1, "fir": true}], "get": {"item": "afak"}, "ll": 3},
+      {"give": [{"item": "gold_coin", "count": 1, "fir": true}, {"item": "ssd_drive", "count": 1}], "get": {"item": "zagustin"}, "ll": 4},
+      {"give": [{"item": "moonshine", "count": 1, "fir": true}, {"item": "pocket_watch", "count": 1}], "get": {"item": "sj6"}, "ll": 4},
+      {"give": [{"item": "military_hdd", "count": 1, "fir": true}, {"item": "intel_folder", "count": 1, "fir": true}], "get": {"item": "surv12"}, "ll": 4},
+      {"give": [{"item": "coin_collection", "count": 1, "fir": true}, {"item": "medical_tools", "count": 2, "fir": true}], "get": {"item": "grizzly"}, "ll": 4}
     ]
   },
   "skier": {
@@ -84,7 +117,10 @@
       {"give": [{"item": "gpu", "count": 1, "fir": true}], "get": {"item": "holo_sight"}},
       {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "duct_tape", "count": 2}], "get": {"item": "pm_suppressor"}},
       {"give": [{"item": "matches", "count": 2}, {"item": "crackers", "count": 1}], "get": {"item": "ammo_9x18_pst", "count": 50}},
-      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "duct_tape", "count": 1}], "get": {"item": "muzzle_9mm_suppressor"}}
+      {"give": [{"item": "gold_chain", "count": 1, "fir": true}, {"item": "duct_tape", "count": 1}], "get": {"item": "muzzle_9mm_suppressor"}},
+      {"give": [{"item": "wrist_watch", "count": 1}, {"item": "cigarettes", "count": 3}], "get": {"item": "red_dot"}},
+      {"give": [{"item": "silver_coin", "count": 2}], "get": {"item": "foregrip"}},
+      {"give": [{"item": "hard_drive", "count": 1}, {"item": "ssd_drive", "count": 1}], "get": {"item": "prism_sight"}, "ll": 2}
     ]
   },
   "peacekeeper": {
@@ -120,7 +156,9 @@
     ],
     "barters": [
       {"give": [{"item": "gpu", "count": 1, "fir": true}], "get": {"item": "sentinel_ar"}},
-      {"give": [{"item": "gold_chain", "count": 2, "fir": true}], "get": {"item": "hornet_smg"}}
+      {"give": [{"item": "gold_chain", "count": 2, "fir": true}], "get": {"item": "hornet_smg"}},
+      {"give": [{"item": "roler", "count": 1, "fir": true}], "get": {"item": "wasp_pdw"}, "ll": 2},
+      {"give": [{"item": "military_hdd", "count": 1, "fir": true}, {"item": "ssd_drive", "count": 1}], "get": {"item": "scope_2_4"}, "ll": 2}
     ]
   },
   "mechanic": {
@@ -162,7 +200,11 @@
       {"give": [{"item": "weapon_parts", "count": 2}, {"item": "bolts", "count": 3, "fir": true}], "get": {"item": "ak_barrel_match"}},
       {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 2, "fir": true}], "get": {"item": "ak_suppressor"}},
       {"give": [{"item": "weapon_parts", "count": 2, "fir": true}, {"item": "wires", "count": 2}], "get": {"item": "ar_handguard_freefloat"}},
-      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 1}], "get": {"item": "bipod_grip"}}
+      {"give": [{"item": "electric_motor", "count": 1, "fir": true}, {"item": "weapon_parts", "count": 1}], "get": {"item": "bipod_grip"}},
+      {"give": [{"item": "capacitors", "count": 2}, {"item": "circuit_board", "count": 1}], "get": {"item": "tactical_laser"}},
+      {"give": [{"item": "wd40", "count": 1}, {"item": "screws", "count": 2}], "get": {"item": "ak_barrel_short"}},
+      {"give": [{"item": "rechargeable_battery", "count": 2}, {"item": "military_cable", "count": 1, "fir": true}], "get": {"item": "ak_mag_45"}, "ll": 2},
+      {"give": [{"item": "pliers", "count": 1}, {"item": "screwdriver", "count": 1}], "get": {"item": "ak_grip_rubber"}}
     ]
   },
   "ragman": {
@@ -221,7 +263,10 @@
       {"item": "rig_patrol", "price": 31200, "currency": "RUB"}
     ],
     "barters": [
-      {"give": [{"item": "duct_tape", "count": 2}, {"item": "wires", "count": 2}], "get": {"item": "tourist_pack"}}
+      {"give": [{"item": "duct_tape", "count": 2}, {"item": "wires", "count": 2}], "get": {"item": "tourist_pack"}},
+      {"give": [{"item": "toothpaste", "count": 2}, {"item": "soap", "count": 2}], "get": {"item": "ripstop_fabric"}},
+      {"give": [{"item": "cigarettes", "count": 3}, {"item": "lighter", "count": 1}], "get": {"item": "paracord"}},
+      {"give": [{"item": "bronze_lion", "count": 1, "fir": true}], "get": {"item": "rig_bear"}, "ll": 2}
     ]
   },
   "jaeger": {
@@ -242,7 +287,10 @@
       {"item": "ammo_338_tacx", "count": 10, "price": 23400, "currency": "RUB", "ll": 3}
     ],
     "barters": [
-      {"give": [{"item": "ledx", "count": 1, "fir": true}], "get": {"item": "leviathan_338"}}
+      {"give": [{"item": "ledx", "count": 1, "fir": true}], "get": {"item": "leviathan_338"}},
+      {"give": [{"item": "lighter", "count": 1}, {"item": "matches", "count": 2}, {"item": "crackers", "count": 2}], "get": {"item": "choke_full"}},
+      {"give": [{"item": "mre", "count": 1}, {"item": "aquamari", "count": 1}, {"item": "fuel_conditioner", "count": 1}], "get": {"item": "huntsman_700"}, "ll": 2},
+      {"give": [{"item": "nails", "count": 2}, {"item": "hose", "count": 1}], "get": {"item": "huntsman_stock_hunting"}}
     ]
   }
 }

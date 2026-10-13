@@ -9,6 +9,9 @@ extends CanvasLayer
 ## when a container, body or item is in reach, and a countdown while extracting.
 ## 360 trick shots (DESIGN.md §13.4): "TRICK SHOT READY" while the window is open, a gold hit marker
 ## and a sound sting for a trick-shot hit, and a kill banner with the bonus experience and Drip.
+## Consumables (DESIGN.md §13.7): energy and hydration bars under stamina (amber when hungry or
+## thirsty, red at 0), running effects beside the body (benefits green, drawbacks red, with the time
+## left), what E would treat, and a progress bar with the item's name while one is being used.
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -26,6 +29,12 @@ const TRICK_STING := preload("res://assets/audio/sfx/trick_sting.wav")
 ## How long the trick-shot kill banner stays up.
 const BANNER_TIME := 2.6
 const RAID_CONFIG: RaidConfig = preload("res://data/config/raid.tres")
+const BUFF_COLOR := Color(0.55, 0.9, 0.55)
+const DRAWBACK_COLOR := Color(0.95, 0.45, 0.4)
+const ENERGY_COLOR := Color(0.9, 0.78, 0.4)
+const HYDRATION_COLOR := Color(0.45, 0.7, 0.95)
+## How often the E hint works out what it would use, in seconds.
+const HINT_INTERVAL := 0.25
 
 ## The player whose status is shown.
 @export var player: Player
@@ -41,6 +50,16 @@ var _banner: Control
 var _banner_title: Label
 var _banner_detail: Label
 var _banner_tween: Tween
+var _energy_bar: ProgressBar
+var _energy_label: Label
+var _hydration_bar: ProgressBar
+var _hydration_label: Label
+var _buffs: Label
+var _drawbacks: Label
+var _treat_hint: Label
+var _use_label: Label
+var _use_bar: ProgressBar
+var _hint_time := 0.0
 
 @onready var _root: Control = %HudRoot
 @onready var _bottom_left: Control = %BottomLeft
@@ -75,6 +94,7 @@ func _ready() -> void:
 	_sting.bus = &"Effects"
 	add_child(_sting)
 	_build_banner()
+	_build_consumables()
 	VisionSystem.conditions_changed.connect(_update_raid_info)
 	_update_raid_info()
 	_connect_vision.call_deferred()
@@ -213,6 +233,94 @@ func _build_banner() -> void:
 	_banner.add_child(_banner_detail)
 
 
+## Energy and hydration bars under stamina; effect lists and the E hint beside the body; the use
+## progress bar above the player.
+func _build_consumables() -> void:
+	var rows: VBoxContainer = _bar.get_parent()
+	var line := HBoxContainer.new()
+	line.name = "Metabolism"
+	line.add_theme_constant_override("separation", 12)
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rows.add_child(line)
+	rows.move_child(line, _bar.get_index() + 1)
+	var energy := _metabolism_bar(line, "ENERGY", ENERGY_COLOR)
+	_energy_label = energy[0]
+	_energy_bar = energy[1]
+	var hydration := _metabolism_bar(line, "WATER", HYDRATION_COLOR)
+	_hydration_label = hydration[0]
+	_hydration_bar = hydration[1]
+	# Long messages ("Propital ...: regeneration +1.0 HP/s, painkiller") wrap instead of widening the panel.
+	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_message.custom_minimum_size.x = _bar.custom_minimum_size.x
+	var info: VBoxContainer = %StatusList.get_parent()
+	_buffs = _info_label(info, "Buffs", BUFF_COLOR)
+	_drawbacks = _info_label(info, "Drawbacks", DRAWBACK_COLOR)
+	_treat_hint = _info_label(info, "TreatHint", Color(NORMAL_COLOR, 0.75))
+	_use_label = _add_center_label(-400.0, 24, NORMAL_COLOR)
+	_use_label.name = "UseLabel"
+	_use_bar = ProgressBar.new()
+	_use_bar.name = "UseBar"
+	_use_bar.show_percentage = false
+	_use_bar.max_value = 1.0
+	_use_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_use_bar.anchor_left = 0.5
+	_use_bar.anchor_right = 0.5
+	_use_bar.anchor_top = 1.0
+	_use_bar.anchor_bottom = 1.0
+	_use_bar.offset_left = -170.0
+	_use_bar.offset_right = 170.0
+	_use_bar.offset_top = -356.0
+	_use_bar.offset_bottom = -346.0
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color(0, 0, 0, 0.55)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = BUFF_COLOR
+	_use_bar.add_theme_stylebox_override("background", background)
+	_use_bar.add_theme_stylebox_override("fill", fill)
+	_use_bar.hide()
+	_root.add_child(_use_bar)
+
+
+## A small "ENERGY 74" label and bar in `parent`: returns [label, bar].
+func _metabolism_bar(parent: Control, title: String, color: Color) -> Array:
+	var box := VBoxContainer.new()
+	box.name = title.capitalize()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 2)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(box)
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", Color(NORMAL_COLOR, 0.85))
+	label.text = title
+	box.add_child(label)
+	var bar := ProgressBar.new()
+	bar.custom_minimum_size = Vector2(0, 8)
+	bar.show_percentage = false
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color(0, 0, 0, 0.5)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = color
+	bar.add_theme_stylebox_override("background", background)
+	bar.add_theme_stylebox_override("fill", fill)
+	box.add_child(bar)
+	return [label, bar]
+
+
+func _info_label(parent: Control, node_name: String, color: Color) -> Label:
+	var label := Label.new()
+	label.name = node_name
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size.x = 240.0
+	label.hide()
+	parent.add_child(label)
+	return label
+
+
 func _add_center_label(from_bottom: float, size: int, color: Color) -> Label:
 	var label := Label.new()
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -256,7 +364,7 @@ func _process(delta: float) -> void:
 	if player == null:
 		return
 	_update_raid_prompts()
-	_bar.max_value = player.max_stamina
+	_bar.max_value = player.stamina_cap()
 	_bar.value = player.stamina
 	_fill.bg_color = EXHAUSTED_COLOR if player.is_exhausted else NORMAL_COLOR
 	var text := "%s  ·  noise %s" % [_move_text(), Settings.format_distance(player.noise_radius)]
@@ -268,6 +376,7 @@ func _process(delta: float) -> void:
 		text += "  ·  heavy %s" % Settings.format_weight(player.carried_weight_kg)
 	_state.text = text
 	_update_health(delta)
+	_update_consumables(delta)
 	_update_ammo()
 	_update_blind()
 
@@ -294,6 +403,56 @@ func _update_health(delta: float) -> void:
 	if health.has_pain() and not player.is_dead:
 		target = 1.0 if Settings.get_value("accessibility", "reduce_flashing") else 0.8 + 0.2 * sin(Time.get_ticks_msec() / 400.0)
 	%PainVignette.modulate.a = move_toward(%PainVignette.modulate.a, target, delta * 2.0)
+
+
+func _update_consumables(delta: float) -> void:
+	var health := player.health
+	var tuning := Consumables.CONFIG
+	_set_metabolism(_energy_bar, _energy_label, "ENERGY", health.energy, tuning.max_energy, ENERGY_COLOR, tuning.low_threshold)
+	_set_metabolism(_hydration_bar, _hydration_label, "WATER", health.hydration, tuning.max_hydration, HYDRATION_COLOR, tuning.low_threshold)
+	var buffs := health.effect_lines(false)
+	_buffs.text = "\n".join(buffs)
+	_buffs.visible = not buffs.is_empty()
+	var drawbacks := health.effect_lines(true)
+	_drawbacks.text = "\n".join(drawbacks)
+	_drawbacks.visible = not drawbacks.is_empty()
+	_hint_time -= delta
+	if _hint_time <= 0.0:
+		_hint_time = HINT_INTERVAL
+		_treat_hint.text = treat_hint_text()
+	_treat_hint.visible = _treat_hint.text != "" and player.using_item == null and not player.is_dead
+	var item := player.using_item
+	_use_label.visible = item != null and not player.is_dead
+	_use_bar.visible = _use_label.visible
+	if item:
+		_use_label.text = "USING  %s  %.1f" % [item.data.display_name.to_upper(), maxf(player.use_time_left, 0.0)]
+		_use_bar.value = player.use_progress()
+
+
+## "E  Bandage: light bleed": what the use_item key would do now, or "" if nothing needs treating.
+func treat_hint_text() -> String:
+	if player == null or player.is_dead:
+		return ""
+	var pick := Consumables.quick_pick(player.inventory, player.health)
+	if pick.has("item"):
+		var where := " (%s)" % BodyHealth.PART_NAMES[pick.part].to_lower() if int(pick.part) >= 0 else ""
+		return "%s  %s: %s%s" % [Settings.key_label("use_item"), (pick.item as ItemInstance).data.display_name,
+			Consumables.problem_name(pick.problem), where]
+	var reason := str(pick.get("reason", ""))
+	return reason if reason.begins_with("Nothing in") else ""
+
+
+func _set_metabolism(bar: ProgressBar, label: Label, title: String, value: float, maximum: float, color: Color, low: float) -> void:
+	bar.max_value = maximum
+	bar.value = value
+	var shown := color
+	if value <= 0.0:
+		shown = EXHAUSTED_COLOR
+	elif value <= low:
+		shown = LOW_AMMO_COLOR
+	(bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = shown
+	label.text = "%s  %d" % [title, ceili(value)]
+	label.add_theme_color_override("font_color", shown if value <= low else Color(NORMAL_COLOR, 0.85))
 
 
 func _update_blind() -> void:

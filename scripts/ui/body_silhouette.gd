@@ -96,7 +96,7 @@ func _get_tooltip(at_position: Vector2) -> String:
 		return ""
 	for part in RECTS.size():
 		if _rect(part).has_point(at_position):
-			var text := "%s: %d / %d HP" % [BodyHealth.PART_NAMES[part], ceili(health.hp[part]), roundi(health.config.max_hp(part))]
+			var text := "%s: %d / %d HP" % [BodyHealth.PART_NAMES[part], ceili(health.hp[part]), roundi(health.max_hp(part))]
 			if health.is_blacked(part):
 				text += " (blacked)"
 			if health.bleeds[part] != BodyHealth.Bleed.NONE:

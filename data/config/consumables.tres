@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ConsumablesConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/consumables_config.gd" id="1_cons"]
+
+[resource]
+script = ExtResource("1_cons")
+max_energy = 100.0
+max_hydration = 100.0
+energy_drain = 1.2
+hydration_drain = 1.8
+sprint_drain_multiplier = 2.0
+drain_reduction_per_level = 0.01
+low_threshold = 25.0
+hungry_stamina_regen = 0.6
+thirsty_sway = 1.5
+starving_damage = 0.12
+dehydrated_damage = 0.2
+recovery_per_minute = 1.0
+after_death_minimum = 30.0
+use_move_multiplier = 0.65
+hits_interrupt = true
+quick_use_backpack = false
+quick_eat_below = 0.6

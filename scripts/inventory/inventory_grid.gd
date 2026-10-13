@@ -87,6 +87,18 @@ func remove(item: ItemInstance) -> void:
 		changed.emit()
 
 
+## The grid holding `item`: this one, or one inside an item here (at any depth); null if none.
+func find_holder(item: ItemInstance) -> InventoryGrid:
+	if item in items:
+		return self
+	for each in items:
+		if each.contents:
+			var holder := each.contents.find_holder(item)
+			if holder:
+				return holder
+	return null
+
+
 func item_at(cell: Vector2i) -> ItemInstance:
 	for item in items:
 		if Rect2i(item.cell, item.footprint()).has_point(cell):
