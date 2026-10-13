@@ -22,9 +22,9 @@
 | 1 | **Prepare (Hideout)** | Manage stash, buy/sell/barter, take quests, craft, upgrade stations, build loadout | Ready loadout |
 | 2 | **Enter Raid** | Pick a map, play as your PMC or as a Scav, check (and insure) the loadout (Section 16.3); loading; deploy at a random spawn point for your side, away from hostile AI | Raid timer counts down |
 | 3 | **Loot** | Fight Scavs/PMCs, search containers & bodies (**F**), pick up loose items, complete in-raid quest objectives | Backpack fills |
-| 4a | **Extract** | Stand in an extract you can use for 7 s *(tune)* before the timer ends (some are open every raid, some only some raids, some cost roubles, need an item or need the power on; Section 5) | Keep everything carried; loot becomes found in raid |
+| 4a | **Extract** | Stand in an extract you can use for 7 s *(tune)* before the timer ends; a hit starts the count over. Every map has 1–3: always open, random, or conditional (a key, roubles, the power on, a flare fired, no backpack; some unlocked by quests). Section 5.1 | Fade out; keep everything carried; loot becomes found in raid |
 | 4b | **Die / MIA** | Killed, the raid timer runs out, or LEAVE RAID from the pause menu | Lose all gear except the secure container; insured items come back to the stash |
-| 5 | **Raid summary** | Every raid ends on the summary: outcome, map, side, time, kills, loot value, experience (with where it came from), gear and insurance, and what's now found in raid | Back to the menu |
+| 5 | **Raid summary** | Every raid ends on the summary: outcome, map, side, time, kills, loot value, experience (with where it came from), gear and insurance, and what's now found in raid | Back to the hideout (everything already saved) |
 
 **Retention rules** (built: `RaidOutcome`)
 
@@ -77,7 +77,7 @@ Player chooses a PMC faction per character. Both are hostile to Scavs and to the
 | Boss | Map-specific, ~30% chance *(tune)* | Unique pattern + guards | Epic–Legendary | Unique loot table |
 | AI PMC | Random spawns | Hunt, loot, extract like player | Uncommon–Epic | Full loadout |
 
-AI implementation: state machine (Idle → Patrol → Alert → Combat → Search → Loot), `NavigationAgent3D`, hearing + vision cone, faction relation table.
+AI implementation: state machine (Idle → Patrol → Alert → Combat → Search → Loot → Extract), `NavigationAgent3D`, hearing + vision cone, faction relation table.
 
 **Combat behaviour (built for Scavs and AI PMCs).** Scavs are friendly to each other; everyone else is hostile.
 
@@ -89,6 +89,7 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 | Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks |
 | Search | Loses sight for too long → goes to the last known position and looks around |
 | Health | Same body parts, bleeds and fractures as the player (Section 13.5): a leg hit slows a bot, an arm hit makes it sway |
+| Leaving | Late in the raid AI PMCs (and half the Scavs) walk to the nearest extract they can use and leave the raid there after 7 s, like the player (Section 5.1). A fight interrupts it; a hit restarts the count |
 | Shooting | Same guns as the player (Section 13.4): fires in bursts, so recoil and bloom build and settle, and always fires aimed (no hip-fire spread). Fights off part of each recoil kick (Scav 30%, PMC 60%, `BotProfile.recoil_control`). Aim error is added on top of the gun's spread. From cover it waits until it has stopped stepping out before firing |
 | Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Bots carry 90 spare rounds in their rig |
 | Gear | Each bot carries a full kit, all of it lootable from its body (F): a Scav has an AK-74N with PS, a Scav vest with 90 PS, sometimes a helmet (25%), a hatchet (20%) or a sling bag of junk (40%), and odds and ends in its pockets; an AI PMC has an AK-74N with BS, sometimes a PM pistol (40%), armor, a helmet, a tactical rig with 90 BS and a bandage, a pack with a few finds, and meds in its pockets. Its spare rounds are the ones in its rig: each reload takes them out, and the gun keeps the rounds left in it |
@@ -102,32 +103,67 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 
 | Map | Size | Players/AI | Raid time | Extracts | Boss | Theme / key loot |
 |---|---|---|---|---|---|---|
-| Customs Yard | Medium | 6 / 15 | 35 min | 4 (1 paid, 1 conditional) | Reshala | Industrial; starter quests |
-| Woodland | Large | 8 / 18 | 45 min | 5 | Shturman | Forest, sawmill; rifles |
-| Factory | Small | 4 / 8 | 20 min | 3 (1 key-locked, 1 random) | Tagilla | Close quarters; fast raids |
-| Shoreline Resort | Large | 8 / 20 | 45 min | 5 | Sanitar | Resort; high-value keys & meds |
-| Labs | Medium | 6 / 12 Raiders | 35 min | 3 (all conditional) | — | Requires keycard; Epic/Legendary loot |
+| Customs Yard | Medium | 6 / 15 | 35 min | 3 (1 random, 1 Scav only) | Reshala | Industrial; starter quests |
+| Woodland | Large | 8 / 18 | 45 min | 3 (1 random, 1 flare) | Shturman | Forest, sawmill; rifles |
+| Factory | Small | 4 / 8 | 20 min | 3 (1 random, 1 key + power) | Tagilla | Close quarters; fast raids |
+| Shoreline Resort | Large | 8 / 20 | 45 min | 3 (1 no backpack, 1 quest + paid) | Sanitar | Resort; high-value keys & meds |
+| Labs | Medium | 6 / 12 Raiders | 35 min | 3 (1 power, 1 no backpack or armor) | — | Requires keycard; Epic/Legendary loot |
 
-Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional (no backpack, power on, keycard) · Scav-only**.
+### 5.1 Extraction *(tune: `data/config/extracts.json`, `raid.tres`)*
 
-**Built** (`ExtractZone` properties, combinable; `power_delay`, `spawn_safe_distance` in `raid.tres`):
+Every map has **1 to 3 extracts**, and at least one of them is **always open** to both PMCs and Scavs, so a raid can always be left. The table is data (`data/config/extracts.json`, checked when it loads: `ExtractTable.problems()`); map scenes place each extract by its id. (The request's extraction table, which it called "4.2a" and this document didn't have, came through as a "[paste the table]" placeholder, so the table below was written here.)
 
-| Kind | How it works |
+| Map | Extract | Type | Takes |
+|---|---|---|---|
+| Test Yard | North-east gate | Always open | — |
+| | Smuggler's car | Conditional | Pay 7,000 ₽ at the car; no backpack |
+| | Signal point | Conditional (quest) | Prapor's *Flare Path* done; fire a signal flare in it |
+| Customs Yard | Crossroads | Always open | — |
+| | Trailer park | Random | 50% |
+| | Scav checkpoint | Conditional | Scavs only |
+| Woodland | Outskirts | Always open | — |
+| | Sawmill road | Random | 60% |
+| | Signal clearing | Conditional | Fire a signal flare in it |
+| Factory | Gate 3 | Always open | — |
+| | Office window | Random | 40% |
+| | Cellars | Conditional | Carry the Factory exit key (not used up); the power on (the boiler house switch) |
+| Shoreline Resort | Coastal road | Always open | — |
+| | Rock passage | Conditional | No backpack |
+| | Pier boat | Conditional (quest) | Skier's *Safe Harbour* done; pay 15,000 ₽ |
+| Labs | Main elevator | Always open | — |
+| | Parking gate | Conditional | The power on |
+| | Ventilation shaft | Conditional | No backpack, no body armor |
+
+| Type | How it works |
 |---|---|
-| Always open | `chance` 1 |
-| Random | Open this raid with `chance`, rolled at raid start (seeded per raid) |
-| Paid | Stand inside and press **F** to pay `price` roubles (once a raid; spent even if you die) |
-| Needs an item | You must carry `required_item` anywhere on you; `consumes_item` uses one up when you extract |
-| Power | Works once the map's power is on: throw the **power switch** (F); the power comes on 10 s later, for the rest of the raid |
-| PMC / Scav only | `sides` |
+| Always open | Works every raid |
+| Random | Rolled at raid start with its chance (seeded per raid). You don't know which way it went: it's **Unknown** until you've been within 12 m of it with a clear line of sight, or stood in it *(tune: `extract_confirm_distance`)*; then **Open** or **Closed** |
+| Conditional | There every raid, but works only once its conditions are met (any mix of): carry an **item** such as a key (`consumes` uses one up when you extract); **pay** roubles at the extract (F inside; once a raid, spent even if you die); the map's **power on** (throw its power switch, F; the power comes on 10 s later for the rest of the raid, `power_delay`); **fire a signal flare** in it (F inside; uses one Red signal flare, which climbs into the sky and is heard 60 m away); a **gear restriction** (equipment slots that must be empty: no backpack, no body armor...) |
+| Quest | A conditional extract that only exists for you once a quest is completed. It counts toward the map's 1–3; until then it isn't in the world, your lists or on the map. The quest says so under its rewards ("Unlocks the Signal point extract on Test Yard (fire a flare)") |
+| Side | Any extract can be PMC-only or Scav-only (`sides`); you only see the ones for your side |
 
-The ring is green when you can use the extract, amber while a condition isn't met, red when it's closed (this raid, or to your side). The HUD lists every extract under the clock with what it takes ("open", "closed this raid", "pay 7,000 ₽", "needs Paracord", "needs power", "Scav only"); inside one you can't use yet it says why ("CAN'T EXTRACT: NO POWER: FIND THE POWER SWITCH"). The clock turns amber with 5 minutes left and red in the last minute.
+**Your extracts and their marks.** Each of your extracts is marked **Open** (green), **Unknown** (grey), **Closed** (red) or with what you still need (amber: "Pay 7,000 ₽", "Needs power, needs Factory exit key", "Power on in 8 s", "Fire a flare", "No backpack"), and shown:
+
+- **At raid start**, on the HUD under the raid clock, for 8 s *(tune: `extract_list_seconds`)*; **O** (Show extracts, rebindable) brings it back.
+- In the **pause menu** (Esc), beside the buttons.
+- On the **map item** (M, or VIEW MAP when examining it): each extract on the layout in its colour, and in the legend with its mark and type ("Office window: Unknown · Random (40%)"). Out of raid it shows the types.
+- **In the world**: a glowing outline (a ring with a faint fill) and a sign on a post with the extract's name and mark, both in the mark's colour. Standing in one you can't use yet, the HUD says why ("CAN'T EXTRACT: TAKE OFF YOUR BACKPACK").
+
+**Extracting.** Stand inside an extract you can use: a **7 s countdown** *(tune: `extract_seconds`)* starts, shown as EXTRACTING with the seconds left and a **progress ring** around you. Walking out or **taking damage** (a hit that hurts; bleeding doesn't count) starts it over. When it runs out: the extraction sound, the raid pauses and **fades to black** (1.5 s, `extract_fade_seconds`), then the **raid summary** (Section 2), and **TO THE HIDEOUT** takes you to the hideout screen. Everything is already saved by then: loot, gear, found-in-raid status and quest progress (trick-shot kills). Running out of time fades out too (OUT OF TIME), then the summary.
+
+**AI uses the same extracts** (Section 4). AI PMCs head for the nearest extract they can use somewhere between 45% and 85% of the raid time; half of the AI Scavs leave, between 60% and 95% *(tune: `ai_pmc_extract_window`, `ai_scav_extract_chance`, `ai_scav_extract_window`)*. They stand in it for the same 7 s (a hit restarts the count, a fight interrupts it) and leave the raid with everything they carry. AI never pays, fires flares or uses quest extracts; conditional ones it uses once it meets them (the power is on, it has no backpack...). With none it can use, it carries on and tries again 30 s later.
+
+**Signal flares.** The Red signal flare (Common, Military) is in weapon boxes and crates, Prapor sells it at LL2 (17,000 ₽), and *Flare Path* hands out two.
+
+**Debug overlay** (**F12**, every raid map; hidden at start): the raid (map, side, seed, clock, power), your position and extract countdown, the AI (alive, heading for an extract with its progress, already left), and every extract with its id, type, what it takes and its state this raid: open or closed, known or unknown, locked behind a quest, paid, flare fired, and your mark.
+
+The raid clock turns amber with 5 minutes left and red in the last minute.
 
 **Spawns:** a raid from ENTER RAID starts at a random `SpawnPoint` for your side, preferring ones at least 15 m from hostile AI (any if none is).
 
 **Climate** (`climate`, `energy_drain_multiplier`, `hydration_drain_multiplier` in each map's `.tres`; Section 13.7): Shoreline Resort and Factory are **hot** (hydration drains ×1.5 and ×1.35, energy ×1.1), Woodland is **cold** (energy ×1.15, hydration ×0.9), the rest temperate. The HUD shows HOT or COLD next to the weather.
 
-**Test Yard** (playable): 15-minute raid, six spawn points, six extracts: the **north-east gate** (always open), the **sewer manhole** (open half the raids, south side), the **smuggler's car** (7,000 ₽, by the west car), the **rope over the east wall** (needs Paracord, used up), the **power station gate** (north-west corner; needs the power switch on the north face of the long wall) and the **Scav checkpoint** (Scavs only, east side); one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
+**Test Yard** (playable): 15-minute raid, six spawn points, three extracts (Section 5.1): the **north-east gate** (always open), the **smuggler's car** by the west car (7,000 ₽, no backpack) and, once Prapor's *Flare Path* is done, the **signal point** in the north-west corner (fire a flare); one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
 
 **Factory** (playable, gray-box): a 60 × 48 m walled factory compound (`maps/factory.tscn`, written by a generator script so the layout is easy to redo), close quarters, 20-minute raids. North is the top of the screen.
 
@@ -145,12 +181,12 @@ The ring is green when you can use the extract, amber while a condition isn't me
 
 **Doors** (23): F opens and closes them (they swing, block bullets and sight while shut, and the AI opens unlocked ones as it walks through). A **locked** door (red plate) says which key it needs; with the key on you, F unlocks it for the rest of the raid and uses one of the key's uses (Factory office key 25, Factory lab key 15, Factory exit key 25; the key is gone at 0). The AI never paths through a locked door.
 
-**Extracts** (Section 5 types):
+**Extracts** (Section 5.1):
 
 | Extract | Where | Kind |
 |---|---|---|
 | Gate 3 | South wall | Always open |
-| Cellars | Boiler house | Needs the **Factory exit key** on you (not used up) |
+| Cellars | Boiler house | Needs the **Factory exit key** on you (not used up) and the power on: the **boiler house power switch** on its east wall |
 | Office window | Offices, north wall | Random: open 40% of raids |
 
 **Spawns:** 6 PMC spawn points around the edge (west yard, south-west, north-east yard, loading dock, boiler yard, east yard) and 3 Scav ones. 8 AI Scavs spawn in three **Scav zones** (main hall 3, warehouse 3, lockers 2) and patrol them; 3 AI PMCs (4 PMCs with you) take PMC spawns you didn't get (farthest first) and roam the Scav zones (`RaidController.ai_pmcs`). The boss (Tagilla) isn't in yet.
@@ -165,7 +201,7 @@ The ring is green when you can use the extract, amber while a condition isn't me
 
 **Keys:** the Factory office key (Skier barter, LL2), the Factory lab key (Therapist barter, LL2) and the Factory exit key (Prapor, LL2) also turn up in filing cabinets.
 
-**Map items** (`"type": "map"` items, tag `map`): the **Factory map** (Prapor, 10,000 ₽; filing cabinets; the guard's desk) and the **Test Yard map**. Carry a map of the map you're on and press **M** (or VIEW MAP when examining it) to open it: the layout (walls, low cover, floors, stairs, doors with locked ones marked, landmarks and area names, loot areas in gold, Scav zones in red), you, and your extracts with what they take and whether you can use them right now ("Office window: open some raids (40%) · now: closed this raid"). You can't shoot while it's open. Without one, M says "No map of Factory". Out of raid, VIEW MAP shows the layout and every extract.
+**Map items** (`"type": "map"` items, tag `map`): the **Factory map** (Prapor, 10,000 ₽; filing cabinets; the guard's desk) and the **Test Yard map**. Carry a map of the map you're on and press **M** (or VIEW MAP when examining it) to open it: the layout (walls, low cover, floors, stairs, doors with locked ones marked, landmarks and area names, loot areas in gold, Scav zones in red), you, and your extracts with their marks and types ("Office window: Unknown · Random (40%)"). You can't shoot while it's open. Without one, M says "No map of Factory". Out of raid, VIEW MAP shows the layout and every extract.
 
 ## 6. Items
 
@@ -183,7 +219,7 @@ The ring is green when you can use the extract, amber while a condition isn't me
 | Meds | Bandages, tourniquets, a hemostat, splints, painkillers, small and large medkits (HP pools), surgical kits, 19 stimulants (Section 13.8) | Use time; uses or HP pool; treats light/heavy bleed, fracture, blacked parts; timed effects and side effects |
 | Food & Drink | Crackers, canned fish, meat and peas, condensed milk, MRE, water, juice, energy drinks, vodka, moonshine (Section 13.7) | Energy, hydration, use time; some have effects |
 | Valuables | 27: jewelry (watches, chains, rings, a diamond necklace), currency (coins, banknotes, banded dollars, a gold bar, Bitcoin), tech (drives, GPU, crypto drive), collectibles (bronze lion, medal, camera, icon, jeweled egg), intel (folder, satellite phone), LEDX (Section 6.5) | Group, tags, value by rarity (5k ₽ Common to 1M+ Legendary); wanted in quests, barters and crafts |
-| Junk / Barter | 58 in 13 groups (maps included): hardware, tools, electronics, tech, household, medical supply, fuel, military, materials (bolts, wrenches, batteries, RAM, server blades, soap, blood sets, propane, thermite, aramid fabric, a tank battery...; Section 6.5) | Group, tags, value by rarity; used in quests, barters, crafts, hideout and gear upgrades ("Needed for" when examined) |
+| Junk / Barter | 59 in 13 groups (maps and the signal flare included): hardware, tools, electronics, tech, household, medical supply, fuel, military, materials (bolts, wrenches, batteries, RAM, server blades, soap, blood sets, propane, thermite, aramid fabric, a tank battery...; Section 6.5) | Group, tags, value by rarity; used in quests, barters, crafts, hideout and gear upgrades ("Needed for" when examined) |
 | Keys | Room keys, keycards (Factory office, lab and exit keys) | Uses (one per door unlocked; gone at 0), unlocks locked doors and key extracts (Section 5) |
 | Containers | Ammo case, item case, Secure container (2x2 → 3x4) | Internal grid |
 
@@ -518,7 +554,7 @@ Barter goods (junk, 56 items) and valuables (27) are what you sell, barter, craf
 | Intel | Documents, secure comms and maps (Factory map, Test Yard map: M in a raid; Section 5) | 2 | 2 |
 | Medical supply | Medical tools and supplies that aren't meds | 6 | 1 |
 | Fuel | Fuel and gas | 3 | 0 |
-| Military | Weapon parts, powder, charges and military kit | 4 | 0 |
+| Military | Weapon parts, powder, charges and military kit (and the signal flare) | 5 | 0 |
 | Materials | Fabrics, resin and ceramics for gear upgrades | 5 | 0 |
 
 **Tags** (any number per item, lower case): `metal`, `building`, `adhesive`, `plumbing`, `lubricant`, `tool`, `electronics`, `cable`, `copper`, `battery`, `computer`, `data`, `radio`, `optics`, `glass`, `fragile`, `heavy`, `hygiene`, `cleaning`, `paper`, `tobacco`, `fire`, `flammable`, `explosive`, `fuel`, `gas`, `liquid`, `chemical`, `kitchen`, `cloth`, `rope`, `ballistic`, `weapon`, `military`, `medical`, `jewelry`, `watch`, `gold`, `silver`, `gem`, `currency`, `antique`, `religious`, `wood`, `intel`, `valuable`, `map`. `map` marks the map items (`"stats": {"type": "map", "map": "<map id>"}`). `valuable` marks every valuable and a few precious barter goods (thermal imaging module, encrypted field transmitter).
@@ -597,6 +633,7 @@ Barter goods (junk, 56 items) and valuables (27) are what you sell, barter, craf
 | Gunpowder "Kite" | Military | Uncommon | 1×1 | 40,000 | explosive, flammable | barters (Prapor); crafts (Workbench) |
 | Thermite charge *(new)* | Military | Rare | 1×2 | 88,000 | explosive, flammable, metal | barters (Prapor) |
 | Military gyroscope *(new)* | Military | Ultra Rare | 1×1 | 280,000 | electronics, military, optics | barters (Mechanic) |
+| Red signal flare *(new)* | Military | Common | 1×1 | 14,000 | fire, flammable, military | quests (Flare Path); fired at flare extracts (Section 5.1) |
 | Paracord | Materials | Common | 1×1 | 7,500 | cloth, rope | gear upgrades (rigs and backpacks) |
 | Ripstop fabric | Materials | Common | 1×1 | 9,000 | cloth | barters (Ragman); gear upgrades (rigs and backpacks) |
 | Aramid fabric | Materials | Uncommon | 1×1 | 36,000 | cloth, ballistic | gear upgrades (armor) |
@@ -732,6 +769,13 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Showboat | Prapor | — | 1 trick-shot kill | 40,000 ₽, 3,000 XP, 25 Drip, 40× 7.62x54R LPS |
 | Around the World | Mechanic | Showboat | 3 trick-shot kills with a bolt-action rifle | 90,000 ₽, 6,000 XP, 50 Drip, 2-4x scope |
 | Spin Doctor | Skier | Showboat | 2 trick-shot kills on PMCs | 120,000 ₽, 8,000 XP, 100 Drip, 6-8x scope |
+
+**Extract quests** (Section 5.1): finishing these unlocks an extract (`"quest"` in `data/config/extracts.json`; the TASKS tab says so under the rewards).
+
+| Quest | Trader | Objective | Rewards | Unlocks |
+|---|---|---|---|---|
+| Flare Path | Prapor | Hand over 1 Red signal flare (FIR) | 20,000 ₽, 1,200 XP, 2 signal flares | Test Yard: Signal point (fire a flare) |
+| Safe Harbour | Skier | Hand over 2 gold chains and a lighter (FIR) | 40,000 ₽, 2,500 XP | Shoreline Resort: Pier boat (15,000 ₽) |
 
 ## 12. Weapon & Gear Upgrades
 
@@ -1298,7 +1342,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Trick shots | `SpinTracker` (`scripts/combat/`): feeds on the aim direction each tick and reports a full one-way turn within the spin time. `Player` runs it (`spin_progress()`, `is_spinning()`, `trick_window_left`, signals `trick_shot_ready` and `trick_shot_hit`) and arms the `Weapon` (`trick_armed`; `firing_trick_shot` is true while that shot's hits land); `Ballistics.fire(..., damage_multiplier)` scales the round. `RaidController` adds the bonus XP and Drip and lists the kills for quests (`QuestLog.record_trick_kills()` at settle); `GameState.drip` and `GameState.trick_shots` keep them. HUD: TRICK SHOT READY, banner, sting (`assets/audio/sfx/trick_sting.wav`, from `tools/make_placeholder_audio.py`); reticle: spin ring, gold marker |
 | Weapon modding | `WeaponMods` (`scripts/inventory/`): the slot tree (`walk()`, slot paths like `handguard/foregrip`), what fits where, install / uninstall, default parts, capacity, missing parts. A part is an attachment item with a `"mod"` stat: `{kind, fits, slots, modifiers, capacity}`. `WeaponStats` (`scripts/combat/`): profiles and rarity strength, adding up modifiers (empty slots included), `build(gun, skills)` (the modded `WeaponData` copy the `Weapon` node fires with: weight, ergonomics and skills applied), the recoil kick / recovery / pattern and wear spread shared by the gun and the previews, stat rows for the UI, repair. UI (`scripts/ui/inventory/`): `WeaponModScreen` (opened by `InventoryScreen.open_modding()`), `ModSlotView`, `ModPartRow`, `WeaponStatList`, `RecoilPatternView`, `SpreadCircleView`. `Player` equips the modded copy, sight and durability, and writes the wear back to the item after every shot |
 | Found in raid | `FoundInRaid` (`scripts/inventory/`): where items come from (`Source`: trader, flea market, quick-buy, insurance, barter, quest reward, craft, starter) and `make()` with the right status; `mark_brought_in()` at raid start, `claim()` when loot reaches the player's inventory (on `Inventory.changed`), `resolve()` at the end |
-| Raid | `RaidController` (`scripts/raid/`, a node in the map): spawn (`SpawnPoint`, `scripts/world/`, group `spawn_points`; `GameState.raid` `"seed"` and `"spawn"` (a spawn point's name, or `"scene"`) for repeatable raids), rolling the extracts, clock, power (`PowerSwitch`, `power_state()`), raid experience with its parts, kill list, extraction (`ExtractZone`, `scripts/world/`: `roll()`, `block_reason()`, `status_text()`, paying through `interact()`), ending. `RaidOutcome` settles it (FIR, keep / lose gear, insurance returns, Scav transfer, XP, loot value, save). `Insurance` (`scripts/progression/`): what's insurable, `price()`, `uninsured()`, `insure()`, `returns_for()`, `deliver()` / `deliver_pending()` (`GameState.insurance_pending`; `ItemInstance.insured`, saved; save version 7). `RaidConfig` (`data/config/raid.tres`): extract time, power delay, spawn distance, Run Through limits, XP, insurance, search timing. Interactables are in group `interactables` with `interact_text()`, `can_interact()`, `interact()`: `LootBox` (a container of a `LootContainer` type), `LootPickup` (loose item), dead `Bot`s (their `inventory`). `LootSearch` (`scripts/inventory/`) reveals hidden items one by one; the inventory screen runs it while the loot is open (`ItemInstance.hidden`, raid only). The raid summary is `ui/raid_result_screen.tscn` (`summary_lines()`), after the death screen's CONTINUE when killed |
+| Raid | `RaidController` (`scripts/raid/`, a node in the map): spawn (`SpawnPoint`, `scripts/world/`, group `spawn_points`; `GameState.raid` `"seed"` and `"spawn"` (a spawn point's name, or `"scene"`) for repeatable raids), the map's extracts (`map_id` when played on its own; `available_extracts()`, confirming random ones in sight, `extract_progress()`, a hit (`Actor.hurt`) restarting the count, `ai_extracts` / `bot_extracted()`), clock, power (`PowerSwitch`, `power_state()`), raid experience with its parts, kill list, ending. Extracts: `ExtractTable` (`scripts/data/`) reads `data/config/extracts.json` (`for_map()`, `find()`, `kind_text()`, `condition_texts()`, `summary()` for the map select, `unlocked_by()` for quests, `problems()`); `ExtractZone` (`scripts/world/`) takes its rules by `extract_id` (`configure()`, `configure_for_map()`), `roll()`, `block_reason()`, `status_for()` / `status_state()` (the marks, `STATE_COLORS`), `usable_by()` for AI, paying and flares through `interact()` (`SignalFlare`, `scripts/world/signal_flare.gd`), the ring and sign. Bots: `Bot.extract_at`, the EXTRACT state, `leave_raid()`. `RaidLevel` fades out (`fade_out()`, `assets/audio/sfx/extract.wav`) before the summary; its CONTINUE sets `GameState.menu_return` so the main menu opens the hideout. `DebugOverlay` (`scripts/debug/`, F12). `RaidOutcome` settles it (FIR, keep / lose gear, insurance returns, Scav transfer, XP, loot value, save). `Insurance` (`scripts/progression/`): what's insurable, `price()`, `uninsured()`, `insure()`, `returns_for()`, `deliver()` / `deliver_pending()` (`GameState.insurance_pending`; `ItemInstance.insured`, saved; save version 7). `RaidConfig` (`data/config/raid.tres`): extract time, power delay, spawn distance, Run Through limits, XP, insurance, search timing, extract list time, confirm distance, fade time, when AI leaves. Interactables are in group `interactables` with `interact_text()`, `can_interact()`, `interact()`: `LootBox` (a container of a `LootContainer` type), `LootPickup` (loose item), dead `Bot`s (their `inventory`). `LootSearch` (`scripts/inventory/`) reveals hidden items one by one; the inventory screen runs it while the loot is open (`ItemInstance.hidden`, raid only). The raid summary is `ui/raid_result_screen.tscn` (`summary_lines()`), after the death screen's CONTINUE when killed |
 | Maps | A raid map's root runs `RaidLevel` (`scripts/maps/raid_level.gd`; `test_level.gd` extends it with the debug keys): it bakes the navmesh (locked doors get a temporary blocker, group `nav_bake_only`), handles death, the raid summary and **M** (`toggle_map()`). Building blocks in `scripts/world/` (all `@tool`, so they show in the editor): `Door` (swinging panel on a hinge, `width`, `locked`, `key_id`, `door_name`; group `doors`, an interactable and a vision occluder; bots open unlocked ones), `Stairs` (a ramp collider under drawn steps, `size` = width × rise × run, top at local +Z), `FloorSlab` (an upper floor or catwalk, `size`, solid or `grating`; top at its origin), `MapLabel` (a painted floor label or a landmark name, group `map_labels`), `LootZone` (`rarity_multipliers` for loot rolled inside; `LootZone.boost_at(tree, point)`, passed to `LootTable` rolls as `boost`), `ScavZone` (`count` bots of `profile` spawned at its child `Marker3D`s, each patrolling `patrol_length` of them). `Keys` (`scripts/inventory/`): a key's uses are `ItemInstance.charges`, `use()` spends one. `RaidController.ai_pmcs` spawns AI PMCs at the PMC spawn points the player didn't get. `MapLayout` (`scripts/world/`) reads a level's walls (`CoverBox`), floors, stairs, doors, labels, loot and Scav zones and extracts into 2D shapes, from the live level or a scene that isn't in the tree; `MapOverlay` (`scripts/ui/`, CanvasLayer 90) draws it with a legend: `show_level()` in a raid, `show_map(map_id)` out of raid; `MapOverlay.carries_map()` / `is_map_of()` check map items. `maps/factory.tscn` is written by a generator script (gray-box geometry: `CoverBox` walls and props, so cover points, sight blockers and bullet materials come free) |
 | Progression | `scripts/progression/`: `Requirement` (item, count, fir), `ItemSearch` (count / take from the stash and character, FIR-only where required), `Trading` (`data/traders/offers.json`), `QuestLog` (`data/quests/*.json`, progress in `GameState.quests`), `Hideout` (`data/hideout/stations.json`, levels in `GameState.hideout`). Screens: TRADERS tabs, `ui/hideout_screen.tscn`; shared widgets `RequirementRow`, `ItemCell`, `FirMark` |
 | Item groups and uses | `ItemData.group` and `tags` (JSON `"group"`, `"tags"`); `ItemGroups` (`scripts/data/`) reads `data/config/item_groups.json` (groups, tags, value bands) and checks every barter good and valuable at load (`problems()`, warnings). `ItemUses` (`scripts/progression/`): `of(id)` lists the quests, hideout upgrades, barters, crafts and gear upgrades that take an item, `summary()` and `tooltip()` for the examine panel's Needed for line and the inventory hover text |
@@ -1347,7 +1391,8 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | `hotkey_1` … `hotkey_5` | 1–5 | `sprint` | Shift (hold) |
 | `crouch` | C (toggle) | Facing | Turns toward where the mouse cursor touches the ground |
 | `flashlight` | L | `binoculars` | B |
-| `map_view` | M: the map, if you carry it (Section 5) | | |
+| `map_view` | M: the map, if you carry it (Section 5) | `show_extracts` | O: your extracts (Section 5.1) |
+| `debug_overlay` | F12: debug overlay (not rebindable) | | |
 
 WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys can be remapped in Settings; controller bindings are listed in Section 17. Menus also use `ui_tab_previous` / `ui_tab_next` (Q / E, LB / RB).
 
@@ -1377,10 +1422,10 @@ WASD is screen-relative: W always moves up the screen. Keyboard and mouse keys c
 
 | Step | Detail |
 |---|---|
-| 1. Map | Every map from Section 5 is listed. Maps that aren't built yet show "in development" and can't be picked. Factory and Test Yard are playable |
+| 1. Map | Every map from Section 5 is listed, with its extracts from the extract table ("3: Gate 3 (always open), Office window (random, 40%), Cellars (Factory exit key, power on)"). Maps that aren't built yet show "in development" and can't be picked. Factory and Test Yard are playable |
 | 2. PMC or Scav | **PMC:** your character and gear; die and lose what you brought. **Scav:** random gear, nothing from your stash at risk; AI Scavs leave you alone unless you shoot them (whoever you shoot turns hostile). AI PMCs are hostile either way |
 | 3. Loadout check | Every slot with its loaded ammo and what's inside rigs, backpacks and the secure container (insured gear marked), pockets and weight, plus warnings (heavy / overweight too): no armor, no helmet, no meds, no backpack, a gun that can't fire (a missing part) or is worn enough to jam, "if you die, everything you bring is lost, except your secure container and insured gear". A PMC gets **INSURE GEAR** (how many items and what it costs; "ALL GEAR INSURED" when there's nothing left; Section 2) |
-| 5. In the raid | A random spawn point for your side; the raid clock counts down; extract (Section 5) or die. Every raid ends on the raid summary (Section 2) |
+| 5. In the raid | A random spawn point for your side; your extracts on screen for a few seconds; the raid clock counts down; extract (Section 5.1) or die. Every raid ends on the raid summary (Section 2), then back to the hideout |
 | 4. Loading | Map name, side, a gameplay tip and a progress bar while the map loads in the background (shown for at least 1.5 s) |
 
 Back (or Esc / B) steps back one step at a time.
@@ -1397,7 +1442,7 @@ On first launch the player picks **BEAR** or **USEC** (Section 3); that creates 
 
 ### 16.5 Pause Menu (in raid)
 
-Esc or Start pauses the raid and frees the mouse: **RESUME**, **SETTINGS**, **LEAVE RAID** (asks first; counts as missing in action: a PMC loses everything but the secure container, and nothing becomes found in raid), **QUIT GAME** (asks first). Esc / Start / B closes it. It can't be opened once you're dead. Dying shows the death screen (Section 13.5), then the raid summary (Section 2) with **BACK TO MENU**.
+Esc or Start pauses the raid and frees the mouse: **RESUME**, **SETTINGS**, **LEAVE RAID** (asks first; counts as missing in action: a PMC loses everything but the secure container, and nothing becomes found in raid), **QUIT GAME** (asks first). Beside them, **EXTRACTS** lists your extracts with their marks (Section 5.1). Esc / Start / B closes it. It can't be opened once you're dead. Dying shows the death screen (Section 13.5), then the raid summary (Section 2) with **TO THE HIDEOUT**.
 
 ## 17. Settings
 
@@ -1416,7 +1461,7 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 |---|---|
 | In-raid aiming | The mouse is captured during a raid and moves an on-screen reticle, so mouse sensitivity, aim sensitivity (while aiming/peeking) and invert apply. A controller's right stick points the reticle out from the player |
 | Colorblind modes | A screen-wide correction filter, plus a rarity palette that stays distinct for that type of color blindness (Section 6.2). Rarity letters (C, U, R, UR, E, L) are shown next to colors, so color is never the only cue |
-| Controller bindings | Left stick move, right stick aim, RT shoot, LT aim/peek, A roll, B crouch, X reload, Y interact, LB take cover, RB use item, L3 sprint, Back inventory, Start pause, D-pad hotkeys 1–4, R3 hotkey 5. Flashlight, binoculars and the map have no controller button yet (every button is taken; the map opens from the inventory's VIEW MAP). Not remappable yet |
+| Controller bindings | Left stick move, right stick aim, RT shoot, LT aim/peek, A roll, B crouch, X reload, Y interact, LB take cover, RB use item, L3 sprint, Back inventory, Start pause, D-pad hotkeys 1–4, R3 hotkey 5. Flashlight, binoculars, the map and Show extracts have no controller button yet (every button is taken; the map opens from the inventory's VIEW MAP, the extracts are in the pause menu). Not remappable yet |
 | Not active yet | Motion blur (Godot has no built-in motion blur), auto-equip, confirm selling, extra languages and subtitles: stored, and shown as "takes effect once..." in the menu |
 
 ## 18. Changelog
@@ -1451,3 +1496,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-13 | Barter goods and valuables (Section 6.5; the request's item table came through as a "[paste the table]" placeholder, so the existing items were kept and extended): every junk and valuable item has a `group` (13: Hardware, Tools, Electronics, Tech, Household, Jewelry, Currency, Collectibles, Intel, Medical supply, Fuel, Military, Materials) and `tags` (electronics, flammable, jewelry, valuable...), and a base value in its rarity's band (Common 5k–25k ₽ ... Legendary 1M+; `data/config/item_groups.json`). 20 new barter goods and 10 new valuables across every rarity. Loot tables roll by group and tag (`groups`, `tags`, `tag_weight`): toolboxes Hardware/Tools, new PCs and server racks Electronics/Tech, jackets and new chests of drawers Household/Jewelry/Currency, new medical crates Medical supply, safes, weapon boxes and boss bodies anything tagged valuable; the Test Yard has one of each new container. Examine shows group, tags and **Needed for** (quests, hideout upgrades, barters, crafts, gear upgrades; full list on hover), the inventory hover sums it up. Two new quests, new barters at every trader, hideout upgrades and crafts that use the new items; trader prices for barter goods follow their values. 474 items |
 | 2026-10-13 | Raid loop (Sections 2, 5, 16.3): a raid from ENTER RAID (map, PMC or Scav, loadout check, loading) starts at a random spawn point for your side, away from hostile AI (six in the Test Yard). Extracts can be always open, random per raid, paid (F inside, roubles), need an item (used up or not), need the power on (a power switch, 10 s to come on) or be for one side; the Test Yard has one of each (north-east gate, sewer manhole 50%, smuggler's car 7,000 ₽, rope over the east wall with Paracord, power station gate, Scav checkpoint). Rings show green / amber / red; the HUD lists every extract with what it takes and says why one won't take you; the clock turns amber at 5 min and red at 1 min. Insurance: INSURE GEAR in the loadout check and INSURE in the examine panel (10% of value, at least 1,000 ₽); insured items lost when killed or MIA come back to the stash (waiting for room if it's full). Run Through now earns no experience; extracting earns +300. Every raid ends on the raid summary: kills by side, loot carried out or lost with its value, experience with where it came from, gear and insurance (the death screen's CONTINUE leads to it). Save version 7 |
 | 2026-10-13 | Factory map (Section 5; the request's map name and setting came through as "[MAP NAME]" / "[paste the setting from the table]" placeholders and there is no extraction table "4.2a", so the Factory from the Section 5 maps table was built, with the Section 5 extract types): a playable 60 × 48 m gray-box factory with buildings you go inside (main hall with a catwalk and the overseer's office up the stairs, dark boiler house, offices, locker rooms, med bay and lab, warehouse with an armory cage), 23 doors (F opens them, they block bullets and sight, the AI opens them) of which 2 are locked (Factory office key, Factory lab key; keys now have uses), stairs, cover, painted area names and three landmarks (smokestack, crane, water tower). 6 PMC spawns, 3 extracts (Gate 3 always open, Cellars with the Factory exit key, Office window 40% of raids), 3 Scav zones (8 Scavs) and 3 AI PMCs, 54 containers and 21 loose loot spots, 3 high-value loot areas with boosted rarity (`LootZone`). Map items (Factory map, Test Yard map): **M** in a raid (or VIEW MAP) shows the layout, you and your extracts with what they take right now; Prapor sells the maps and the exit key, Skier and Therapist barter the office and lab keys. Map scenes share `RaidLevel`; building blocks `Door`, `Stairs`, `FloorSlab`, `MapLabel`, `LootZone`, `ScavZone`. Bots wait for the navmesh to sync before pathing. 478 items |
+| 2026-10-13 | Extraction (Section 5.1; the request's extraction table, "4.2a", came through as a "[paste the table]" placeholder and this document had no 4.2a, so a table was written in Section 5.1): every map has 1–3 extracts with at least one always open to both sides, in `data/config/extracts.json` (checked on load). Types: always open; random (rolled each raid, **Unknown** until you've seen it); conditional (a key or other item, roubles paid at the extract, the power on, a **signal flare** fired in it, a gear restriction such as no backpack; quest-unlocked ones only exist once the quest is done). Test Yard cut to 3 (north-east gate; smuggler's car, paid and no backpack; signal point, flare, after Prapor's new *Flare Path*), Factory's Cellars now need the power too (new switch in the boiler house); Customs Yard, Woodland, Shoreline Resort and Labs have their 3 in the table (Labs gets an always-open elevator). Your extracts are shown for 8 s at raid start and with **O**, in the pause menu and on the map item, marked Open / Unknown / Closed / what you still need; in the world a glowing outline and a sign. 7 s countdown with a progress ring; walking out or a hit restarts it; then the extraction sound, a fade to black, the summary and **TO THE HIDEOUT** (everything saved). AI PMCs and some Scavs leave through the same extracts late in the raid. New: Red signal flare (Prapor, weapon boxes, crates), quests *Flare Path* (Prapor) and *Safe Harbour* (Skier, Shoreline's pier boat), debug overlay (F12) with every extract's state. 479 items |

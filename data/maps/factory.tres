@@ -11,7 +11,6 @@ order = 3
 size = "Small"
 raid_minutes = 20
 players = "4 PMCs · 8 Scavs"
-extracts = "3 (1 needs a key, 1 random)"
 boss = "Tagilla"
 scene_path = "res://maps/factory.tscn"
 climate = "Hot"

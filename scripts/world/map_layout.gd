@@ -19,15 +19,21 @@ var labels: Array = []
 var loot_zones: Array = []
 ## {"at": Vector2, "radius": float, "name": String}
 var scav_zones: Array = []
-## {"at": Vector2, "radius": float, "name": String, "kind": String (ExtractZone.kind_text()), "sides":
-## "Both", "PMC" or "Scav", "zone": the ExtractZone in a live level (null when read from a scene)}
+## {"at": Vector2, "radius": float, "name": String, "type": "always", "random" or "conditional",
+## "kind": String (ExtractZone.kind_text()), "sides": "Both", "PMC" or "Scav", "zone": the ExtractZone
+## in a live level (null when read from a scene)}. Quest extracts you haven't unlocked aren't listed.
 var extracts: Array = []
 var bounds := Rect2()
 
+## The map read out of raid: extracts take their rules from data/config/extracts.json for it.
+var _map_id := ""
 
-## Reads the layout of the map under `root` (in the tree or not).
-static func from_level(root: Node) -> MapLayout:
+
+## Reads the layout of the map under `root` (in the tree or not). Out of raid, `map_id` says which map
+## it is, for its extracts' rules.
+static func from_level(root: Node, map_id := "") -> MapLayout:
 	var layout := MapLayout.new()
+	layout._map_id = map_id
 	layout._read(root, root)
 	var first := true
 	for wall: Dictionary in layout.walls:
@@ -72,8 +78,12 @@ func _read(node: Node, root: Node) -> void:
 			scav_zones.append({"at": centre, "radius": radius, "name": node.zone_name})
 		return  # Not the Scavs spawned in it.
 	elif node is ExtractZone:
-		extracts.append({"at": _flat(_xform(node, root).origin), "radius": node.radius, "name": node.extract_name,
-			"kind": node.kind_text(), "sides": node.sides, "zone": node if node.is_inside_tree() else null})
+		var live: bool = node.is_inside_tree()
+		if not live and _map_id != "":
+			node.configure_for_map(_map_id)
+		if (node.available if live else node.quest == "" or GameState.quests.get(node.quest, {}).get("state", "") == "completed"):
+			extracts.append({"at": _flat(_xform(node, root).origin), "radius": node.radius, "name": node.extract_name,
+				"type": node.kind, "kind": node.kind_text(), "sides": node.sides, "zone": node if live else null})
 	elif node is Actor or node is CanvasLayer:
 		return
 	for child in node.get_children():

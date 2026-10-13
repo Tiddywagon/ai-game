@@ -78,5 +78,7 @@
       {"type": "hand_in", "item": "cordless_drill", "count": 1, "fir": true}
     ],
     "rewards": {"roubles": 120000, "xp": 5000, "reputation": 0.03, "items": [{"item": "scope_2_4", "count": 1}]}
-  }
+  },
+  {"id": "flare_path", "name": "Flare Path", "trader": "prapor", "description": "My people pick up from a signal point at the back of the Test Yard, but only for those who know how to call them. Bring me a signal flare you found out there and I'll show you the way.", "objectives": [{"type": "hand_in", "item": "signal_flare", "count": 1, "fir": true}], "rewards": {"roubles": 20000, "xp": 1200, "reputation": 0.02, "items": [{"item": "signal_flare", "count": 2}]}},
+  {"id": "safe_harbour", "name": "Safe Harbour", "trader": "skier", "description": "The pier boat on the Shoreline runs for people I trust. Two gold chains and a lighter, found out there, and you're on the list.", "objectives": [{"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}, {"type": "hand_in", "item": "lighter", "count": 1, "fir": true}], "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.02}}
 ]

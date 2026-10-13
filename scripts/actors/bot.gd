@@ -4,8 +4,11 @@ extends Actor
 ## its own cone, shorter at night, farther through a scope) and hears hostile actors, fights from the same cover points
 ## the player uses (duck, peek, shoot, move on), and — with an advanced profile — combat-rolls to
 ## dodge or to reach new cover when under fire.
+## Late in the raid it heads for an extract it can use (DESIGN.md §5: the same extracts as the player,
+## RaidConfig says when) and leaves the raid after standing in it for the extract time; a fight or a hit
+## interrupts it.
 
-enum State { IDLE, INVESTIGATE, COMBAT, SEARCH }
+enum State { IDLE, INVESTIGATE, COMBAT, SEARCH, EXTRACT }
 
 const PERCEIVE_INTERVAL := 0.15
 const ARRIVE_DISTANCE := 0.3
@@ -21,6 +24,8 @@ const OUTLINE_SHADER := preload("res://assets/shaders/outline.gdshader")
 const PEEK_SETTLE_SPEED := 0.15
 ## When no cover is found, wait this long before searching again.
 const COVER_RETRY_TIME := 0.5
+## With no extract it can use, try again this much later (seconds of raid time).
+const EXTRACT_RETRY_TIME := 30.0
 
 @export var profile: BotProfile
 ## Optional patrol route in world positions, walked in a loop.
@@ -37,6 +42,9 @@ var search: LootSearch
 var state := State.IDLE
 ## The hostile actor being fought, if any.
 var target: Actor
+## Seconds into the raid when it heads for an extract (-1: never), and whether it has left the raid.
+var extract_at := -1.0
+var extracted := false
 
 var _sees_target := false
 var _seen_time := 0.0
@@ -55,6 +63,9 @@ var _burst_clock := 0.0
 var _outline: ShaderMaterial
 ## What the bot sees this perception tick.
 var _view: VisionView
+## The extract it's heading for, and how long it has stood in it.
+var _extract_zone: ExtractZone
+var _extract_time := 0.0
 
 @onready var _agent: NavigationAgent3D = $NavigationAgent3D
 
@@ -85,12 +96,51 @@ func _ready() -> void:
 	NoiseSystem.noise_emitted.connect(_on_noise)
 	Settings.applied.connect(_update_outline)
 	_update_outline.call_deferred()  # After the player is in the tree.
+	_plan_extract.call_deferred()  # Once the raid has started.
 
 
 func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
 	var outcome := super(damage, from, hit_position, shot)
 	_update_outline()  # A friendly bot shot by the player turns hostile.
+	if float(outcome.get("damage", 0.0)) > 0.0:
+		_extract_time = 0.0  # A hit starts the extract countdown again.
 	return outcome
+
+
+## Leaves the raid through an extract: out of the fight, gone from the map with everything it carries.
+func leave_raid() -> void:
+	extracted = true
+	exit_cover()
+	CoverSystem.release(self)
+	is_dead = true  # Nothing targets it any more.
+	velocity = Vector3.ZERO
+	collision_layer = 0
+	collision_mask = 0
+	_hitbox.collision_layer = 0
+	for group in ["actors", "bots", "vision_hideable", "interactables"]:
+		remove_from_group(group)
+	hide()
+	set_deferred("process_mode", Node.PROCESS_MODE_DISABLED)  # After this physics step (it leaves the physics space).
+
+
+## When this bot will head for an extract: AI PMCs some time in RaidConfig.ai_pmc_extract_window of the
+## raid, some Scavs (ai_scav_extract_chance) in ai_scav_extract_window.
+func _plan_extract() -> void:
+	var raid := _raid_controller()
+	if raid == null:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var window := raid.config.ai_pmc_extract_window
+	if side == Side.SCAV:
+		if rng.randf() >= raid.config.ai_scav_extract_chance:
+			return
+		window = raid.config.ai_scav_extract_window
+	extract_at = raid.raid_seconds() * rng.randf_range(window.x, window.y)
+
+
+func _raid_controller() -> RaidController:
+	return get_tree().get_first_node_in_group("raid_controller") as RaidController if is_inside_tree() else null
 
 
 func worn_gear() -> Inventory:
@@ -158,6 +208,10 @@ func _think(delta: float) -> void:
 	if _perceive_timer <= 0.0:
 		_perceive_timer = PERCEIVE_INTERVAL
 		_perceive()
+	if state == State.IDLE and extract_at >= 0.0:
+		var raid := _raid_controller()
+		if raid and not raid.is_over() and raid.elapsed >= extract_at:
+			state = State.EXTRACT
 	match state:
 		State.IDLE:
 			_do_idle(delta)
@@ -165,6 +219,8 @@ func _think(delta: float) -> void:
 			_do_investigate(delta)
 		State.COMBAT:
 			_do_combat(delta)
+		State.EXTRACT:
+			_do_extract(delta)
 	if state != State.COMBAT and _look_timer <= 0.0 and not move_input.is_zero_approx():
 		aim_point = global_position + move_input * 5.0
 		has_aim = true
@@ -263,6 +319,57 @@ func _do_idle(delta: float) -> void:
 	if _move_to(patrol_points[_patrol_index], false):
 		_patrol_index = (_patrol_index + 1) % patrol_points.size()
 		_look_timer = 1.5
+
+
+## Walks to the nearest extract it can use, stands in it for the extract time and leaves the raid.
+## With none it can use, it goes back to its patrol and tries again later.
+func _do_extract(delta: float) -> void:
+	var raid := _raid_controller()
+	if raid == null:
+		state = State.IDLE
+		return
+	if _extract_zone == null or not _extract_zone.usable_by(self):
+		_extract_zone = _nearest_extract()
+		_extract_time = 0.0
+		if _extract_zone == null:
+			extract_at = raid.elapsed + EXTRACT_RETRY_TIME
+			state = State.IDLE
+			return
+	var centre := _extract_zone.global_position
+	if Vector2(centre.x - global_position.x, centre.z - global_position.z).length() > _extract_zone.radius * 0.5:
+		_extract_time = 0.0
+		_move_to(centre, false)
+		return
+	_extract_time += delta
+	var angle := _extract_time * 0.9
+	aim_point = global_position + Vector3(sin(angle), 0.0, cos(angle)) * 5.0
+	has_aim = true
+	if _extract_time >= raid.config.extract_seconds:
+		raid.bot_extracted(self, _extract_zone)
+
+
+## 0 to 1 through its extract countdown (0 when not extracting).
+func extract_progress() -> float:
+	var raid := _raid_controller()
+	if state != State.EXTRACT or raid == null or raid.config.extract_seconds <= 0.0:
+		return 0.0
+	return clampf(_extract_time / raid.config.extract_seconds, 0.0, 1.0)
+
+
+## The extract it's heading for ("" if none).
+func extract_goal() -> String:
+	return _extract_zone.extract_name if state == State.EXTRACT and _extract_zone else ""
+
+
+func _nearest_extract() -> ExtractZone:
+	var best: ExtractZone = null
+	var best_distance := INF
+	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
+		var distance := zone.global_position.distance_to(global_position)
+		if distance < best_distance and zone.usable_by(self):
+			best = zone
+			best_distance = distance
+	return best
 
 
 ## Walks to the point of interest (a noise, or where the target was last seen) and looks around.

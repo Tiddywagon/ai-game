@@ -92,6 +92,6 @@ alignment = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 56)
 layout_mode = 2
-text = "BACK TO MENU"
+text = "TO THE HIDEOUT"
 script = ExtResource("2_button")
 primary = true

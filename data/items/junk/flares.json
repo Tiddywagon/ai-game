@@ -1,0 +1,3 @@
+[
+  {"id": "signal_flare", "name": "Red signal flare", "category": "junk", "rarity": "common", "weight": 0.25, "value": 14000, "group": "Military", "tags": ["fire", "flammable", "military"], "stats": {"type": "flare"}, "description": "A hand-held signal flare. Stand in an extract that needs one and fire it (F) to call your ride."}
+]

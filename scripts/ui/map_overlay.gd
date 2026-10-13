@@ -3,9 +3,9 @@ extends CanvasLayer
 ## The map item (DESIGN.md §5): a paper map of one raid map, opened with M in a raid if you carry it
 ## (anywhere on you), or with VIEW MAP when examining it. It shows the layout (walls, low cover,
 ## catwalks, stairs, doors with the locked ones in red, named places and landmarks) and your extracts:
-## those your side can use, each with what it takes, and in a raid whether you can use it right now
-## (green open, amber a condition missing, red closed). Scav areas and high-value loot rooms are marked
-## too. It doesn't show where you are. M, Esc or CLOSE closes it; the raid goes on underneath.
+## those your side can use (quest extracts once unlocked), each with what it takes, and in a raid its
+## mark: Open (green), Unknown (grey: a random one you haven't seen yet), Closed (red) or what it still
+## needs (amber). Scav areas and high-value loot rooms are marked too. It doesn't show where you are. M, Esc or CLOSE closes it; the raid goes on underneath.
 
 const PAPER := Color(0.13, 0.14, 0.13, 0.97)
 const INK := Color(0.82, 0.8, 0.72)
@@ -15,9 +15,6 @@ const METAL := Color(0.45, 0.52, 0.6)
 const FLOOR := Color(0.55, 0.6, 0.65, 0.35)
 const DOOR := Color(0.95, 0.75, 0.35)
 const LOCKED := Color(0.9, 0.3, 0.25)
-const OPEN := Color(0.4, 0.95, 0.5)
-const CONDITION := Color(0.95, 0.72, 0.25)
-const CLOSED := Color(0.9, 0.3, 0.25)
 const SCAV := Color(0.85, 0.35, 0.3, 0.16)
 const LOOT := Color(1.0, 0.8, 0.3)
 const MARGIN := 40.0
@@ -137,7 +134,7 @@ func show_map(map_id: String) -> bool:
 		return false
 	var scene := load(map.scene_path) as PackedScene
 	var level := scene.instantiate()
-	layout = MapLayout.from_level(level)
+	layout = MapLayout.from_level(level, map_id)
 	level.free()
 	_show()
 	return true
@@ -170,7 +167,7 @@ func _fill_legend() -> void:
 		var color := _color_of(entry)
 		var status: String = entry.kind
 		if entry.zone and is_instance_valid(entry.zone) and raid:
-			status = "%s  ·  now: %s" % [entry.kind, entry.zone.status_text(player)]
+			status = "%s  ·  %s" % [entry.zone.status_for(player), entry.kind]
 		lines.append([entry.name, status, color])
 	if _legend.get_child_count() == lines.size() * 2:
 		for i in lines.size():
@@ -261,14 +258,13 @@ func _draw_map() -> void:
 	_canvas.draw_string(font, compass + Vector2(-5, -18), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, INK)
 
 
-## Green: you can use it now (or it's always open); amber: something's needed; red: closed this raid.
+## In a raid, as its mark: green open, amber something's needed, red closed, grey unknown. Out of raid
+## by type: green always open, grey random, amber conditional.
 func _color_of(entry: Dictionary) -> Color:
 	var zone: ExtractZone = entry.zone if entry.zone and is_instance_valid(entry.zone) else null
 	if zone and raid:
-		if not zone.open:
-			return CLOSED
-		return OPEN if zone.status_text(player) == "open" else CONDITION
-	return OPEN if entry.kind == "always open" else CONDITION
+		return ExtractZone.STATE_COLORS[zone.status_state(player)]
+	return ExtractZone.STATE_COLORS[{"always": "open", "random": "unknown"}.get(entry.get("type", ""), "condition")]
 
 
 ## A filled outline with diagonal hatching, for catwalks and stairs.

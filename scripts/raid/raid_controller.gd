@@ -1,11 +1,15 @@
 class_name RaidController
 extends Node
-## Runs a raid on a map (DESIGN.md §2, §5): the start (a random spawn point for your side, which
-## extracts are open this raid), the raid clock, the map's power, raid experience (kills, loot, trick
-## shots, extracting) and how the raid ends. Standing in an ExtractZone you can use for
+## Runs a raid on a map (DESIGN.md §2, §5): the start (a random spawn point for your side; the map's
+## extracts from data/config/extracts.json, which random ones are open this raid and which quest ones
+## you've unlocked), the raid clock, the map's power, raid experience (kills, loot, trick shots,
+## extracting) and how the raid ends. Standing in an ExtractZone you can use for
 ## `RaidConfig.extract_seconds` extracts (SURVIVED, or a Run Through if it was quick and you earned
-## little); dying is KILLED; the clock running out or leaving from the pause menu is MIA. The ending
-## is settled by RaidOutcome (found-in-raid status, what you keep, insurance) and shown by the level.
+## little); walking out or getting hit starts the count again. A random extract turns from "Unknown" to
+## open or closed once you've been close enough to see it. AI Scavs and PMCs leave through the same
+## extracts (Bot). Dying is KILLED; the clock running out or leaving from the pause menu is MIA. The
+## ending is settled by RaidOutcome (found-in-raid status, what you keep, insurance) and shown by the
+## level.
 
 ## The raid ended (the outcome is already settled and saved).
 signal raid_ended(outcome: RaidOutcome)
@@ -14,6 +18,8 @@ signal power_on
 
 @export var player: Player
 @export var config: RaidConfig = preload("res://data/config/raid.tres")
+## The map this scene is (data/maps/), when it's played without ENTER RAID (GameState.raid "map").
+@export var map_id := "test_yard"
 ## AI PMCs that join the raid, each at a PMC spawn point the player didn't get (DESIGN.md §4, §5).
 @export_range(0, 8) var ai_pmcs := 0
 @export var ai_pmc_profile: BotProfile = preload("res://data/bots/pmc.tres")
@@ -39,25 +45,30 @@ var extract_time := 0.0
 var extracted_at := ""
 ## Where the raid started (null: the player's place in the scene).
 var spawn_point: SpawnPoint
+## AI that left through an extract: [{"name", "side": "pmc" or "scav", "extract"}].
+var ai_extracts: Array[Dictionary] = []
 ## Rolls this raid: spawn point and random extracts. Seeded from GameState.raid "seed" if set.
 var rng := RandomNumberGenerator.new()
 
 ## The map's power: seconds until it comes on after the switch is thrown (-1: off), and on.
 var _power_countdown := -1.0
 var _power_on := false
+var _confirm_timer := 0.0
 
 
 func _ready() -> void:
 	add_to_group("raid_controller")
-	map = MapInfo.find(GameState.raid.get("map", "test_yard"))
-	time_left = (map.raid_minutes if map else 15) * 60.0
+	map = MapInfo.find(GameState.raid.get("map", map_id))
+	time_left = raid_seconds()
 	if GameState.raid.has("seed"):
 		rng.seed = int(GameState.raid.seed)
 	else:
 		rng.randomize()
-	for zone in get_tree().get_nodes_in_group("extract_zones"):
+	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
+		zone.configure_for_map(map.id if map else map_id)
 		zone.roll(rng)
 	if player:
+		player.hurt.connect(_on_player_hurt)
 		player.killed.connect(_on_kill)
 		player.loot_claimed.connect(_on_loot_claimed)
 		player.trick_shot_hit.connect(_on_trick_shot_hit)
@@ -79,6 +90,10 @@ func _physics_process(delta: float) -> void:
 				player.action_blocked.emit("The power is on")
 	if outcome or player == null or player.is_dead:
 		return
+	_confirm_timer -= delta
+	if _confirm_timer <= 0.0:
+		_confirm_timer = 0.25
+		_confirm_extracts()
 	elapsed += delta
 	time_left = maxf(time_left - delta, 0.0)
 	if time_left <= 0.0:
@@ -98,6 +113,21 @@ func is_over() -> bool:
 	return outcome != null
 
 
+## The raid's full length in seconds (the map's raid time).
+func raid_seconds() -> float:
+	return (map.raid_minutes if map else 15) * 60.0
+
+
+## The extracts the player has this raid: the ones for their side, without quest extracts they haven't
+## unlocked, in the order they're placed.
+func available_extracts() -> Array[ExtractZone]:
+	var zones: Array[ExtractZone] = []
+	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
+		if zone.available and zone.allows_side(side()):
+			zones.append(zone)
+	return zones
+
+
 ## "pmc" or "scav".
 func side() -> String:
 	return str(GameState.raid.get("side", "pmc"))
@@ -109,6 +139,12 @@ func extract_remaining() -> float:
 	if extract_zone == null or outcome or extract_zone.block_reason(player) != "":
 		return -1.0
 	return maxf(config.extract_seconds - extract_time, 0.0)
+
+
+## 0 to 1 through the extract countdown (0 when not extracting).
+func extract_progress() -> float:
+	var left := extract_remaining()
+	return 1.0 - left / config.extract_seconds if left >= 0.0 and config.extract_seconds > 0.0 else 0.0
 
 
 ## Why the extract the player stands in won't take them yet ("" when it will, or when they're not in
@@ -130,6 +166,33 @@ func enter_extract(zone: ExtractZone) -> void:
 func leave_extract(zone: ExtractZone) -> void:
 	if extract_zone == zone:
 		extract_zone = null
+
+
+## An AI Scav or PMC left through `zone`: it's gone from the raid (with its gear).
+func bot_extracted(bot: Bot, zone: ExtractZone) -> void:
+	ai_extracts.append({"name": bot.display_name(), "side": "scav" if bot.side == Actor.Side.SCAV else "pmc",
+		"extract": zone.extract_name})
+	bot.leave_raid()
+
+
+## A hit restarts the extract countdown.
+func _on_player_hurt(_damage: float) -> void:
+	if extract_zone and extract_time > 0.0 and not outcome:
+		extract_time = 0.0
+		player.action_blocked.emit("Hit: extraction restarted")
+
+
+## Random extracts the player is close enough to see become known (open or closed).
+func _confirm_extracts() -> void:
+	var space := player.get_world_3d().direct_space_state
+	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
+		if zone.confirmed or not zone.available:
+			continue
+		var to := zone.global_position
+		if Vector2(to.x - player.global_position.x, to.z - player.global_position.z).length() > config.extract_confirm_distance:
+			continue
+		if VisionSystem.line_clear(space, player.global_position, to, false):
+			zone.confirm()
 
 
 # --- Power ---------------------------------------------------------------------------------------

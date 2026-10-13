@@ -4,7 +4,8 @@ extends CanvasLayer
 ## lost) and its value; experience with where it came from (kills, looting, trick shots, extracting;
 ## none for a Run Through); what happened to your gear (kept, lost, insured items coming back); and the
 ## loot that is now found in raid, each with its checkmark turned solid. A Run Through or MIA explains
-## why nothing gained the checkmark. BACK TO MENU leaves.
+## why nothing gained the checkmark. TO THE HIDEOUT goes back to the hideout (the profile is already
+## saved: loot, gear, found-in-raid status, quest progress).
 
 const MAIN_MENU := "res://ui/main_menu.tscn"
 const FADE_TIME := 0.5
@@ -16,7 +17,7 @@ const XP_PART_NAMES := {"kills": "Kills", "looting": "Looting", "trick_shots": "
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	%MenuButton.pressed.connect(_to_menu)
+	%MenuButton.pressed.connect(_to_hideout)
 	%Root.modulate.a = 0.0
 	create_tween().tween_property(%Root, "modulate:a", 1.0, FADE_TIME)
 
@@ -123,7 +124,8 @@ func _stat(name: String, value: String) -> void:
 	%Stats.add_child(value_label)
 
 
-func _to_menu() -> void:
+func _to_hideout() -> void:
 	get_tree().paused = false
 	GameState.raid = {}
+	GameState.menu_return = "hideout"
 	get_tree().change_scene_to_file(MAIN_MENU)

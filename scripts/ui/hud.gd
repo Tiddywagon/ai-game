@@ -6,9 +6,11 @@ extends CanvasLayer
 ## Vision (DESIGN.md §13.6): direction markers for sounds you can't see, a white-out while blinded,
 ## time of day and weather next to the raid name, and the sight in use or the binoculars.
 ## Raid (DESIGN.md §2, §5): the time left under the raid name (amber in the last 5 minutes, red in the
-## last minute), every extract with whether you can use it ("open", "closed this raid", "pay 7,000 ₽",
-## "needs Paracord", "needs power"), an "F  Search ..." prompt when a container, body or item is in
-## reach, and a countdown while extracting (or why the extract you're in won't take you yet).
+## last minute); your extracts for a few seconds at raid start and whenever you press O (Show extracts),
+## each marked Open, Unknown (a random one you haven't seen), Closed or with what it still needs ("Pay
+## 7,000 ₽", "Needs Factory exit key", "No backpack"); an "F  Search ..." prompt when a container, body
+## or item is in reach; and while extracting a countdown with a progress ring around you (or why the
+## extract you're in won't take you yet).
 ## 360 trick shots (DESIGN.md §13.4): "TRICK SHOT READY" while the window is open, a gold hit marker
 ## and a sound sting for a trick-shot hit, and a kill banner with the bonus experience and Drip.
 ## Consumables (DESIGN.md §13.7): energy and hydration bars under stamina (amber when hungry or
@@ -31,6 +33,9 @@ const MATERIAL_NAMES := ["wood", "concrete", "metal"]
 const EXTRACT_COLOR := Color(0.45, 0.95, 0.5)
 const EXTRACT_BLOCKED_COLOR := Color(0.95, 0.72, 0.3)
 const CLOSED_COLOR := Color(0.9, 0.35, 0.3)
+## The extract progress ring around the player, in pixels.
+const RING_RADIUS := 52.0
+const RING_WIDTH := 7.0
 ## The raid clock turns amber, then red, with this many seconds left.
 const CLOCK_WARNING := 300.0
 const CLOCK_DANGER := 60.0
@@ -54,6 +59,9 @@ var _raid: RaidController
 var _raid_line := ""
 var _prompt: Label
 var _extract: Label
+var _extract_ring: Control
+## Seconds the extract list stays up.
+var _extract_list_left := 0.0
 var _trick_ready: Label
 var _sting: AudioStreamPlayer
 var _banner: Control
@@ -108,11 +116,28 @@ func _ready() -> void:
 	add_child(_sting)
 	_build_banner()
 	_build_consumables()
+	_extract_ring = Control.new()
+	_extract_ring.name = "ExtractRing"
+	_extract_ring.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_extract_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_extract_ring.draw.connect(_draw_extract_ring)
+	add_child(_extract_ring)
+	_extract_list_left = RAID_CONFIG.extract_list_seconds
 	VisionSystem.conditions_changed.connect(_update_raid_info)
 	_update_raid_info()
 	_connect_vision.call_deferred()
 	Settings.applied.connect(_apply_settings)
 	_apply_settings()
+
+
+## Shows your extracts for RaidConfig.extract_list_seconds.
+func show_extract_list() -> void:
+	_extract_list_left = (_raid.config if _raid else RAID_CONFIG).extract_list_seconds
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("show_extracts") and player and not player.is_dead:
+		show_extract_list()
 
 
 ## Shows `text` above the stamina panel for `duration` seconds.
@@ -123,7 +148,9 @@ func show_message(text: String, duration := MESSAGE_TIME) -> void:
 
 func _update_raid_info() -> void:
 	var raid := GameState.raid
-	var map := MapInfo.find(raid.get("map", ""))
+	if _raid == null:
+		_raid = get_tree().get_first_node_in_group("raid_controller") as RaidController
+	var map := _raid.map if _raid else MapInfo.find(raid.get("map", ""))
 	_raid_line = "%s  ·  %s  ·  %s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD",
 		"SCAV" if raid.get("side") == "scav" else "PMC", VisionSystem.time_name(VisionSystem.time_of_day).to_upper(),
 		VisionSystem.weather_name(VisionSystem.weather).to_upper()]
@@ -151,23 +178,23 @@ func _update_raid_clock() -> void:
 	var list := extract_list_text()
 	if %ExtractList.text != list:
 		%ExtractList.text = list
+	%ExtractList.visible = _extract_list_left > 0.0 and list != ""
+	%ExtractList.modulate.a = clampf(_extract_list_left, 0.0, 1.0)  # Fades out over its last second.
 
 
-## The extract list (BBCode): "EXTRACTS", then each extract's name and status, green when you can use
-## it, amber while a condition isn't met, red when it's closed to you.
+## The extract list (BBCode): "EXTRACTS", then each of your extracts with its mark (Open, Unknown,
+## Closed or what it still needs), green when you can use it, amber while a condition isn't met, red
+## when it's closed, grey while unknown.
 func extract_list_text() -> String:
-	var zones := get_tree().get_nodes_in_group("extract_zones")
-	if zones.is_empty() or _raid == null:
+	if _raid == null:
 		return ""
-	var lines := ["[right][b]EXTRACTS[/b]"]
-	for zone: ExtractZone in zones:
-		var status := zone.status_text(player)
-		var color := EXTRACT_COLOR
-		if not zone.open or not zone.allows_side(_raid.side()):
-			color = CLOSED_COLOR
-		elif status != "open":
-			color = EXTRACT_BLOCKED_COLOR
-		lines.append("[color=#%s]%s  ·  %s[/color]" % [color.to_html(false), zone.extract_name, status])
+	var zones := _raid.available_extracts()
+	if zones.is_empty():
+		return ""
+	var lines := ["[right][b]EXTRACTS[/b]  (%s)" % Settings.key_label("show_extracts")]
+	for zone in zones:
+		var color: Color = ExtractZone.STATE_COLORS[zone.status_state(player)]
+		lines.append("[color=#%s]%s  ·  %s[/color]" % [color.to_html(false), zone.extract_name, zone.status_for(player)])
 	return "\n".join(lines) + "[/right]"
 
 
@@ -183,12 +210,29 @@ func _update_raid_prompts() -> void:
 	var left := _raid.extract_remaining() if _raid else -1.0
 	var blocked := _raid.extract_block() if _raid else ""
 	_extract.visible = left >= 0.0 or blocked != ""
+	_extract_ring.visible = left >= 0.0 and not player.is_dead
+	if _extract_ring.visible:
+		_extract_ring.queue_redraw()
 	if left >= 0.0:
 		_extract.text = "EXTRACTING  %.1f" % left
 		_extract.add_theme_color_override("font_color", EXTRACT_COLOR)
 	elif blocked != "":
 		_extract.text = "CAN'T EXTRACT: %s" % blocked.to_upper()
 		_extract.add_theme_color_override("font_color", EXTRACT_BLOCKED_COLOR)
+
+
+## The extract countdown ring around the player: fills clockwise from the top (the seconds are in the
+## EXTRACTING line).
+func _draw_extract_ring() -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null or player == null or _raid == null:
+		return
+	var centre := camera.unproject_position(player.global_position + Vector3.UP * 0.9)
+	var progress := _raid.extract_progress()
+	_extract_ring.draw_arc(centre, RING_RADIUS, 0.0, TAU, 64, Color(0, 0, 0, 0.55), RING_WIDTH + 4.0, true)
+	_extract_ring.draw_arc(centre, RING_RADIUS, 0.0, TAU, 64, Color(EXTRACT_COLOR, 0.25), RING_WIDTH, true)
+	if progress > 0.0:
+		_extract_ring.draw_arc(centre, RING_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * progress, 64, EXTRACT_COLOR, RING_WIDTH, true)
 
 
 func _on_trick_shot_ready() -> void:
@@ -430,6 +474,7 @@ func _process(delta: float) -> void:
 	%BottomRight.pivot_offset = %BottomRight.size
 	_message_time -= delta
 	_message.visible = _message_time > 0.0
+	_extract_list_left = maxf(_extract_list_left - delta, 0.0)
 	_update_raid_clock()
 	if player == null:
 		return

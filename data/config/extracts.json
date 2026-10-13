@@ -1,0 +1,35 @@
+{
+  "_comment": "Every map's extracts (DESIGN.md §5). Each map has 1 to 3, and at least one always-open extract every side can use, so a raid can always be left. A map scene places each one as an ExtractZone whose extract_id is the entry's id; where it is and its radius are in the scene, the rules here. Entry: id, name, type and its fields. type 'always': open every raid. 'random': open this raid with `chance` (0-1), rolled at raid start; you don't know until you see it. 'conditional': open every raid, but only works once its conditions are met: `item` (an item id you must carry, e.g. a key; `consumes` true uses one up when you extract), `price` (roubles, paid at the extract with F), `power` (true: the map's power switch must be on), `flare` (true: fire a signal flare inside it, F), `no_gear` (equipment slots that must be empty: backpack, armor (body armor), helmet, rig, primary...), `quest` (a quest id: the extract only exists for you once that quest is completed; it counts toward the map's 1-3). Any type can have `sides` (Both, PMC or Scav; default Both). AI Scavs and PMCs use the same extracts, except paid, flare and quest ones.",
+  "maps": {
+    "test_yard": [
+      {"id": "north_east_gate", "name": "North-east gate", "type": "always"},
+      {"id": "smugglers_car", "name": "Smuggler's car", "type": "conditional", "price": 7000, "no_gear": ["backpack"]},
+      {"id": "signal_point", "name": "Signal point", "type": "conditional", "flare": true, "quest": "flare_path"}
+    ],
+    "customs_yard": [
+      {"id": "crossroads", "name": "Crossroads", "type": "always"},
+      {"id": "trailer_park", "name": "Trailer park", "type": "random", "chance": 0.5},
+      {"id": "scav_checkpoint", "name": "Scav checkpoint", "type": "conditional", "sides": "Scav"}
+    ],
+    "woodland": [
+      {"id": "outskirts", "name": "Outskirts", "type": "always"},
+      {"id": "sawmill_road", "name": "Sawmill road", "type": "random", "chance": 0.6},
+      {"id": "signal_clearing", "name": "Signal clearing", "type": "conditional", "flare": true}
+    ],
+    "factory": [
+      {"id": "gate_3", "name": "Gate 3", "type": "always"},
+      {"id": "office_window", "name": "Office window", "type": "random", "chance": 0.4},
+      {"id": "cellars", "name": "Cellars", "type": "conditional", "item": "factory_exit_key", "power": true}
+    ],
+    "shoreline": [
+      {"id": "coastal_road", "name": "Coastal road", "type": "always"},
+      {"id": "rock_passage", "name": "Rock passage", "type": "conditional", "no_gear": ["backpack"]},
+      {"id": "pier_boat", "name": "Pier boat", "type": "conditional", "price": 15000, "quest": "safe_harbour"}
+    ],
+    "labs": [
+      {"id": "main_elevator", "name": "Main elevator", "type": "always"},
+      {"id": "parking_gate", "name": "Parking gate", "type": "conditional", "power": true},
+      {"id": "ventilation_shaft", "name": "Ventilation shaft", "type": "conditional", "no_gear": ["backpack", "armor"]}
+    ]
+  }
+}

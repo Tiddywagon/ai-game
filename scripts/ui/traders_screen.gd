@@ -183,6 +183,13 @@ func _build_tasks(trader: Dictionary) -> void:
 					return "" if QuestLog.hand_in(quest, i) > 0 else "Nothing to hand over"))
 			box.add_child(line)
 		box.add_child(_note("Rewards: " + _rewards_text(quest.get("rewards", {}))))
+		for unlock: Dictionary in ExtractTable.unlocked_by(quest.id):
+			var map := MapInfo.find(unlock.map)
+			var rules: Dictionary = unlock.entry.duplicate()
+			rules.erase("quest")
+			var needs := ", ".join(ExtractTable.condition_texts(rules))
+			box.add_child(_note("Unlocks the %s extract on %s%s" % [unlock.entry.name, map.display_name if map else unlock.map,
+				" (%s)" % needs if needs != "" else ""]))
 		match state:
 			"available":
 				box.add_child(_action_button("ACCEPT", "", func() -> String: return "" if QuestLog.accept(quest) else "Can't accept"))

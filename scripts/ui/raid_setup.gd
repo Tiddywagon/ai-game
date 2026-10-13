@@ -103,7 +103,7 @@ func _select_map(map: MapInfo) -> void:
 	%MapName.text = map.display_name.to_upper()
 	%MapDescription.text = map.description
 	%MapStats.text = "Size: %s\nRaid time: %d min\nPlayers: %s\nExtracts: %s\nBoss: %s" % [
-		map.size, map.raid_minutes, map.players, map.extracts, map.boss]
+		map.size, map.raid_minutes, map.players, ExtractTable.summary(map.id), map.boss]
 	%MapStatus.text = "" if map.is_playable() else "In development: not playable yet."
 	if _step == Step.MAP:
 		_next.disabled = not map.is_playable()

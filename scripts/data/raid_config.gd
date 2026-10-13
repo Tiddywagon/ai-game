@@ -1,7 +1,8 @@
 class_name RaidConfig
 extends Resource
 ## Raid tuning (DESIGN.md §2, §5, §7): extraction, power, spawns, Run Through, raid experience,
-## insurance and how long searching takes. The values live in data/config/raid.tres.
+## insurance, how long searching takes, the extract list and when AI leaves the raid. The values live
+## in data/config/raid.tres.
 
 ## Seconds to stand in an extract zone before you're out.
 @export_range(1.0, 60.0, 0.5, "suffix:s") var extract_seconds := 7.0
@@ -40,3 +41,21 @@ extends Resource
 ## search_time.
 @export_range(0.0, 5.0, 0.05, "suffix:s") var search_base_seconds := 0.35
 @export_range(0.0, 5.0, 0.05, "suffix:s") var search_seconds_per_cell := 0.25
+
+@export_group("Extracts")
+## Seconds the list of your extracts stays on screen at raid start, and after pressing the Show
+## extracts key (O).
+@export_range(0.0, 60.0, 0.5, "suffix:s") var extract_list_seconds := 8.0
+## A random extract becomes known (open or closed) once you're this close to it with a clear line of
+## sight, or stand in it. Until then it's "Unknown".
+@export_range(1.0, 100.0, 0.5, "suffix:m") var extract_confirm_distance := 12.0
+## Seconds of the fade to black after extracting, before the raid summary.
+@export_range(0.0, 10.0, 0.1, "suffix:s") var extract_fade_seconds := 1.5
+
+@export_group("AI extraction")
+## AI PMCs head for an extract they can use somewhere between these shares of the raid time (0.5:
+## halfway through), and leave the raid there like the player does.
+@export var ai_pmc_extract_window := Vector2(0.45, 0.85)
+## The share of AI Scavs that leave at all, and when (the rest stay until the end).
+@export_range(0.0, 1.0, 0.05) var ai_scav_extract_chance := 0.5
+@export var ai_scav_extract_window := Vector2(0.6, 0.95)

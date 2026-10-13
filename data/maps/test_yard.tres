@@ -6,11 +6,10 @@
 script = ExtResource("1_map")
 id = "test_yard"
 display_name = "Test Yard"
-description = "A walled practice yard with concrete, wood and metal cover, two Scavs and an AI PMC. The only map you can play for now."
+description = "A walled practice yard with concrete, wood and metal cover, two Scavs and an AI PMC. Leave by the north-east gate, the smuggler's car (paid, no backpack) or, once Prapor trusts you, the signal point (fire a flare)."
 order = 0
 size = "Small"
 raid_minutes = 15
 players = "1 PMC · 2 Scavs"
-extracts = "1 (walk out the way you came)"
 boss = "None"
 scene_path = "res://maps/test_level.tscn"

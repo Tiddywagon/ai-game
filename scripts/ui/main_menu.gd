@@ -2,7 +2,8 @@ extends Node
 ## Main menu (DESIGN.md §16): a slowly panning dusk scene with ambient music, the title top-left,
 ## the main buttons stacked on the left, the profile top-right and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
-## On first launch the player picks a faction, which creates the profile.
+## On first launch the player picks a faction, which creates the profile. After a raid's summary it
+## opens straight on the hideout (GameState.menu_return).
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
 const CHARACTER_SCENE := preload("res://ui/character_screen.tscn")
@@ -55,7 +56,11 @@ func _load_profile() -> void:
 	_faction_picker.visible = not has_profile
 	_menu.visible = has_profile
 	_refresh_profile()
-	(%EnterRaidButton if has_profile else %UsecButton).grab_focus.call_deferred()
+	if has_profile and GameState.menu_return == "hideout":
+		GameState.menu_return = ""
+		_open(HIDEOUT_SCENE, %HideoutButton)
+	else:
+		(%EnterRaidButton if has_profile else %UsecButton).grab_focus.call_deferred()
 
 
 func _choose_faction(faction: int) -> void:

@@ -10,7 +10,7 @@ extends Resource
 @export var size: String
 @export var raid_minutes: int
 @export var players: String
-@export var extracts: String
+## (The extracts are in data/config/extracts.json: ExtractTable.)
 @export var boss: String
 ## The map's scene. Empty until the map is built; it then shows as "In development".
 @export_file("*.tscn") var scene_path: String

@@ -11,7 +11,6 @@ order = 2
 size = "Large"
 raid_minutes = 45
 players = "8 PMCs · 18 Scavs"
-extracts = "5"
 boss = "Shturman"
 scene_path = ""
 climate = "Cold"

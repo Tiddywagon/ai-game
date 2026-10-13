@@ -1,5 +1,5 @@
-"""Generates the placeholder audio in assets/audio: a seamless dark ambient menu loop, two UI sounds and the
-360 trick-shot sting.
+"""Generates the placeholder audio in assets/audio: a seamless dark ambient menu loop, two UI sounds, the
+360 trick-shot sting, the extraction sound and the signal flare.
 
 Usage: python3 tools/make_placeholder_audio.py assets/audio   (needs numpy and ffmpeg with libvorbis)
 """
@@ -100,4 +100,23 @@ for k, (freq, start) in enumerate([(659.25, 0.0), (987.77, 0.06), (1318.5, 0.12)
     sting[s:s + len(tt)] += note[:total - s] * gain
 os.makedirs(f"{out_dir}/sfx", exist_ok=True)
 write_wav(f"{out_dir}/sfx/trick_sting.wav", sting / np.max(np.abs(sting)) * 0.85)
+
+# ---- Extraction: a low swell into a settled major chord (A3 C#4 E4 A4) with a soft whoosh -------
+total = int(2.2 * sr)
+tt = np.arange(total) / sr
+swell = np.minimum(1.0, tt / 0.6) * np.exp(-np.maximum(tt - 0.9, 0) * 2.2)
+chord = sum(np.sin(2 * np.pi * f * tt + k) * a for k, (f, a) in enumerate([(220.0, 0.30), (277.18, 0.22), (329.63, 0.22), (440.0, 0.16), (880.0, 0.04)]))
+noise = rng.standard_normal(total)
+whoosh = np.convolve(noise, np.ones(40) / 40, mode="same") * np.exp(-((tt - 0.35) / 0.25) ** 2) * 0.5
+extract = chord * swell + whoosh
+write_wav(f"{out_dir}/sfx/extract.wav", extract / np.max(np.abs(extract)) * 0.8)
+
+# ---- Signal flare: a sharp pop, then a hiss that fades as it climbs ------------------------------
+total = int(2.4 * sr)
+tt = np.arange(total) / sr
+pop = np.sin(2 * np.pi * 95 * tt) * np.exp(-tt / 0.03) * 0.9
+hiss = rng.standard_normal(total)
+hiss = (hiss - np.convolve(hiss, np.ones(6) / 6, mode="same")) * np.minimum(1.0, tt / 0.05) * np.exp(-tt * 1.4) * 0.45
+flare = pop + hiss
+write_wav(f"{out_dir}/sfx/flare.wav", flare / np.max(np.abs(flare)) * 0.85)
 print("done")

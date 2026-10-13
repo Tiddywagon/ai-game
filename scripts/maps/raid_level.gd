@@ -2,15 +2,20 @@ class_name RaidLevel
 extends Node3D
 ## A raid map (DESIGN.md §2, §5): bakes where the AI can walk (with locked doors blocked for it), then
 ## plays as the side picked in ENTER RAID (GameState.raid) with that loadout; run on its own it plays
-## as a PMC and the raid's ending doesn't touch your profile. Shows the death screen and the raid
-## summary, and opens the map of the area (M) if you carry one (MapOverlay). Every map scene has this
-## (or a script extending it) on its root, with Player, HUD, RaidEnvironment, PlayerVision, Raid,
-## InventoryLayer and a Navigation region holding the level geometry.
+## as a PMC and the raid's ending doesn't touch your profile. Extracting plays the extraction sound and
+## fades to black; then the raid summary (after the death screen if you were killed), and from there
+## back to the hideout. Opens the map of the area (M) if you carry one (MapOverlay), and has the debug
+## overlay (F12, DebugOverlay). Every map scene has this (or a script extending it) on its root, with
+## Player, HUD, RaidEnvironment, PlayerVision, Raid, InventoryLayer and a Navigation region holding the
+## level geometry.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
 const RESULT_SCREEN := preload("res://ui/raid_result_screen.tscn")
 ## Seconds between dying and the death screen.
 const DEATH_DELAY := 1.5
+const EXTRACT_SOUND := preload("res://assets/audio/sfx/extract.wav")
+## The fade to black after extracting sits under the raid summary (layer 60).
+const FADE_LAYER := 58
 
 @onready var _player: Player = $Player
 @onready var _hud := $HUD
@@ -34,6 +39,9 @@ func _ready() -> void:
 	_start_msec = Time.get_ticks_msec()
 	_player.died.connect(_on_player_died)
 	_raid.raid_ended.connect(_on_raid_ended)
+	var overlay := DebugOverlay.new()
+	overlay.name = "DebugOverlay"
+	add_child(overlay)
 
 
 ## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
@@ -49,7 +57,7 @@ func _apply_raid() -> void:
 		Consumables.recover_profile()
 		_player.health.start_metabolism(tuning, GameState.energy, GameState.hydration)
 	_player.health.metabolism_skill = Consumables.skill_multiplier()
-	var map := MapInfo.find(raid.get("map", "test_yard"))
+	var map := _raid.map
 	if map:
 		_player.health.energy_climate = map.energy_drain_multiplier
 		_player.health.hydration_climate = map.hydration_drain_multiplier
@@ -59,6 +67,8 @@ func _apply_raid() -> void:
 
 ## A moment after dying, the death screen says what killed you (DESIGN.md §16.5).
 func _on_player_died() -> void:
+	if _raid.outcome and _raid.outcome.status != RaidOutcome.Status.KILLED:
+		return  # Already out: extracted or missing.
 	var raid_seconds := (Time.get_ticks_msec() - _start_msec) / 1000.0
 	get_tree().create_timer(DEATH_DELAY).timeout.connect(func() -> void:
 		_hud.visible = false
@@ -70,12 +80,55 @@ func _on_player_died() -> void:
 			_show_summary(_raid.outcome)))
 
 
-## Extracted or out of time: the raid summary over the paused raid. (Killed: the death screen first,
-## then the summary.)
+## Extracted (the extraction sound) or out of time: the raid pauses and fades to black, then the
+## raid summary. (Killed: the death screen first, then the summary.)
 func _on_raid_ended(outcome: RaidOutcome) -> void:
 	if outcome.status == RaidOutcome.Status.KILLED:
 		return  # The death screen handles that.
-	_show_summary(outcome)
+	var extracted := outcome.status in [RaidOutcome.Status.SURVIVED, RaidOutcome.Status.RUN_THROUGH]
+	fade_out(extracted, _show_summary.bind(outcome))
+
+
+## Pauses the raid and fades the screen to black (with the extraction sound if `extracted`), then
+## calls `then`.
+func fade_out(extracted: bool, then: Callable) -> void:
+	$InventoryLayer.close()
+	var map_overlay := get_node_or_null("MapOverlay")
+	if map_overlay:
+		map_overlay.close()
+	get_tree().paused = true
+	var layer := CanvasLayer.new()
+	layer.name = "ExtractFade"
+	layer.layer = FADE_LAYER
+	layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(layer)
+	var black := ColorRect.new()
+	black.color = Color(0, 0, 0, 0)
+	black.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(black)
+	var title := Label.new()
+	title.text = "EXTRACTED" if extracted else "OUT OF TIME"
+	title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color(0.45, 0.95, 0.5) if extracted else Color(0.9, 0.35, 0.3))
+	title.modulate.a = 0.0
+	layer.add_child(title)
+	if extracted:
+		var sound := AudioStreamPlayer.new()
+		sound.name = "ExtractSound"
+		sound.stream = EXTRACT_SOUND
+		sound.bus = &"Effects"
+		sound.process_mode = Node.PROCESS_MODE_ALWAYS
+		layer.add_child(sound)
+		sound.play()
+	var seconds := _raid.config.extract_fade_seconds
+	var tween := layer.create_tween()
+	tween.tween_property(black, "color:a", 1.0, seconds)
+	tween.parallel().tween_property(title, "modulate:a", 1.0, seconds * 0.6).set_delay(seconds * 0.4)
+	tween.tween_callback(then)
 
 
 func _show_summary(outcome: RaidOutcome) -> void:
@@ -99,7 +152,7 @@ func toggle_map() -> void:
 	if open:
 		open.close()
 		return
-	var map_id := str(_raid.map.id) if _raid.map else "test_yard"
+	var map_id := str(_raid.map.id) if _raid.map else _raid.map_id
 	if not MapOverlay.carries_map(_player.inventory, map_id):
 		_player.action_blocked.emit("No map of %s" % (_raid.map.display_name if _raid.map else "this area"))
 		return

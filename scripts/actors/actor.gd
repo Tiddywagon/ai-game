@@ -14,6 +14,8 @@ signal died
 signal roll_finished(direction: Vector3)
 ## Something the controller asked for can't happen, e.g. "Can't roll: leg fracture".
 signal action_blocked(reason: String)
+## A hit did damage (bleeding doesn't count): an extract countdown starts again (DESIGN.md §5).
+signal hurt(damage: float)
 
 enum Side { PMC, SCAV }
 enum Move { IDLE, WALK, SPRINT, CROUCH, ROLL, COVER }
@@ -387,6 +389,7 @@ func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionar
 		cause.distance = from.global_position.distance_to(global_position)
 	if outcome.damage > 0.0:
 		health.hit(part, outcome.damage, cause)
+		hurt.emit(outcome.damage)
 	if health.is_dead:
 		die()
 	return outcome

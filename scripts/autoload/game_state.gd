@@ -66,6 +66,9 @@ var insurance_pending: Array = []
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
+## The screen the main menu opens when it loads ("hideout" after a raid's summary; "" for none). Not
+## saved.
+var menu_return := ""
 
 
 func _ready() -> void:
