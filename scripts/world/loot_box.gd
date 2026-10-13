@@ -2,7 +2,8 @@ class_name LootBox
 extends Node3D
 ## A container to search in a raid (DESIGN.md §6.2, §7): a crate, toolbox, jacket, weapon box, medical
 ## bag, safe, filing cabinet or duffle bag, set by its LootContainer type. At the start of the raid it's
-## filled from the type's own LootTable (with the map's multipliers) and everything inside is hidden.
+## filled from the type's own LootTable (with the map's multipliers, and a LootZone's if it stands in
+## one) and everything inside is hidden.
 ## F nearby opens it beside your inventory and searches it: items turn up one by one (LootSearch).
 ## Whatever you take out is loot (found in raid if you extract with it). Big types are solid: they block
 ## movement and bullets and the AI walks around them. Placeholder shapes in the type's colour for now.
@@ -36,7 +37,8 @@ func roll() -> void:
 		rng.seed = loot_seed
 	else:
 		rng.randomize()
-	for item in container.loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", ""))):
+	var boost := LootZone.boost_at(get_tree(), global_position) if is_inside_tree() else PackedFloat32Array()
+	for item in container.loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost):
 		grid.add(item)
 	search.hide_all()
 

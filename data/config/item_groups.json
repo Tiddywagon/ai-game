@@ -61,7 +61,8 @@
     "religious": "Religious art",
     "wood": "Wood",
     "intel": "Intelligence: documents, encrypted drives and radios",
-    "valuable": "Worth keeping: every valuable and a few precious barter goods. Safes, weapon boxes and boss bodies roll these"
+    "valuable": "Worth keeping: every valuable and a few precious barter goods. Safes, weapon boxes and boss bodies roll these",
+    "map": "A map of a raid map: M shows it in a raid"
   },
   "value_bands": {
     "common": [5000, 25000],

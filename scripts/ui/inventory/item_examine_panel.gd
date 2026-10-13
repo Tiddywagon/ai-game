@@ -16,7 +16,7 @@ extends PanelContainer
 ## upgrade, barter, craft or gear upgrade takes shows "Needed for" with a summary; hover it for the
 ## full list (ItemUses).
 ## Gear that can be insured (Insurance) says whether it is; out of raid INSURE insures it for its
-## price.
+## price. A map item has VIEW MAP (MapOverlay).
 ## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
 
 signal closed
@@ -50,6 +50,7 @@ var _unload: Button
 var _modify: Button
 var _upgrade: Button
 var _insure: Button
+var _map: Button
 var _use: Button
 var _parts: VBoxContainer
 
@@ -144,6 +145,12 @@ func _ready() -> void:
 	_insure.custom_minimum_size = Vector2(120, 36)
 	_insure.pressed.connect(_on_insure)
 	buttons.add_child(_insure)
+	_map = Button.new()
+	_map.name = "ViewMapButton"
+	_map.text = "VIEW MAP"
+	_map.custom_minimum_size = Vector2(120, 36)
+	_map.pressed.connect(_on_view_map)
+	buttons.add_child(_map)
 	var close_button := Button.new()
 	close_button.text = "CLOSE"
 	close_button.custom_minimum_size = Vector2(120, 36)
@@ -188,6 +195,7 @@ func show_item(examined: ItemInstance) -> void:
 	_unload.visible = item.rounds_loaded() > 0
 	_modify.visible = can_modify and item.is_gun()
 	_upgrade.visible = can_modify and GearUpgrades.is_upgradable(data)
+	_map.visible = MapOverlay.is_map(data)
 	_insure.visible = can_modify and Insurance.is_insurable(item) and not item.insured
 	if _insure.visible:
 		var cost := Insurance.price(item)
@@ -209,6 +217,21 @@ func show_item(examined: ItemInstance) -> void:
 		_chart.show_caliber(str(data.stats.get("caliber", "")), data.id)
 	show()
 	_fit.call_deferred()
+
+
+## Opens the map: the live one (with your extracts' statuses) in a raid on that map, else the map
+## read from its scene.
+func _on_view_map() -> void:
+	var map_id := str(item.data.stats.get("map", ""))
+	var overlay := MapOverlay.new()
+	overlay.name = "MapOverlay"
+	var level := get_tree().current_scene
+	var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+	get_tree().root.add_child(overlay)
+	if level is RaidLevel and raid and raid.map and raid.map.id == map_id:
+		overlay.show_level(level, raid.map, raid.player)
+	elif not overlay.show_map(map_id):
+		overlay.queue_free()
 
 
 func _on_insure() -> void:

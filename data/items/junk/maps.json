@@ -1,0 +1,4 @@
+[
+  {"id": "factory_map", "name": "Factory map", "category": "junk", "rarity": "common", "weight": 0.05, "value": 9000, "group": "Intel", "tags": ["paper", "map"], "stats": {"type": "map", "map": "factory"}, "description": "A folded site plan of the Factory: halls, offices and the extracts. Press M in a raid on the Factory to read it."},
+  {"id": "test_yard_map", "name": "Test Yard map", "category": "junk", "rarity": "common", "weight": 0.05, "value": 5000, "group": "Intel", "tags": ["paper", "map"], "stats": {"type": "map", "map": "test_yard"}, "description": "A hand-drawn plan of the Test Yard and its extracts. Press M in a raid there to read it."}
+]

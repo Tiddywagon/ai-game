@@ -1,0 +1,1925 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/cover_box.gd" id="1_cover_box"]
+[ext_resource type="Script" path="res://scripts/world/door.gd" id="2_door"]
+[ext_resource type="Script" path="res://scripts/world/stairs.gd" id="3_stairs"]
+[ext_resource type="Script" path="res://scripts/world/floor_slab.gd" id="4_floor_slab"]
+[ext_resource type="Script" path="res://scripts/world/map_label.gd" id="5_map_label"]
+[ext_resource type="Script" path="res://scripts/world/loot_zone.gd" id="6_loot_zone"]
+[ext_resource type="Script" path="res://scripts/world/scav_zone.gd" id="7_scav_zone"]
+[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="8_spawn_point"]
+[ext_resource type="Script" path="res://scripts/world/loot_box.gd" id="9_loot_box"]
+[ext_resource type="Script" path="res://scripts/world/loot_pickup.gd" id="10_loot_pickup"]
+[ext_resource type="Script" path="res://scripts/world/extract_zone.gd" id="11_extract_zone"]
+[ext_resource type="Script" path="res://scripts/world/dark_zone.gd" id="12_dark_zone"]
+[ext_resource type="Script" path="res://scripts/maps/raid_level.gd" id="13_raid_level"]
+[ext_resource type="Texture2D" path="res://assets/textures/prototype_grid.png" id="14_prototype_gr"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="15_player"]
+[ext_resource type="PackedScene" path="res://scenes/props/car.tscn" id="16_car"]
+[ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="17_top_down_cam"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="18_hud"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="19_pause_menu"]
+[ext_resource type="Script" path="res://scripts/world/player_vision.gd" id="20_player_visio"]
+[ext_resource type="Script" path="res://scripts/world/raid_environment.gd" id="21_raid_environ"]
+[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_layer.gd" id="22_inventory_la"]
+[ext_resource type="Script" path="res://scripts/raid/raid_controller.gd" id="23_raid_control"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/toolbox.tres" id="24_toolbox"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/crate.tres" id="25_crate"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="26_duffle_bag"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/jacket.tres" id="27_jacket"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="28_safe"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/filing_cabinet.tres" id="29_filing_cabin"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/pc.tres" id="30_pc"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/drawer.tres" id="31_drawer"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/server_rack.tres" id="32_server_rack"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/fridge.tres" id="33_fridge"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/kitchen_cabinet.tres" id="34_kitchen_cabi"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/store_shelf.tres" id="35_store_shelf"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medicine_cabinet.tres" id="36_medicine_cab"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_crate.tres" id="37_medical_crat"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_bag.tres" id="38_medical_bag"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/lab_cabinet.tres" id="39_lab_cabinet"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/weapon_box.tres" id="40_weapon_box"]
+
+[sub_resource type="Environment" id="Environment_factory"]
+background_mode = 1
+background_color = Color(0.09, 0.09, 0.09, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.75, 0.76, 0.82, 1)
+ambient_light_energy = 0.45
+tonemap_mode = 2
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_factory"]
+geometry_parsed_geometry_type = 1
+geometry_collision_mask = 1
+cell_size = 0.2
+cell_height = 0.25
+agent_height = 1.75
+agent_radius = 0.4
+agent_max_climb = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(64, 1, 52)
+
+[sub_resource type="StandardMaterial3D" id="Material_ground"]
+albedo_color = Color(0.5, 0.5, 0.47, 1)
+albedo_texture = ExtResource("14_prototype_gr")
+roughness = 0.95
+uv1_triplanar = true
+uv1_world_triplanar = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+material = SubResource("Material_ground")
+size = Vector3(64, 1, 52)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Smokestack"]
+albedo_color = Color(0.7, 0.18, 0.14, 1)
+roughness = 0.8
+
+[sub_resource type="CylinderMesh" id="Mesh_Smokestack"]
+material = SubResource("Mat_Smokestack")
+top_radius = 0.9
+bottom_radius = 1.1
+height = 16.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_Smokestack_Band"]
+albedo_color = Color(0.92, 0.92, 0.9, 1)
+roughness = 0.8
+
+[sub_resource type="CylinderMesh" id="Mesh_Smokestack_Band"]
+material = SubResource("Mat_Smokestack_Band")
+top_radius = 0.95
+bottom_radius = 0.95
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_Crane_Beam"]
+albedo_color = Color(0.95, 0.75, 0.1, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="Mesh_Crane_Beam"]
+material = SubResource("Mat_Crane_Beam")
+size = Vector3(24, 0.5, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Crane_Hook"]
+albedo_color = Color(0.95, 0.75, 0.1, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="Mesh_Crane_Hook"]
+material = SubResource("Mat_Crane_Hook")
+size = Vector3(0.8, 1.2, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Crane_Rail_W"]
+albedo_color = Color(0.6, 0.5, 0.15, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="Mesh_Crane_Rail_W"]
+material = SubResource("Mat_Crane_Rail_W")
+size = Vector3(0.4, 0.4, 18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Crane_Rail_E"]
+albedo_color = Color(0.6, 0.5, 0.15, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="Mesh_Crane_Rail_E"]
+material = SubResource("Mat_Crane_Rail_E")
+size = Vector3(0.4, 0.4, 18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Water_Tank"]
+albedo_color = Color(0.25, 0.45, 0.75, 1)
+roughness = 0.8
+
+[sub_resource type="CylinderMesh" id="Mesh_Water_Tank"]
+material = SubResource("Mat_Water_Tank")
+top_radius = 1.8
+bottom_radius = 1.8
+height = 2.6
+
+[sub_resource type="StandardMaterial3D" id="Mat_Exit_Lamp_Gate3"]
+albedo_color = Color(0.3, 1.0, 0.4, 1)
+roughness = 0.8
+emission_enabled = true
+emission = Color(0.3, 1.0, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Exit_Lamp_Gate3"]
+material = SubResource("Mat_Exit_Lamp_Gate3")
+size = Vector3(0.6, 0.3, 0.3)
+
+[node name="Factory" type="Node3D"]
+script = ExtResource("13_raid_level")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_factory")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-72, -25, 0)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_max_distance = 70.0
+
+[node name="RaidEnvironment" type="Node" parent="." node_paths=PackedStringArray("sun", "world_environment")]
+script = ExtResource("21_raid_environ")
+sun = NodePath("../Sun")
+world_environment = NodePath("../WorldEnvironment")
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_factory")
+
+[node name="Ground" type="StaticBody3D" parent="Navigation"]
+position = Vector3(0, -0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Navigation/Ground"]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Navigation/Ground"]
+mesh = SubResource("BoxMesh_ground")
+
+[node name="Geometry" type="Node3D" parent="Navigation"]
+
+[node name="Loot" type="Node3D" parent="Navigation"]
+
+[node name="Doors" type="Node3D" parent="."]
+
+[node name="Perimeter_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(0, 2.5, -24)
+script = ExtResource("1_cover_box")
+size = Vector3(60.4, 5, 0.4)
+cover_material = 1
+
+[node name="Perimeter_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-30, 2.5, 0)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 48.4)
+cover_material = 1
+
+[node name="Perimeter_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(30, 2.5, 0)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 48.4)
+cover_material = 1
+
+[node name="Perimeter_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-16.6, 2.5, 24)
+script = ExtResource("1_cover_box")
+size = Vector3(27.2, 5, 0.4)
+cover_material = 1
+
+[node name="Perimeter_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(16.6, 2.5, 24)
+script = ExtResource("1_cover_box")
+size = Vector3(27.2, 5, 0.4)
+cover_material = 1
+
+[node name="Gate3_Gate" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(0, 2, 24.1)
+script = ExtResource("1_cover_box")
+size = Vector3(6, 4, 0.3)
+cover_material = 2
+
+[node name="Door_1" type="Node3D" parent="Doors"]
+position = Vector3(-8, 0, -8)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Boiler yard door"
+
+[node name="Door_2" type="Node3D" parent="Doors"]
+position = Vector3(1, 0, -8)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Hall north door"
+
+[node name="Hall_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-10.4, 2.5, -8)
+script = ExtResource("1_cover_box")
+size = Vector3(3.6, 5, 0.4)
+cover_material = 1
+
+[node name="Hall_N_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-3.5, 2.5, -8)
+script = ExtResource("1_cover_box")
+size = Vector3(7.8, 5, 0.4)
+cover_material = 1
+
+[node name="Hall_N_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(6.9, 2.5, -8)
+script = ExtResource("1_cover_box")
+size = Vector3(10.6, 5, 0.4)
+cover_material = 1
+
+[node name="Hall_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-7.6, 2.5, 10)
+script = ExtResource("1_cover_box")
+size = Vector3(9.2, 5, 0.4)
+cover_material = 1
+
+[node name="Hall_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(7.6, 2.5, 10)
+script = ExtResource("1_cover_box")
+size = Vector3(9.2, 5, 0.4)
+cover_material = 1
+
+[node name="Hall_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-12, 2.5, -4.6)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 7.2)
+cover_material = 1
+
+[node name="Hall_W_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-12, 2.5, 6.1)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 8.2)
+cover_material = 1
+
+[node name="Door_3" type="Node3D" parent="Doors"]
+position = Vector3(12, 0, 8.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "East yard door"
+cover_material = 2
+
+[node name="Hall_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(12, 2.5, -3.1)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 10.2)
+cover_material = 1
+
+[node name="Hall_E_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(12, 2.5, 6.45)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 2.9)
+cover_material = 1
+
+[node name="Hall_E_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(12, 2.5, 9.65)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 1.1)
+cover_material = 1
+
+[node name="Press_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-7, 1.3, -3)
+script = ExtResource("1_cover_box")
+size = Vector3(2.2, 2.6, 2.2)
+cover_material = 2
+
+[node name="Press_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-7, 1.3, 3.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.2, 2.6, 2.2)
+cover_material = 2
+
+[node name="Press_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-2, 1.3, -3)
+script = ExtResource("1_cover_box")
+size = Vector3(2.2, 2.6, 2.2)
+cover_material = 2
+
+[node name="Press_3" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-2, 1.3, 3.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.2, 2.6, 2.2)
+cover_material = 2
+
+[node name="Conveyor" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(1.2, 0.5, 0.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1, 8)
+cover_material = 2
+
+[node name="Lathe_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(8.5, 0.7, 4.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 1.4, 1.2)
+cover_material = 2
+
+[node name="Lathe_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(8.5, 0.7, 7.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 1.4, 1.2)
+cover_material = 2
+
+[node name="Hall_Crates_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-10.5, 0.6, 8.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.2, 1.2)
+cover_material = 0
+
+[node name="Hall_Crates_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-9.2, 0.6, 8.6)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.2, 1.2)
+cover_material = 0
+
+[node name="Hall_Pallet" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(6, 0.45, 8.6)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 0.9, 1.2)
+cover_material = 0
+
+[node name="Hall_Barrier" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-4.5, 0.5, 8)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 1, 0.4)
+cover_material = 1
+
+[node name="Catwalk" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-4.15, 3, -7)
+script = ExtResource("4_floor_slab")
+size = Vector3(15.3, 0.2, 1.6)
+grating = true
+
+[node name="Landing" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(4.25, 3, -6.1)
+script = ExtResource("4_floor_slab")
+size = Vector3(1.5, 0.2, 3.4)
+grating = true
+
+[node name="Stairs_Catwalk" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-10.9, 0, -3.7)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("3_stairs")
+size = Vector3(1.4, 3, 5)
+
+[node name="Stairs_Office" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(4.25, 0, -1.9)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("3_stairs")
+size = Vector3(1.4, 3, 5)
+
+[node name="Railing_Catwalk" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-3.35, 3.5, -6.15)
+script = ExtResource("1_cover_box")
+size = Vector3(13.7, 1, 0.1)
+cover_material = 2
+
+[node name="Railing_Landing" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(3.45, 3.5, -5.3)
+script = ExtResource("1_cover_box")
+size = Vector3(0.1, 1, 1.8)
+cover_material = 2
+
+[node name="Overseer_Block" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(8.4, 1.5, -4.9)
+script = ExtResource("1_cover_box")
+size = Vector3(6.8, 3, 5.8)
+cover_material = 1
+
+[node name="Door_4" type="Node3D" parent="Doors"]
+position = Vector3(5.1, 3, -5.4)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.1
+door_name = "Overseer's office door"
+locked = true
+key_id = "office_key"
+height = 2.1
+
+[node name="Overseer_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(5.1, 4.2, -6.925)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 2.4, 1.95)
+cover_material = 1
+
+[node name="Overseer_W_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(5.1, 4.2, -3.375)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 2.4, 2.95)
+cover_material = 1
+
+[node name="Overseer_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(8.45, 4.2, -2)
+script = ExtResource("1_cover_box")
+size = Vector3(6.9, 2.4, 0.2)
+cover_material = 1
+
+[node name="Overseer_Desk" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(9.5, 3.4, -5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 0.8, 0.8)
+cover_material = 0
+
+[node name="Door_5" type="Node3D" parent="Doors"]
+position = Vector3(0, 0, -12)
+script = ExtResource("2_door")
+width = 1.4
+door_name = "Boiler house door"
+cover_material = 2
+
+[node name="Boiler_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-3.45, 2, -12)
+script = ExtResource("1_cover_box")
+size = Vector3(5.5, 4, 0.4)
+cover_material = 1
+
+[node name="Boiler_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(3.45, 2, -12)
+script = ExtResource("1_cover_box")
+size = Vector3(5.5, 4, 0.4)
+cover_material = 1
+
+[node name="Boiler_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(0, 2, -20)
+script = ExtResource("1_cover_box")
+size = Vector3(12.4, 4, 0.4)
+cover_material = 1
+
+[node name="Boiler_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-6, 2, -16)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 4, 8.4)
+cover_material = 1
+
+[node name="Door_6" type="Node3D" parent="Doors"]
+position = Vector3(6, 0, -16)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Boiler house side door"
+cover_material = 2
+
+[node name="Boiler_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(6, 2, -18.4)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 4, 3.6)
+cover_material = 1
+
+[node name="Boiler_E_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(6, 2, -13.6)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 4, 3.6)
+cover_material = 1
+
+[node name="Boiler_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(2.5, 1.5, -17.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3, 3)
+cover_material = 2
+
+[node name="Boiler_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-1, 1.5, -17.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3, 3)
+cover_material = 2
+
+[node name="Boiler_Pipes" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(3.5, 0.6, -13.5)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 1.2, 0.6)
+cover_material = 2
+
+[node name="Cellar_Hatch_Rim" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-4, 0.25, -16)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 0.5, 0.2)
+cover_material = 1
+
+[node name="Door_7" type="Node3D" parent="Doors"]
+position = Vector3(-21, 0, -12)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Office back door"
+opens_back = true
+
+[node name="Office_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-24.9, 1.75, -12)
+script = ExtResource("1_cover_box")
+size = Vector3(6.6, 3.5, 0.4)
+cover_material = 1
+
+[node name="Office_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-17.6, 1.75, -12)
+script = ExtResource("1_cover_box")
+size = Vector3(5.6, 3.5, 0.4)
+cover_material = 1
+
+[node name="Office_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-27.25, 1.75, -22)
+script = ExtResource("1_cover_box")
+size = Vector3(1.9, 3.5, 0.4)
+cover_material = 1
+
+[node name="Office_N_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-19.75, 1.75, -22)
+script = ExtResource("1_cover_box")
+size = Vector3(9.9, 3.5, 0.4)
+cover_material = 1
+
+[node name="Office_Window_Bars" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-25.5, 1.6, -22.35)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 1.2, 0.1)
+cover_material = 2
+provides_cover = false
+
+[node name="Office_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-28, 1.75, -17)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 10.4)
+cover_material = 1
+
+[node name="Door_8" type="Node3D" parent="Doors"]
+position = Vector3(-15, 0, -13.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Office front door"
+
+[node name="Office_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-15, 1.75, -18.15)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 8.1)
+cover_material = 1
+
+[node name="Office_E_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-15, 1.75, -12.35)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 1.1)
+cover_material = 1
+
+[node name="Door_9" type="Node3D" parent="Doors"]
+position = Vector3(-25.5, 0, -15)
+script = ExtResource("2_door")
+width = 1
+door_name = "Records room door"
+
+[node name="Door_10" type="Node3D" parent="Doors"]
+position = Vector3(-21, 0, -15)
+script = ExtResource("2_door")
+width = 1
+door_name = "Server room door"
+
+[node name="Door_11" type="Node3D" parent="Doors"]
+position = Vector3(-17, 0, -15)
+script = ExtResource("2_door")
+width = 1
+door_name = "Archive door"
+
+[node name="Office_Corridor_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-27.05, 1.75, -15)
+script = ExtResource("1_cover_box")
+size = Vector3(2.1, 3.5, 0.2)
+cover_material = 1
+
+[node name="Office_Corridor_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-23.25, 1.75, -15)
+script = ExtResource("1_cover_box")
+size = Vector3(3.5, 3.5, 0.2)
+cover_material = 1
+
+[node name="Office_Corridor_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-19, 1.75, -15)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 3.5, 0.2)
+cover_material = 1
+
+[node name="Office_Corridor_3" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-15.7, 1.75, -15)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 3.5, 0.2)
+cover_material = 1
+
+[node name="Office_Split_A_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-23, 1.75, -18.5)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 3.5, 7.2)
+cover_material = 1
+
+[node name="Office_Split_B_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-19, 1.75, -18.5)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 3.5, 7.2)
+cover_material = 1
+
+[node name="Office_Desk_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-26.5, 0.4, -18)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 0.8, 0.8)
+cover_material = 0
+
+[node name="Office_Desk_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-17, 0.4, -19.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 0.8, 0.8)
+cover_material = 0
+
+[node name="Door_12" type="Node3D" parent="Doors"]
+position = Vector3(-19, 0, 6)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Break room door"
+
+[node name="Locker_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-23.9, 1.75, 6)
+script = ExtResource("1_cover_box")
+size = Vector3(8.6, 3.5, 0.4)
+cover_material = 1
+
+[node name="Locker_N_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-17.1, 1.75, 6)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3.5, 0.4)
+cover_material = 1
+
+[node name="Locker_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-22, 1.75, 20)
+script = ExtResource("1_cover_box")
+size = Vector3(12.4, 3.5, 0.4)
+cover_material = 1
+
+[node name="Locker_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-28, 1.75, 13)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 14.4)
+cover_material = 1
+
+[node name="Door_13" type="Node3D" parent="Doors"]
+position = Vector3(-16, 0, 16.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Showers door"
+
+[node name="Locker_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-16, 1.75, 10.85)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 10.1)
+cover_material = 1
+
+[node name="Locker_E_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-16, 1.75, 18.65)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 3.1)
+cover_material = 1
+
+[node name="Door_14" type="Node3D" parent="Doors"]
+position = Vector3(-22, 0, 9.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1
+door_name = "Locker room door"
+
+[node name="Door_15" type="Node3D" parent="Doors"]
+position = Vector3(-22, 0, 17)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1
+door_name = "Locker room back door"
+
+[node name="Locker_Split_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-22, 1.75, 7.45)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 3.5, 3.1)
+cover_material = 1
+
+[node name="Locker_Split_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-22, 1.75, 13.25)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 3.5, 6.5)
+cover_material = 1
+
+[node name="Locker_Split_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-22, 1.75, 18.8)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 3.5, 2.6)
+cover_material = 1
+
+[node name="Door_16" type="Node3D" parent="Doors"]
+position = Vector3(-19, 0, 13)
+script = ExtResource("2_door")
+width = 1
+door_name = "Showers inner door"
+
+[node name="Locker_BreakWall_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-20.8, 1.75, 13)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3.5, 0.2)
+cover_material = 1
+
+[node name="Locker_BreakWall_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-17.2, 1.75, 13)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3.5, 0.2)
+cover_material = 1
+
+[node name="Lockers_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-27.4, 1, 8.5)
+script = ExtResource("1_cover_box")
+size = Vector3(0.6, 2, 2.2)
+cover_material = 2
+
+[node name="Lockers_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-27.4, 1, 11.5)
+script = ExtResource("1_cover_box")
+size = Vector3(0.6, 2, 2.2)
+cover_material = 2
+
+[node name="Lockers_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-27.4, 1, 14.5)
+script = ExtResource("1_cover_box")
+size = Vector3(0.6, 2, 2.2)
+cover_material = 2
+
+[node name="Lockers_3" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-27.4, 1, 17.5)
+script = ExtResource("1_cover_box")
+size = Vector3(0.6, 2, 2.2)
+cover_material = 2
+
+[node name="Locker_Bench_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-24.8, 0.25, 10)
+script = ExtResource("1_cover_box")
+size = Vector3(0.5, 0.5, 3)
+cover_material = 0
+
+[node name="Locker_Bench_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-24.8, 0.25, 16)
+script = ExtResource("1_cover_box")
+size = Vector3(0.5, 0.5, 3)
+cover_material = 0
+
+[node name="Break_Table" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-19, 0.4, 9.8)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 0.8, 1)
+cover_material = 0
+
+[node name="Shower_Stall_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-17, 1, 18.6)
+script = ExtResource("1_cover_box")
+size = Vector3(1.4, 2, 0.1)
+cover_material = 1
+
+[node name="Shower_Stall_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-20.5, 1, 18.6)
+script = ExtResource("1_cover_box")
+size = Vector3(1.4, 2, 0.1)
+cover_material = 1
+
+[node name="Door_17" type="Node3D" parent="Doors"]
+position = Vector3(22, 0, -8)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Med bay door"
+opens_back = true
+
+[node name="Med_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(18.6, 1.75, -8)
+script = ExtResource("1_cover_box")
+size = Vector3(5.6, 3.5, 0.4)
+cover_material = 1
+
+[node name="Med_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(25.4, 1.75, -8)
+script = ExtResource("1_cover_box")
+size = Vector3(5.6, 3.5, 0.4)
+cover_material = 1
+
+[node name="Med_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(22, 1.75, -20)
+script = ExtResource("1_cover_box")
+size = Vector3(12.4, 3.5, 0.4)
+cover_material = 1
+
+[node name="Door_18" type="Node3D" parent="Doors"]
+position = Vector3(16, 0, -11)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Med bay side door"
+
+[node name="Med_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(16, 1.75, -15.9)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 8.6)
+cover_material = 1
+
+[node name="Med_W_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(16, 1.75, -9.1)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 2.6)
+cover_material = 1
+
+[node name="Med_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(28, 1.75, -14)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 3.5, 12.4)
+cover_material = 1
+
+[node name="Door_19" type="Node3D" parent="Doors"]
+position = Vector3(19, 0, -14)
+script = ExtResource("2_door")
+width = 1
+door_name = "Lab door"
+cover_material = 2
+locked = true
+key_id = "factory_lab_key"
+
+[node name="Door_20" type="Node3D" parent="Doors"]
+position = Vector3(25, 0, -14)
+script = ExtResource("2_door")
+width = 1
+door_name = "Chem storage door"
+
+[node name="Med_Split_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(17.2, 1.75, -14)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3.5, 0.2)
+cover_material = 1
+
+[node name="Med_Split_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(22, 1.75, -14)
+script = ExtResource("1_cover_box")
+size = Vector3(5, 3.5, 0.2)
+cover_material = 1
+
+[node name="Med_Split_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(26.8, 1.75, -14)
+script = ExtResource("1_cover_box")
+size = Vector3(2.6, 3.5, 0.2)
+cover_material = 1
+
+[node name="Lab_Split_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(22, 1.75, -17)
+script = ExtResource("1_cover_box")
+size = Vector3(0.2, 3.5, 6.2)
+cover_material = 1
+
+[node name="Med_Bed_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(18, 0.35, -10)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 0.7, 0.9)
+cover_material = 2
+
+[node name="Med_Bed_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(18, 0.35, -12.4)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 0.7, 0.9)
+cover_material = 2
+
+[node name="Lab_Bench" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(19, 0.45, -18.5)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 0.9, 0.8)
+cover_material = 2
+
+[node name="Chem_Drums" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(26.6, 0.55, -18.4)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.1, 1.2)
+cover_material = 2
+
+[node name="Door_21" type="Node3D" parent="Doors"]
+position = Vector3(20, 0, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Warehouse north door"
+cover_material = 2
+
+[node name="Ware_N_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(17.6, 2.5, 0)
+script = ExtResource("1_cover_box")
+size = Vector3(3.6, 5, 0.4)
+cover_material = 2
+
+[node name="Ware_N_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(24.4, 2.5, 0)
+script = ExtResource("1_cover_box")
+size = Vector3(7.6, 5, 0.4)
+cover_material = 2
+
+[node name="Ware_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(17.4, 2.5, 20)
+script = ExtResource("1_cover_box")
+size = Vector3(3.2, 5, 0.4)
+cover_material = 2
+
+[node name="Ware_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(26.6, 2.5, 20)
+script = ExtResource("1_cover_box")
+size = Vector3(3.2, 5, 0.4)
+cover_material = 2
+
+[node name="Door_22" type="Node3D" parent="Doors"]
+position = Vector3(16, 0, 15)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Warehouse side door"
+cover_material = 2
+
+[node name="Ware_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(16, 2.5, 1.4)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 3.2)
+cover_material = 2
+
+[node name="Ware_W_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(16, 2.5, 10.7)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 7.4)
+cover_material = 2
+
+[node name="Ware_W_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(16, 2.5, 17.9)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 4.6)
+cover_material = 2
+
+[node name="Ware_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(28, 2.5, 10)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 5, 20.4)
+cover_material = 2
+
+[node name="Shelves_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(19, 1.25, 11)
+script = ExtResource("1_cover_box")
+size = Vector3(1, 2.5, 3.2)
+cover_material = 2
+
+[node name="Shelves_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(23.5, 1.25, 11)
+script = ExtResource("1_cover_box")
+size = Vector3(1, 2.5, 3.2)
+cover_material = 2
+
+[node name="Shelves_W_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(19, 1.25, 15.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1, 2.5, 3.2)
+cover_material = 2
+
+[node name="Shelves_E_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(23.5, 1.25, 15.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1, 2.5, 3.2)
+cover_material = 2
+
+[node name="Ware_Crates_A" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(25.8, 0.7, 11.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.4, 1.4, 1.4)
+cover_material = 0
+
+[node name="Ware_Crates_B" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(25.8, 0.7, 13)
+script = ExtResource("1_cover_box")
+size = Vector3(1.4, 1.4, 1.4)
+cover_material = 0
+
+[node name="Ware_Pallet" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(19.5, 0.45, 3)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 0.9, 1.2)
+cover_material = 0
+
+[node name="Door_23" type="Node3D" parent="Doors"]
+position = Vector3(23, 0, 6.6)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("2_door")
+width = 1
+door_name = "Armory cage gate"
+cover_material = 2
+
+[node name="Cage_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(23, 1.3, 3.1125)
+script = ExtResource("1_cover_box")
+size = Vector3(0.15, 2.6, 5.975)
+cover_material = 2
+
+[node name="Cage_W_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(23, 1.3, 7.5875)
+script = ExtResource("1_cover_box")
+size = Vector3(0.15, 2.6, 0.975)
+cover_material = 2
+
+[node name="Cage_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(25.5, 1.3, 8)
+script = ExtResource("1_cover_box")
+size = Vector3(5.15, 2.6, 0.15)
+cover_material = 2
+
+[node name="Barrier_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-20, 0.5, -6)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 1, 0.4)
+cover_material = 1
+
+[node name="Barrier_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-24, 0.5, 0)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 1, 3)
+cover_material = 1
+
+[node name="Barrier_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-16, 0.5, 2)
+script = ExtResource("1_cover_box")
+size = Vector3(2, 1, 0.4)
+cover_material = 1
+
+[node name="Barrier_3" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-7, 0.5, 16)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 1, 0.4)
+cover_material = 1
+
+[node name="Barrier_4" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(6, 0.5, 15)
+script = ExtResource("1_cover_box")
+size = Vector3(3, 1, 0.4)
+cover_material = 1
+
+[node name="Barrier_5" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(13.5, 0.5, -14)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 1, 3)
+cover_material = 1
+
+[node name="Barrier_6" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(13.5, 0.5, 14)
+script = ExtResource("1_cover_box")
+size = Vector3(0.4, 1, 3)
+cover_material = 1
+
+[node name="Barrier_7" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-12, 0.5, -10)
+script = ExtResource("1_cover_box")
+size = Vector3(2.5, 1, 0.4)
+cover_material = 1
+
+[node name="Barrier_8" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(8, 0.5, -10.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.5, 1, 0.4)
+cover_material = 1
+
+[node name="Yard_Crate_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-22, 0.6, -3)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.2, 1.2)
+cover_material = 0
+
+[node name="Yard_Crate_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-9, 0.6, 20)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.2, 1.2)
+cover_material = 0
+
+[node name="Yard_Crate_2" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(9, 0.6, 19.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.2, 1.2)
+cover_material = 0
+
+[node name="Yard_Crate_3" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(14.2, 0.6, 21)
+script = ExtResource("1_cover_box")
+size = Vector3(1.2, 1.2, 1.2)
+cover_material = 0
+
+[node name="Truck" parent="Navigation/Geometry" instance=ExtResource("16_car")]
+position = Vector3(26.5, 0, 22.3)
+
+[node name="Water_Tower_Base" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-12, 1, 19.5)
+script = ExtResource("1_cover_box")
+size = Vector3(1.6, 2, 1.6)
+cover_material = 1
+
+[node name="Smokestack_Base" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(3, 2, -22)
+script = ExtResource("1_cover_box")
+size = Vector3(2.4, 4, 2.4)
+cover_material = 1
+
+[node name="Landmarks" type="Node3D" parent="."]
+
+[node name="Smokestack" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(3, 8, -22)
+mesh = SubResource("Mesh_Smokestack")
+
+[node name="Smokestack_Band" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(3, 13.5, -22)
+mesh = SubResource("Mesh_Smokestack_Band")
+
+[node name="Crane_Beam" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(0, 6.6, 1.5)
+mesh = SubResource("Mesh_Crane_Beam")
+
+[node name="Crane_Hook" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(-3, 5.6, 1.5)
+mesh = SubResource("Mesh_Crane_Hook")
+
+[node name="Crane_Rail_W" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(-11.6, 6.2, 1)
+mesh = SubResource("Mesh_Crane_Rail_W")
+
+[node name="Crane_Rail_E" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(11.6, 6.2, 1)
+mesh = SubResource("Mesh_Crane_Rail_E")
+
+[node name="Water_Tank" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(-12, 3.4, 19.5)
+mesh = SubResource("Mesh_Water_Tank")
+
+[node name="Exit_Lamp_Gate3" type="MeshInstance3D" parent="Landmarks"]
+position = Vector3(0, 4.4, 23.7)
+mesh = SubResource("Mesh_Exit_Lamp_Gate3")
+
+[node name="BoilerDark" type="Node3D" parent="."]
+position = Vector3(0, 2, -16)
+script = ExtResource("12_dark_zone")
+size = Vector3(12, 4, 8)
+
+[node name="MapLabels" type="Node3D" parent="."]
+
+[node name="Label_1" type="Marker3D" parent="MapLabels"]
+position = Vector3(-1, 0, 6.2)
+script = ExtResource("5_map_label")
+text = "Main hall"
+paint_size = 100
+
+[node name="Label_2" type="Marker3D" parent="MapLabels"]
+position = Vector3(0, 0, -14.5)
+script = ExtResource("5_map_label")
+text = "Boiler house"
+paint_size = 60
+
+[node name="Label_3" type="Marker3D" parent="MapLabels"]
+position = Vector3(-21.5, 0, -13.5)
+script = ExtResource("5_map_label")
+text = "Offices"
+paint_size = 56
+
+[node name="Label_4" type="Marker3D" parent="MapLabels"]
+position = Vector3(-25.5, 0, -19)
+script = ExtResource("5_map_label")
+text = "Records"
+paint_size = 40
+
+[node name="Label_5" type="Marker3D" parent="MapLabels"]
+position = Vector3(-21, 0, -19.5)
+script = ExtResource("5_map_label")
+text = "Server room"
+paint_size = 36
+
+[node name="Label_6" type="Marker3D" parent="MapLabels"]
+position = Vector3(-17, 0, -17)
+script = ExtResource("5_map_label")
+text = "Archive"
+paint_size = 40
+
+[node name="Label_7" type="Marker3D" parent="MapLabels"]
+position = Vector3(-25, 0, 13)
+script = ExtResource("5_map_label")
+text = "Lockers"
+paint_size = 56
+
+[node name="Label_8" type="Marker3D" parent="MapLabels"]
+position = Vector3(-19, 0, 7.5)
+script = ExtResource("5_map_label")
+text = "Break room"
+paint_size = 40
+
+[node name="Label_9" type="Marker3D" parent="MapLabels"]
+position = Vector3(-19, 0, 16)
+script = ExtResource("5_map_label")
+text = "Showers"
+paint_size = 40
+
+[node name="Label_10" type="Marker3D" parent="MapLabels"]
+position = Vector3(22, 0, -11)
+script = ExtResource("5_map_label")
+text = "Med bay"
+paint_size = 60
+
+[node name="Label_11" type="Marker3D" parent="MapLabels"]
+position = Vector3(19, 0, -16.5)
+script = ExtResource("5_map_label")
+text = "Lab"
+paint_size = 56
+
+[node name="Label_12" type="Marker3D" parent="MapLabels"]
+position = Vector3(25, 0, -17)
+script = ExtResource("5_map_label")
+text = "Chem storage"
+paint_size = 36
+
+[node name="Label_13" type="Marker3D" parent="MapLabels"]
+position = Vector3(21, 0, 9)
+script = ExtResource("5_map_label")
+text = "Warehouse"
+paint_size = 80
+
+[node name="Label_14" type="Marker3D" parent="MapLabels"]
+position = Vector3(25.5, 0, 4)
+script = ExtResource("5_map_label")
+text = "Armory"
+paint_size = 48
+
+[node name="Label_15" type="Marker3D" parent="MapLabels"]
+position = Vector3(0, 0, 21.5)
+script = ExtResource("5_map_label")
+text = "Gate 3"
+paint_size = 90
+
+[node name="Label_16" type="Marker3D" parent="MapLabels"]
+position = Vector3(22, 0, 22.3)
+script = ExtResource("5_map_label")
+text = "Loading dock"
+paint_size = 56
+
+[node name="Label_17" type="Marker3D" parent="MapLabels"]
+position = Vector3(8.4, 3.02, -4)
+script = ExtResource("5_map_label")
+text = "Overseer"
+paint_size = 48
+
+[node name="Label_18" type="Marker3D" parent="MapLabels"]
+position = Vector3(-22, 0, 1.5)
+script = ExtResource("5_map_label")
+text = "West yard"
+paint_size = 56
+
+[node name="Label_19" type="Marker3D" parent="MapLabels"]
+position = Vector3(14, 0, -2)
+script = ExtResource("5_map_label")
+text = "East yard"
+paint_size = 40
+
+[node name="Label_20" type="Marker3D" parent="MapLabels"]
+position = Vector3(3, 0, -22)
+script = ExtResource("5_map_label")
+text = "Smokestack"
+paint_size = 64
+painted = false
+landmark = true
+
+[node name="Label_21" type="Marker3D" parent="MapLabels"]
+position = Vector3(0, 0, 1.5)
+script = ExtResource("5_map_label")
+text = "Crane"
+paint_size = 64
+painted = false
+landmark = true
+
+[node name="Label_22" type="Marker3D" parent="MapLabels"]
+position = Vector3(-12, 0, 19.5)
+script = ExtResource("5_map_label")
+text = "Water tower"
+paint_size = 64
+painted = false
+landmark = true
+
+[node name="Overseer's office" type="Node3D" parent="."]
+position = Vector3(8.4, 3, -4.9)
+script = ExtResource("6_loot_zone")
+zone_name = "Overseer's office"
+size = Vector3(6.6, 3, 5.6)
+rarity_multipliers = PackedFloat32Array(1, 1, 1.4, 1.8, 2.2, 2.2)
+
+[node name="Lab" type="Node3D" parent="."]
+position = Vector3(19, 0, -17)
+script = ExtResource("6_loot_zone")
+zone_name = "Lab"
+size = Vector3(6, 3.5, 6)
+rarity_multipliers = PackedFloat32Array(1, 1, 1.3, 1.7, 2, 2)
+
+[node name="Armory cage" type="Node3D" parent="."]
+position = Vector3(25.5, 0, 4)
+script = ExtResource("6_loot_zone")
+zone_name = "Armory cage"
+size = Vector3(5, 3, 7.6)
+rarity_multipliers = PackedFloat32Array(1, 1, 1.2, 1.5, 1.8, 1.6)
+
+[node name="Main_hall" type="Node3D" parent="."]
+script = ExtResource("7_scav_zone")
+zone_name = "Main hall"
+count = 3
+
+[node name="P1" type="Marker3D" parent="Main_hall"]
+position = Vector3(-5, 0, 0.5)
+
+[node name="P2" type="Marker3D" parent="Main_hall"]
+position = Vector3(0.5, 0, -5)
+
+[node name="P3" type="Marker3D" parent="Main_hall"]
+position = Vector3(6, 0, 2)
+
+[node name="P4" type="Marker3D" parent="Main_hall"]
+position = Vector3(-1, 0, 7)
+
+[node name="P5" type="Marker3D" parent="Main_hall"]
+position = Vector3(9, 0, 6)
+
+[node name="P6" type="Marker3D" parent="Main_hall"]
+position = Vector3(-9.5, 0, -1)
+
+[node name="Warehouse" type="Node3D" parent="."]
+script = ExtResource("7_scav_zone")
+zone_name = "Warehouse"
+count = 3
+
+[node name="P1" type="Marker3D" parent="Warehouse"]
+position = Vector3(18.5, 0, 4)
+
+[node name="P2" type="Marker3D" parent="Warehouse"]
+position = Vector3(21.5, 0, 8)
+
+[node name="P3" type="Marker3D" parent="Warehouse"]
+position = Vector3(21, 0, 13.5)
+
+[node name="P4" type="Marker3D" parent="Warehouse"]
+position = Vector3(25.8, 0, 16.5)
+
+[node name="P5" type="Marker3D" parent="Warehouse"]
+position = Vector3(18, 0, 18)
+
+[node name="Locker_rooms" type="Node3D" parent="."]
+script = ExtResource("7_scav_zone")
+zone_name = "Locker rooms"
+count = 2
+
+[node name="P1" type="Marker3D" parent="Locker_rooms"]
+position = Vector3(-25.8, 0, 9)
+
+[node name="P2" type="Marker3D" parent="Locker_rooms"]
+position = Vector3(-19, 0, 11)
+
+[node name="P3" type="Marker3D" parent="Locker_rooms"]
+position = Vector3(-19, 0, 16.5)
+
+[node name="P4" type="Marker3D" parent="Locker_rooms"]
+position = Vector3(-25.8, 0, 18.2)
+
+[node name="SpawnPoints" type="Node3D" parent="."]
+
+[node name="WestYard" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-24, 0, -6)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("8_spawn_point")
+side = "PMC"
+
+[node name="SouthWest" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-15, 0, 22)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("8_spawn_point")
+side = "PMC"
+
+[node name="NorthEastYard" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(14, 0, -21)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("8_spawn_point")
+side = "PMC"
+
+[node name="LoadingDock" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(21, 0, 22.6)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("8_spawn_point")
+side = "PMC"
+
+[node name="BoilerYard" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-9, 0, -10)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("8_spawn_point")
+side = "PMC"
+
+[node name="EastYard" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(14, 0, 9)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("8_spawn_point")
+side = "PMC"
+
+[node name="ScavHall" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-3, 0, 9)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("8_spawn_point")
+side = "Scav"
+
+[node name="ScavWarehouse" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(21, 0, 17.5)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("8_spawn_point")
+side = "Scav"
+
+[node name="ScavLockers" type="Marker3D" parent="SpawnPoints"]
+position = Vector3(-19, 0, 11.5)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("8_spawn_point")
+side = "Scav"
+
+[node name="Player" parent="." instance=ExtResource("15_player")]
+position = Vector3(-24, 0, -6)
+
+[node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("23_raid_control")
+player = NodePath("../Player")
+ai_pmcs = 3
+
+[node name="ExtractGate3" type="Area3D" parent="."]
+position = Vector3(0, 0, 22.2)
+script = ExtResource("11_extract_zone")
+extract_name = "Gate 3"
+radius = 2.2
+
+[node name="ExtractCellars" type="Area3D" parent="."]
+position = Vector3(-4, 0, -17.8)
+script = ExtResource("11_extract_zone")
+extract_name = "Cellars"
+radius = 1.4
+required_item = "factory_exit_key"
+
+[node name="ExtractOfficeWindow" type="Area3D" parent="."]
+position = Vector3(-25.5, 0, -21)
+script = ExtResource("11_extract_zone")
+extract_name = "Office window"
+radius = 1.1
+chance = 0.4
+
+[node name="Box_toolbox_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-5.6, 0, -3)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("24_toolbox")
+
+[node name="Box_toolbox_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(7.2, 0, 6)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("24_toolbox")
+
+[node name="Box_crate_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-10.8, 0, 6.5)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_crate_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(10.8, 0, -1)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_crate_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(1.5, 0, 8.6)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_duffle_bag_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-2, 0, 0.3)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("26_duffle_bag")
+
+[node name="Box_jacket_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(4, 3, -6.9)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("27_jacket")
+
+[node name="Box_safe_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(11.4, 3, -7.3)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("28_safe")
+
+[node name="Box_filing_cabinet_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(6, 3, -7.4)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("29_filing_cabin")
+
+[node name="Box_pc_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(9.5, 3, -6.1)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("30_pc")
+
+[node name="Box_drawer_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(11.5, 3, -3.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("31_drawer")
+
+[node name="Box_toolbox_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(5.3, 0, -18.6)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("24_toolbox")
+
+[node name="Box_crate_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-5.2, 0, -13)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_pc_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-5.5, 0, -19.4)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("30_pc")
+
+[node name="Box_filing_cabinet_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-27.4, 0, -21.3)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("29_filing_cabin")
+
+[node name="Box_filing_cabinet_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-27.4, 0, -16.5)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("29_filing_cabin")
+
+[node name="Box_drawer_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-23.4, 0, -20.6)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("31_drawer")
+
+[node name="Box_server_rack_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-22.4, 0, -21.3)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("32_server_rack")
+
+[node name="Box_server_rack_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-19.65, 0, -21.3)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("32_server_rack")
+
+[node name="Box_pc_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-22.4, 0, -16)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("30_pc")
+
+[node name="Box_filing_cabinet_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-15.6, 0, -21.3)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("29_filing_cabin")
+
+[node name="Box_drawer_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-18.6, 0, -17)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("31_drawer")
+
+[node name="Box_jacket_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-27, 0, -12.8)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("27_jacket")
+
+[node name="Box_jacket_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-26.8, 0, 8.5)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("27_jacket")
+
+[node name="Box_jacket_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-26.8, 0, 14.5)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("27_jacket")
+
+[node name="Box_jacket_5" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-26.8, 0, 17.5)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("27_jacket")
+
+[node name="Box_drawer_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-23, 0, 19.4)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("31_drawer")
+
+[node name="Box_drawer_5" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-22.4, 0, 7.2)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("31_drawer")
+
+[node name="Box_fridge_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-16.7, 0, 7)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("33_fridge")
+
+[node name="Box_kitchen_cabinet_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-21.3, 0, 12.5)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("34_kitchen_cabi")
+
+[node name="Box_store_shelf_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-16.8, 0, 11.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("35_store_shelf")
+
+[node name="Box_medicine_cabinet_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-21.5, 0, 14)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("36_medicine_cab")
+
+[node name="Box_medicine_cabinet_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(27.6, 0, -9)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("36_medicine_cab")
+
+[node name="Box_medicine_cabinet_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(27.6, 0, -12.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("36_medicine_cab")
+
+[node name="Box_medical_crate_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(20.5, 0, -8.6)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("37_medical_crat")
+
+[node name="Box_medical_bag_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(24.5, 0, -11)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("38_medical_bag")
+
+[node name="Box_lab_cabinet_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(16.6, 0, -19.2)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("39_lab_cabinet")
+
+[node name="Box_lab_cabinet_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(21.6, 0, -19.2)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("39_lab_cabinet")
+
+[node name="Box_pc_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(20.2, 0, -14.4)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("30_pc")
+
+[node name="Box_crate_5" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(27.4, 0, -15)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_duffle_bag_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(24, 0, -19)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("26_duffle_bag")
+
+[node name="Box_crate_6" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(19, 0, 13.2)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_crate_7" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(23.5, 0, 9)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_crate_8" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(26.8, 0, 18.8)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_duffle_bag_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(17, 0, 18.6)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("26_duffle_bag")
+
+[node name="Box_duffle_bag_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(26, 0, 10)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("26_duffle_bag")
+
+[node name="Box_toolbox_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(21, 0, 1)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("24_toolbox")
+
+[node name="Box_weapon_box_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(27.2, 0, 2)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("40_weapon_box")
+
+[node name="Box_weapon_box_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(27.2, 0, 5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("40_weapon_box")
+
+[node name="Box_weapon_box_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(24.2, 0, 1)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("40_weapon_box")
+
+[node name="Box_crate_9" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(26.8, 0, 7.2)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_crate_10" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-20.5, 0, -3)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Box_duffle_bag_5" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(13, 0, 18.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("26_duffle_bag")
+
+[node name="Box_crate_11" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-29, 0, 3)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("9_loot_box")
+container = ExtResource("25_crate")
+
+[node name="Loose_1" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-8, 0, 0.5)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(2.5, 0, -1)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_3" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(10, 0, 2)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-1, 3, -7)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_5" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(0.5, 0, -15)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_6" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-4, 0, -13.5)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_7" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-27.2, 0, -13.5)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_8" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-17.5, 0, -20)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_9" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-24.5, 0, 12)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_10" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-18, 0, 18)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_11" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(19, 0, -11.5)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_12" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(19, 0, -16)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_13" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(25, 0, -16)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_14" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(21, 0, 6)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_15" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(25, 0, 3)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_16" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(21, 0, 17)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_17" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-14, 0, -4)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_18" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(14, 0, -10)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_19" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(6, 0, 18)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_20" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(8, 3, -6)
+script = ExtResource("10_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_Map" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-26.5, 0.85, -18)
+script = ExtResource("10_loot_pickup")
+item_id = "factory_map"
+spawn_chance = 0.5
+
+[node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
+fov = 55.0
+current = true
+script = ExtResource("17_top_down_cam")
+target = NodePath("../Player")
+
+[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("18_hud")]
+player = NodePath("../Player")
+
+[node name="InventoryLayer" type="CanvasLayer" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("22_inventory_la")
+player = NodePath("../Player")
+
+[node name="PlayerVision" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("20_player_visio")
+player = NodePath("../Player")
+
+[node name="PauseMenu" parent="." instance=ExtResource("19_pause_menu")]

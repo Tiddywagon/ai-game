@@ -3,8 +3,9 @@ extends Node3D
 ## An item lying loose on the ground in a raid (DESIGN.md §2, §6.2). F nearby picks it up into the
 ## pockets, rig or backpack (it's then loot: found in raid if you extract with it). Either a set item,
 ## or rolled at the start of the raid from a LootTable (normally loose_loot.tres, any item) with the
-## map's multipliers; a spot only has something on it `spawn_chance` of the time. Hidden while out of
-## sight, like enemies. A small box the size of the item, in its rarity colour, for now.
+## map's multipliers (and a LootZone's if it lies in one); a spot only has something on it
+## `spawn_chance` of the time. Hidden while out of sight, like enemies. A small box the size of the
+## item, in its rarity colour, for now.
 
 ## A set item, or "" to roll one from `loot_table`.
 @export var item_id := ""
@@ -53,7 +54,8 @@ func _make_item() -> ItemInstance:
 		rng.randomize()
 	if rng.randf() >= spawn_chance:
 		return null
-	var rolled := loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")))
+	var boost := LootZone.boost_at(get_tree(), global_position) if is_inside_tree() else PackedFloat32Array()
+	var rolled := loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost)
 	return rolled[0] if not rolled.is_empty() else null
 
 

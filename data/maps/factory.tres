@@ -6,14 +6,14 @@
 script = ExtResource("1_map")
 id = "factory"
 display_name = "Factory"
-description = "Tight industrial halls. Short, brutal raids."
+description = "Tight industrial halls, a catwalk over the factory floor, offices, lockers, a lab and a warehouse armory. Short, brutal raids."
 order = 3
 size = "Small"
 raid_minutes = 20
 players = "4 PMCs · 8 Scavs"
-extracts = "2 (1 needs a key)"
+extracts = "3 (1 needs a key, 1 random)"
 boss = "Tagilla"
-scene_path = ""
+scene_path = "res://maps/factory.tscn"
 climate = "Hot"
 energy_drain_multiplier = 1.1
 hydration_drain_multiplier = 1.35

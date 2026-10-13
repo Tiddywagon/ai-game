@@ -1,10 +1,8 @@
 [
-  {"id": "dorm_key", "name": "Dorm room 114 key", "description": "Opens a room in the dorms.", "category": "key",
-   "rarity": "uncommon", "weight": 0.01, "value": 20000, "stats": {"uses": 40}},
-  {"id": "office_key", "name": "Factory office key", "description": "Opens the office above the factory floor.", "category": "key",
-   "rarity": "rare", "weight": 0.01, "value": 45000, "stats": {"uses": 25}},
-  {"id": "marked_key", "name": "Marked room key", "description": "A key with a red mark. Rumoured to open a room full of valuables.", "category": "key",
-   "rarity": "epic", "weight": 0.01, "value": 600000, "stats": {"uses": 10}},
-  {"id": "lab_keycard", "name": "Lab access keycard", "description": "Single-use card for the Labs entrance.", "category": "key",
-   "rarity": "epic", "weight": 0.01, "value": 350000, "stats": {"uses": 1}}
+  {"id": "dorm_key", "name": "Dorm room 114 key", "description": "Opens a room in the dorms.", "category": "key", "rarity": "uncommon", "weight": 0.01, "value": 20000, "stats": {"uses": 40}},
+  {"id": "office_key", "name": "Factory office key", "description": "Opens the overseer's office above the Factory floor.", "category": "key", "rarity": "rare", "weight": 0.01, "value": 45000, "stats": {"uses": 25}},
+  {"id": "marked_key", "name": "Marked room key", "description": "A key with a red mark. Rumoured to open a room full of valuables.", "category": "key", "rarity": "epic", "weight": 0.01, "value": 600000, "stats": {"uses": 10}},
+  {"id": "lab_keycard", "name": "Lab access keycard", "description": "Single-use card for the Labs entrance.", "category": "key", "rarity": "epic", "weight": 0.01, "value": 350000, "stats": {"uses": 1}},
+  {"id": "factory_exit_key", "name": "Factory exit key", "description": "Opens the cellar hatch in the Factory boiler house: carry it to extract through the Cellars.", "category": "key", "rarity": "uncommon", "weight": 0.01, "value": 30000, "stats": {"uses": 25}},
+  {"id": "factory_lab_key", "name": "Factory lab key", "description": "Opens the lab behind the Factory med bay.", "category": "key", "rarity": "rare", "weight": 0.01, "value": 70000, "stats": {"uses": 15}}
 ]

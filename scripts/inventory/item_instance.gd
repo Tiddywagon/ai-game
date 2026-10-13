@@ -42,7 +42,8 @@ var max_durability := 100.0
 ## Gear upgrade level, 0 to +5 (GearUpgrades): more durability, less blunt damage, more room or better
 ## hearing, depending on the item.
 var upgrade_level := 0
-## Meds, food and drink: uses left, or HP left in a medkit (Consumables). Used up at 0.
+## Meds, food and drink: uses left, or HP left in a medkit (Consumables). Keys: uses left (Keys).
+## Used up at 0.
 var charges := 0.0
 ## Insured (DESIGN.md §2, Insurance): lost when you die or go missing, it comes back to the stash
 ## (without what was inside it or loaded in it). Coming back ends the insurance.
@@ -64,6 +65,8 @@ static func create(id: String, amount := 1) -> ItemInstance:
 	WeaponMods.install_defaults(instance)
 	if Consumables.is_consumable(item_data):
 		instance.charges = Consumables.max_charges(item_data)
+	elif Keys.is_key(item_data):
+		instance.charges = Keys.max_uses(item_data)
 	if instance.is_armor():
 		instance.max_durability = float(item_data.stats.get("durability", 100.0))
 		instance.durability = instance.max_durability
@@ -179,6 +182,8 @@ func has_durability() -> bool:
 
 ## A med, food or drink with some of its uses (or HP) gone.
 func is_part_used() -> bool:
+	if Keys.is_key(data):
+		return charges < Keys.max_uses(data) - 0.001
 	return Consumables.is_consumable(data) and charges < Consumables.max_charges(data) - 0.001
 
 
@@ -313,6 +318,8 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 	instance.upgrade_level = clampi(int(entry.get("upgrade", 0)), 0, GearUpgrades.max_level(instance.data))
 	if entry.has("charges") and Consumables.is_consumable(instance.data):
 		instance.charges = clampf(float(entry.charges), 0.0, Consumables.max_charges(instance.data))
+	elif entry.has("charges") and Keys.is_key(instance.data):
+		instance.charges = clampf(float(entry.charges), 0.0, Keys.max_uses(instance.data))
 	if instance.upgrade_level > 0:
 		GearUpgrades.apply(instance)
 	if entry.has("mods"):

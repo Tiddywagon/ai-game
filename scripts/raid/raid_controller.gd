@@ -14,6 +14,9 @@ signal power_on
 
 @export var player: Player
 @export var config: RaidConfig = preload("res://data/config/raid.tres")
+## AI PMCs that join the raid, each at a PMC spawn point the player didn't get (DESIGN.md §4, §5).
+@export_range(0, 8) var ai_pmcs := 0
+@export var ai_pmc_profile: BotProfile = preload("res://data/bots/pmc.tres")
 
 var map: MapInfo
 ## Seconds since the raid started, and seconds left on the clock.
@@ -61,6 +64,8 @@ func _ready() -> void:
 		player.died.connect(end_raid.bind(RaidOutcome.Status.KILLED))
 		if is_real_raid() and GameState.raid.get("spawn", "") != "scene":
 			_place_player()
+		if ai_pmcs > 0:
+			_spawn_ai_pmcs.call_deferred()
 
 
 func _physics_process(delta: float) -> void:
@@ -169,6 +174,30 @@ func _place_player() -> void:
 	if spawn_point:
 		player.global_position = spawn_point.global_position
 		player.rotation.y = spawn_point.global_rotation.y
+
+
+## AI PMCs at PMC spawn points the player isn't at, farthest from the player first, each patrolling
+## through a few points of the Scav zones.
+func _spawn_ai_pmcs() -> void:
+	var free_points: Array = get_tree().get_nodes_in_group("spawn_points").filter(func(point: SpawnPoint) -> bool:
+		return point != spawn_point and point.side != "Scav")
+	free_points.sort_custom(func(a: SpawnPoint, b: SpawnPoint) -> bool:
+		return a.global_position.distance_to(player.global_position) > b.global_position.distance_to(player.global_position))
+	var stops := PackedVector3Array()
+	for zone in get_tree().get_nodes_in_group("scav_zones"):
+		stops.append_array(zone.patrol_points())
+	for i in mini(ai_pmcs, free_points.size()):
+		var point: SpawnPoint = free_points[i]
+		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
+		bot.name = "AIPMC%d" % (i + 1)
+		bot.profile = ai_pmc_profile
+		var route := PackedVector3Array([point.global_position])
+		for stop in 2:
+			if not stops.is_empty():
+				route.append(stops[rng.randi_range(0, stops.size() - 1)])
+		bot.patrol_points = route
+		bot.position = point.global_position
+		get_parent().add_child(bot)
 
 
 # --- Ending --------------------------------------------------------------------------------------

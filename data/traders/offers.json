@@ -27,7 +27,10 @@
       {"item": "ammo_762x54r_lps", "count": 20, "price": 7800, "currency": "RUB", "ll": 1},
       {"item": "ammo_762x54r_sp", "count": 20, "price": 8300, "currency": "RUB", "ll": 2},
       {"item": "ammo_762x54r_t46", "count": 20, "price": 8800, "currency": "RUB", "ll": 2},
-      {"item": "ammo_762x54r_snb", "count": 20, "price": 62400, "currency": "RUB", "ll": 4}
+      {"item": "ammo_762x54r_snb", "count": 20, "price": 62400, "currency": "RUB", "ll": 4},
+      {"item": "factory_map", "price": 10000, "currency": "RUB"},
+      {"item": "test_yard_map", "price": 5500, "currency": "RUB"},
+      {"item": "factory_exit_key", "price": 34000, "currency": "RUB", "ll": 2}
     ],
     "barters": [
       {"give": [{"item": "bolts", "count": 2, "fir": true}, {"item": "screws", "count": 2}], "get": {"item": "ammo_545_bs", "count": 30}, "ll": 3},
@@ -107,7 +110,8 @@
       {"give": [{"item": "military_hdd", "count": 1, "fir": true}, {"item": "saline_bag", "count": 2}], "get": {"item": "ghost_serum"}, "ll": 3},
       {"give": [{"item": "ophthalmoscope", "count": 1}, {"item": "blood_set", "count": 2}], "get": {"item": "ifak"}, "ll": 2},
       {"give": [{"item": "defibrillator", "count": 1}], "get": {"item": "surv12"}, "ll": 3},
-      {"give": [{"item": "diamond_necklace", "count": 1}], "get": {"item": "afak"}, "ll": 3}
+      {"give": [{"item": "diamond_necklace", "count": 1}], "get": {"item": "afak"}, "ll": 3},
+      {"give": [{"item": "blood_set", "count": 2}, {"item": "medical_tools", "count": 1}], "get": {"item": "factory_lab_key"}, "ll": 2}
     ]
   },
   "skier": {
@@ -151,7 +155,8 @@
       {"give": [{"item": "hard_drive", "count": 1}, {"item": "ssd_drive", "count": 1}], "get": {"item": "prism_sight"}, "ll": 2},
       {"give": [{"item": "multitool", "count": 1}, {"item": "cigarettes", "count": 2}], "get": {"item": "red_dot"}},
       {"give": [{"item": "silver_ring", "count": 1}, {"item": "vintage_camera", "count": 1}], "get": {"item": "prism_sight"}, "ll": 2},
-      {"give": [{"item": "sat_phone", "count": 1}], "get": {"item": "lpvo_1_6"}, "ll": 3}
+      {"give": [{"item": "sat_phone", "count": 1}], "get": {"item": "lpvo_1_6"}, "ll": 3},
+      {"give": [{"item": "gold_chain", "count": 1}, {"item": "cigarettes", "count": 2}], "get": {"item": "office_key"}, "ll": 2}
     ]
   },
   "peacekeeper": {

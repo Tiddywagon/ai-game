@@ -1,60 +1,15 @@
-extends Node3D
-## Test level for movement, cover and combat (DESIGN.md §13). Esc / Start opens the pause menu.
-## Uses the side and loadout picked in ENTER RAID (GameState.raid); run on its own it plays as a PMC
-## (and the raid's ending doesn't touch your profile). A raid from ENTER RAID starts at a random spawn
-## point (SpawnPoint). Search the containers and bodies (F), pick up loose loot, and extract: the
-## north-east gate is always open; the sewer manhole is open some raids; the smuggler's car takes
-## roubles; the rope over the east wall needs paracord; the power station gate needs the power switch
-## on the long wall thrown; the Scav checkpoint is for Scavs (RaidController, ExtractZone).
+extends RaidLevel
+## Test level for movement, cover and combat (DESIGN.md §13): the raid map script (RaidLevel) plus
+## debug keys. Search the containers and bodies (F), pick up loose loot, and extract: the north-east
+## gate is always open; the sewer manhole is open some raids; the smuggler's car takes roubles; the
+## rope over the east wall needs paracord; the power station gate needs the power switch on the long
+## wall thrown; the Scav checkpoint is for Scavs (RaidController, ExtractZone).
 ## Debug keys: F1 left leg fracture, F2 overweight, F3 next round type for the gun's caliber (adds a stack if you have none), F4 AI on/off, F5 heal (and fill energy and hydration),
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.
 
-const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
-const RESULT_SCREEN := preload("res://ui/raid_result_screen.tscn")
-## Seconds between dying and the death screen.
-const DEATH_DELAY := 1.5
-
-@onready var _player: Player = $Player
-@onready var _hud := $HUD
-@onready var _environment: RaidEnvironment = $RaidEnvironment
-@onready var _vision: PlayerVision = $PlayerVision
-@onready var _raid: RaidController = $Raid
-
-var _start_msec := 0
-
-
-func _ready() -> void:
-	# Work out where the AI can walk from the level geometry, then rebuild cover points to match.
-	($Navigation as NavigationRegion3D).bake_navigation_mesh(false)
-	CoverSystem.mark_dirty()
-	_apply_raid()
-	_start_msec = Time.get_ticks_msec()
-	_player.died.connect(_on_player_died)
-	_raid.raid_ended.connect(_on_raid_ended)
-
-
-## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
-## player gets the starter kit. A PMC brings the profile's energy and hydration (DESIGN.md §13.7); a
-## Scav starts full. The map's climate sets how fast they drain.
-func _apply_raid() -> void:
-	var raid := GameState.raid
-	var tuning := Consumables.CONFIG
-	if raid.get("side") == "scav":
-		_player.side = Actor.Side.SCAV
-		_player.health.start_metabolism(tuning, tuning.max_energy, tuning.max_hydration)
-	else:
-		Consumables.recover_profile()
-		_player.health.start_metabolism(tuning, GameState.energy, GameState.hydration)
-	_player.health.metabolism_skill = Consumables.skill_multiplier()
-	var map := MapInfo.find(raid.get("map", "test_yard"))
-	if map:
-		_player.health.energy_climate = map.energy_drain_multiplier
-		_player.health.hydration_climate = map.hydration_drain_multiplier
-	var loadout: Variant = raid.get("loadout")
-	_player.set_inventory(loadout if loadout is Inventory else Inventory.starter())
-
 
 func _unhandled_input(event: InputEvent) -> void:
+	super(event)
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return
@@ -105,33 +60,3 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F10:
 			_vision.enabled = not _vision.enabled
 			_hud.show_message("Fog of war " + ("on" if _vision.enabled else "off"))
-
-
-## A moment after dying, the death screen says what killed you (DESIGN.md §16.5).
-func _on_player_died() -> void:
-	var raid_seconds := (Time.get_ticks_msec() - _start_msec) / 1000.0
-	get_tree().create_timer(DEATH_DELAY).timeout.connect(func() -> void:
-		_hud.visible = false
-		var screen := DEATH_SCREEN.instantiate()
-		add_child(screen)
-		screen.show_death(_player, raid_seconds, _raid.outcome)
-		screen.continued.connect(func() -> void:
-			screen.queue_free()
-			_show_summary(_raid.outcome)))
-
-
-## Extracted or out of time: the raid summary over the paused raid. (Killed: the death screen first,
-## then the summary.)
-func _on_raid_ended(outcome: RaidOutcome) -> void:
-	if outcome.status == RaidOutcome.Status.KILLED:
-		return  # The death screen handles that.
-	_show_summary(outcome)
-
-
-func _show_summary(outcome: RaidOutcome) -> void:
-	$InventoryLayer.close()
-	_hud.visible = false
-	get_tree().paused = true
-	var screen := RESULT_SCREEN.instantiate()
-	add_child(screen)
-	screen.show_outcome(outcome, _raid)

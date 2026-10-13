@@ -119,6 +119,23 @@ func status_text(player: Player) -> String:
 	return ", ".join(needs) if not needs.is_empty() else "open"
 
 
+## What it takes, whatever the raid: "always open", "open some raids (50%)", "pay 7,000 ₽", "needs
+## Factory exit key", "needs power", "Scav only" (the map item's legend).
+func kind_text() -> String:
+	var parts: Array[String] = []
+	if sides != "Both":
+		parts.append("%s only" % ("Scav" if sides == "Scav" else "PMC"))
+	if chance < 1.0:
+		parts.append("open some raids (%d%%)" % roundi(chance * 100.0))
+	if price > 0:
+		parts.append("pay %s" % UiFormat.money(price))
+	if required_item != "":
+		parts.append("needs %s%s" % [_item_name(), " (used up)" if consumes_item else ""])
+	if needs_power:
+		parts.append("needs power")
+	return ", ".join(parts) if not parts.is_empty() else "always open"
+
+
 ## Uses up the required item on extracting (if it's used up): one piece of it.
 func use_up_item(player: Player) -> void:
 	if required_item == "" or not consumes_item:

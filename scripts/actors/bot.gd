@@ -422,6 +422,8 @@ func _move_to(goal: Vector3, sprint: bool) -> bool:
 	var to_goal := Vector3(goal.x - global_position.x, 0.0, goal.z - global_position.z)
 	if to_goal.length() < ARRIVE_DISTANCE:
 		return true
+	if NavigationServer3D.map_get_iteration_id(_agent.get_navigation_map()) == 0:
+		return false  # The navmesh baked at raid start hasn't synced yet: wait a frame.
 	if _agent.target_position.distance_to(goal) > 0.05:
 		_agent.target_position = goal
 	var next := _agent.get_next_path_position()
