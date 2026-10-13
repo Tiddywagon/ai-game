@@ -86,20 +86,41 @@
   {
     "id": "nutrition_unit",
     "name": "Nutrition Unit",
-    "description": "Filters water, packs rations and brews drinks.",
+    "description": "Cooks, brews and packs food and drink from junk. Each level also refills energy and hydration faster between raids.",
     "levels": [
       {"level": 1, "roubles": 25000, "requires": [{"item": "hose", "count": 1}, {"item": "kettle", "count": 1}, {"item": "lighter", "count": 1}],
         "crafts": [
+          {"id": "energy_drink", "inputs": [{"item": "water_bottle", "count": 1}, {"item": "sugar", "count": 1}, {"item": "coffee", "count": 1}], "output": {"item": "energy_drink", "count": 2}},
+          {"id": "black_tea", "inputs": [{"item": "water_bottle", "count": 1}, {"item": "sugar", "count": 1}, {"item": "lighter", "count": 1}], "output": {"item": "black_tea", "count": 1}},
+          {"id": "field_ration", "inputs": [{"item": "crackers", "count": 2}, {"item": "jerky", "count": 1}, {"item": "water_bottle", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "field_ration", "count": 2}},
+          {"id": "emergency_water", "inputs": [{"item": "water_bottle", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "emergency_water", "count": 2}},
           {"id": "aquamari", "inputs": [{"item": "water_bottle", "count": 2}, {"item": "hose", "count": 1}], "output": {"item": "aquamari", "count": 1}},
-          {"id": "mre", "inputs": [{"item": "canned_beef", "count": 1}, {"item": "crackers", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "mre", "count": 1}},
-          {"id": "emergency_water", "inputs": [{"item": "water_bottle", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "emergency_water", "count": 2}}
+          {"id": "mre", "inputs": [{"item": "canned_beef", "count": 1}, {"item": "crackers", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "mre", "count": 1}}
         ]},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "kettle", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "rechargeable_battery", "count": 1, "fir": true}],
         "crafts": [
+          {"id": "kvass", "inputs": [{"item": "rye_bread", "count": 1}, {"item": "sugar", "count": 1}, {"item": "water_bottle", "count": 1}], "output": {"item": "kvass", "count": 2}},
+          {"id": "buckwheat", "inputs": [{"item": "sugar", "count": 1}, {"item": "water_bottle", "count": 1}, {"item": "matches", "count": 2}], "output": {"item": "buckwheat", "count": 2}},
           {"id": "hot_rod", "inputs": [{"item": "energy_drink", "count": 2}, {"item": "condensed_milk", "count": 1}], "output": {"item": "hot_rod", "count": 1}},
           {"id": "vodka", "inputs": [{"item": "crackers", "count": 3}, {"item": "water_bottle", "count": 1}, {"item": "lighter", "count": 1}], "output": {"item": "vodka", "count": 1}},
           {"id": "moonshine", "inputs": [{"item": "condensed_milk", "count": 2}, {"item": "water_bottle", "count": 2}, {"item": "lighter", "count": 1}], "output": {"item": "moonshine", "count": 1}}
+        ]},
+      {"level": 3, "roubles": 90000, "stations": {"generator": 2}, "requires": [{"item": "hose", "count": 2, "fir": true}, {"item": "kettle", "count": 1, "fir": true}, {"item": "capacitors", "count": 2, "fir": true}, {"item": "toothpaste", "count": 2, "fir": true}],
+        "crafts": [
+          {"id": "survivor_kit", "inputs": [{"item": "field_ration", "count": 1}, {"item": "emergency_water", "count": 2}, {"item": "matches", "count": 1}, {"item": "duct_tape", "count": 1}], "output": {"item": "survivor_kit", "count": 2}},
+          {"id": "isotonic", "inputs": [{"item": "mineral_water", "count": 1}, {"item": "sugar", "count": 1}, {"item": "apple_juice", "count": 1}], "output": {"item": "isotonic", "count": 2}},
+          {"id": "chocolate_bar", "inputs": [{"item": "sugar", "count": 2}, {"item": "condensed_milk", "count": 1}], "output": {"item": "chocolate_bar", "count": 3}}
         ]}
+    ]
+  },
+  {
+    "id": "rest_space",
+    "name": "Rest Space",
+    "description": "Bunks, a heater and a TV. Energy and hydration refill faster between raids with each level.",
+    "levels": [
+      {"level": 1, "roubles": 30000, "requires": [{"item": "light_bulb", "count": 2}, {"item": "nails", "count": 3}, {"item": "duct_tape", "count": 1}]},
+      {"level": 2, "roubles": 0, "stations": {"generator": 1}, "requires": [{"item": "rechargeable_battery", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "soap", "count": 2, "fir": true}]},
+      {"level": 3, "roubles": 120000, "stations": {"generator": 2, "nutrition_unit": 2}, "requires": [{"item": "military_cable", "count": 1, "fir": true}, {"item": "circuit_board", "count": 2, "fir": true}, {"item": "hard_drive", "count": 1, "fir": true}]}
     ]
   }
 ]

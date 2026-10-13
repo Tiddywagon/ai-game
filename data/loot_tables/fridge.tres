@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "Fridge"
+rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
+rarity_multipliers = PackedFloat32Array(1, 1.1, 1, 0.9, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray("water_bottle", "apple_juice", "kvass", "mineral_water", "energy_drink", "hot_rod", "isotonic", "birch_sap", "aquamari", "vodka", "moonshine", "condensed_milk", "pickles", "green_peas", "sprats", "canned_soup", "canned_beef", "field_ration")
+item_weights = {
+"water_bottle": 2.5,
+"energy_drink": 1.5
+}
+item_count = Vector2i(1, 4)

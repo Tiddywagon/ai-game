@@ -68,10 +68,10 @@ static func describe(cause: Dictionary) -> Array[String]:
 				if source.get("weapon", "") != "":
 					detail += " (%s)" % source.weapon
 			return ["Bled out", detail + "."]
-		"starvation":
-			return ["Starved", "No energy left: your stomach gave out%s." % (", and it spread to your %s" % fatal if fatal != "stomach" else "")]
+		"exhaustion":
+			return ["Died of exhaustion", "No energy left: Exhaustion wore every part of you down until your %s gave out." % fatal]
 		"dehydration":
-			return ["Died of thirst", "No hydration left: your stomach gave out%s." % (", and it spread to your %s" % fatal if fatal != "stomach" else "")]
+			return ["Died of thirst", "No hydration left: Dehydration wore every part of you down until your %s gave out." % fatal]
 		"toxin":
 			var item := ItemDB.get_item(str(cause.get("source", "")))
 			return ["Poisoned", "Side effect of %s%s." % [item.display_name if item else "a stimulant",

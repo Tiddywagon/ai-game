@@ -103,17 +103,39 @@ static func craft_block_reason(station: Dictionary, recipe: Dictionary) -> Strin
 		return "Upgrade the station first"
 	if not ItemSearch.can_afford(Requirement.list(recipe.inputs)):
 		return "Missing items"
-	var output := ItemInstance.create(str(recipe.output.item), int(recipe.output.get("count", 1)))
-	if output == null or not GameState.stash.has_room_for(output):
+	var outputs := _outputs(recipe)
+	if outputs.is_empty():
 		return "No room in the stash"
+	# Everything it makes has to fit: try it on a copy of the stash.
+	var copy := InventoryGrid.new(GameState.stash.size, &"stash")
+	copy.load_array(GameState.stash.to_array())
+	for piece in outputs:
+		if not copy.add(piece):
+			return "No room in the stash"
 	return ""
 
 
-## Crafts `recipe`: takes the inputs, puts the output (found in raid) in the stash. "" on success.
+## Crafts `recipe`: takes the inputs, puts the output (found in raid) in the stash. "" on success. An
+## output of several items that don't stack (2 energy drinks) comes as that many items.
 static func craft(station: Dictionary, recipe: Dictionary) -> String:
 	var reason := craft_block_reason(station, recipe)
 	if reason != "":
 		return reason
 	ItemSearch.pay(Requirement.list(recipe.inputs))
-	GameState.stash.add(FoundInRaid.make(str(recipe.output.item), int(recipe.output.get("count", 1)), FoundInRaid.Source.CRAFT))
+	for piece in _outputs(recipe):
+		GameState.stash.add(FoundInRaid.make(piece.data.id, piece.count, FoundInRaid.Source.CRAFT))
 	return ""
+
+
+## What `recipe` makes, as stacks no bigger than the item's max stack (none if the item is missing).
+static func _outputs(recipe: Dictionary) -> Array[ItemInstance]:
+	var pieces: Array[ItemInstance] = []
+	var data := ItemDB.get_item(str(recipe.output.item))
+	if data == null:
+		return pieces
+	var left := int(recipe.output.get("count", 1))
+	while left > 0:
+		var piece := ItemInstance.create(data.id, mini(left, data.max_stack))
+		pieces.append(piece)
+		left -= piece.count
+	return pieces

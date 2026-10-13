@@ -106,7 +106,9 @@ AI implementation: state machine (Idle → Patrol → Alert → Combat → Searc
 
 Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional (no backpack, power on, keycard) · Scav-only**.
 
-**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
+**Climate** (`climate`, `energy_drain_multiplier`, `hydration_drain_multiplier` in each map's `.tres`; Section 13.7): Shoreline Resort and Factory are **hot** (hydration drains ×1.5 and ×1.35, energy ×1.1), Woodland is **cold** (energy ×1.15, hydration ×0.9), the rest temperate. The HUD shows HOT or COLD next to the weather.
+
+**Test Yard** (playable): 15-minute raid, one always-open extract (the green ring in the north-east corner), one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
 
 ## 6. Items
 
@@ -147,14 +149,18 @@ Extract types: **Always open · Random (chance) · Paid (roubles) · Conditional
 | Container *(tune)* | Holds | Items | Rarity multipliers (C / U / R / UR / E / L) | Grid | Search time | Solid |
 |---|---|---|---|---|---|---|
 | Loose loot (on the ground) | Anything | 1 (70% of spots) | 1 / 1 / 1 / 1 / 1 / 1 | — | — | — |
-| Crate | Ammo, food, junk, melee | 1–4 | 1.1 / 1 / 1 / 0.9 / 0.8 / 0.6 | 5×4 | ×1 | Yes (wood) |
+| Crate | Ammo, junk, melee | 1–4 | 1.1 / 1 / 1 / 0.9 / 0.8 / 0.6 | 5×4 | ×1 | Yes (wood) |
 | Toolbox | Bolts, screws, wires, tape, pliers, screwdriver, nails, hose, weapon parts, electric motor, batteries, light bulbs, capacitors, circuit boards, WD-40, gunpowder, military cable, lighters | 1–3 | 1 / 1 / 1.1 / 1.2 / 1 / 1 | 4×2 | ×1 | No |
 | Jacket | Ammo, meds, food, valuables, junk, keys | 0–2 | 1 / 1 / 1 / 1 / 1 / 1 | 2×2 | ×0.8 | No |
 | Weapon box | Weapons, ammo, attachments | 1–2 | 0.8 / 1 / 1.3 / 1.3 / 1.2 / 1 | 6×3 | ×1.1 | Yes (wood) |
 | Medical bag | Meds and stims (all 26), medical tools | 1–3 | 0.8 / 1.1 / 1.3 / 1.5 / 1 / 1 | 3×3 | ×1 | No |
 | Safe | Valuables, keys | 1–2 | 0.3 / 0.8 / 1.5 / 2.5 / 3 / 3 | 3×3 | ×1.4 | Yes (metal) |
 | Filing cabinet | Keys, flash drives, intelligence folders (×2 likely), paper, matches, gold chains, hard drives, crypto drives, cigarettes, lighters | 1–3 | 1 / 1 / 1.2 / 1.3 / 1.2 / 1 | 4×4 | ×1.2 | Yes (metal) |
-| Duffle bag | Ammo, attachments, meds, food, valuables, junk | 1–3 | 1 / 1 / 1 / 1 / 1 / 1 | 4×3 | ×1 | No |
+| Duffle bag | Ammo, attachments, meds, valuables, junk | 1–3 | 1 / 1 / 1 / 1 / 1 / 1 | 4×3 | ×1 | No |
+| Fridge | Drinks, canned food, alcohol, field rations | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 3×4 | ×0.8 | Yes (metal) |
+| Kitchen cabinet | Dry and canned food, combo rations, matches, lighters, soap, kettles | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 4×3 | ×1 | Yes (wood) |
+| Store shelf | Snacks, food, drinks, combo rations, cigarettes, hygiene, batteries, bulbs | 2–5 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 5×3 | ×1.1 | Yes (metal) |
+| Gas station counter | Energy and sports drinks, water, coffee, snacks, combo rations, cigarettes, lighters, batteries, WD-40, fuel conditioner | 1–4 | 1 / 1.1 / 1 / 0.9 / 1 / 1 | 4×3 | ×1 | Yes (metal) |
 
 Solid containers block movement and bullets (wood ones can be shot through) and the AI paths around them.
 
@@ -454,7 +460,8 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 | Generator | 3 | Powers stations; consumes fuel | 2× Fuel can, 1× Wires |
 | Stash | 4 | Increases stash size | 500k ₽, Prapor LL2 |
 | Medstation | 3 | Crafts meds | 2× Bandage, 1× Medical tools |
-| Nutrition Unit | 3 | Crafts food/drink | 1× Hose, 1× Kettle |
+| Nutrition Unit | 3 | Crafts food/drink; faster energy/hydration refill | 1× Hose, 1× Kettle |
+| Rest Space | 3 | Faster energy/hydration refill between raids | 2× Light bulb, 1× Rechargeable battery |
 | Workbench | 3 | Crafts ammo/attachments; unlocks repair | 5× Bolts, 3× Screws |
 | Water Collector | 3 | Produces water | 3× Hose, 1× Pump |
 | Lavatory | 3 | Crafts barter/junk components | 2× Duct tape, 1× Toilet paper |
@@ -466,7 +473,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory and Nutrition Unit. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, propital, the Surv12 and the Legendary Grizzly, eTG-c and Obdolbos, which traders never sell. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) filters water (Aquamari), packs MREs and water rations, and at level 2 brews Hot Rod, vodka and moonshine. Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, propital, the Surv12 and the Legendary Grizzly, eTG-c and Obdolbos, which traders never sell. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
@@ -700,7 +707,7 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | Strength | Carrying weight, melee | Carry more, throw farther; 0.25% less recoil per level |
 | Endurance | Sprinting | More stamina |
 | Vitality | Taking damage | Lower bleed chance |
-| Metabolism | Eating/drinking | 1% slower energy/hydration drain per level (built, Section 13.7; levelling isn't built yet) |
+| Metabolism | Eating/drinking (built: 0.5 points per point of energy or hydration; a level takes 100 points, +10% each) | 1% slower energy/hydration drain per level, up to 50% at level 50 (built, Section 13.7) |
 | Search | Searching containers | Faster search, rarer loot (+% capped) |
 | Weapon class skills | Using weapon type (built: Pistols, SMGs, Shotguns, Assault rifles, Marksman rifles, Bolt-action rifles, Machine guns) | 0.5% less recoil per level (up to 15% with Strength); reload speed planned. Levelling isn't built yet |
 
@@ -709,8 +716,8 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | System | Detail |
 |---|---|
 | Body parts | Head, Thorax (death at 0), Stomach, L/R Arm, L/R Leg (Section 13.5) |
-| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); hungry, thirsty, starving, dehydrated; timed effects from meds, stims and food (Section 13.7) |
-| Energy / Hydration | 100 each; drain in a raid, carried between raids; low slows stamina or shakes the aim, 0 = stomach HP loss (Section 13.7) |
+| Conditions | Light bleed, heavy bleed, fracture, pain (Section 13.5); hungry and thirsty (below 30), Exhaustion and Dehydration (at 0); timed effects from meds, stims and food (Section 13.7) |
+| Energy / Hydration | 0–100 each; drain in a raid (hydration twice as fast; more sprinting, rolling, overweight, injured or on hot maps, less crouched or still), carried between raids, refilled in the hideout; below 30 slows stamina recovery, 0 drains HP from every part, shakes the aim and blurs vision (Section 13.7) |
 | Stamina | Sprint, aim stability |
 
 ### 13.1 Movement *(tune)*
@@ -836,7 +843,7 @@ Every actor, player and AI, has the same body. Armor stops rounds before they re
 | Pain | While any part is fractured or blacked, unless a painkiller is working ("Pain (numbed)"). +1° weapon sway; for the player, dark red tunnel vision at the screen edges (pulsing; steady with "reduce flashing") |
 | Weapon sway | The aim drifts slowly left and right by up to the total sway (injuries plus the gun's own, Section 13.4), on top of spread. The player sees it as the bloom reticle shifting |
 | HUD | Bottom left: body silhouette (seen from behind), each part filled green → amber → red by its HP, black with a red outline when blacked; drops for bleeds (two for heavy), a crack for fractures, a flash on the part that was hit. Next to it, total HP, a list of conditions, the running effects (benefits green, drawbacks red, with time left) and what E would treat; energy and water bars under stamina; a USING bar above the player (Section 13.7) |
-| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it; "Starved", "Died of thirst" or "Poisoned" by a stim), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
+| Death screen | After 1.5 s: **KILLED IN ACTION**, what killed you ("Shot in the head by a Scav", with weapon, ammo, damage and distance; "the damage spread to your thorax" when a blacked limb did it; or "Bled out" with which bleed and who caused it; "Died of exhaustion", "Died of thirst" or "Poisoned" by a stim), your body at the moment of death (hover parts for HP), active effects, map, side, time in raid and kills. **BACK TO MENU** |
 
 All of these values live in `data/config/health.tres`.
 
@@ -945,29 +952,68 @@ Meds treat the body of Section 13.5, stims trade a few minutes of buffs for side
 
 | Rule | Detail |
 |---|---|
-| Max | 100 each. A new character starts full |
-| Drain | In a raid: −1.2 energy and −1.8 hydration per minute, twice as fast while sprinting, less with the Metabolism skill (1% per level). Stims and food change it (above) |
-| Hungry / thirsty | At 25 or less. Hungry: stamina recovers at 60% speed. Thirsty: +1.5° weapon sway. On the status list |
-| Starving / dehydrated | At 0: −0.12 HP/s (starving) and −0.2 HP/s (dehydrated) from the stomach; once it's blacked the damage spreads (Section 13.5), so it can kill ("Starved", "Died of thirst") |
-| Between raids | A PMC's energy and hydration carry over from raid to raid (at least 30 each after dying) and recover by 1 per real minute out of raid; eat and drink from the stash. A Scav starts full and doesn't touch the PMC's |
-| HUD | Energy and water bars under stamina (amber when low, red at 0); the inventory header and character screen show both |
+| Range | 0 to 100 each. A new character starts full |
+| Drain | In a raid, walking: −1 energy and −2 hydration a minute (hydration twice as fast) |
+| Faster / slower | × activity: standing or crouching still 0.5, moving crouched 0.75, walking 1, sprinting 2, rolling 3. × 1.2 heavy (from 25 kg), × 1.5 overweight. × 1.25 injured (bleeding, a fracture or a blacked part). × the map's climate: Shoreline Resort (hot) hydration ×1.5, energy ×1.1; Factory (hot) ×1.35 / ×1.1; Woodland (cold) hydration ×0.9, energy ×1.15. Stims and food add their own rates (above) |
+| Metabolism skill | Eating and drinking train it: 0.5 skill points per point of energy or hydration an item gives or takes; a level takes 100 points, +10% per level, up to 50. Each level drains 1% slower, up to 50% at level 50. Shown on the character screen |
+| Below 30 | Hungry (energy) or thirsty (hydration): stamina recovers at 70% speed for each, and the HUD warns (amber bar, a pulsing HUNGRY / THIRSTY line under the bars, the status list) |
+| At 0 | **Exhaustion** (energy) or **Dehydration** (hydration): every body part with HP loses 0.03 HP/s (Exhaustion) or 0.05 HP/s (Dehydration), so the head or thorax eventually gives out ("Died of exhaustion", "Died of thirst"); +1° (Exhaustion) and +1.5° (Dehydration) weapon sway; the view blurs (more at the edges, swimming in and out; steady with "reduce flashing") and the vision cone narrows ×0.85 each. Red EXHAUSTION / DEHYDRATION warning |
+| Between raids | A PMC's energy and hydration carry over from raid to raid (at least 30 each after dying). In the hideout they refill by 0.5 a real minute, × (1 + 0.5 per Nutrition Unit level + 0.75 per Rest Space level): ×4.75 with both at level 3, about 2.4 a minute. Eat and drink from the stash. A Scav starts full and doesn't touch the PMC's |
+| Eating and drinking | Takes the item's use time (2–6 s), can be cancelled (E again, or shooting, rolling, sprinting, reloading, aiming, a hit) and then nothing is eaten. Multi-use items take one use at a time and keep the rest (uses left on the item, saved) |
+| Previews | Hovering a food or drink in the inventory shows what one use would do: "Energy 62 → 77 (+15)  ·  Hydration 40 → 35 (−5)" in its tooltip and in the inventory header (against the player in a raid, the profile out of raid) |
+| HUD | Energy and water bars under stamina (amber below 30, red at 0) and the warning line; the inventory header and character screen show both |
 
-| Food / drink | Rarity | Size | Energy | Hydration | Use time | Effects |
-|---|---|---|---|---|---|---|
-| Crackers | Common | 1×1 | +15 | -5 | 3.0 s | — |
-| Green peas | Common | 1×1 | +25 | +10 | 4.0 s | — |
-| Sprats | Common | 1×1 | +30 | -10 | 4.0 s | — |
-| Apple juice | Common | 1×2 | +15 | +40 | 4.0 s | — |
-| Water bottle | Common | 1×2 | — | +60 | 4.0 s | — |
-| Energy drink | Uncommon | 1×1 | +10 | +40 | 3.0 s | stamina recovery +20% 2:00 |
-| Water ration | Uncommon | 1×1 | — | +35 | 3.0 s | — |
-| Condensed milk | Uncommon | 1×1 | +50 | -10 | 5.0 s | — |
-| Beef stew | Uncommon | 1×1 | +60 | -10 | 5.0 s | — |
-| Vodka | Uncommon | 1×2 | — | -15 | 4.0 s | painkiller 2:00; side effect: sway +1.5° 2:00 |
-| Hot Rod energy drink | Rare | 1×1 | +20 | +30 | 3.0 s | max stamina +20 5:00; stamina recovery +30% 5:00; side effect: sway +0.5° 5:00 |
-| Aquamari bottle with filter | Rare | 1×2 | — | +100 | 5.0 s | — |
-| MRE ration pack | Rare | 1×2 | +75 | +15 | 6.0 s | — |
-| Moonshine | Ultra Rare | 1×2 | — | -20 | 4.0 s | painkiller 5:00; side effect: sway +2.0° 5:00; side effect: speed -5% 5:00 |
+Values below are per use; negative values drain that stat. Combo rations (Field ration pack, Survivor's emergency kit) restore both, are Common / Uncommon and drop 3× / 2.5× as often as other items of their rarity, so they're a regular find wherever food spawns.
+
+| Food / drink | Rarity | Size | Energy | Hydration | Uses | Use time | Effects (side effects marked) |
+|---|---|---|---|---|---|---|---|
+| Sunflower seeds | Common | 1×1 | +6 | -4 | 5 | 2.0 s | — |
+| Crackers | Common | 1×1 | +15 | -5 | 1 | 3.0 s | — |
+| Oat bar | Common | 1×1 | +12 | -3 | 1 | 2.0 s | — |
+| Sugar | Common | 1×1 | +20 | -8 | 2 | 2.0 s | — |
+| Dried fish | Common | 1×1 | +18 | -12 | 2 | 3.0 s | — |
+| Rye bread | Common | 1×2 | +15 | -4 | 3 | 3.0 s | — |
+| Green peas | Common | 1×1 | +25 | +10 | 1 | 4.0 s | — |
+| Chocolate bar | Common | 1×1 | +20 | -6 | 1 | 2.0 s | — |
+| Pickles | Common | 1×1 | +10 | +12 | 2 | 3.0 s | — |
+| Sprats | Common | 1×1 | +30 | -10 | 1 | 4.0 s | — |
+| Canned soup | Common | 1×1 | +18 | +18 | 1 | 4.0 s | — |
+| Kvass | Common | 1×2 | +12 | +20 | 2 | 3.0 s | — |
+| Beef jerky | Common | 1×1 | +12 | -6 | 3 | 2.0 s | — |
+| Apple juice | Common | 1×2 | +10 | +25 | 2 | 3.0 s | — |
+| Water bottle | Common | 1×2 | — | +30 | 2 | 3.0 s | — |
+| Field ration pack | Common | 1×2 | +20 | +15 | 3 | 4.0 s | — |
+| Coffee | Uncommon | 1×1 | +8 | -4 | 4 | 2.0 s | stamina recovery +10% 3:00 |
+| Birch sap | Uncommon | 1×2 | +8 | +28 | 2 | 3.0 s | — |
+| Black tea | Uncommon | 1×2 | +5 | +20 | 3 | 4.0 s | sway -0.3° 2:00 |
+| Energy drink | Uncommon | 1×1 | +10 | +35 | 1 | 3.0 s | stamina recovery +20% 2:00 |
+| Mineral water | Uncommon | 1×2 | — | +45 | 1 | 3.0 s | stamina recovery +10% 2:00 |
+| Buckwheat | Uncommon | 1×1 | +40 | +5 | 1 | 6.0 s | — |
+| Honey | Uncommon | 1×1 | +15 | -3 | 3 | 3.0 s | stamina recovery +10% 1:00 |
+| Water ration | Uncommon | 1×1 | — | +35 | 1 | 3.0 s | — |
+| Tushonka | Uncommon | 1×1 | +45 | -12 | 1 | 4.0 s | — |
+| Condensed milk | Uncommon | 1×1 | +25 | -5 | 2 | 3.0 s | — |
+| Beef stew | Uncommon | 1×1 | +60 | -10 | 1 | 5.0 s | — |
+| Vodka | Uncommon | 1×2 | — | -8 | 3 | 3.0 s | painkiller 1:30; side effect: sway +1.0° 1:30 |
+| Survivor's emergency kit | Uncommon | 1×2 | +25 | +25 | 2 | 5.0 s | — |
+| Isotonic drink | Rare | 1×2 | +10 | +40 | 1 | 3.0 s | max stamina +10 3:00; stamina recovery +30% 3:00 |
+| Hot Rod energy drink | Rare | 1×1 | +20 | +30 | 1 | 3.0 s | max stamina +20 5:00; stamina recovery +30% 5:00; side effect: sway +0.5° 5:00 |
+| Aquamari bottle with filter | Rare | 1×2 | — | +50 | 2 | 4.0 s | — |
+| MRE ration pack | Rare | 1×2 | +75 | +15 | 1 | 6.0 s | — |
+| Moonshine | Ultra Rare | 1×2 | — | -15 | 2 | 4.0 s | painkiller 5:00; side effect: sway +2.0° 5:00; side effect: speed -5% 5:00 |
+
+**Where food spawns**
+
+| Spot | What it holds |
+|---|---|
+| Fridge | Drinks (water ×2.5 as likely, energy drinks), canned food, vodka and moonshine, field rations |
+| Kitchen cabinet | Dry and canned food (sugar and coffee more likely), combo rations, matches, lighters, soap, kettles |
+| Store shelf | Snacks, canned food, drinks, combo rations, cigarettes, toothpaste, soap, batteries, light bulbs |
+| Gas station counter | Energy and sports drinks, water, coffee, snacks, combo rations, cigarettes, lighters, batteries, WD-40, fuel conditioner |
+| Scav bodies | A snack in the pockets (always), often a drink or ration in the vest, food in the sling bag |
+| Elsewhere | Jackets and loose loot can hold food; crates and duffle bags no longer do |
+
+**Nutrition Unit crafts** (found in raid): level 1: energy drink ×2 (water + sugar + coffee), black tea (water + sugar + lighter), field ration ×2 (crackers ×2, jerky, water, tape), water ration ×2, Aquamari (water ×2 + hose), MRE; level 2 (generator 1): kvass ×2 (rye bread + sugar + water), buckwheat ×2 (sugar + water + matches ×2), Hot Rod, vodka, moonshine; level 3 (generator 2; found-in-raid hoses, kettle, capacitors, toothpaste): Survivor's emergency kit ×2, isotonic drink ×2, chocolate ×3.
 
 **Valuables** sell high and are wanted in barters and crafts; the best are Epic and Legendary.
 
@@ -975,7 +1021,7 @@ Meds treat the body of Section 13.5, stims trade a few minutes of buffs for side
 |---|---|---|---|---|
 | Old silver coin | Uncommon | 1×1 | 12,000 | barters (Skier) |
 | Old wrist watch | Uncommon | 1×1 | 15,000 | barters (Skier, Therapist) |
-| Hard drive | Uncommon | 1×1 | 18,000 | barters (Skier) |
+| Hard drive | Uncommon | 1×1 | 18,000 | barters (Skier); upgrades (Rest Space 3) |
 | Gold chain | Rare | 1×1 | 30,000 | barters (Peacekeeper, Prapor, Skier, Therapist); crafts (Workbench) |
 | Antique pocket watch | Rare | 1×1 | 38,000 | barters (Therapist) |
 | SSD drive | Rare | 1×1 | 46,000 | barters (Peacekeeper, Skier, Therapist) |
@@ -995,32 +1041,32 @@ Meds treat the body of Section 13.5, stims trade a few minutes of buffs for side
 
 | Barter good | Rarity | Size | Value (₽) | Used in |
 |---|---|---|---|---|
-| Matches | Common | 1×1 | 2,000 | barters (Jaeger, Skier); crafts (Lavatory) |
+| Matches | Common | 1×1 | 2,000 | barters (Jaeger, Skier); crafts (Lavatory, Nutrition Unit) |
 | Lighter | Common | 1×1 | 2,500 | barters (Jaeger, Prapor, Ragman); crafts (Nutrition Unit); upgrades (Nutrition Unit 1) |
-| Soap | Common | 1×1 | 2,800 | barters (Ragman, Therapist); crafts (Medstation); upgrades (Lavatory 2, Medstation 2, Medstation 3) |
-| Toothpaste | Common | 1×1 | 3,000 | barters (Ragman, Therapist); crafts (Lavatory); upgrades (Lavatory 2, Medstation 2, Medstation 3) |
+| Soap | Common | 1×1 | 2,800 | barters (Ragman, Therapist); crafts (Medstation); upgrades (Lavatory 2, Medstation 2, Medstation 3, Rest Space 2) |
+| Toothpaste | Common | 1×1 | 3,000 | barters (Ragman, Therapist); crafts (Lavatory); upgrades (Lavatory 2, Medstation 2, Medstation 3, Nutrition Unit 3) |
 | Cigarettes | Common | 1×1 | 3,000 | barters (Prapor, Ragman, Skier, Therapist) |
-| Light bulb | Common | 1×1 | 3,200 | upgrades (Medstation 3, Nutrition Unit 2) |
+| Light bulb | Common | 1×1 | 3,200 | upgrades (Medstation 3, Nutrition Unit 2, Rest Space 1, Rest Space 2) |
 | AA battery | Common | 1×1 | 3,500 | crafts (Workbench) |
 | Toilet paper | Common | 1×1 | 3,500 | barters (Therapist); crafts (Lavatory); upgrades (Lavatory 1, Lavatory 2) |
 | Screwdriver | Common | 1×1 | 3,500 | barters (Mechanic) |
-| Pack of nails | Common | 1×1 | 4,000 | barters (Jaeger) |
+| Pack of nails | Common | 1×1 | 4,000 | barters (Jaeger); upgrades (Rest Space 1) |
 | Pliers | Common | 1×1 | 5,000 | barters (Mechanic) |
 | Screw nuts | Common | 1×1 | 6,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
 | Wires | Common | 1×1 | 7,000 | barters (Mechanic, Ragman); crafts (Lavatory, Workbench); upgrades (Generator 2, Generator 3, Workbench 3) |
 | Bolts | Common | 1×1 | 8,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 1, Workbench 2) |
-| Duct tape | Common | 1×1 | 9,000 | barters (Prapor, Ragman, Skier); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); upgrades (Lavatory 1, Lavatory 2) |
-| Kettle | Uncommon | 1×2 | 9,000 | upgrades (Nutrition Unit 1, Nutrition Unit 2) |
+| Duct tape | Common | 1×1 | 9,000 | barters (Prapor, Ragman, Skier); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); upgrades (Lavatory 1, Lavatory 2, Rest Space 1) |
+| Kettle | Uncommon | 1×2 | 9,000 | upgrades (Nutrition Unit 1, Nutrition Unit 2, Nutrition Unit 3) |
 | WD-40 can | Uncommon | 1×1 | 11,000 | barters (Mechanic); crafts (Lavatory) |
-| Capacitors | Uncommon | 1×1 | 12,000 | barters (Mechanic); crafts (Workbench) |
-| Rechargeable battery | Uncommon | 1×1 | 14,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 2) |
-| Corrugated hose | Uncommon | 2×1 | 14,000 | barters (Jaeger); crafts (Nutrition Unit); upgrades (Nutrition Unit 1) |
-| Printed circuit board | Uncommon | 1×1 | 15,000 | barters (Mechanic) |
+| Capacitors | Uncommon | 1×1 | 12,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 3) |
+| Rechargeable battery | Uncommon | 1×1 | 14,000 | barters (Mechanic); crafts (Workbench); upgrades (Nutrition Unit 2, Rest Space 2) |
+| Corrugated hose | Uncommon | 2×1 | 14,000 | barters (Jaeger); crafts (Nutrition Unit); upgrades (Nutrition Unit 1, Nutrition Unit 3) |
+| Printed circuit board | Uncommon | 1×1 | 15,000 | barters (Mechanic); upgrades (Rest Space 3) |
 | Weapon parts | Uncommon | 2×1 | 15,000 | barters (Mechanic, Prapor); crafts (Workbench); upgrades (Workbench 3) |
 | Gunpowder "Kite" | Uncommon | 1×1 | 18,000 | barters (Prapor); crafts (Workbench) |
 | Medical tools | Uncommon | 1×1 | 19,000 | barters (Therapist); crafts (Medstation); upgrades (Medstation 3) |
 | Fuel can | Uncommon | 2×2 | 30,000 | upgrades (Generator 1, Generator 2) |
-| Military power cable | Rare | 1×1 | 36,000 | barters (Mechanic, Prapor); upgrades (Workbench 3) |
+| Military power cable | Rare | 1×1 | 36,000 | barters (Mechanic, Prapor); upgrades (Rest Space 3, Workbench 3) |
 | Fuel conditioner | Rare | 1×2 | 48,000 | barters (Jaeger); upgrades (Generator 3) |
 | Car battery | Rare | 2×2 | 52,000 | upgrades (Generator 3) |
 | Electric motor | Rare | 2×2 | 55,000 | barters (Mechanic); crafts (Workbench); upgrades (Generator 3, Workbench 3) |
@@ -1197,3 +1243,4 @@ Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits
 | 2026-10-12 | Ammo rework (Section 6.4; the request's ammo table didn't come through, a "[paste the table]" placeholder, so the rounds in Section 6.4 were kept and extended): every round now has fragmentation, velocity, recoil, accuracy, ricochet and light/heavy bleed chances on top of damage, penetration and armor damage (50 rounds, 4–6 per caliber; 5.45 PS and BS moved into `545.json`); 5 new tracer rounds (9x19, 5.56, 7.62x39, 7.62x51, 7.62x54R; 5.45 BT is one too). Armor works: helmets and vests stop rounds on the parts they cover by penetration against class and wear, push blunt damage through or let them ricochet, and wear down (durability saved per item). Soft rounds fragment and bleed, AP rounds get through armor for less flesh damage. Velocity sets range, damage falloff and energy through wood; rounds change recoil and spread. Ammo charts (examine panel for guns and rounds; new AMMO tab on the trader screen) compare every round of a caliber with armor class 1–6 squares. Ammo offers need trader loyalty (LL1 cheap, LL3–4 AP; Legendary rounds aren't sold); loyalty levels now rise when you meet their requirements. Workbench level 3 crafts the Legendary AP rounds. Armor hit marker and damage numbers. 307 items |
 | 2026-10-12 | Gear and gear upgrades (Section 12.2): armor classes 1–6 across 13 vests, 7 armored rigs and 10 helmets (penetration and durability as in Section 6.4), new zones (face for frontal head hits, arms for the heaviest suits), helmet face shield and headset slots (7 face shields, 6 headsets; helmets muffle hearing, headsets amplify it for the player's sound markers and AI hearing), armored rigs that can't be worn with body armor, plain rigs and backpacks from 3×1 to 8×8: 47 new gear items across every rarity, plus 5 upgrade materials. Upgrades +1…+5 (max by rarity: Common +1 … Epic/Legendary +5) at Ragman (by loyalty level) or the Workbench (by its level, cheaper): +10% durability and −4% blunt per level for armor, +6% ricochet for helmets and face shields, lighter and roomier rigs and backpacks, +5% hearing for headsets; roubles plus barter items per level (`data/config/gear_upgrades.json`). UPGRADE in the examine panel, Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES; "+N" on upgraded items. 359 items |
 | 2026-10-13 | Consumables (Section 13.7): meds that work (bandages and army bandages stop light bleeds, Esmarch and CAT tourniquets heavy ones, the CALOK-B hemostat either; splints set fractures; painkillers numb pain and let broken legs sprint; AI-2 and car (small) and Salewa, IFAK, AFAK and Grizzly (large) medkits with HP pools that pay for bleeds and heal one part a use; CMS and Surv12 surgery restores blacked parts at a max HP cost), 9 stimulants with timed effects (regeneration, painkiller, hemostatic, stamina, speed, recoil, sway) and side effects (tremor, thirst, hunger, toxin). Every item has a use time and can be interrupted (shooting, rolling, sprinting, reloading, aiming, a hit, E); E quick-treats with what's in your pockets, rig and secure container; USE in the examine panel. Energy and hydration drain in raids (faster sprinting), make you hungry or thirsty when low and hurt at 0, carry over between raids and recover out of raid; 14 foods and drinks. New valuables (watches, coins, hard drives, crypto drive) and barter goods (batteries, fuel conditioner, toothpaste, soap, cigarettes, lighter and more) in barters, crafts and hideout upgrades; Medstation level 3, Nutrition Unit; best meds and valuables Epic or Legendary. HUD energy and water bars, effects, E hint, use bar; uses left on items; `consumables.tres`. 412 items. Save adds energy and hydration |
+| 2026-10-13 | Energy and hydration system (Section 13.7). The request's food table came through as a "[paste the table]" placeholder, so the table was built from the items it named (crackers, sugar, jerky, vodka, moonshine, water, coffee, energy drink, Field ration pack, Survivor's emergency kit) and the existing food, plus 15 originals: 34 foods and drinks with per-use energy and hydration, uses, use time, rarity, size and side effects. Drain: −1 energy / −2 hydration a minute walking, × activity (still 0.5, crouched 0.75, sprint 2, roll 3), load, injuries and the map's climate (hot Shoreline Resort and Factory, cold Woodland); below 30 slower stamina recovery and a HUD warning (was 25, with sway); at 0 Exhaustion / Dehydration drain HP from every body part (was the stomach), add sway and blur and narrow vision. Hideout refill 0.5 a minute, faster with the Nutrition Unit (now 3 levels, 14 crafts from junk) and the new Rest Space. Metabolism skill levels from eating and drinking (new `Skills`). Food containers: fridge, kitchen cabinet, store shelf, gas station counter (placed in the Test Yard); crates and duffle bags no longer hold food; Scavs always carry a snack. Hover preview of energy and hydration on food. Crafts that make several non-stacking items give them all. 432 items |

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "Gas station counter"
+rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
+rarity_multipliers = PackedFloat32Array(1, 1.1, 1, 0.9, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray("energy_drink", "hot_rod", "isotonic", "water_bottle", "mineral_water", "coffee", "jerky", "chocolate_bar", "sunflower_seeds", "crackers", "oat_bar", "field_ration", "survivor_kit", "cigarettes", "lighter", "matches", "aa_battery", "rechargeable_battery", "wd40", "fuel_conditioner")
+item_weights = {
+"energy_drink": 1.5
+}
+item_count = Vector2i(1, 4)

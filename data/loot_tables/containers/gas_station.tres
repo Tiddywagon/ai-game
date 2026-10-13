@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/gas_station.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "gas_station"
+display_name = "Gas station counter"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(4, 3)
+search_time = 1.0
+look = 10
+box_size = Vector3(1.6, 1.0, 0.7)
+color = Color(0.7, 0.24, 0.18, 1)
+solid = true
+cover_material = 2

@@ -97,6 +97,12 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
+## The item drawn at `at` (local position), or null (also for one not searched yet).
+func item_at_position(at: Vector2) -> ItemInstance:
+	var item := grid.item_at(cell_at(at)) if grid else null
+	return item if item and not item.hidden else null
+
+
 func _get_tooltip(at: Vector2) -> String:
 	var item := grid.item_at(cell_at(at)) if grid else null
 	if item and item.hidden:

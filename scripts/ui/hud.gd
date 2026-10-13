@@ -10,7 +10,8 @@ extends CanvasLayer
 ## 360 trick shots (DESIGN.md §13.4): "TRICK SHOT READY" while the window is open, a gold hit marker
 ## and a sound sting for a trick-shot hit, and a kill banner with the bonus experience and Drip.
 ## Consumables (DESIGN.md §13.7): energy and hydration bars under stamina (amber when hungry or
-## thirsty, red at 0), running effects beside the body (benefits green, drawbacks red, with the time
+## thirsty, red at 0) with a pulsing warning under them (HUNGRY, THIRSTY, EXHAUSTION, DEHYDRATION), the
+## view blurring at 0, running effects beside the body (benefits green, drawbacks red, with the time
 ## left), what E would treat, and a progress bar with the item's name while one is being used.
 ## HUD scale, opacity, units and reticle come from Settings.
 
@@ -35,6 +36,7 @@ const ENERGY_COLOR := Color(0.9, 0.78, 0.4)
 const HYDRATION_COLOR := Color(0.45, 0.7, 0.95)
 ## How often the E hint works out what it would use, in seconds.
 const HINT_INTERVAL := 0.25
+const BLUR_SHADER := preload("res://assets/shaders/depleted_blur.gdshader")
 
 ## The player whose status is shown.
 @export var player: Player
@@ -60,6 +62,8 @@ var _treat_hint: Label
 var _use_label: Label
 var _use_bar: ProgressBar
 var _hint_time := 0.0
+var _metabolism_warning: Label
+var _blur: ColorRect
 
 @onready var _root: Control = %HudRoot
 @onready var _bottom_left: Control = %BottomLeft
@@ -114,6 +118,8 @@ func _update_raid_info() -> void:
 	_raid_line = "%s  ·  %s  ·  %s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD",
 		"SCAV" if raid.get("side") == "scav" else "PMC", VisionSystem.time_name(VisionSystem.time_of_day).to_upper(),
 		VisionSystem.weather_name(VisionSystem.weather).to_upper()]
+	if map and map.climate != "Temperate":
+		_raid_line += "  ·  %s" % map.climate.to_upper()
 	_update_raid_clock()
 
 
@@ -249,6 +255,24 @@ func _build_consumables() -> void:
 	var hydration := _metabolism_bar(line, "WATER", HYDRATION_COLOR)
 	_hydration_label = hydration[0]
 	_hydration_bar = hydration[1]
+	_metabolism_warning = Label.new()
+	_metabolism_warning.name = "MetabolismWarning"
+	_metabolism_warning.add_theme_font_size_override("font_size", 14)
+	_metabolism_warning.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_metabolism_warning.hide()
+	rows.add_child(_metabolism_warning)
+	rows.move_child(_metabolism_warning, line.get_index() + 1)
+	# Exhaustion and Dehydration blur the view: drawn first, under the rest of the HUD.
+	_blur = ColorRect.new()
+	_blur.name = "DepletedBlur"
+	_blur.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_blur.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var blur_material := ShaderMaterial.new()
+	blur_material.shader = BLUR_SHADER
+	_blur.material = blur_material
+	_blur.hide()
+	_root.add_child(_blur)
+	_root.move_child(_blur, 0)
 	# Long messages ("Propital ...: regeneration +1.0 HP/s, painkiller") wrap instead of widening the panel.
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_message.custom_minimum_size.x = _bar.custom_minimum_size.x
@@ -410,6 +434,7 @@ func _update_consumables(delta: float) -> void:
 	var tuning := Consumables.CONFIG
 	_set_metabolism(_energy_bar, _energy_label, "ENERGY", health.energy, tuning.max_energy, ENERGY_COLOR, tuning.low_threshold)
 	_set_metabolism(_hydration_bar, _hydration_label, "WATER", health.hydration, tuning.max_hydration, HYDRATION_COLOR, tuning.low_threshold)
+	_update_metabolism_warning(health)
 	var buffs := health.effect_lines(false)
 	_buffs.text = "\n".join(buffs)
 	_buffs.visible = not buffs.is_empty()
@@ -427,6 +452,33 @@ func _update_consumables(delta: float) -> void:
 	if item:
 		_use_label.text = "USING  %s  %.1f" % [item.data.display_name.to_upper(), maxf(player.use_time_left, 0.0)]
 		_use_bar.value = player.use_progress()
+
+
+## Under the bars: HUNGRY / THIRSTY (amber) below the low threshold, EXHAUSTION / DEHYDRATION (red) at
+## 0, pulsing (steady with "reduce flashing"); and the blur over the view at 0.
+func _update_metabolism_warning(health: BodyHealth) -> void:
+	var words: Array[String] = []
+	if health.has_dehydration():
+		words.append("DEHYDRATION")
+	elif health.is_thirsty():
+		words.append("THIRSTY")
+	if health.has_exhaustion():
+		words.append("EXHAUSTION")
+	elif health.is_hungry():
+		words.append("HUNGRY")
+	var depleted := health.has_dehydration() or health.has_exhaustion()
+	_metabolism_warning.visible = not words.is_empty() and not player.is_dead
+	if _metabolism_warning.visible:
+		var hint := "losing HP: eat or drink now" if depleted else "stamina recovers slower"
+		_metabolism_warning.text = "%s  ·  %s" % ["  ·  ".join(words), hint]
+		var pulse := 1.0 if Settings.get_value("accessibility", "reduce_flashing") else 0.65 + 0.35 * absf(sin(Time.get_ticks_msec() / 350.0))
+		_metabolism_warning.add_theme_color_override("font_color", Color(EXHAUSTED_COLOR if depleted else LOW_AMMO_COLOR, pulse))
+	var amount := health.blur_amount() if not player.is_dead else 0.0
+	_blur.visible = amount > 0.0
+	if _blur.visible:
+		if not Settings.get_value("accessibility", "reduce_flashing"):
+			amount *= 0.85 + 0.15 * sin(Time.get_ticks_msec() / 900.0)  # Swimming in and out.
+		(_blur.material as ShaderMaterial).set_shader_parameter("amount", amount)
 
 
 ## "E  Bandage: light bleed": what the use_item key would do now, or "" if nothing needs treating.
@@ -451,7 +503,7 @@ func _set_metabolism(bar: ProgressBar, label: Label, title: String, value: float
 	elif value <= low:
 		shown = LOW_AMMO_COLOR
 	(bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = shown
-	label.text = "%s  %d" % [title, ceili(value)]
+	label.text = "%s  %d" % [title, ceili(snappedf(value, 0.1))]
 	label.add_theme_color_override("font_color", shown if value <= low else Color(NORMAL_COLOR, 0.85))
 
 

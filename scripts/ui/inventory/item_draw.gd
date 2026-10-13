@@ -76,7 +76,8 @@ static func draw_unknown(canvas: CanvasItem, rect: Rect2, progress := -1.0) -> v
 		canvas.draw_arc(centre, radius + 3.0, -PI / 2.0, -PI / 2.0 + TAU * progress, 32, Color(0.95, 0.78, 0.35), 3.0, true)
 
 
-## Hover text for an item.
+## Hover text for an item. Food, drinks and stims that change energy or hydration preview it, e.g.
+## "Energy 62 → 77 (+15)  ·  Hydration 40 → 35 (−5)" (Consumables.preview_text()).
 static func tooltip(item: ItemInstance) -> String:
 	var lines := [item.title() + (" ×%d" % item.count if item.count > 1 else ""),
 		"%s  ·  %s  ·  %s" % [Palette.RARITY_NAMES[item.data.rarity], Settings.format_weight(item.weight()), UiFormat.money(item.value())]]
@@ -84,6 +85,9 @@ static func tooltip(item: ItemInstance) -> String:
 		lines.append("Durability %.1f / %.1f" % [item.durability, item.max_durability])
 	elif item.is_armor():
 		lines.append("Class %d  ·  durability %.1f / %.1f" % [int(item.data.stats["class"]), item.durability, item.max_durability])
+	var preview := Consumables.preview_text(item.data) if Consumables.is_consumable(item.data) else ""
+	if preview != "":
+		lines.append(preview + (" a use" if Consumables.max_charges(item.data) > 1.0 else ""))
 	if Consumables.is_medkit(item.data):
 		lines.append("%d / %d HP left" % [ceili(item.charges), roundi(Consumables.max_charges(item.data))])
 	elif Consumables.is_consumable(item.data) and Consumables.max_charges(item.data) > 1.0:

@@ -262,8 +262,9 @@ static func starter() -> Inventory:
 
 
 ## A random Scav kit (DESIGN.md §4, §16.3): an AK-74N with PS, a Scav vest with 90 spare rounds,
-## sometimes a helmet, a hatchet or a sling bag of food and junk, and odds and ends (a bandage, junk,
-## cigarettes, a snack) in the pockets. Nothing from the stash. Also what AI Scavs carry (and drop).
+## sometimes a helmet, a hatchet or a sling bag of food and junk, often a drink in the vest, a snack in
+## the pockets and odds and ends (a bandage, junk, cigarettes). Nothing from the stash. Also what AI
+## Scavs carry (and drop): Scav bodies are one of the best places for food (DESIGN.md §13.7).
 static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
@@ -272,6 +273,8 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	var vest := ItemInstance.create("scav_vest")
 	vest.contents.add(ItemInstance.create("ammo_545_ps", 60))
 	vest.contents.add(ItemInstance.create("ammo_545_ps", 30))
+	if rng.randf() < 0.6:
+		vest.contents.add(ItemInstance.create(["water_bottle", "energy_drink", "kvass", "apple_juice", "field_ration"][rng.randi() % 5]))
 	inventory.equip("rig", vest)
 	if rng.randf() < 0.25:
 		inventory.equip("helmet", ItemInstance.create("ssh68_helmet"))
@@ -279,10 +282,12 @@ static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 		inventory.equip("melee", ItemInstance.create("hatchet"))
 	if rng.randf() < 0.4:
 		var bag := ItemInstance.create("sling_bag")
-		for id in ["crackers", "bolts", "duct_tape", "screwdriver", "sprats", "cigarettes"].slice(0, rng.randi_range(1, 6)):
+		for id in ["crackers", "tushonka", "bolts", "water_bottle", "sprats", "duct_tape", "cigarettes", "screwdriver"].slice(0, rng.randi_range(1, 8)):
 			bag.contents.add(ItemInstance.create(id))
 		inventory.equip("backpack", bag)
-	for id in ["bandage", "bolts", "matches", "screws", "cigarettes", "toothpaste", "crackers", "aa_battery"]:
+	var snacks := ["crackers", "jerky", "oat_bar", "sunflower_seeds", "chocolate_bar", "sugar", "dried_fish"]
+	inventory.pockets.add(ItemInstance.create(snacks[rng.randi() % snacks.size()]))
+	for id in ["bandage", "bolts", "matches", "cigarettes", "toothpaste", "aa_battery"]:
 		if rng.randf() < 0.3:
 			inventory.pockets.add(ItemInstance.create(id))
 	return inventory

@@ -17,6 +17,10 @@ extends Resource
 ## Multiplies loot rarity weights on this map, indexed by ItemData.Rarity (DESIGN.md §6.2): Labs
 ## doubles Epic and Legendary. Missing entries count as 1.
 @export var loot_multipliers: PackedFloat32Array = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+## Climate (DESIGN.md §13.7): hot maps dry you out faster. Energy and hydration drain × these.
+@export_enum("Temperate", "Hot", "Cold") var climate := "Temperate"
+@export_range(0.5, 3.0, 0.05) var energy_drain_multiplier := 1.0
+@export_range(0.5, 3.0, 0.05) var hydration_drain_multiplier := 1.0
 
 
 func is_playable() -> bool:

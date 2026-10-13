@@ -11,7 +11,8 @@ extends MenuScreen
 ## MODIFY there opens the modding screen (WeaponModScreen), and dropping a weapon part on a gun fits it
 ## to a free slot. Meds, stims, food and drink have USE in the examine panel (DESIGN.md §13.7): in a
 ## raid the player uses it over its use time (the header shows progress; the game goes on); out of
-## raid food and drink go straight to the profile's energy and hydration. The header shows both.
+## raid food and drink go straight to the profile's energy and hydration. The header shows both, and
+## hovering a food or drink previews what one use would do under them ("Crackers: Energy 62 → 77 (+15)  ·  ...").
 
 ## Equipment slot layout: two columns of [slot, size in cells].
 const SLOT_COLUMNS := [
@@ -21,6 +22,8 @@ const SLOT_COLUMNS := [
 ## Equipped items whose grids are shown under the pockets.
 const CONTAINER_SLOTS := [["rig", "TACTICAL RIG"], ["backpack", "BACKPACK"], ["secure", "SECURE CONTAINER"]]
 const HEAVY_COLOR := Color(0.95, 0.7, 0.3)
+## Width of the energy / water status in the header.
+const BODY_STATUS_WIDTH := 430.0
 const OVERWEIGHT_COLOR := Color(0.9, 0.32, 0.25)
 
 ## The character's equipment and pockets.
@@ -81,6 +84,7 @@ func _ready() -> void:
 		%StashView.grid = stash
 	inventory.changed.connect(_on_inventory_changed)
 	_build_body_status()
+	Consumables.preview_health = user.health if user else null
 	if user:
 		user.item_use_ended.connect(_on_use_ended)
 	elif stash:
@@ -332,6 +336,7 @@ func _build_body_status() -> void:
 	var box := VBoxContainer.new()
 	box.name = "BodyStatus"
 	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	box.custom_minimum_size.x = BODY_STATUS_WIDTH  # Fixed: long previews are cut, never widen the header.
 	box.add_theme_constant_override("separation", 2)
 	%ValueLabel.add_sibling(box)
 	_body_label = Label.new()
@@ -341,6 +346,25 @@ func _build_body_status() -> void:
 	_use_label.name = "UseStatus"
 	_use_label.theme_type_variation = &"DimLabel"
 	box.add_child(_use_label)
+	for label in [_body_label, _use_label]:
+		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.custom_minimum_size.x = BODY_STATUS_WIDTH
+
+
+## The item under the mouse in one of the grids or slots, or null.
+func hovered_item() -> ItemInstance:
+	var control := get_viewport().gui_get_hovered_control()
+	if control is InventoryGridView:
+		return (control as InventoryGridView).item_at_position(control.get_local_mouse_position())
+	if control is EquipmentSlotView:
+		return (control as EquipmentSlotView).item()
+	return null
+
+
+func _exit_tree() -> void:
+	if user and Consumables.preview_health == user.health:
+		Consumables.preview_health = null
 
 
 func _update_body_status(delta: float) -> void:
@@ -349,13 +373,20 @@ func _update_body_status(delta: float) -> void:
 	var tuning := Consumables.CONFIG
 	var energy := user.health.energy if user else GameState.energy
 	var hydration := user.health.hydration if user else GameState.hydration
-	_body_label.text = "ENERGY  %d / %d    WATER  %d / %d" % [ceili(energy), roundi(tuning.max_energy), ceili(hydration), roundi(tuning.max_hydration)]
+	_body_label.text = "ENERGY  %d / %d    WATER  %d / %d" % [ceili(snappedf(energy, 0.1)), roundi(tuning.max_energy), ceili(snappedf(hydration, 0.1)),
+		roundi(tuning.max_hydration)]
+	var hovered := hovered_item()
+	var preview := Consumables.preview_text(hovered.data) if hovered and Consumables.is_consumable(hovered.data) else ""
 	var low := energy <= tuning.low_threshold or hydration <= tuning.low_threshold
 	_body_label.add_theme_color_override("font_color", HEAVY_COLOR if low else MenuEntryButton.TEXT)
 	_use_message_time -= delta
+	_use_label.remove_theme_color_override("font_color")
 	if user and user.using_item:
 		_use_label.text = "Using %s  ·  %.1f s  ·  %s to stop" % [user.using_item.data.display_name, maxf(user.use_time_left, 0.0),
 			Settings.key_label("use_item")]
+	elif preview != "":
+		_use_label.text = "%s: %s" % [hovered.data.display_name, preview.replace("Hydration", "Water")]
+		_use_label.add_theme_color_override("font_color", HEAVY_COLOR)
 	elif _use_message_time > 0.0:
 		_use_label.text = _use_message
 	else:

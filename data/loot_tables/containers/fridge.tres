@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/fridge.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "fridge"
+display_name = "Fridge"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(3, 4)
+search_time = 0.8
+look = 7
+box_size = Vector3(0.75, 1.7, 0.7)
+color = Color(0.82, 0.84, 0.86, 1)
+solid = true
+cover_material = 2

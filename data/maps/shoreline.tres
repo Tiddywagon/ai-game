@@ -14,3 +14,6 @@ players = "8 PMCs · 20 Scavs"
 extracts = "5"
 boss = "Sanitar"
 scene_path = ""
+climate = "Hot"
+energy_drain_multiplier = 1.1
+hydration_drain_multiplier = 1.5

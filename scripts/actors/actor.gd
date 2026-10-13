@@ -177,7 +177,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_sway_time += delta
 	blind_time = maxf(blind_time - delta, 0.0)
-	health.exertion = health.metabolism.sprint_drain_multiplier if health.metabolism and move_state == Move.SPRINT else 1.0
+	if health.metabolism:
+		health.exertion = metabolism_exertion()
 	weapon.recoil_multiplier = health.recoil_multiplier()
 	stamina = minf(stamina, stamina_cap())
 	_think(delta)
@@ -304,6 +305,28 @@ func try_reload() -> bool:
 		action_blocked.emit("Magazine full" if reason == "magazine full" else "Can't reload: " + reason)
 		return false
 	return weapon.reload()
+
+
+## How hard this actor is working, for energy and hydration drain (DESIGN.md §13.7): still or
+## crouched is easy, sprinting and rolling hard; carrying too much and being injured make it harder.
+func metabolism_exertion() -> float:
+	var tuning := health.metabolism
+	var multiplier := 1.0
+	if is_rolling:
+		multiplier = tuning.roll_drain
+	elif move_state == Move.SPRINT:
+		multiplier = tuning.sprint_drain
+	elif speed_ratio() < 0.05:
+		multiplier = tuning.still_drain
+	elif is_crouching or move_state == Move.CROUCH or move_state == Move.COVER:
+		multiplier = tuning.crouch_drain
+	if is_overweight():
+		multiplier *= tuning.overweight_drain
+	elif is_encumbered():
+		multiplier *= tuning.encumbered_drain
+	if health.is_injured():
+		multiplier *= tuning.injured_drain
+	return multiplier
 
 
 ## Max stamina right now: more on some stims.
@@ -479,9 +502,10 @@ func has_light_on() -> bool:
 	return false
 
 
-## Pain and head injuries narrow the vision cone (DESIGN.md §13.6).
+## Pain and head injuries narrow the vision cone (DESIGN.md §13.6), and so do Exhaustion and
+## Dehydration (§13.7).
 func status_cone_multiplier() -> float:
-	var multiplier := 1.0
+	var multiplier := health.vision_multiplier()
 	if health.has_pain():
 		multiplier *= VisionSystem.config.pain_cone_multiplier
 	if health.fraction(BodyHealth.Part.HEAD) < VisionSystem.config.head_injury_threshold:

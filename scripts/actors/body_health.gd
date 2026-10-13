@@ -7,8 +7,9 @@ extends RefCounted
 ## Treatment (DESIGN.md §13.7, Consumables): bleeds stop, fractures set, parts heal and blacked parts
 ## come back through surgery (with less max HP). Timed effects from meds, stims and food (`effects`)
 ## numb pain, regenerate, stop bleed damage, change stamina, speed, recoil and sway, or poison. With
-## `metabolism` set (the player in a raid), energy and hydration drain: low is hungry or thirsty, 0
-## hurts the stomach.
+## `metabolism` set (the player in a raid), energy and hydration drain (by `exertion`, the map's
+## climate and the Metabolism skill): low (hungry, thirsty) slows stamina recovery; at 0 Exhaustion or
+## Dehydration drains HP from every body part, shakes the aim and blurs vision.
 ##
 ## Causes are Dictionaries describing what did the damage, e.g. {"kind": "shot", "attacker": "Scav",
 ## "weapon": "AK-74N", "ammo": "5.45x39 PS", "part": Part.LEFT_ARM, "damage": 50.0, "distance": 12.0}.
@@ -44,8 +45,12 @@ var effects: Array[Dictionary] = []
 var metabolism: ConsumablesConfig
 var energy := 100.0
 var hydration := 100.0
-## Drain multiplier right now: the actor sets it (faster while sprinting).
+## Drain multiplier right now: the actor sets it from what it's doing (still, crouched, sprinting,
+## rolling), its load and injuries.
 var exertion := 1.0
+## Drain multipliers from the map's climate (MapInfo: hot maps dry you out faster).
+var energy_climate := 1.0
+var hydration_climate := 1.0
 ## Drain multiplier from the Metabolism skill (1 = none).
 var metabolism_skill := 1.0
 
@@ -256,11 +261,13 @@ func stamina_bonus() -> float:
 	return effect_total("stamina")
 
 
-## How fast stamina recovers, ×: faster on stims, slower when hungry.
+## How fast stamina recovers, ×: faster on stims, slower when hungry and slower again when thirsty.
 func stamina_regen_multiplier() -> float:
 	var multiplier := maxf(1.0 + effect_total("stamina_regen"), 0.1)
 	if is_hungry():
-		multiplier *= metabolism.hungry_stamina_regen
+		multiplier *= metabolism.low_stamina_regen
+	if is_thirsty():
+		multiplier *= metabolism.low_stamina_regen
 	return multiplier
 
 
@@ -274,17 +281,60 @@ func recoil_multiplier() -> float:
 	return clampf(1.0 + effect_total("recoil"), 0.3, 2.0)
 
 
-## Weapon sway added by effects (a tremor, or steadier hands below 0) and thirst, in degrees.
+## Weapon sway added by effects (a tremor, or steadier hands below 0), Exhaustion and Dehydration,
+## in degrees.
 func extra_sway() -> float:
-	return effect_total("sway") + (metabolism.thirsty_sway if is_thirsty() else 0.0)
+	var amount := effect_total("sway")
+	if has_exhaustion():
+		amount += metabolism.exhaustion_sway
+	if has_dehydration():
+		amount += metabolism.dehydration_sway
+	return amount
 
 
+## Vision cone ×: narrower with Exhaustion and again with Dehydration.
+func vision_multiplier() -> float:
+	var multiplier := 1.0
+	if has_exhaustion():
+		multiplier *= metabolism.depleted_vision
+	if has_dehydration():
+		multiplier *= metabolism.depleted_vision
+	return multiplier
+
+
+## How blurred the player's view is, 0 to 1: half for Exhaustion, half for Dehydration.
+func blur_amount() -> float:
+	return (0.5 if has_exhaustion() else 0.0) + (0.5 if has_dehydration() else 0.0)
+
+
+## Energy at or below the low threshold.
 func is_hungry() -> bool:
 	return metabolism != null and energy <= metabolism.low_threshold
 
 
+## Hydration at or below the low threshold.
 func is_thirsty() -> bool:
 	return metabolism != null and hydration <= metabolism.low_threshold
+
+
+## No energy left: Exhaustion.
+func has_exhaustion() -> bool:
+	return metabolism != null and energy <= 0.0
+
+
+## No hydration left: Dehydration.
+func has_dehydration() -> bool:
+	return metabolism != null and hydration <= 0.0
+
+
+## Bleeding, a fracture or a blacked part (energy and hydration drain faster).
+func is_injured() -> bool:
+	if is_bleeding() or fractures.has(true):
+		return true
+	for part in Part.size():
+		if is_blacked(part) and not is_vital(part):
+			return true
+	return false
 
 
 # --- Queries ----------------------------------------------------------------------------------
@@ -386,14 +436,14 @@ func status_lines() -> Array[String]:
 	elif is_hurting():
 		lines.append("Pain (numbed)")
 	if metabolism:
-		if energy <= 0.0:
-			lines.append("Starving")
-		elif is_hungry():
-			lines.append("Hungry")
-		if hydration <= 0.0:
-			lines.append("Dehydrated")
+		if has_dehydration():
+			lines.append("Dehydration")
 		elif is_thirsty():
 			lines.append("Thirsty")
+		if has_exhaustion():
+			lines.append("Exhaustion")
+		elif is_hungry():
+			lines.append("Hungry")
 	return lines
 
 
@@ -488,15 +538,32 @@ func _regenerate(amount: float) -> void:
 		changed.emit()
 
 
+## Energy and hydration per minute right now (negative: draining), with every multiplier and effect.
+func energy_rate() -> float:
+	return effect_total("energy_rate") - metabolism.energy_drain * exertion * energy_climate * metabolism_skill if metabolism else 0.0
+
+
+func hydration_rate() -> float:
+	return effect_total("hydration_rate") - metabolism.hydration_drain * exertion * hydration_climate * metabolism_skill if metabolism else 0.0
+
+
 func _tick_metabolism(delta: float) -> void:
 	var minutes := delta / 60.0
-	var drain := exertion * metabolism_skill
-	energy = clampf(energy - (metabolism.energy_drain * drain - effect_total("energy_rate")) * minutes, 0.0, metabolism.max_energy)
-	hydration = clampf(hydration - (metabolism.hydration_drain * drain - effect_total("hydration_rate")) * minutes, 0.0, metabolism.max_hydration)
+	energy = clampf(energy + energy_rate() * minutes, 0.0, metabolism.max_energy)
+	hydration = clampf(hydration + hydration_rate() * minutes, 0.0, metabolism.max_hydration)
 	if energy <= 0.0:
-		apply_damage(Part.STOMACH, metabolism.starving_damage * delta, {"kind": "starvation", "part": Part.STOMACH})
+		_drain_every_part(metabolism.exhaustion_damage * delta, "exhaustion")
 	if hydration <= 0.0 and not is_dead:
-		apply_damage(Part.STOMACH, metabolism.dehydrated_damage * delta, {"kind": "dehydration", "part": Part.STOMACH})
+		_drain_every_part(metabolism.dehydration_damage * delta, "dehydration")
+
+
+## Exhaustion and Dehydration: `amount` HP off every part that still has HP (a vital one at 0 kills).
+func _drain_every_part(amount: float, kind: String) -> void:
+	for part in Part.size():
+		if hp[part] > 0.0:
+			apply_damage(part, amount, {"kind": kind, "part": part})
+			if is_dead:
+				return
 
 
 ## The item that started the running effect of `kind`, if any (for death messages).

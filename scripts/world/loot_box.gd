@@ -74,6 +74,25 @@ func _build_look() -> void:
 		LootContainer.Look.SAFE:
 			_box(Vector3(0.12, size.y * 0.6, front), Vector3(0.12, 0.12, 0.03), Color(0.7, 0.68, 0.6))  # Dial.
 			_box(Vector3(-0.15, size.y * 0.5, front), Vector3(0.04, 0.22, 0.04), dark)  # Handle.
+		LootContainer.Look.FRIDGE:
+			_box(Vector3(0, size.y * 0.62, front), Vector3(size.x * 0.96, 0.015, 0.01), dark)  # Freezer door line.
+			_box(Vector3(size.x * 0.36, size.y * 0.75, front - 0.02), Vector3(0.03, 0.16, 0.03), Color(0.7, 0.7, 0.72))
+			_box(Vector3(size.x * 0.36, size.y * 0.38, front - 0.02), Vector3(0.03, 0.22, 0.03), Color(0.7, 0.7, 0.72))
+		LootContainer.Look.SHELF:
+			for i in 3:  # Shelves with a row of goods on each.
+				var y := size.y * (0.08 + 0.32 * i)
+				_box(Vector3(0, y, front + 0.02), Vector3(size.x * 0.96, 0.03, 0.06), dark)
+				for x in [-0.32, -0.08, 0.16, 0.36]:
+					_box(Vector3(x * size.x, y + 0.11, front + 0.08), Vector3(0.16, 0.18, 0.12),
+						Color(0.85, 0.6, 0.25) if (i + int(x * 10.0)) % 2 == 0 else Color(0.3, 0.55, 0.8))
+		LootContainer.Look.KITCHEN_CABINET:
+			_box(Vector3(0, size.y * 0.5, front), Vector3(0.015, size.y * 0.9, 0.01), dark)  # Two doors.
+			for x in [-0.08, 0.08]:
+				_box(Vector3(x, size.y * 0.7, front - 0.01), Vector3(0.03, 0.12, 0.02), Color(0.75, 0.75, 0.72))
+			_box(Vector3(0, size.y + 0.02, 0), Vector3(size.x * 1.04, 0.04, size.z * 1.04), Color(0.7, 0.68, 0.62))  # Worktop.
+		LootContainer.Look.COUNTER:
+			_box(Vector3(0, size.y + 0.02, 0), Vector3(size.x * 1.05, 0.04, size.z * 1.05), Color(0.82, 0.8, 0.76))  # Top.
+			_box(Vector3(0, size.y * 0.55, front), Vector3(size.x * 0.96, 0.08, 0.01), Color(0.95, 0.8, 0.2))  # Stripe.
 		LootContainer.Look.FILING_CABINET:
 			for i in 3:  # Drawers, each with a handle.
 				var y := size.y * (0.2 + 0.31 * i)

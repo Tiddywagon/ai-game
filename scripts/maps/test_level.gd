@@ -32,7 +32,7 @@ func _ready() -> void:
 
 ## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
 ## player gets the starter kit. A PMC brings the profile's energy and hydration (DESIGN.md §13.7); a
-## Scav starts full.
+## Scav starts full. The map's climate sets how fast they drain.
 func _apply_raid() -> void:
 	var raid := GameState.raid
 	var tuning := Consumables.CONFIG
@@ -42,7 +42,11 @@ func _apply_raid() -> void:
 	else:
 		Consumables.recover_profile()
 		_player.health.start_metabolism(tuning, GameState.energy, GameState.hydration)
-	_player.health.metabolism_skill = 1.0 - tuning.drain_reduction_per_level * int(GameState.skills.get("metabolism", {}).get("level", 0))
+	_player.health.metabolism_skill = Consumables.skill_multiplier()
+	var map := MapInfo.find(raid.get("map", "test_yard"))
+	if map:
+		_player.health.energy_climate = map.energy_drain_multiplier
+		_player.health.hydration_climate = map.hydration_drain_multiplier
 	var loadout: Variant = raid.get("loadout")
 	_player.set_inventory(loadout if loadout is Inventory else Inventory.starter())
 

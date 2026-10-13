@@ -16,7 +16,9 @@ extends RefCounted
 ##
 ## A med picks its body part (or takes `part` if it can do something there): heavy bleeds first, then
 ## light bleeds, fractures, blacked parts and missing HP; legs before arms. Out of raid only food and
-## drink can be used (on the profile's energy and hydration, which recover over real time).
+## drink can be used (on the profile's energy and hydration, which recover over real time, faster with
+## the Nutrition Unit and Rest Space built). Eating and drinking train the Metabolism skill (Skills),
+## which slows the drain.
 
 const CONFIG: ConsumablesConfig = preload("res://data/config/consumables.tres")
 ## Conditions on a body part, in the order they're treated.
@@ -25,6 +27,11 @@ const CONDITION_NAMES := {"heavy_bleed": "heavy bleed", "light_bleed": "light bl
 	"blacked": "blacked part", "pain": "pain"}
 ## Where the quick-treat key looks for each problem, in order: [problem, item filter].
 const QUICK_ORDER: Array[String] = ["heavy_bleed", "light_bleed", "fracture", "pain", "heal", "blacked", "hydration", "energy"]
+const METABOLISM := "metabolism"
+
+## In a raid, the body the inventory's effect previews compare against (the player's); null out of
+## raid, where they use the profile's energy and hydration.
+static var preview_health: BodyHealth
 
 
 static func is_consumable(data: ItemData) -> bool:
@@ -116,6 +123,12 @@ static func apply(item: ItemInstance, health: BodyHealth, part := -1) -> Diction
 	item.charges = maxf(item.charges - float(result.spent), 0.0)
 	result.used_up = item.charges < (1.0 if is_medkit(data) else 0.5)
 	result.text = summary(item, result)
+	result.levels = 0
+	if health.metabolism and data.category == ItemData.Category.FOOD:
+		result.levels = train_metabolism(data)
+		health.metabolism_skill = skill_multiplier()
+		if result.levels > 0:
+			result.text += "  ·  Metabolism level %d" % Skills.level(METABOLISM)
 	return result
 
 
@@ -175,8 +188,9 @@ static func reachable(inventory: Inventory) -> Array[ItemInstance]:
 ## What quick treatment would use now: {"item", "part", "problem"}, or {"reason"} if nothing (no
 ## problem, or nothing in reach for it). Problems in order: heavy bleed, light bleed, fracture, pain,
 ## missing HP, blacked part, then thirst and hunger (below ConsumablesConfig.quick_eat_below). Among
-## the items that fix a problem: dedicated ones before medkits, cheaper first, part-used first. Stims
-## and items with drawbacks are never picked: use them from the inventory.
+## the items that fix a problem: dedicated ones before medkits, part-used first, then cheaper (food and
+## drink: the most of what's needed). Stims, items with side effects and food that would make you
+## thirsty (or drink that would make you hungry) are never picked: use them from the inventory.
 static func quick_pick(inventory: Inventory, health: BodyHealth) -> Dictionary:
 	if health == null or health.is_dead:
 		return {"reason": "Dead"}
@@ -241,7 +255,7 @@ static func recover_profile(now := -1.0) -> void:
 	if now < 0.0:
 		now = Time.get_unix_time_from_system()
 	if GameState.metabolism_time > 0.0 and now > GameState.metabolism_time:
-		var gain := CONFIG.recovery_per_minute * (now - GameState.metabolism_time) / 60.0
+		var gain := hideout_recovery_rate() * (now - GameState.metabolism_time) / 60.0
 		GameState.energy = minf(GameState.energy + gain, CONFIG.max_energy)
 		GameState.hydration = minf(GameState.hydration + gain, CONFIG.max_hydration)
 	GameState.metabolism_time = now
@@ -278,7 +292,55 @@ static func use_in_profile(item: ItemInstance, holder: InventoryGrid) -> Diction
 	for change in [[energy, "energy"], [hydration, "hydration"]]:
 		if change[0] != 0.0:
 			parts.append("%+d %s" % [roundi(change[0]), change[1]])
-	return {"ok": true, "text": "%s: %s" % [item.data.display_name, ", ".join(parts)]}
+	var levels := train_metabolism(item.data)
+	if levels > 0:
+		parts.append("Metabolism level %d" % Skills.level(METABOLISM))
+	return {"ok": true, "text": "%s: %s" % [item.data.display_name, ", ".join(parts)], "levels": levels}
+
+
+## Energy and hydration refill per real minute out of raid: the base rate, faster for each level of the
+## Nutrition Unit and the Rest Space.
+static func hideout_recovery_rate() -> float:
+	var nutrition := int(GameState.hideout.get("nutrition_unit", 0))
+	var rest := int(GameState.hideout.get("rest_space", 0))
+	return CONFIG.hideout_recovery * (1.0 + nutrition * CONFIG.nutrition_unit_bonus + rest * CONFIG.rest_space_bonus)
+
+
+# --- Metabolism skill and previews ---------------------------------------------------------------
+
+## Drain × from the Metabolism skill: 1% less per level (by default), up to the config's cap.
+static func skill_multiplier() -> float:
+	return 1.0 - minf(Skills.level(METABOLISM) * CONFIG.drain_reduction_per_level, CONFIG.max_skill_reduction)
+
+
+## Metabolism points one use of `data` is worth: its energy and hydration, either way.
+static func metabolism_points(data: ItemData) -> float:
+	return (absf(float(data.stats.get("energy", 0.0))) + absf(float(data.stats.get("hydration", 0.0)))) * CONFIG.metabolism_points_per_unit
+
+
+## Eating or drinking `data` trains Metabolism. Returns the levels gained.
+static func train_metabolism(data: ItemData) -> int:
+	return Skills.add_points(METABOLISM, metabolism_points(data))
+
+
+## What one use of food or drink `data` would do to energy and hydration now: [["Energy", now, after,
+## change], ["Hydration", ...]] for each it changes (against the player in a raid, the profile out of
+## raid).
+static func preview(data: ItemData) -> Array:
+	var rows := []
+	var energy := preview_health.energy if preview_health else GameState.energy
+	var hydration := preview_health.hydration if preview_health else GameState.hydration
+	for entry in [["Energy", "energy", energy, CONFIG.max_energy], ["Hydration", "hydration", hydration, CONFIG.max_hydration]]:
+		var change := float(data.stats.get(entry[1], 0.0))
+		if change != 0.0:
+			rows.append([entry[0], float(entry[2]), clampf(float(entry[2]) + change, 0.0, float(entry[3])), change])
+	return rows
+
+
+## preview() as text: "Energy 62 → 77 (+15)  ·  Hydration 40 → 35 (−5)".
+static func preview_text(data: ItemData) -> String:
+	return "  ·  ".join(preview(data).map(func(row: Array) -> String:
+		return "%s %d → %d (%s)" % [row[0], ceili(snappedf(row[1], 0.1)), ceili(snappedf(row[2], 0.1)), ("%+d" % roundi(row[3])).replace("-", "−")]))
 
 
 # --- Internals ---------------------------------------------------------------------------------
@@ -371,12 +433,25 @@ static func _nothing_to_do(item: ItemInstance) -> String:
 	return "No %s to treat" % " or ".join(names)
 
 
+## Food or drink quick treatment may pick: no side effects (no alcohol), and whatever it costs of the
+## other stat doesn't take that one down to low.
+static func _safe_to_eat(data: ItemData, health: BodyHealth) -> bool:
+	if data.stats.get("effects", []).any(func(effect: Dictionary) -> bool: return effect.get("side", false)):
+		return false
+	var low := (health.metabolism if health.metabolism else CONFIG).low_threshold
+	for entry in [[health.energy, "energy"], [health.hydration, "hydration"]]:
+		var change := float(data.stats.get(entry[1], 0.0))
+		if change < 0.0 and float(entry[0]) + change <= low:
+			return false
+	return true
+
+
 ## The best reachable item for `problem`: {"item", "part"} or {}.
 static func _choose(items: Array[ItemInstance], health: BodyHealth, problem: String) -> Dictionary:
 	var candidates: Array[ItemInstance] = []
 	for item in items:
 		var data := item.data
-		if data.stats.get("type", "") == "stim" or has_drawbacks(data) and problem != "pain":
+		if data.stats.get("type", "") == "stim" or has_drawbacks(data) and not problem in ["pain", "energy", "hydration"]:
 			continue
 		var fits := false
 		match problem:
@@ -388,9 +463,9 @@ static func _choose(items: Array[ItemInstance], health: BodyHealth, problem: Str
 			"heal":
 				fits = is_medkit(data) and best_part(item, health) >= 0
 			"hydration":
-				fits = float(data.stats.get("hydration", 0.0)) > 0.0 and not has_drawbacks(data)
+				fits = float(data.stats.get("hydration", 0.0)) > 0.0 and _safe_to_eat(data, health)
 			"energy":
-				fits = float(data.stats.get("energy", 0.0)) > 0.0 and not has_drawbacks(data)
+				fits = float(data.stats.get("energy", 0.0)) > 0.0 and _safe_to_eat(data, health)
 		if fits:
 			candidates.append(item)
 	if candidates.is_empty():
@@ -404,6 +479,8 @@ static func _choose(items: Array[ItemInstance], health: BodyHealth, problem: Str
 		var b_part_used := b.charges < max_charges(b.data)
 		if a_part_used != b_part_used:
 			return a_part_used  # Finish what's open.
+		if problem in ["energy", "hydration"]:
+			return float(a.data.stats.get(problem, 0.0)) > float(b.data.stats.get(problem, 0.0))  # The most of what's needed.
 		return a.data.base_value < b.data.base_value)
 	var item := candidates[0]
 	var part := best_part(item, health) if works_on_parts(item.data) else -1

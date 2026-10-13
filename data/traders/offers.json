@@ -36,7 +36,8 @@
       {"give": [{"item": "cigarettes", "count": 4}, {"item": "lighter", "count": 1}], "get": {"item": "ammo_545_ps", "count": 60}},
       {"give": [{"item": "vodka", "count": 1}, {"item": "cigarettes", "count": 2}], "get": {"item": "ammo_9x18_pst", "count": 50}},
       {"give": [{"item": "gunpowder", "count": 2}, {"item": "bolts", "count": 2}], "get": {"item": "ammo_545_bt", "count": 60}, "ll": 2},
-      {"give": [{"item": "military_cable", "count": 1, "fir": true}, {"item": "gunpowder", "count": 2}], "get": {"item": "ammo_762x39_bp", "count": 20}, "ll": 3}
+      {"give": [{"item": "military_cable", "count": 1, "fir": true}, {"item": "gunpowder", "count": 2}], "get": {"item": "ammo_762x39_bp", "count": 20}, "ll": 3},
+      {"give": [{"item": "tushonka", "count": 2}, {"item": "vodka", "count": 1}], "get": {"item": "ammo_762x39_ps", "count": 40}}
     ]
   },
   "therapist": {
@@ -65,7 +66,16 @@
       {"item": "emergency_water", "price": 11000, "currency": "RUB"},
       {"item": "condensed_milk", "price": 12500, "currency": "RUB", "ll": 2},
       {"item": "aquamari", "price": 29000, "currency": "RUB", "ll": 3},
-      {"item": "mre", "price": 34000, "currency": "RUB", "ll": 3}
+      {"item": "mre", "price": 34000, "currency": "RUB", "ll": 3},
+      {"item": "sugar", "price": 4000, "currency": "RUB"},
+      {"item": "coffee", "price": 7200, "currency": "RUB"},
+      {"item": "jerky", "price": 6000, "currency": "RUB"},
+      {"item": "field_ration", "price": 9900, "currency": "RUB"},
+      {"item": "rye_bread", "price": 4200, "currency": "RUB"},
+      {"item": "canned_soup", "price": 5500, "currency": "RUB"},
+      {"item": "mineral_water", "price": 9900, "currency": "RUB", "ll": 2},
+      {"item": "survivor_kit", "price": 17600, "currency": "RUB", "ll": 2},
+      {"item": "isotonic", "price": 21000, "currency": "RUB", "ll": 3}
     ],
     "barters": [
       {"give": [{"item": "gold_chain", "count": 1, "fir": true}], "get": {"item": "surgical_kit"}},
@@ -284,13 +294,17 @@
       {"item": "ammo_762x54r_sp", "count": 20, "price": 8300, "currency": "RUB", "ll": 1},
       {"item": "ammo_338_fmj", "count": 10, "price": 11700, "currency": "RUB", "ll": 1},
       {"item": "ammo_338_ucw", "count": 10, "price": 13000, "currency": "RUB", "ll": 2},
-      {"item": "ammo_338_tacx", "count": 10, "price": 23400, "currency": "RUB", "ll": 3}
+      {"item": "ammo_338_tacx", "count": 10, "price": 23400, "currency": "RUB", "ll": 3},
+      {"item": "jerky", "price": 6200, "currency": "RUB"},
+      {"item": "sunflower_seeds", "price": 2500, "currency": "RUB"},
+      {"item": "dried_fish", "price": 4000, "currency": "RUB"}
     ],
     "barters": [
       {"give": [{"item": "ledx", "count": 1, "fir": true}], "get": {"item": "leviathan_338"}},
       {"give": [{"item": "lighter", "count": 1}, {"item": "matches", "count": 2}, {"item": "crackers", "count": 2}], "get": {"item": "choke_full"}},
       {"give": [{"item": "mre", "count": 1}, {"item": "aquamari", "count": 1}, {"item": "fuel_conditioner", "count": 1}], "get": {"item": "huntsman_700"}, "ll": 2},
-      {"give": [{"item": "nails", "count": 2}, {"item": "hose", "count": 1}], "get": {"item": "huntsman_stock_hunting"}}
+      {"give": [{"item": "nails", "count": 2}, {"item": "hose", "count": 1}], "get": {"item": "huntsman_stock_hunting"}},
+      {"give": [{"item": "dried_fish", "count": 2}, {"item": "kvass", "count": 1}], "get": {"item": "choke_modified"}}
     ]
   }
 }

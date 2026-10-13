@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "Kitchen cabinet"
+rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
+rarity_multipliers = PackedFloat32Array(1, 1.1, 1, 0.9, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray("crackers", "sugar", "coffee", "green_peas", "sprats", "tushonka", "canned_beef", "buckwheat", "condensed_milk", "honey", "rye_bread", "oat_bar", "sunflower_seeds", "pickles", "canned_soup", "field_ration", "survivor_kit", "matches", "lighter", "soap", "kettle")
+item_weights = {
+"sugar": 1.5,
+"coffee": 1.5
+}
+item_count = Vector2i(1, 4)

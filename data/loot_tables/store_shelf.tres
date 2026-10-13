@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "Store shelf"
+rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
+rarity_multipliers = PackedFloat32Array(1, 1.1, 1, 0.9, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray("crackers", "chocolate_bar", "oat_bar", "jerky", "sunflower_seeds", "dried_fish", "rye_bread", "canned_soup", "green_peas", "sprats", "tushonka", "water_bottle", "apple_juice", "kvass", "mineral_water", "energy_drink", "vodka", "field_ration", "survivor_kit", "cigarettes", "toothpaste", "soap", "aa_battery", "light_bulb", "matches", "lighter")
+item_weights = {
+"water_bottle": 1.5
+}
+item_count = Vector2i(2, 5)

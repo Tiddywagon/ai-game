@@ -28,6 +28,10 @@
 [ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="26_safe"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/filing_cabinet.tres" id="27_cabinet"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="28_duffle"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/fridge.tres" id="60_fridge"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/kitchen_cabinet.tres" id="61_kitchen"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/store_shelf.tres" id="62_shelf"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/gas_station.tres" id="63_gas"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -273,7 +277,7 @@ script = ExtResource("19_box")
 container = ExtResource("25_medical")
 
 [node name="Safe" type="Node3D" parent="Navigation/Loot"]
-transform = Transform3D(-3.67321e-06, 0, -1, 0, 1, 0, 1, 0, -3.67321e-06, 18.6, 0, -9)
+transform = Transform3D(-3.67321e-06, 0, 1, 0, 1, 0, -1, 0, -3.67321e-06, 18.6, 0, -9)
 script = ExtResource("19_box")
 container = ExtResource("26_safe")
 
@@ -286,6 +290,26 @@ container = ExtResource("27_cabinet")
 transform = Transform3D(0.980067, 0, 0.198669, 0, 1, 0, -0.198669, 0, 0.980067, -2.5, 0, -14)
 script = ExtResource("19_box")
 container = ExtResource("28_duffle")
+
+[node name="Fridge" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.6, 0, 19.35)
+script = ExtResource("19_box")
+container = ExtResource("60_fridge")
+
+[node name="StoreShelf" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6, 0, 19.5)
+script = ExtResource("19_box")
+container = ExtResource("62_shelf")
+
+[node name="GasStationCounter" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 19.4, 0, 5)
+script = ExtResource("19_box")
+container = ExtResource("63_gas")
+
+[node name="KitchenCabinet" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -19.45, 0, 7)
+script = ExtResource("19_box")
+container = ExtResource("61_kitchen")
 
 [node name="LooseNearSpawn" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-6, 0, 15.3)
