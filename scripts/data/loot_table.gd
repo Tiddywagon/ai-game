@@ -4,13 +4,14 @@ extends Resource
 ## data/loot_tables/ (crate.tres, medical_bag.tres, safe.tres...), plus loose_loot.tres for items on
 ## the ground and default.tres, the plain base table.
 ##
-## A roll picks a rarity by weight: the base weights × this table's rarity multipliers × the map's (Labs
+## A roll picks a rarity by weight: the base weights × this table's rarity multipliers × the map's (Lab Zero
 ## doubles Epic and Legendary). Then it picks an item of that rarity the table allows, weighted by each
 ## item's loot_weight × the table's item_weights. A table allows every item in its item list, of its
 ## categories, of its groups, with any of its tags or of its types (all of them together; anything if
 ## it has none of these): a toolbox rolls the Hardware and Tools groups, a safe anything tagged
 ## "valuable" (DESIGN.md §6.5). Rarities with nothing allowed in them get no weight, so the others
-## share their chance. Pass a RandomNumberGenerator for repeatable results.
+## share their chance. Pass a RandomNumberGenerator for repeatable results. Rolled inside a point of
+## interest (DESIGN.md §5.2), items matching its focus tags weigh PoiConfig.focus_weight times more.
 
 const RARITY_COUNT := 6
 
@@ -90,8 +91,9 @@ func roll_rarity(rng: RandomNumberGenerator, map: MapInfo = null, boost := Packe
 	return _pick(rng, weights(map, boost))
 
 
-## Rolls one item: a rarity, then an item of that rarity. Null if nothing can drop.
-func roll_item(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat32Array()) -> ItemData:
+## Rolls one item: a rarity, then an item of that rarity (those matching `focus`, a POI's focus tags,
+## weigh more). Null if nothing can drop.
+func roll_item(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat32Array(), focus: Array = []) -> ItemData:
 	var rarity := roll_rarity(rng, map, boost)
 	if rarity < 0:
 		return null
@@ -100,6 +102,8 @@ func roll_item(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedF
 	for item in pool:
 		var source := _source(item)
 		var side_line := tag_weight if source == "tag" else type_weight if source == "type" else 1.0
+		if not focus.is_empty() and PoiTable.matches_focus(item, focus):
+			side_line *= PoiTable.CONFIG.focus_weight
 		pool_weights.append(item.loot_weight * float(item_weights.get(item.id, 1.0)) * side_line)
 	var index := _pick(rng, pool_weights)
 	return pool[index] if index >= 0 else null
@@ -107,10 +111,10 @@ func roll_item(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedF
 
 ## Fills one container: item_count.x to item_count.y items, each {"id", "count"}. Stackable items
 ## (ammo) come as a partial stack: a fifth to a half of a full one.
-func roll(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat32Array()) -> Array[Dictionary]:
+func roll(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat32Array(), focus: Array = []) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for i in rng.randi_range(item_count.x, item_count.y):
-		var item := roll_item(rng, map, boost)
+		var item := roll_item(rng, map, boost, focus)
 		if item:
 			var count := 1
 			if item.max_stack > 1:
@@ -121,9 +125,9 @@ func roll(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat3
 
 ## roll() as ready-made items: guns come loaded with a matching round, somewhat worn (60-95
 ## durability). Null entries are skipped.
-func roll_items(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat32Array()) -> Array[ItemInstance]:
+func roll_items(rng: RandomNumberGenerator, map: MapInfo = null, boost := PackedFloat32Array(), focus: Array = []) -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []
-	for entry in roll(rng, map, boost):
+	for entry in roll(rng, map, boost, focus):
 		var item := ItemInstance.create(entry.id, entry.count)
 		if item and item.data.weapon:
 			item = Inventory.loaded_gun(entry.id, ammo_for(item.data.weapon.caliber), rng.randf_range(60.0, 95.0))
@@ -136,6 +140,18 @@ func roll_items(rng: RandomNumberGenerator, map: MapInfo = null, boost := Packed
 static func ammo_for(caliber: String) -> String:
 	var rounds := ItemDB.ammo_of(caliber)
 	return rounds[0].id if not rounds.is_empty() else ""
+
+
+## Two sets of rarity multipliers multiplied together (an empty set counts as all 1).
+static func combine_boosts(a: PackedFloat32Array, b: PackedFloat32Array) -> PackedFloat32Array:
+	if a.is_empty():
+		return b.duplicate()
+	if b.is_empty():
+		return a.duplicate()
+	var result := PackedFloat32Array()
+	for rarity in RARITY_COUNT:
+		result.append(_multiplier(a, rarity) * _multiplier(b, rarity))
+	return result
 
 
 static func _multiplier(multipliers: PackedFloat32Array, rarity: int) -> float:

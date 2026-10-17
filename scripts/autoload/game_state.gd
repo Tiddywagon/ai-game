@@ -63,11 +63,15 @@ var hideout: Dictionary = {}
 var energy := START_ENERGY
 var hydration := START_HYDRATION
 var metabolism_time := 0.0
-## Insured items that came back but didn't fit in the stash yet (DESIGN.md §2, Insurance), as
-## ItemInstance.to_dict() entries. Delivered when there's room.
+## Insured items on their way back (DESIGN.md §2, Insurance): {"item": ItemInstance.to_dict(), "due":
+## unix time, "insurer"}, delivered to the stash once due and there's room (Insurance.deliver_due()).
 var insurance_pending: Array = []
+## The trader you insure with (an id in data/config/insurers.json).
+var insurer := "prapor"
 ## Hotkeys 1-5: the item id each one uses (the first one you carry), "" for none.
 var hotkeys: Array = DEFAULT_HOTKEYS.duplicate()
+## Points of interest you've been in, by map (DESIGN.md §5.2): {map id: [POI ids]}.
+var explored: Dictionary = {}
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -115,6 +119,28 @@ func hotkey_of(id: String) -> int:
 	return hotkeys.find(id) if id != "" else -1
 
 
+## Marks POI `poi_id` on `map_id` explored. False if it already was.
+func explore(map_id: String, poi_id: String) -> bool:
+	var list: Array = explored.get(map_id, [])
+	if poi_id in list:
+		return false
+	list.append(poi_id)
+	explored[map_id] = list
+	return true
+
+
+## How many of `map_id`'s points of interest you've explored (that still exist).
+func explored_count(map_id: String) -> int:
+	var ids := PoiTable.for_map(map_id).map(func(entry: Dictionary) -> String: return str(entry.get("id", "")))
+	return explored.get(map_id, []).filter(func(id: String) -> bool: return id in ids).size()
+
+
+## Share (0-1) of `map_id`'s points of interest you've explored.
+func exploration(map_id: String) -> float:
+	var total := PoiTable.for_map(map_id).size()
+	return float(explored_count(map_id)) / total if total > 0 else 0.0
+
+
 func _reset(new_faction: Faction) -> void:
 	faction = new_faction
 	level = 1
@@ -137,7 +163,9 @@ func _reset(new_faction: Faction) -> void:
 	quests = {}
 	hideout = {}
 	insurance_pending = []
+	insurer = "prapor"
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
+	explored = {}
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -166,7 +194,9 @@ func to_dict() -> Dictionary:
 			"hideout": hideout.duplicate(),
 			"metabolism": {"energy": snappedf(energy, 0.01), "hydration": snappedf(hydration, 0.01), "time": metabolism_time},
 			"insurance_pending": insurance_pending.duplicate(true),
+			"insurer": insurer,
 			"hotkeys": hotkeys.duplicate(),
+			"explored": explored.duplicate(true),
 		},
 		"stash": stash.to_array(),
 	}
@@ -215,9 +245,13 @@ func from_dict(data: Dictionary) -> void:
 		quests[quest] = {"state": str(entry.get("state", "active")),
 			"progress": entry.get("progress", []).map(func(n: Variant) -> int: return int(n))}
 	insurance_pending = profile.get("insurance_pending", []).duplicate(true)
+	insurer = str(profile.get("insurer", "prapor"))
 	var saved_hotkeys: Array = profile.get("hotkeys", DEFAULT_HOTKEYS)
 	for i in HOTKEY_COUNT:
 		hotkeys[i] = str(saved_hotkeys[i]) if i < saved_hotkeys.size() else ""
+	var saved_explored: Dictionary = profile.get("explored", {})
+	for map_id: String in saved_explored:
+		explored[map_id] = saved_explored[map_id].map(func(id: Variant) -> String: return str(id))
 	var saved_hideout: Dictionary = profile.get("hideout", {})
 	for station: String in saved_hideout:
 		hideout[station] = int(saved_hideout[station])

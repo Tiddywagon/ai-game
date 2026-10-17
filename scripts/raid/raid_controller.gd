@@ -15,6 +15,9 @@ extends Node
 signal raid_ended(outcome: RaidOutcome)
 ## The power came on (extracts that need it open).
 signal power_on
+## The player walked into a point of interest (DESIGN.md §5.2) for the first time this raid;
+## `first_time` if they'd never explored it before (it's now explored, with its experience).
+signal poi_entered(poi: PointOfInterest, first_time: bool)
 
 @export var player: Player
 @export var config: RaidConfig = preload("res://data/config/raid.tres")
@@ -23,14 +26,19 @@ signal power_on
 ## AI PMCs that join the raid, each at a PMC spawn point the player didn't get (DESIGN.md §4, §5).
 @export_range(0, 8) var ai_pmcs := 0
 @export var ai_pmc_profile: BotProfile = preload("res://data/bots/pmc.tres")
+## Scav waves during the raid (RaidConfig), and the Scavs they bring.
+@export var scav_waves := true
+@export var scav_profile: BotProfile = preload("res://data/bots/scav.tres")
+@export var poi_config: PoiConfig = preload("res://data/config/poi.tres")
 
 var map: MapInfo
 ## Seconds since the raid started, and seconds left on the clock.
 var elapsed := 0.0
 var time_left := 0.0
-## Raid experience so far, and where it came from: {"kills", "looting", "trick_shots", "survived"}.
+## Raid experience so far, and where it came from: {"kills", "looting", "trick_shots", "exploration",
+## "survived"}.
 var xp := 0
-var xp_parts := {"kills": 0, "looting": 0, "trick_shots": 0, "survived": 0}
+var xp_parts := {"kills": 0, "looting": 0, "trick_shots": 0, "exploration": 0, "survived": 0}
 ## Who the player killed: [{"name", "side": "pmc" or "scav"}].
 var kill_list: Array[Dictionary] = []
 ## Drip earned this raid (360 trick-shot kills), and the trick-shot kills: [{"side": "pmc" or "scav",
@@ -49,6 +57,14 @@ var spawn_point: SpawnPoint
 var ai_extracts: Array[Dictionary] = []
 ## Rolls this raid: spawn point and random extracts. Seeded from GameState.raid "seed" if set.
 var rng := RandomNumberGenerator.new()
+## The point of interest the player is in (null: none), the ones they've been in this raid, and the
+## ones explored for the first time this raid (ids).
+var current_poi: PointOfInterest
+var visited_pois: Array[String] = []
+var discovered_pois: Array[String] = []
+## Scav waves so far, and raid seconds until the next one.
+var waves := 0
+var next_wave := -1.0
 
 ## The map's power: seconds until it comes on after the switch is thrown (-1: off), and on.
 var _power_countdown := -1.0
@@ -77,6 +93,8 @@ func _ready() -> void:
 			_place_player()
 		if ai_pmcs > 0:
 			_spawn_ai_pmcs.call_deferred()
+	if scav_waves:
+		next_wave = rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
 
 
 func _physics_process(delta: float) -> void:
@@ -94,8 +112,11 @@ func _physics_process(delta: float) -> void:
 	if _confirm_timer <= 0.0:
 		_confirm_timer = 0.25
 		_confirm_extracts()
+		_track_poi()
 	elapsed += delta
 	time_left = maxf(time_left - delta, 0.0)
+	if next_wave >= 0.0 and elapsed >= next_wave:
+		spawn_wave()
 	if time_left <= 0.0:
 		end_raid(RaidOutcome.Status.MIA)
 		return
@@ -195,6 +216,37 @@ func _confirm_extracts() -> void:
 			zone.confirm()
 
 
+# --- Points of interest --------------------------------------------------------------------------
+
+## The map's id (data/maps).
+func map_key() -> String:
+	return str(map.id) if map else map_id
+
+
+## Notices the player walking into a point of interest: the first time this raid it's announced
+## (poi_entered); the first time ever it's explored (saved with the profile in a real raid) and earns
+## PoiConfig.xp_discover (more for a hidden one), plus xp_map_complete for the map's last one.
+func _track_poi() -> void:
+	var poi := PointOfInterest.at(get_tree(), player.global_position)
+	if poi == current_poi:
+		return
+	current_poi = poi
+	if poi == null or poi.poi_id in visited_pois:
+		return
+	visited_pois.append(poi.poi_id)
+	var first := false
+	if is_real_raid() and not poi.entry().is_empty() and poi.map_id == map_key():
+		first = GameState.explore(map_key(), poi.poi_id)
+	if first:
+		discovered_pois.append(poi.poi_id)
+		var gained := poi_config.xp_discover_hidden if poi.is_hidden() else poi_config.xp_discover
+		if GameState.explored_count(map_key()) == PoiTable.for_map(map_key()).size():
+			gained += poi_config.xp_map_complete
+		xp += gained
+		xp_parts.exploration += gained
+	poi_entered.emit(poi, first)
+
+
 # --- Power ---------------------------------------------------------------------------------------
 
 ## "off", "starting" (the switch is thrown) or "on".
@@ -239,26 +291,123 @@ func _place_player() -> void:
 		player.rotation.y = spawn_point.global_rotation.y
 
 
-## AI PMCs at PMC spawn points the player isn't at, farthest from the player first, each patrolling
-## through a few points of the Scav zones.
+## A wave of Scavs (RaidConfig scav waves): 2-3 together at a spawn spot out of the player's sight,
+## roaming the points around it. Skipped (and tried again later) while too many Scavs are alive or
+## there's nowhere to spawn. Returns the Scavs it spawned.
+func spawn_wave() -> Array[Bot]:
+	var spawned: Array[Bot] = []
+	next_wave = elapsed + rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
+	if elapsed > raid_seconds() * config.scav_wave_until:
+		next_wave = -1.0
+		return spawned
+	var alive := get_tree().get_nodes_in_group("bots").filter(func(bot: Bot) -> bool:
+		return not bot.is_dead and bot.side == Actor.Side.SCAV).size()
+	var size := mini(rng.randi_range(config.scav_wave_size.x, config.scav_wave_size.y), config.scav_max_alive - alive)
+	var at: Variant = wave_spot()
+	if size <= 0 or at == null:
+		return spawned
+	waves += 1
+	var roam := _points_near(at, 30.0)
+	for i in size:
+		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
+		bot.name = "Wave%d_Scav%d" % [waves, i + 1]
+		bot.profile = scav_profile
+		bot.wander_points = roam
+		var angle := TAU * i / size
+		bot.position = at + Vector3(cos(angle), 0.0, sin(angle)) * 1.2
+		get_parent().add_child(bot)
+		spawned.append(bot)
+	return spawned
+
+
+## Where a Scav wave can spawn now: a Scav zone point (weight 1) or a point of interest (its heat:
+## higher tiers and fresh raid events pull harder), at least scav_wave_min_distance from the player and
+## out of their line of sight. Null if there's none.
+func wave_spot() -> Variant:
+	var spots: Array[Vector3] = []
+	var weights := PackedFloat32Array()
+	for zone in get_tree().get_nodes_in_group("scav_zones"):
+		for point in zone.patrol_points():
+			spots.append(point)
+			weights.append(1.0)
+	for node in get_tree().get_nodes_in_group("pois"):
+		var poi := node as PointOfInterest
+		if not poi.is_hidden() and poi.requirement_met():
+			spots.append(_on_navmesh(poi.global_position))
+			weights.append(poi.heat(elapsed))
+	var space := player.get_world_3d().direct_space_state if player else null
+	for i in spots.size():
+		if player and (spots[i].distance_to(player.global_position) < config.scav_wave_min_distance
+				or VisionSystem.line_clear(space, player.global_position, spots[i], false)):
+			weights[i] = 0.0
+	var index := LootTable._pick(rng, weights)
+	return spots[index] if index >= 0 else null
+
+
+## A hot point of interest for a roaming bot near `from` to head for: picked by heat
+## (PointOfInterest.heat(): high tiers, fresh raid events), among the ones you can get into now and
+## that aren't hidden. Null if there's none.
+func hot_point(from: Vector3) -> Variant:
+	var pois: Array[PointOfInterest] = []
+	var weights := PackedFloat32Array()
+	for node in get_tree().get_nodes_in_group("pois"):
+		var poi := node as PointOfInterest
+		if poi.is_hidden() or not poi.requirement_met() or poi.contains(from):
+			continue
+		pois.append(poi)
+		weights.append(poi.heat(elapsed))
+	var index := LootTable._pick(rng, weights)
+	if index < 0:
+		return null
+	var spots := pois[index].event_spots()
+	return _on_navmesh(spots[rng.randi_range(0, spots.size() - 1)])
+
+
+## Scav zone points and point of interest centres within `radius` of `at` (at least `at` itself): where
+## a wave roams.
+func _points_near(at: Vector3, radius: float) -> PackedVector3Array:
+	var points := PackedVector3Array([at])
+	for point in _roam_points():
+		if point.distance_to(at) <= radius and point.distance_to(at) > 1.0:
+			points.append(point)
+	return points
+
+
+## Every point AI roams between: the Scav zones' points and the (not hidden) points of interest.
+func _roam_points() -> PackedVector3Array:
+	var points := PackedVector3Array()
+	for zone in get_tree().get_nodes_in_group("scav_zones"):
+		points.append_array(zone.patrol_points())
+	for node in get_tree().get_nodes_in_group("pois"):
+		if not node.is_hidden():
+			points.append(_on_navmesh(node.global_position))
+	return points
+
+
+func _on_navmesh(point: Vector3) -> Vector3:
+	var level := get_parent() as Node3D
+	if level == null or not level.is_inside_tree():
+		return point
+	var map := level.get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return point
+	return NavigationServer3D.map_get_closest_point(map, point)
+
+
+## AI PMCs at PMC spawn points the player isn't at, farthest from the player first, each roaming the
+## Scav zones and points of interest (hot ones draw them: BotProfile.hot_poi_chance).
 func _spawn_ai_pmcs() -> void:
 	var free_points: Array = get_tree().get_nodes_in_group("spawn_points").filter(func(point: SpawnPoint) -> bool:
 		return point != spawn_point and point.side != "Scav")
 	free_points.sort_custom(func(a: SpawnPoint, b: SpawnPoint) -> bool:
 		return a.global_position.distance_to(player.global_position) > b.global_position.distance_to(player.global_position))
-	var stops := PackedVector3Array()
-	for zone in get_tree().get_nodes_in_group("scav_zones"):
-		stops.append_array(zone.patrol_points())
+	var stops := _roam_points()
 	for i in mini(ai_pmcs, free_points.size()):
 		var point: SpawnPoint = free_points[i]
 		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
 		bot.name = "AIPMC%d" % (i + 1)
 		bot.profile = ai_pmc_profile
-		var route := PackedVector3Array([point.global_position])
-		for stop in 2:
-			if not stops.is_empty():
-				route.append(stops[rng.randi_range(0, stops.size() - 1)])
-		bot.patrol_points = route
+		bot.wander_points = stops
 		bot.position = point.global_position
 		get_parent().add_child(bot)
 
@@ -281,17 +430,37 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 		RaidOutcome.keep_metabolism(player.health, status == RaidOutcome.Status.KILLED or status == RaidOutcome.Status.MIA)
 	outcome = RaidOutcome.settle(status, side(), player.inventory, elapsed, xp,
 		player.kills, is_real_raid(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
-		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at})
+		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters()})
 	raid_ended.emit(outcome)
 	return outcome
+
+
+## Hostile AI alive within Insurance's "taken" radius of the player: who could take insured gear off
+## their body.
+func looters() -> int:
+	if player == null:
+		return 0
+	var radius := float(Insurance.config().get("taken", {}).get("radius", 40.0))
+	return get_tree().get_nodes_in_group("bots").filter(func(bot: Bot) -> bool:
+		return not bot.is_dead and bot.is_hostile(player) and bot.global_position.distance_to(player.global_position) <= radius).size()
 
 
 func _on_kill(target: Actor) -> void:
 	var pmc := target.side == Actor.Side.PMC
 	var gained := config.xp_pmc_kill if pmc else config.xp_scav_kill
+	var role := ""
+	if target is Bot and target.is_boss():
+		role = "boss"
+		gained = config.xp_boss_kill
+	elif target is Bot and target.is_guard():
+		role = "guard"
+		gained = config.xp_guard_kill
 	xp += gained
 	xp_parts.kills += gained
-	kill_list.append({"name": target.display_name(), "side": "pmc" if pmc else "scav"})
+	var entry := {"name": target.display_name(), "side": "pmc" if pmc else "scav"}
+	if role != "":
+		entry.role = role
+	kill_list.append(entry)
 
 
 ## A 360 trick-shot kill: bonus experience on top of the kill's, and Drip.

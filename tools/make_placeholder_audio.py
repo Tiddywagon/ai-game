@@ -1,5 +1,6 @@
 """Generates the placeholder audio in assets/audio: a seamless dark ambient menu loop, two UI sounds, the
-360 trick-shot sting, the extraction sound and the signal flare.
+360 trick-shot sting, the extraction sound, the signal flare, and the raid event sounds (a plane
+overhead for an airdrop, a truck's horn and engine, a weapon cache's klaxon).
 
 Usage: python3 tools/make_placeholder_audio.py assets/audio   (needs numpy and ffmpeg with libvorbis)
 """
@@ -120,3 +121,31 @@ hiss = (hiss - np.convolve(hiss, np.ones(6) / 6, mode="same")) * np.minimum(1.0,
 flare = pop + hiss
 write_wav(f"{out_dir}/sfx/flare.wav", flare / np.max(np.abs(flare)) * 0.85)
 print("done")
+
+# ---- Raid events (DESIGN.md §5.2): an airdrop plane, a supply truck's horn, a weapon cache klaxon --------
+total = int(7.0 * sr)
+tt = np.arange(total) / sr
+swell = np.exp(-((tt - 3.2) / 1.9) ** 2)  # Comes in, passes over, fades.
+pitch = 1.0 + 0.06 * np.tanh((3.2 - tt) * 1.2)  # A slight Doppler drop as it passes.
+phase = 2 * np.pi * np.cumsum(62.0 * pitch) / sr
+engine = (np.sin(phase) + 0.6 * np.sin(2 * phase) + 0.3 * np.sin(3 * phase)) * (0.7 + 0.3 * np.sin(2 * np.pi * 11 * tt))
+rumble = np.convolve(rng.standard_normal(total), np.ones(120) / 120, mode="same") * 3.0
+plane = (engine * 0.5 + rumble) * swell
+write_wav(f"{out_dir}/sfx/plane.wav", plane / np.max(np.abs(plane)) * 0.8)
+
+total = int(3.0 * sr)
+tt = np.arange(total) / sr
+blasts = ((tt > 0.05) & (tt < 0.45)) | ((tt > 0.65) & (tt < 1.35))
+horn = (np.sign(np.sin(2 * np.pi * 220 * tt)) * 0.5 + np.sign(np.sin(2 * np.pi * 277 * tt)) * 0.4) * blasts
+horn = np.convolve(horn, np.ones(20) / 20, mode="same")
+idle = np.sin(2 * np.pi * np.cumsum(38 + 4 * np.sin(2 * np.pi * 3 * tt)) / sr) * 0.35 * np.minimum(1.0, tt / 0.3)
+truck = horn * 0.6 + idle
+write_wav(f"{out_dir}/sfx/truck_horn.wav", truck / np.max(np.abs(truck)) * 0.8)
+
+total = int(2.6 * sr)
+tt = np.arange(total) / sr
+two_tone = np.where((tt * 2.5) % 1.0 < 0.5, 660.0, 495.0)
+klaxon = np.sign(np.sin(2 * np.pi * np.cumsum(two_tone) / sr)) * np.exp(-np.maximum(tt - 2.0, 0) * 6.0)
+klaxon = np.convolve(klaxon, np.ones(12) / 12, mode="same")
+write_wav(f"{out_dir}/sfx/klaxon.wav", klaxon / np.max(np.abs(klaxon)) * 0.7)
+print("events done")

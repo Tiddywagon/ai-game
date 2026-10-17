@@ -4,8 +4,10 @@ extends Node3D
 ## pockets, rig or backpack (it's then loot: found in raid if you extract with it). Either a set item,
 ## or rolled at the start of the raid from a LootTable (normally loose_loot.tres, any item) with the
 ## map's multipliers (and a LootZone's if it lies in one); a spot only has something on it
-## `spawn_chance` of the time. Hidden while out of sight, like enemies. A small box the size of the
-## item, in its rarity colour, for now.
+## `spawn_chance` of the time. Inside a point of interest a rolled spot is one of the POI's spawn points
+## instead (DESIGN.md §5.2): the POI decides whether it has anything this raid, and it rolls from the
+## POI's focus items most of the time (PoiConfig.focus_share), with the POI's tier multipliers. Hidden
+## while out of sight, like enemies. A small box the size of the item, in its rarity colour, for now.
 
 ## A set item, or "" to roll one from `loot_table`.
 @export var item_id := ""
@@ -43,8 +45,12 @@ func _ready() -> void:
 
 
 func _make_item() -> ItemInstance:
+	var poi := PointOfInterest.at(get_tree(), global_position) if is_inside_tree() and loot_seed == 0 else null
 	if item_id != "":
-		return ItemInstance.create(item_id, count)
+		var placed := ItemInstance.create(item_id, count)
+		if poi:
+			poi.record(self, "loose", true, [placed])
+		return placed
 	if loot_table == null:
 		return null
 	var rng := RandomNumberGenerator.new()
@@ -52,10 +58,20 @@ func _make_item() -> ItemInstance:
 		rng.seed = loot_seed
 	else:
 		rng.randomize()
-	if rng.randf() >= spawn_chance:
-		return null
 	var boost := LootZone.boost_at(get_tree(), global_position) if is_inside_tree() else PackedFloat32Array()
-	var rolled := loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost)
+	var table := loot_table
+	if poi:
+		if not poi.spot_active(self):
+			poi.record(self, "loose", false, [])
+			return null
+		boost = LootTable.combine_boosts(boost, poi.loot_boost())
+		if rng.randf() < PoiTable.CONFIG.focus_share:
+			table = PoiTable.focus_table(poi.focus())
+	elif rng.randf() >= spawn_chance:
+		return null
+	var rolled := table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost)
+	if poi:
+		poi.record(self, "loose", not rolled.is_empty(), rolled)
 	return rolled[0] if not rolled.is_empty() else null
 
 

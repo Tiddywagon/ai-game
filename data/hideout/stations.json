@@ -74,7 +74,8 @@
           {"id": "ap338_rounds", "inputs": [{"item": "weapon_parts", "count": 3, "fir": true}, {"item": "gpu", "count": 1, "fir": true}], "output": {"item": "ammo_338_ap", "count": 10}},
           {"id": "military_cable", "inputs": [{"item": "wires", "count": 4}, {"item": "duct_tape", "count": 2}, {"item": "rechargeable_battery", "count": 1}], "output": {"item": "military_cable", "count": 1}},
           {"id": "thermite", "inputs": [{"item": "gunpowder", "count": 1}, {"item": "wd40", "count": 1}, {"item": "bolts", "count": 2}], "output": {"item": "thermite", "count": 1}},
-          {"id": "server_blade", "inputs": [{"item": "circuit_board", "count": 2}, {"item": "ram_stick", "count": 2}, {"item": "ssd_drive", "count": 1}, {"item": "power_cord", "count": 1}], "output": {"item": "server_blade", "count": 1}}
+          {"id": "server_blade", "inputs": [{"item": "circuit_board", "count": 2}, {"item": "ram_stick", "count": 2}, {"item": "ssd_drive", "count": 1}, {"item": "power_cord", "count": 1}], "output": {"item": "server_blade", "count": 1}},
+          {"id": "secure_beta", "inputs": [{"item": "secure_alpha", "count": 1}, {"item": "military_cable", "count": 2}, {"item": "duct_tape", "count": 3}, {"item": "bolts", "count": 4, "fir": true}], "output": {"item": "secure_beta", "count": 1}}
         ]}
     ]
   },

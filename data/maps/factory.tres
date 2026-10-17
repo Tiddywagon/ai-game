@@ -11,7 +11,6 @@ order = 3
 size = "Small"
 raid_minutes = 20
 players = "4 PMCs · 8 Scavs"
-boss = "Tagilla"
 scene_path = "res://maps/factory.tscn"
 climate = "Hot"
 energy_drain_multiplier = 1.1

@@ -23,22 +23,29 @@
 | 2 | **Enter Raid** | Pick a map, play as your PMC or as a Scav, check (and insure) the loadout (Section 16.3); loading; deploy at a random spawn point for your side, away from hostile AI | Raid timer counts down |
 | 3 | **Loot** | Fight Scavs/PMCs, search containers & bodies (**F**), pick up loose items, complete in-raid quest objectives | Backpack fills |
 | 4a | **Extract** | Stand in an extract you can use for 7 s *(tune)* before the timer ends; a hit starts the count over. Every map has 1–3: always open, random, or conditional (a key, roubles, the power on, a flare fired, no backpack; some unlocked by quests). Section 5.1 | Fade out; keep everything carried; loot becomes found in raid |
-| 4b | **Die / MIA** | Killed, the raid timer runs out, or LEAVE RAID from the pause menu | Lose all gear except the secure container; insured items come back to the stash |
+| 4b | **Die / MIA** | Killed, the raid timer runs out, or LEAVE RAID from the pause menu | Lose all gear except the secure container; insured items come back to the stash 1–2 real minutes later, unless someone took them off your body |
 | 5 | **Raid summary** | Every raid ends on the summary: outcome, map, side, time, kills, loot value, experience (with where it came from), gear and insurance, and what's now found in raid | Back to the hideout (everything already saved) |
 
 **Retention rules** (built: `RaidOutcome`)
 
 | Item location | Survived / Run Through | Killed / MIA |
 |---|---|---|
-| Equipped / backpack / rig / pockets | Kept | Lost, except insured items: they come back to the stash after the raid (guns with their parts, rigs and backpacks empty, no rounds; not found in raid, no longer insured). If the stash is full they wait and arrive when there's room |
+| Equipped / backpack / rig / pockets | Kept | Lost, except insured items nobody took: they come back to the stash after the insurer's return time, 24–48 game hours, which is 1–2 real minutes (guns with their parts, rigs and backpacks empty, no rounds; not found in raid, no longer insured). If the stash is full they wait and arrive when there's room |
 | Secure container | Kept | Kept |
 | Found-in-Raid (FIR) tag | Applied to loot on a SURVIVED extract (not on a Run Through) | Never |
 | Experience | SURVIVED: everything earned plus 300 for extracting. **Run Through: none at all** (you keep the loot, but not as found in raid) | Kills, looting and trick shots count; no extract bonus |
 | Scav run | Everything the Scav carries goes to the stash (what doesn't fit is left behind) | Nothing from the stash was at risk |
 
-**Raid experience** *(tune, `data/config/raid.tres`)*: 100 per Scav kill, 300 per PMC kill, 10 per item looted, 250 more per 360 trick-shot kill, 300 for extracting (SURVIVED). Added to the profile however the raid ends, except a Run Through, which earns nothing.
+**Raid experience** *(tune, `data/config/raid.tres`, `data/config/poi.tres`)*: 100 per Scav kill, 300 per PMC kill, 1,000 per boss and 250 per boss guard (Section 4.3), 10 per item looted, 250 more per 360 trick-shot kill, 25 for each point of interest you explore for the first time (75 for a hidden one, 250 more when the whole map is explored; Section 5.2), 300 for extracting (SURVIVED). Added to the profile however the raid ends, except a Run Through, which earns nothing.
 
-**Insurance** *(tune, `insurance_rate` / `insurance_min_price` in `raid.tres`)*: before a raid, insure guns (with their parts), weapon parts, armor, helmets, rigs, backpacks and melee weapons for 10% of their value (at least 1,000 ₽ each): **INSURE GEAR** in the loadout check insures everything you'd bring that isn't yet, **INSURE** in an item's examine panel insures one item. Insured items have a blue corner and say so when hovered or examined. Ammo, meds, food, barter goods, valuables and keys can't be insured; the secure container never needs it. Insurance lasts until the item comes back.
+**Insurance** *(tune: `data/config/insurers.json`, `insurance_min_price` in `raid.tres`)*: before a raid, pay a trader to insure guns (with their parts), weapon parts, armor, helmets, rigs, backpacks and melee weapons. **INSURE GEAR** in the loadout check insures everything you'd bring that isn't yet, **INSURE** in an item's examine panel insures one item; the loadout check's insurer picker says who (saved with the profile). Insured items have a blue corner and say so (and with whom) when hovered or examined. Ammo, meds, food, barter goods, valuables and keys can't be insured; the secure container never needs it. Insurance lasts until the item comes back.
+
+| Insurer | Cost (share of value, at least 1,000 ₽) | Back after (game time) | Real time |
+|---|---|---|---|
+| Prapor | 8% | 36–48 h | 1:30–2:00 |
+| Therapist | 15% | 24–30 h | 1:00–1:15 |
+
+Game time runs 24× real time for insurance: a game day is a real minute. When you die or go missing, your insured items are claimed: **killed**, each one is taken (gone for good) with a chance of 5% plus 12% for every hostile AI alive within 40 m of your body, at most 60%; **missing in action** nobody is there, so everything comes back. The rest is on its way: the raid summary says how many items, with whom and when ("2 insured items on the way back with Prapor: in your stash in 1:42", and "1 insured item taken off your body"). The main menu counts down ("Insurance returns in 1:12") and delivers them when due, while no screen is open ("Prapor returned 2 insured items to your stash"); with a full stash they wait for room. One roll per insurer per claim, so a claim arrives together.
 
 ### 2.1 Found in Raid (FIR)
 
@@ -71,43 +78,77 @@ Player chooses a PMC faction per character. Both are hostile to Scavs and to the
 
 | Type | Spawn | Behavior | Gear tier | Loot drop |
 |---|---|---|---|---|
-| Scav | Common, waves | Patrol, loose groups, poor accuracy | Common–Uncommon | Junk, meds, ammo |
-| Scav Sniper | Fixed overwatch spots | Static, long range | Uncommon | Rifles, ammo |
-| Raider | Specific POIs | Aggressive, flanks, good aim | Rare–Ultra Rare | Armor, attachments |
-| Boss | Map-specific, ~30% chance *(tune)* | Unique pattern + guards | Epic–Legendary | Unique loot table |
-| AI PMC | Random spawns | Hunt, loot, extract like player | Uncommon–Epic | Full loadout |
+| Scav | Scav zones at raid start, then **waves** (Section 4.2) | Patrol, loot, flee to heal, poor accuracy | Common–Uncommon, small chance of Rare | Junk, meds, food, ammo |
+| Scav Sniper | Fixed overwatch spots | Static, long range | Uncommon | Rifles, ammo *(planned)* |
+| Raider | Specific POIs | Aggressive, flanks, good aim | Rare–Ultra Rare | Armor, attachments *(planned)* |
+| Boss + 2–4 guards | One per map, 35% of raids *(tune)* | Tough, smart, pushes as a group (Section 4.3) | Class 5–6 armor, signature guns | Guaranteed Epic or Legendary |
+| AI PMC | PMC spawns you didn't get | Roam, drawn to hot POIs, loot, extract like the player | Uncommon–Epic | Full loadout |
 
-AI implementation: state machine (Idle → Patrol → Alert → Combat → Search → Loot → Extract), `NavigationAgent3D`, hearing + vision cone, faction relation table.
+### 4.1 Scav AI
 
-**Combat behaviour (built for Scavs and AI PMCs).** Scavs are friendly to each other; everyone else is hostile.
+**State machine** (`Bot`, built): each bot is in one state at a time; the map's `NavigationRegion3D` (baked at raid start, locked doors shut to it) is what it walks on, through a `NavigationAgent3D`.
+
+| State | What it does | Leaves it when |
+|---|---|---|
+| Idle | Stands and looks around (2–5 s at a patrol stop) | It has somewhere to patrol to; it hears or sees something |
+| Patrol | Walks to the next point: a random point of its zone (a Scav zone's markers, or the points around where its wave came in), sometimes a **hot point of interest** (Scav 25%, PMC 50% of patrol legs; Section 5.2), or the next stop of a fixed route | It gets there (Idle); a noise, a target or loot |
+| Investigate | Walks to a noise it heard (or a raid event it rushes to), looks around | Done looking (Idle); a target |
+| Combat | Takes cover, peeks and shoots in bursts with its profile's aim error, reloads ducked, moves to new cover when flanked or after a few peeks; **sometimes flanks** (Scav 25%, PMC 40% of moves: cover 40–110° around the threat, no farther from it); melee up close | Target dead (Idle) or lost for a while (Search); low HP (Flee) |
+| Search | Goes to where the target was last seen and looks around | Done looking (Idle) |
+| Loot | Out of a fight, every 1.5 s it looks for loose loot or a ready raid-event crate within its loot radius (Scav 10 m, PMC 12 m), in sight and on its floor, that no other bot is fetching; walks there, takes 1.2 s to pick it up (from a crate: its two most valuable items) | Done, or the loot is gone or out of reach (Idle); a noise or a target |
+| Flee | Below 35% of its total HP (PMC 25%; bosses never), at most once every 45 s: runs (sprinting) for cover farther from the threat, or straight away from it; there it ducks and treats itself with what it carries (quick treatment's pick: bleeds first, then HP; its backpack too), up to three treatments | Treated (back to Combat, or Search); the target corners it within 6 m (Combat) |
+| Extract | Walks to an extract it can use and leaves the raid (Section 5.1) | Gone; a fight interrupts it |
+
+A bot that makes no progress toward where it's going for 2 s (a doorway the navmesh cuts too fine, another body in the way) gives up on that spot as the closest it can get.
+
+**Combat behaviour (built for Scavs and AI PMCs).** Scavs are friendly to each other (and to a boss and its guards); everyone else is hostile.
 
 | Sense / action | Rule |
 |---|---|
 | Vision | Same rules as the player (Section 13.6): a cone in front, anyone within 3 m noticed regardless, a clear sight line (walls, cars, crates, hedges block; low cover only if either side is crouched). Shorter at night, in dark rooms, fog and rain; someone with a flashlight on is spotted from 1.5× farther. A magnified scope adds a long narrow cone it scans with. Blinded by flashbangs. Once in combat it tracks its target outside the cone |
-| Hearing | Hears any noise whose radius reaches it (footsteps, rolls, shots); walks over to investigate, then looks around |
-| Under fire | A bullet passing within 2 m puts the bot in combat with the shooter |
-| Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks |
+| Hearing | Hears any noise whose radius × its hearing reaches it, so **how you move matters**: footsteps carry 10 m walking, **20 m sprinting**, **4 m crouched** (a roll 25 m, a gunshot 60 m); a Scav hears ×1.0, a PMC ×1.3, a boss ×1.5, a helmet without a headset less. Walks over to investigate, then looks around |
+| Under fire | A bullet passing within 2 m puts the bot in combat with the shooter (a fleeing bot keeps running) |
+| Cover | Picks a free cover point that hides it from the threat, preferring spots it can shoot from. Ducks, peeks for a burst, ducks again. Moves to new cover when flanked or after a few peeks, sometimes to a flank |
 | Search | Loses sight for too long → goes to the last known position and looks around |
-| Health | Same body parts, bleeds and fractures as the player (Section 13.5): a leg hit slows a bot, an arm hit makes it sway |
-| Leaving | Late in the raid AI PMCs (and half the Scavs) walk to the nearest extract they can use and leave the raid there after 7 s, like the player (Section 5.1). A fight interrupts it; a hit restarts the count |
+| Health | Same body parts, bleeds and fractures as the player (Section 13.5): a leg hit slows a bot, an arm hit makes it sway. Low on HP it flees and treats itself |
+| Leaving | Late in the raid AI PMCs (and half the Scavs) walk to the nearest extract they can use and leave the raid there after 7 s, like the player (Section 5.1). A fight interrupts it; a hit restarts the count. Bosses and their guards never leave |
 | Shooting | Same guns as the player (Section 13.4): fires in bursts, so recoil and bloom build and settle, and always fires aimed (no hip-fire spread). Fights off part of each recoil kick (Scav 30%, PMC 60%, `BotProfile.recoil_control`). Aim error is added on top of the gun's spread. From cover it waits until it has stopped stepping out before firing |
-| Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Bots carry 90 spare rounds in their rig |
-| Gear | Each bot carries a full kit, all of it lootable from its body (F): a Scav has an AK-74N with PS, a Scav vest with 90 PS, sometimes a helmet (25%), a hatchet (20%) or a sling bag of junk (40%), and odds and ends in its pockets; an AI PMC has an AK-74N with BS, sometimes a PM pistol (40%), armor, a helmet, a tactical rig with 90 BS and a bandage, a pack with a few finds, and meds in its pockets. Its spare rounds are the ones in its rig: each reload takes them out, and the gun keeps the rounds left in it |
+| Reloading | Reloads when the magazine runs dry, and tops up while ducked below half a magazine. Never peeks while reloading. Its spare rounds are the ones in its rig and pockets |
+| Gear | Each bot carries a full kit, all of it lootable from its body (F); it fights with the gun in it. **A Scav's is random and cheap** (`data/bots/scav_kit.tres`, `BotKit`): a gun by weight (AK-74N 30, Partisan SKS 16, Warden 870 14, PM 12, Mosin 10, Vektor P9 8, Tundra 47 4, Hornet SMG 3, Tempest S12 2, SVD 1) loaded with its everyday round and three magazines of spares, always a rig, sometimes armor (30%), a helmet (30%), a backpack (40%) or a hatchet (20%), each rolled from a Scav table that is 70% Common, 26% Uncommon, 3.5% Rare and 0.5% Ultra rare (`data/loot_tables/scav_kit/`), always something to eat or drink, often a bandage, and odds and ends. An AI PMC has an AK-74N with BS, sometimes a PM pistol (40%), armor, a helmet, a tactical rig with 90 BS and a bandage, a pack with a few finds, and meds in its pockets. Each reload takes rounds out of the rig, and the gun keeps the rounds left in it. In a seeded raid every bot's kit is the same each time |
 
-| Profile | Vision (daylight) | Sight | Reaction | Aim error | Hearing | Rolls | Ammo |
-|---|---|---|---|---|---|---|---|
-| Scav (basic) | 25 m, 120° | Iron sights | 0.8 s | 2.8° | ×1.0 | Never | 5.45 PS |
-| PMC (advanced) | 35 m, 140° | 2-4x scope (+70 m, 40° cone) | 0.4 s | 0.3° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 5.45 BS |
+| Profile | Vision (daylight) | Sight | Reaction | Aim error | Hearing | Rolls | Flees below | Flanks |
+|---|---|---|---|---|---|---|---|---|
+| Scav (basic) | 25 m, 120° | Iron sights | 0.8 s | 2.8° | ×1.0 | Never | 35% HP | 25% |
+| PMC (advanced) | 35 m, 140° | 2-4x scope (+70 m, 40° cone) | 0.4 s | 0.3° | ×1.3 | 50% chance to roll out of the line of fire when shot at in the open; 70% chance to roll into new cover when it's within reach | 25% HP | 40% |
+
+### 4.2 Scav Waves *(tune: `raid.tres`)*
+
+More Scavs turn up as the raid goes on: a wave of **2–3 Scavs every 150–240 s**, until 85% of the raid has passed, while fewer than **10 Scavs** are alive. A wave spawns together at a Scav zone point (weight 1) or a point of interest (weighted by its **heat**: tier 1 ×1, tier 2 ×2, tier 3 ×4, +8 for five minutes after a raid event there; Section 5.2), at least 25 m from you and out of your line of sight, and roams the points within 30 m. The debug overlay shows the waves so far and when the next is due.
+
+### 4.3 Bosses *(tune: `data/config/bosses.json`, `data/bots/boss.tres`, `guard.tres`)*
+
+Every map has one boss, with an original name and a theme that fits the map. It's in **35% of raids** (rolled at raid start, seeded by the raid), with **2–4 guards**. A boss is tougher (×1.8 HP, the head ×1.34; guards ×1.3), wears class 5–6 armor and a class 5 helmet (guards class 4–5), shoots straighter and reacts faster than a Scav, hears better, never flees and never leaves the raid. It always carries **Epic or Legendary loot** (1–2 items from `boss_loot.tres`, which only rolls those two rarities, themed by the boss's loot focus tags, rolled again until one fits), on top of valuables and stims (`boss_body.tres`). A boss kill is worth 1,000 XP, a guard 250, and the raid summary names the boss you killed.
+
+| Map | Boss | Guards | Theme | Signature gear | Loot focus |
+|---|---|---|---|---|---|
+| Test Yard | **Sergeant Major Hollis Krane**, the Drillmaster | 2–3 Instructors | A retired drill instructor who never stopped running the yard as his training ground | Sentinel AR (5.56 EPR), Bastion 45, Korund-VM, Sentry helmet | Intel, military |
+| Factory | **Iron Matvei**, the Furnace King | 2–4 Stokers | The old night foreman, now a warlord in a scorched welding mask, holding the boiler house | Tempest S12 (flechette), hatchet, Zabralo-Sh, Altyn | Tools, fuel, electronics |
+| Customs Yard | **Bogdan "Tollkeeper" Varga** | 3–4 Toll men | Runs a racket on the old customs checkpoint: everyone pays, in roubles or in blood | Grizzly 74 (BT), Strelka MP, Redut-T5, Sentry helmet | Currency, valuables |
+| Woodland | **Old Leshy**, the Poacher of the Pines | 2–3 Trappers | A hermit hunter who picks raiders off from the treeline while his Trappers close the net | Huntsman 700 (M62), Bastion 45, Korund-VM, Lynx-T helmet | Food, weapons, tools |
+| Shoreline Resort | **Captain Marisol "Undertow" Reyes** | 3–4 Deckhands | A smuggler captain who took the resort for her headquarters | Halcyon B5 (EPR), Vektor P9, Hexgrid, Lynx-T helmet | Valuables, currency |
+| Lab Zero | **Director Ilse Varn**, the Last Director | 3–4 Cleaners | Lab Zero's head of security, who sealed the doors and never left | Wasp PDW (PBP), Bastion 45 (AP), Zabralo-Sh, Altyn | Intel, medical, electronics |
+
+**A squad.** The boss and its guards share targets: when one of them spots or is shot by someone, the whole squad fights them, and what one sees updates the others. Out of a fight the guards stay with the boss (each at its own spot around it) while the boss wanders its haunt (the `BossSpawn` node's markers). In a fight they **push as a group**: moving to new cover means cover at least 2 m closer to the threat, and only one of them moves at a time while the rest stay in their cover peeking and shooting to pin the threat down (unless their cover stops protecting them). The raid setup shows each map's boss with its odds ("Iron Matvei, the Furnace King · 35% · 2-4 Stokers"); the debug overlay says whether it's in this raid and how many guards are alive. `GameState.raid` `"boss": true / false` forces the roll (tests).
 
 ## 5. Maps
 
 | Map | Size | Players/AI | Raid time | Extracts | Boss | Theme / key loot |
 |---|---|---|---|---|---|---|
-| Customs Yard | Medium | 6 / 15 | 35 min | 3 (1 random, 1 Scav only) | Reshala | Industrial; starter quests |
-| Woodland | Large | 8 / 18 | 45 min | 3 (1 random, 1 flare) | Shturman | Forest, sawmill; rifles |
-| Factory | Small | 4 / 8 | 20 min | 3 (1 random, 1 key + power) | Tagilla | Close quarters; fast raids |
-| Shoreline Resort | Large | 8 / 20 | 45 min | 3 (1 no backpack, 1 quest + paid) | Sanitar | Resort; high-value keys & meds |
-| Labs | Medium | 6 / 12 Raiders | 35 min | 3 (1 power, 1 no backpack or armor) | — | Requires keycard; Epic/Legendary loot |
+| Customs Yard | Medium | 6 / 15 | 35 min | 3 (1 random, 1 Scav only) | Bogdan "Tollkeeper" Varga | Industrial; starter quests |
+| Woodland | Large | 8 / 18 | 45 min | 3 (1 random, 1 flare) | Old Leshy | Forest, sawmill; rifles |
+| Factory | Small | 4 / 8 | 20 min | 3 (1 random, 1 key + power) | Iron Matvei | Close quarters; fast raids |
+| Shoreline Resort | Large | 8 / 20 | 45 min | 3 (1 no backpack, 1 quest + paid) | Captain Marisol "Undertow" Reyes | Resort; high-value keys & meds |
+| Lab Zero | Medium | 6 / 12 Cleaners | 35 min | 3 (1 power, 1 no backpack or armor) | Director Ilse Varn | A PMC needs a **Lab Zero access keycard** to get in, used up on entry; Scavs can't enter; Epic/Legendary loot |
 
 ### 5.1 Extraction *(tune: `data/config/extracts.json`, `raid.tres`)*
 
@@ -130,7 +171,7 @@ Every map has **1 to 3 extracts**, and at least one of them is **always open** t
 | Shoreline Resort | Coastal road | Always open | — |
 | | Rock passage | Conditional | No backpack |
 | | Pier boat | Conditional (quest) | Skier's *Safe Harbour* done; pay 15,000 ₽ |
-| Labs | Main elevator | Always open | — |
+| Lab Zero | Main elevator | Always open | — |
 | | Parking gate | Conditional | The power on |
 | | Ventilation shaft | Conditional | No backpack, no body armor |
 
@@ -163,7 +204,7 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 
 **Climate** (`climate`, `energy_drain_multiplier`, `hydration_drain_multiplier` in each map's `.tres`; Section 13.7): Shoreline Resort and Factory are **hot** (hydration drains ×1.5 and ×1.35, energy ×1.1), Woodland is **cold** (energy ×1.15, hydration ×0.9), the rest temperate. The HUD shows HOT or COLD next to the weather.
 
-**Test Yard** (playable): 15-minute raid, six spawn points, three extracts (Section 5.1): the **north-east gate** (always open), the **smuggler's car** by the west car (7,000 ₽, no backpack) and, once Prapor's *Flare Path* is done, the **signal point** in the north-west corner (fire a flare); one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour.
+**Test Yard** (playable): 15-minute raid, six spawn points, three extracts (Section 5.1): the **north-east gate** (always open), the **smuggler's car** by the west car (7,000 ₽, no backpack) and, once Prapor's *Flare Path* is done, the **signal point** in the north-west corner (fire a flare); one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour. Nine points of interest (Section 5.2), with the original ones: a **wrecked courier van** in the middle of the yard, a **shuttered bunker** on the north wall (its lever is on the west wall) and a **stash under the floorboards** behind the south hedge. In 35% of raids **Sergeant Major Hollis Krane** drills his Instructors by the field clinic (Section 4.3).
 
 **Factory** (playable, gray-box): a 60 × 48 m walled factory compound (`maps/factory.tscn`, written by a generator script so the layout is easy to redo), close quarters, 20-minute raids. North is the top of the screen.
 
@@ -179,7 +220,7 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 
 **Landmarks** you can see from anywhere: the red **smokestack** (north), the yellow **crane** beam over the main hall and the blue **water tower** (south-west); every area's name is painted on the floor.
 
-**Doors** (23): F opens and closes them (they swing, block bullets and sight while shut, and the AI opens unlocked ones as it walks through). A **locked** door (red plate) says which key it needs; with the key on you, F unlocks it for the rest of the raid and uses one of the key's uses (Factory office key 25, Factory lab key 15, Factory exit key 25; the key is gone at 0). The AI never paths through a locked door.
+**Doors** (24): F opens and closes them (they swing, block bullets and sight while shut, and the AI opens unlocked ones as it walks through). A **locked** door (red plate) says which key it needs; with the key on you, F unlocks it for the rest of the raid and uses one of the key's uses (Factory office key 25, Factory lab key 15, Factory exit key 25; the key is gone at 0). The AI never paths through a locked door. The generator bunker's **blast door** (amber plate) has no key: it opens by itself once the power is on.
 
 **Extracts** (Section 5.1):
 
@@ -189,19 +230,92 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 | Cellars | Boiler house | Needs the **Factory exit key** on you (not used up) and the power on: the **boiler house power switch** on its east wall |
 | Office window | Offices, north wall | Random: open 40% of raids |
 
-**Spawns:** 6 PMC spawn points around the edge (west yard, south-west, north-east yard, loading dock, boiler yard, east yard) and 3 Scav ones. 8 AI Scavs spawn in three **Scav zones** (main hall 3, warehouse 3, lockers 2) and patrol them; 3 AI PMCs (4 PMCs with you) take PMC spawns you didn't get (farthest first) and roam the Scav zones (`RaidController.ai_pmcs`). The boss (Tagilla) isn't in yet.
+**Spawns:** 6 PMC spawn points around the edge (west yard, south-west, north-east yard, loading dock, boiler yard, east yard) and 3 Scav ones. 8 AI Scavs spawn in three **Scav zones** (main hall 3, warehouse 3, lockers 2) and patrol them; 3 AI PMCs (4 PMCs with you) take PMC spawns you didn't get (farthest first) and roam the Scav zones and points of interest (`RaidController.ai_pmcs`). Scav waves add more during the raid (Section 4.2). In 35% of raids **Iron Matvei, the Furnace King** holds the boiler house with 2–4 Stokers (Section 4.3).
 
-**Loot:** 54 containers (filing cabinets and PCs in the offices, medicine and lab cabinets in the med bay and lab, toolboxes and crates on the floor, weapon boxes in the armory...) and 21 loose loot spots. Three **high-value loot areas** (`LootZone`) boost the rarity of everything rolled inside them:
-
-| Loot area | Rarity multipliers (C / U / R / UR / E / L) |
-|---|---|
-| Overseer's office (locked) | 1 / 1 / 1.4 / 1.8 / 2.2 / 2.2 |
-| Lab (locked) | 1 / 1 / 1.3 / 1.7 / 2 / 2 |
-| Armory cage | 1 / 1 / 1.2 / 1.5 / 1.8 / 1.6 |
+**Loot:** containers (filing cabinets and PCs in the offices, medicine and lab cabinets in the med bay and lab, toolboxes and crates on the floor, weapon boxes in the armory...) and loose loot spots, all of them spawn points of the Factory's 12 **points of interest** (Section 5.2), which decide which of them spawn this raid and how rare their loot is. The original ones: the **Foreman's stash** under the break room floor (hidden), the **generator bunker** behind the power-driven blast door in the boiler yard (hidden) and a **crashed supply truck** between the med bay and the warehouse.
 
 **Keys:** the Factory office key (Skier barter, LL2), the Factory lab key (Therapist barter, LL2) and the Factory exit key (Prapor, LL2) also turn up in filing cabinets.
 
-**Map items** (`"type": "map"` items, tag `map`): the **Factory map** (Prapor, 10,000 ₽; filing cabinets; the guard's desk) and the **Test Yard map**. Carry a map of the map you're on and press **M** (or VIEW MAP when examining it) to open it: the layout (walls, low cover, floors, stairs, doors with locked ones marked, landmarks and area names, loot areas in gold, Scav zones in red), you, and your extracts with their marks and types ("Office window: Unknown · Random (40%)"). You can't shoot while it's open. Without one, M says "No map of Factory". Out of raid, VIEW MAP shows the layout and every extract.
+**Map items** (`"type": "map"` items, tag `map`): the **Factory map** (Prapor, 10,000 ₽; filing cabinets; the guard's desk) and the **Test Yard map**. Carry a map of the map you're on and press **M** (or VIEW MAP when examining it) to open it: the layout (walls, low cover, floors, stairs, doors with locked ones marked, landmarks and area names, points of interest outlined in their tier's colour with their names, Scav zones in red), you, and your extracts with their marks and types ("Office window: Unknown · Random (40%)"); the legend lists the points of interest with their tier, which you've explored and what they need, under how much of the map you've explored. You can't shoot while it's open. Without one, M says "No map of Factory". Out of raid, VIEW MAP shows the layout and every extract.
+
+### 5.2 Points of Interest & Raid Events *(tune: `data/config/pois.json`, `data/config/poi.tres`)*
+
+Every map is divided into **points of interest** (POIs): named areas, each with a boundary (a box in the map scene, `PointOfInterest`), a **loot tier** (1–3), **loot focus tags**, the containers and loose loot spots inside it as its **spawn points**, and optionally a **requirement** (a key, the power on, a lever pulled). The table is data (`data/config/pois.json`, checked at load: `PoiTable.problems()`); map scenes place each POI by its id. (The request's table of starting POIs came through empty, so the POIs below were written here: the obvious areas of each map plus 2–3 original ones per map, including hidden ones.)
+
+| Map | Point of interest | Tier | Focus | Needs |
+|---|---|---|---|---|
+| Test Yard | Yard workshop | 1 | tools, medical | — |
+|  | Dark storeroom | 2 | weapons, intel | — |
+|  | Field clinic | 2 | medical | — |
+|  | Signal hut | 2 | electronics, valuables | — |
+|  | Corner shop | 1 | food, household | — |
+|  | West squat | 1 | household, food | — |
+|  | Stash under the floorboards *(hidden)* | 3 | valuables, currency | — |
+|  | Wrecked courier van *(spots spawn 80%)* | 2 | electronics, valuables | — |
+|  | Shuttered bunker | 3 | weapons, ammo, military | Lever pulled |
+| Factory | Main hall | 1 | tools, ammo | — |
+|  | Overseer's office | 3 | valuables, intel, keys | Key: Factory office key |
+|  | Boiler house | 1 | fuel, tools | — |
+|  | Offices | 2 | intel, electronics | — |
+|  | Locker rooms | 1 | household, food, gear | — |
+|  | Med bay | 2 | medical | — |
+|  | Lab | 3 | medical, valuables, electronics | Key: Factory lab key |
+|  | Warehouse | 1 | tools, food, gear | — |
+|  | Armory cage | 3 | weapons, ammo, military | — |
+|  | Foreman's floor stash *(hidden)* | 3 | valuables, currency | — |
+|  | Generator bunker *(hidden)* | 3 | military, ammo, electronics | Power on |
+|  | Crashed supply truck *(spots spawn 80%)* | 2 | food, medical, electronics | — |
+| Customs Yard | Dorms | 2 | electronics, household, keys | — |
+|  | Dorm room 114 | 3 | valuables, currency | Key: Dorm room 114 key |
+|  | Marked room | 3 | valuables, currency | Key: Marked room key |
+|  | Construction site | 1 | tools | — |
+|  | Fuel depot | 1 | fuel, food | — |
+|  | Customs office | 2 | intel, electronics | — |
+|  | Trailer park | 1 | household, food | — |
+|  | Smuggler's crawlspace *(hidden)* | 3 | valuables, currency | — |
+|  | Overturned armored van | 2 | currency, valuables | — |
+|  | Railway signal bunker *(hidden)* | 3 | military, ammo | Lever pulled |
+| Woodland | Sawmill | 1 | tools, fuel | — |
+|  | Hunter's lodge | 2 | weapons, ammo | Key: Hunter's lodge key |
+|  | Scav camp | 1 | food, military | — |
+|  | Radio tower | 2 | electronics | — |
+|  | Abandoned village | 1 | household, food | — |
+|  | Old army checkpoint | 2 | military, gear | — |
+|  | Cache under the old oak *(hidden)* | 3 | weapons, valuables | — |
+|  | Downed helicopter | 3 | military, electronics, medical | — |
+|  | Forester's root cellar *(hidden)* | 2 | food, medical | Key: Forester's cellar key |
+| Shoreline Resort | Resort west wing | 2 | valuables, medical | Key: Resort west wing key |
+|  | Resort east wing | 2 | electronics, medical | Key: Resort east wing key |
+|  | Resort admin office | 3 | valuables, intel | Key: Resort admin office key |
+|  | Pier | 1 | fuel, food | — |
+|  | Weather station | 2 | electronics | — |
+|  | Power station | 1 | tools, fuel | — |
+|  | Beached yacht | 3 | valuables, currency | — |
+|  | Pool-house crawlspace *(hidden)* | 3 | currency, valuables | — |
+|  | Cliffside bunker *(hidden)* | 3 | military, ammo | Power on |
+| Lab Zero | Main lobby | 2 | electronics, food | — |
+|  | Cafeteria | 1 | food | — |
+|  | Research wing | 3 | medical, valuables | Key: Lab Zero red keycard |
+|  | Server hall | 3 | electronics, intel | Power on |
+|  | Manager's office | 3 | valuables, intel | Key: Lab Zero black keycard |
+|  | Security armory | 3 | weapons, ammo, gear | Key: Lab Zero violet keycard |
+|  | Specimen vault *(hidden)* | 3 | medical, valuables | Key: Lab Zero black keycard |
+|  | Collapsed service tunnel | 2 | tools, electronics | — |
+|  | Under-floor cable stash *(hidden)* | 3 | electronics, valuables | — |
+
+**Dynamic loot.** At raid start every spawn point in a POI rolls whether it spawns at all this raid (tier 1: 55%, tier 2: 65%, tier 3: 75%; the wrecked van and crashed truck 80%), seeded by the raid and the spot, so not every spot has something every raid. The active ones roll their items with the POI's tier as a rarity multiplier on Rare and above (tier 1 ×1, tier 2 ×1.5, tier 3 ×2.5) and its focus tags: in a container, items matching the tags weigh ×3; a loose spot rolls from the POI's focus table 70% of the time. **Locked rooms** (a POI that needs a key) roll better still: on top of the tier, Rare ×1.2, Ultra rare ×1.35, Epic and Legendary ×1.5. Where POIs overlap, the smallest one a spot is in owns it.
+
+| Focus tag | Picks |
+|---|---|
+| electronics, medical, weapons, ammo, gear, food, valuables, currency, tools, intel, keys, military, fuel, household | Item categories, groups and tags (`PoiTable.FOCUS`): weapons are guns and weapon parts, medical the meds and medical supplies, intel the Intel group and intelligence folders... |
+
+**Requirements.** A POI with a **key** (a locked door with its `key_id`) is open once its door is unlocked; one with **power** once the map's power is on (its blast door opens by itself); one with a **lever** once its `Lever` has been pulled (F, a loud clank; its shutter opens by itself). A **stash under a floor** (`FloorHatch`) is a few darker boards: its containers can't be seen or searched until F pries them up.
+
+**Exploring.** Walking into a POI for the first time in a raid shows its name and what it holds near the top of the screen for 3.5 s ("DARK STOREROOM · Tier 2 · weapons, intel"); the first time ever, it's **explored**: "NEW AREA · +25 XP · Test Yard 22% explored" (a hidden one: "HIDDEN AREA FOUND", +75 XP; the whole map: +250 more). Exploration is kept per map with the profile (`GameState.explored`) and shown on the map item and the raid setup ("Explored: 4 of 9 points of interest (44%)"); the experience is part of the raid's (EXPLORATION in the summary).
+
+**Raid events.** **1–3 times a raid**, at random times between 15% and 80% of it, new loot turns up at a POI, loudly, at one of its event spots: an **airdrop** (a plane passes over, a red flare goes up where the crate will land, and it comes down on a parachute for 9 s; searchable once landed), a **supply truck** (it drives in with its horn going and leaves its cargo crate), or a **weapon cache** (one of the sealed caches standing at the map's cache spots unlocks with a klaxon and a green flare). Each is announced on the HUD ("AIRDROP · A plane is dropping supplies over Main hall") and heard 120 m away; AI within earshot that isn't fighting rushes there (Scavs 50% of the time, PMCs 85%) and loots the crate. Event crates have the best Epic and Legendary odds in the game (`data/loot_tables/event_*.tres`). A POI with an event in the last five minutes is **hot**: it draws Scav waves and roaming AI (Section 4.2).
+
+**Debug overlay** (F12, second press): every POI with its tier, focus, Rare+ multiplier, how many of its spawn points are active this raid and what each spawned, its heat, whether its requirement is met, and the events (when the rest are due, what happened where). In the world a marker floats over every spawn point (green with what spawned, grey when inactive) and each POI's name. A third press hides it.
 
 ## 6. Items
 
@@ -221,8 +335,8 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 | Valuables | 27: jewelry (watches, chains, rings, a diamond necklace), currency (coins, banknotes, banded dollars, a gold bar, Bitcoin), tech (drives, GPU, crypto drive), collectibles (bronze lion, medal, camera, icon, jeweled egg), intel (folder, satellite phone), LEDX (Section 6.5) | Group, tags, value by rarity (5k ₽ Common to 1M+ Legendary); wanted in quests, barters and crafts |
 | Junk / Barter | 59 in 13 groups (maps and the signal flare included): hardware, tools, electronics, tech, household, medical supply, fuel, military, materials (bolts, wrenches, batteries, RAM, server blades, soap, blood sets, propane, thermite, aramid fabric, a tank battery...; Section 6.5) | Group, tags, value by rarity; used in quests, barters, crafts, hideout and gear upgrades ("Needed for" when examined) |
 | Throwables | F-1 frag grenade, Zarya flashbang (Section 13.4.2) | Fuse, blast radius and damage (frag); thrown from a hotkey or the hotkey wheel |
-| Keys | Room keys, keycards (Factory office, lab and exit keys) | Uses (one per door unlocked; gone at 0), unlocks locked doors and key extracts (Section 5) |
-| Containers | Ammo case, item case, Secure container (2x2 → 3x4) | Internal grid |
+| Keys | Room keys and keycards: Factory office, lab and exit keys, Dorm room 114 and Marked room (Customs), Hunter's lodge and Root cellar (Woodland), Resort west / east wing and Admin office (Shoreline), Lab Zero red (10 uses), violet (6) and black (3, Legendary) keycards, and the **Lab Zero access keycard** (1 use: the reader keeps it) | Uses (one per door unlocked; gone at 0), unlock locked doors (and the better loot behind them, Section 5.2) and key extracts (Section 5.1). In filing cabinets (keys) and lab cabinets (keycards) |
+| Containers | Ammo case, item case, Secure containers Alpha 2×2 (starter), Beta 3×2 (Workbench), Gamma 3×3 and Kappa 3×4 (quests) | Internal grid |
 
 ### 6.2 Rarity Scale
 
@@ -236,7 +350,7 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 | Legendary | Gold | 0.5% | LEDX, crypto drive, jeweled egg, tank battery, Grizzly medkit, eTG-c, Obdolbos and Phoenix stims, class 6 armor, boss uniques |
 
 - Rates are per-roll weights for generic loot spawns; sum = 100%.
-- **Modifiers:** container type (safe/jacket/weapon box), map tier (Labs ×2 for Epic+), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
+- **Modifiers:** container type (safe/jacket/weapon box), map tier (Lab Zero ×2 for Epic+), point of interest tier and locked rooms (Section 5.2), boss loot tables override, hideout/skill bonuses ≤ +10% relative.
 
 **How a roll works:** every container type has its **own loot table** (`data/loot_tables/<type>.tres`; loose loot uses `loose_loot.tres`). Weight of each rarity = base weight (55 / 25 / 12 / 5 / 2.5 / 0.5) × the table's rarity multipliers × the map's multiplier. Pick a rarity by weight, then an item of that rarity the table can hold: anything in its item list, of its categories, of its groups or with one of its tags (a toolbox holds Hardware and Tools, a safe anything tagged `valuable`; Section 6.5), all together. Each item's `loot_weight` and the table's `item_weights` set how often it comes up among its rarity; `loot_weight` 0 = never from loot (quest items, boss uniques). If a table can't hold any item of some rarity (a medical bag has no Epic meds), that rarity's weight is 0, so the other rarities share its chance. Stackable items (ammo) come as a partial stack (a fifth to a half of a full stack); guns come loaded.
 
@@ -266,12 +380,12 @@ Solid containers block movement and bullets (wood ones can be shot through) and 
 
 | Map | Rarity multipliers |
 |---|---|
-| Labs | Epic and Legendary ×2 |
+| Lab Zero | Epic and Legendary ×2 |
 | Every other map | ×1 |
 
 **High-value loot areas** (`LootZone`, placed in a map): containers and loose loot inside one multiply their rarity weights again by the zone's multipliers (on top of the table's and the map's). Factory has three (Section 5): the Overseer's office (Epic and Legendary ×2.2), the Lab (×2) and the Armory cage (Epic ×1.8).
 
-So a safe on Labs drops Epic about 22% and Legendary about 4.4% of the time, against 2.5% and 0.5% for loose loot elsewhere. `scenes/debug/loot_roll_test.tscn` rolls 10,000 times for the base table, every container type's table, loose loot on Labs and a safe on Labs, and prints expected vs rolled rates.
+So a safe on Lab Zero drops Epic about 22% and Legendary about 4.4% of the time, against 2.5% and 0.5% for loose loot elsewhere. `scenes/debug/loot_roll_test.tscn` rolls 10,000 times for the base table, every container type's table, loose loot on Lab Zero and a safe on Lab Zero, and prints expected vs rolled rates.
 
 ### 6.3 Gear Variance (Rolled Loot)
 
@@ -301,7 +415,7 @@ Borderlands-style variety with Tarkov-style realism. Each dropped **weapon, atta
 
 - **Roll quality** sets where each bonus lands in its range (Low = bottom third, High = top third).
 - **Naming:** `[Quality] Base Item`, for example *Match-grade AK-74N* or *Hand-fitted M4A1*. Named Legendaries use their own name.
-- **Map bonus:** Labs and boss loot tables roll quality one step higher.
+- **Map bonus:** Lab Zero and boss loot tables roll quality one step higher.
 
 **Weapon bonuses**
 
@@ -343,11 +457,11 @@ Attachments roll from the weapon pool at half the range, with at most 2 bonuses.
 
 | Name | Base | Fixed mod | Source |
 |---|---|---|---|
-| *Reshala's TT* | Gold-plated TT pistol | Hand-fitted: −40% malfunction chance; very high sell value | Reshala |
-| *Woodcutter* | SKS | Match barrel, lapped bore: −20% MOA | Shturman |
-| *Tagilla's Rig* | Plate carrier | Reinforced: −10% blunt damage, +15% durability | Tagilla |
-| *Sanitar's Kit* | Medical rig | Extra sewn pouches: +2 slots (1×1); meds taken from the rig apply 15% faster | Sanitar |
-| *Prototype AK-12* | AK-12 | Tuned gas + lightened bolt: −10% recoil, +5% fire rate | Labs |
+| *Tollkeeper's Pistol* | Gold-plated pistol | Hand-fitted: −40% malfunction chance; very high sell value | Bogdan "Tollkeeper" Varga (Customs Yard) |
+| *Woodcutter* | SKS | Match barrel, lapped bore: −20% MOA | Old Leshy (Woodland) |
+| *Furnace Rig* | Plate carrier | Reinforced: −10% blunt damage, +15% durability | Iron Matvei (Factory) |
+| *Smuggler's Kit* | Rig | Extra sewn pouches: +2 slots (1×1); meds taken from the rig apply 15% faster | Captain Marisol "Undertow" Reyes (Shoreline Resort) |
+| *Prototype AK-12* | AK-12 | Tuned gas + lightened bolt: −10% recoil, +5% fire rate | Lab Zero |
 | *Three-Gun* | M4A1 | Competition build: match trigger + tuned gas | Any Legendary roll |
 
 **Systems interaction**
@@ -953,7 +1067,7 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 |---|---|---|
 | Armor | Repair kits, plate inserts (class swap) | Restore durability, raise class |
 | Helmets | NVG mounts | Night vision |
-| Secure container | Quest/barter tiers: Alpha 2×2 → Beta 3×2 → Gamma 3×3 → Kappa 3×4 | Safer loot |
+| Secure container | Alpha 2×2 (every new PMC) → **Beta 3×2** (Workbench level 3: an Alpha, 2 military cables, 3 duct tape, 4 found-in-raid bolts) → **Gamma 3×3** (Prapor's *Safekeeping*: an intelligence folder, a military HDD and 2 gold chains, found in raid) → **Kappa 3×4** (Skier's *The Collector's Case*: a Roler, a jeweled egg, a coin collection and a diamond necklace, found in raid). Never lost on death; never loot | Safer loot |
 
 ### 12.3 Player Skills
 
@@ -1275,7 +1389,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Stim resistance | New skill: each injection trains it (15 / 20 / 25 / 35 / 45 / 60 points by rarity, Common to Legendary); each level makes side effects 1% shorter, up to 30%. Buffs are untouched. Shown on the character screen and in the examine panel ("1:00 (1:15 before Stim resistance)") |
 | HUD | A row of icons over the body: each stim's icon with a ring for its phase (grey: waiting for its delay, "in 3"; green: buffs running; red: only side effects left) and the time until that phase ends; a red OD icon while an Overdose runs. Buffs and side effects are also listed with their numbers beside the body |
 | Examine | Kicks in (delay), every buff and side effect with its number and duration, whether a side effect runs during or after the buffs, energy and hydration at once, and the Overdose rule |
-| Where they spawn | Medical bags and the new **medicine cabinet** (medical POIs), the new **lab cabinet** (labs; Epic and Legendary ×2.5), safes (stims weigh ×0.3 next to valuables and keys), and boss bodies (`data/loot_tables/boss_body.tres`, rolled into a bot's kit through its profile's `extra_loot`; ready for when bosses are added). AI PMCs carry a cheap stim 30% of the time. Epic and Legendary stims drop half as often as other items of their rarity |
+| Where they spawn | Medical bags and the new **medicine cabinet** (medical POIs), the new **lab cabinet** (labs; Epic and Legendary ×2.5), safes (stims weigh ×0.3 next to valuables and keys), and boss bodies (`data/loot_tables/boss_body.tres`, rolled into every boss's kit; Section 4.3). AI PMCs carry a cheap stim 30% of the time. Epic and Legendary stims drop half as often as other items of their rarity |
 | Traders | Therapist (the medic) sells Common and Uncommon stims, empty autoinjectors and saline, and barters the Epic and Legendary ones for valuables: Quickhands, Ghost serum (LL3), Zagustin, SJ6, eTG-c, Obdolbos, Phoenix (LL4). She never sells Epic or Legendary stims |
 | Medstation | Crafts Common to Rare stims from medical supplies (empty autoinjectors, saline solution, sugar, coffee, bandages, splints, painkillers, medical tools): Glucose shot and Caffeine autoinjector (level 1), Electrolyte booster, Coagulant pen, Bonelock and Adrenaline (level 2), Packmule and Hawkeye (level 3), plus Morphine. Ultra Rare and better stims are loot and barters only |
 
@@ -1354,12 +1468,15 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Weapon modding | `WeaponMods` (`scripts/inventory/`): the slot tree (`walk()`, slot paths like `handguard/foregrip`), what fits where, install / uninstall, default parts, capacity, missing parts. A part is an attachment item with a `"mod"` stat: `{kind, fits, slots, modifiers, capacity}`. `WeaponStats` (`scripts/combat/`): profiles and rarity strength, adding up modifiers (empty slots included), `build(gun, skills)` (the modded `WeaponData` copy the `Weapon` node fires with: weight, ergonomics and skills applied), the recoil kick / recovery / pattern and wear spread shared by the gun and the previews, stat rows for the UI, repair. UI (`scripts/ui/inventory/`): `WeaponModScreen` (opened by `InventoryScreen.open_modding()`), `ModSlotView`, `ModPartRow`, `WeaponStatList`, `RecoilPatternView`, `SpreadCircleView`. `Player` equips the modded copy, sight and durability, and writes the wear back to the item after every shot |
 | Found in raid | `FoundInRaid` (`scripts/inventory/`): where items come from (`Source`: trader, flea market, quick-buy, insurance, barter, quest reward, craft, starter) and `make()` with the right status; `mark_brought_in()` at raid start, `claim()` when loot reaches the player's inventory (on `Inventory.changed`), `resolve()` at the end |
 | Raid | `RaidController` (`scripts/raid/`, a node in the map): spawn (`SpawnPoint`, `scripts/world/`, group `spawn_points`; `GameState.raid` `"seed"` and `"spawn"` (a spawn point's name, or `"scene"`) for repeatable raids), the map's extracts (`map_id` when played on its own; `available_extracts()`, confirming random ones in sight, `extract_progress()`, a hit (`Actor.hurt`) restarting the count, `ai_extracts` / `bot_extracted()`), clock, power (`PowerSwitch`, `power_state()`), raid experience with its parts, kill list, ending. Extracts: `ExtractTable` (`scripts/data/`) reads `data/config/extracts.json` (`for_map()`, `find()`, `kind_text()`, `condition_texts()`, `summary()` for the map select, `unlocked_by()` for quests, `problems()`); `ExtractZone` (`scripts/world/`) takes its rules by `extract_id` (`configure()`, `configure_for_map()`), `roll()`, `block_reason()`, `status_for()` / `status_state()` (the marks, `STATE_COLORS`), `usable_by()` for AI, paying and flares through `interact()` (`SignalFlare`, `scripts/world/signal_flare.gd`), the ring and sign. Bots: `Bot.extract_at`, the EXTRACT state, `leave_raid()`. `RaidLevel` fades out (`fade_out()`, `assets/audio/sfx/extract.wav`) before the summary; its CONTINUE sets `GameState.menu_return` so the main menu opens the hideout. `DebugOverlay` (`scripts/debug/`, F12). `RaidOutcome` settles it (FIR, keep / lose gear, insurance returns, Scav transfer, XP, loot value, save). `Insurance` (`scripts/progression/`): what's insurable, `price()`, `uninsured()`, `insure()`, `returns_for()`, `deliver()` / `deliver_pending()` (`GameState.insurance_pending`; `ItemInstance.insured`, saved; save version 7). `RaidConfig` (`data/config/raid.tres`): extract time, power delay, spawn distance, Run Through limits, XP, insurance, search timing, extract list time, confirm distance, fade time, when AI leaves. Interactables are in group `interactables` with `interact_text()`, `can_interact()`, `interact()`: `LootBox` (a container of a `LootContainer` type), `LootPickup` (loose item), dead `Bot`s (their `inventory`). `LootSearch` (`scripts/inventory/`) reveals hidden items one by one; the inventory screen runs it while the loot is open (`ItemInstance.hidden`, raid only). The raid summary is `ui/raid_result_screen.tscn` (`summary_lines()`), after the death screen's CONTINUE when killed |
-| Maps | A raid map's root runs `RaidLevel` (`scripts/maps/raid_level.gd`; `test_level.gd` extends it with the debug keys): it bakes the navmesh (locked doors get a temporary blocker, group `nav_bake_only`), handles death, the raid summary and **M** (`toggle_map()`). Building blocks in `scripts/world/` (all `@tool`, so they show in the editor): `Door` (swinging panel on a hinge, `width`, `locked`, `key_id`, `door_name`; group `doors`, an interactable and a vision occluder; bots open unlocked ones), `Stairs` (a ramp collider under drawn steps, `size` = width × rise × run, top at local +Z), `FloorSlab` (an upper floor or catwalk, `size`, solid or `grating`; top at its origin), `MapLabel` (a painted floor label or a landmark name, group `map_labels`), `LootZone` (`rarity_multipliers` for loot rolled inside; `LootZone.boost_at(tree, point)`, passed to `LootTable` rolls as `boost`), `ScavZone` (`count` bots of `profile` spawned at its child `Marker3D`s, each patrolling `patrol_length` of them). `Keys` (`scripts/inventory/`): a key's uses are `ItemInstance.charges`, `use()` spends one. `RaidController.ai_pmcs` spawns AI PMCs at the PMC spawn points the player didn't get. `MapLayout` (`scripts/world/`) reads a level's walls (`CoverBox`), floors, stairs, doors, labels, loot and Scav zones and extracts into 2D shapes, from the live level or a scene that isn't in the tree; `MapOverlay` (`scripts/ui/`, CanvasLayer 90) draws it with a legend: `show_level()` in a raid, `show_map(map_id)` out of raid; `MapOverlay.carries_map()` / `is_map_of()` check map items. `maps/factory.tscn` is written by a generator script (gray-box geometry: `CoverBox` walls and props, so cover points, sight blockers and bullet materials come free) |
+| Maps | A raid map's root runs `RaidLevel` (`scripts/maps/raid_level.gd`; `test_level.gd` extends it with the debug keys): it bakes the navmesh (locked doors get a temporary blocker, group `nav_bake_only`), handles death, the raid summary and **M** (`toggle_map()`). Building blocks in `scripts/world/` (all `@tool`, so they show in the editor): `Door` (swinging panel on a hinge, `width`, `locked`, `key_id`, `door_name`; group `doors`, an interactable and a vision occluder; bots open unlocked ones), `Stairs` (a ramp collider under drawn steps, `size` = width × rise × run, top at local +Z), `FloorSlab` (an upper floor or catwalk, `size`, solid or `grating`; top at its origin), `MapLabel` (a painted floor label or a landmark name, group `map_labels`), `LootZone` (`rarity_multipliers` for loot rolled inside; `LootZone.boost_at(tree, point)`, passed to `LootTable` rolls as `boost`), `ScavZone` (`count` bots of `profile` spawned at its child `Marker3D`s, each wandering between them). `Keys` (`scripts/inventory/`): a key's uses are `ItemInstance.charges`, `use()` spends one. `RaidController.ai_pmcs` spawns AI PMCs at the PMC spawn points the player didn't get. `MapLayout` (`scripts/world/`) reads a level's walls (`CoverBox`), floors, stairs, doors, labels, loot and Scav zones and extracts into 2D shapes, from the live level or a scene that isn't in the tree; `MapOverlay` (`scripts/ui/`, CanvasLayer 90) draws it with a legend: `show_level()` in a raid, `show_map(map_id)` out of raid; `MapOverlay.carries_map()` / `is_map_of()` check map items. `maps/factory.tscn` is written by a generator script (gray-box geometry: `CoverBox` walls and props, so cover points, sight blockers and bullet materials come free) |
+| Points of interest | `PoiTable` (`scripts/data/`) reads `data/config/pois.json` (`maps()`, `for_map()`, `find()`, `loot_boost()` with the tier and locked-room multipliers, `spawn_chance()`, `matches_focus()`, `focus_table()`, `summary()`, `requirement_text()`, `problems()`); `PoiConfig` (`data/config/poi.tres`): multipliers, spawn chances, focus weight, experience, label time, event count / window / timings, rush chances, heat. `PointOfInterest` (`scripts/world/`, group `pois`; `map_id`, `poi_id`, `size`): `at(tree, point)` (smallest containing), `spot_active()` (seeded by raid seed + POI + spot path), `record()` / `spots` (what each spawn point rolled, for the overlay), `requirement_met()`, `heat()`, `event_spots()` (its `EventSpot_<kind>` markers). `LootBox` and `LootPickup` ask the POI they're in (`concealed`, `sealed`, `ignore_poi`). `Lever` (group `levers`, `lever_id`; doors with that `lever_id` open), `FloorHatch` (conceals its `LootBox` children until opened), `Door.needs_power` / `lever_id`. `RaidEvents` (`scripts/raid/`, added by `RaidLevel`, group `raid_events`): `schedule`, `events`, `caches`, `spots()`, `pick()`, `start(kind, poi, at)`, `describe()`. Exploration: `GameState.explored`, `explore()`, `explored_count()`, `exploration()`; `RaidController.poi_entered`, `current_poi`; `HUD.announce()` / `announcement()`; `MapLayout.pois`, `MapOverlay.shown_pois()` |
+| AI | `Bot` (`scripts/actors/bot.gd`): `State` (IDLE, INVESTIGATE, COMBAT, SEARCH, EXTRACT, PATROL, LOOT, FLEE; append new ones, tests use the numbers), `wander_points` (a zone's, random order) or `patrol_points` (a route), `find_loot()`, `pick_treatment()`, `_flank_cover()`, `_push_cover()`, `_best_cover()`, stuck detection in `_move_to()` (`stuck_count`), `rush_to()`, squads (`squad`, `leader`, `title`, `is_boss()`, `is_guard()`), `looted` / `treated` / `flanks` for tests. `BotProfile` adds `flee_health`, `flank_chance`, `loot_radius`, `hot_poi_chance`, `health_multiplier`, `pushes`. `BotKit` (`scripts/data/`, `data/bots/scav_kit.tres`) builds a Scav's random kit; `Inventory.scav()` uses it. `RaidController`: `spawn_wave()`, `wave_spot()`, `hot_point()`, `waves`, `next_wave`, `looters()`; `RaidConfig` scav-wave and boss / guard XP fields. Bosses: `BossTable` (`scripts/data/`, `data/config/bosses.json`: `for_map()`, `full_name()`, `summary()`, `kit()`, `add_boss_loot()`, `problems()`), `BossSpawn` (`scripts/world/`, group `boss_spawns`; its `Marker3D`s are the haunt: `spawn()`, `boss`, `guards`, `boss_loot`), `data/bots/boss.tres`, `guard.tres`, `data/loot_tables/boss_loot.tres` |
+| Insurance and Lab Zero | `Insurance` (`scripts/progression/`) reads `data/config/insurers.json`: `insurers()`, `insurer()`, `price(item, insurer)`, `insure(items, insurer)`, `taken_chance()`, `claim(lost, looters)` (-1: missing in action), `schedule()`, `pending()`, `deliver_due()`, `next_due()`, `arrival_text()`, `countdown_text()`, `now_override` (tests); `ItemInstance.insurer`, `GameState.insurer`. `MapInfo.entry_item`; `RaidSetup.entry_block_reason()`, `use_entry_item()`, `map_stats()` |
 | Progression | `scripts/progression/`: `Requirement` (item, count, fir), `ItemSearch` (count / take from the stash and character, FIR-only where required), `Trading` (`data/traders/offers.json`), `QuestLog` (`data/quests/*.json`, progress in `GameState.quests`), `Hideout` (`data/hideout/stations.json`, levels in `GameState.hideout`). Screens: TRADERS tabs, `ui/hideout_screen.tscn`; shared widgets `RequirementRow`, `ItemCell`, `FirMark` |
 | Item groups and uses | `ItemData.group` and `tags` (JSON `"group"`, `"tags"`); `ItemGroups` (`scripts/data/`) reads `data/config/item_groups.json` (groups, tags, value bands) and checks every barter good and valuable at load (`problems()`, warnings). `ItemUses` (`scripts/progression/`): `of(id)` lists the quests, hideout upgrades, barters, crafts and gear upgrades that take an item, `summary()` and `tooltip()` for the examine panel's Needed for line and the inventory hover text |
 | Inventory | Data (`scripts/inventory/`, no UI): `InventoryGrid` (placement, rotation, stacking, what may go inside what, weight, save), `Inventory` (equipment slots + pockets: slot rules, weight, ammo count / take, starter and Scav kits), `InventoryConfig` (`data/config/inventory.tres`: stash size, weight thresholds). UI (`scripts/ui/inventory/`): `InventoryScreen` (`ui/inventory_screen.tscn`), `InventoryGridView`, `EquipmentSlotView`, `InventoryDrag` (what a drop would do, and doing it), `InventoryDragPreview`, `ItemDraw`, `ItemExaminePanel`; `InventoryLayer` opens it in a raid. Built on Godot's GUI drag & drop (`_get_drag_data` / `_can_drop_data` / `_drop_data`). The player's weight, gun and spare rounds follow its `Inventory` (`Player.set_inventory()`) |
 | Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, quests, hideout levels, stash grid; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
-| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 6 adds Drip and trick-shot stats (older profiles start at 0). Version 5 saves each gun's parts (nested, each with its FIR status) and durability; older guns load with their default parts at full durability. Version 4 keeps each gun's magazine as runs of rounds with their FIR status, and adds quests and hideout levels (version 3 rounds load as not found in raid). Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
+| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 8 adds explored points of interest, the insurer you pick and timed insurance returns (`{"item", "due", "insurer"}`; version 7's returns waiting for room arrive at once). Version 7 adds insured items and returns waiting for room. Version 6 adds Drip and trick-shot stats (older profiles start at 0). Version 5 saves each gun's parts (nested, each with its FIR status) and durability; older guns load with their default parts at full durability. Version 4 keeps each gun's magazine as runs of rounds with their FIR status, and adds quests and hideout levels (version 3 rounds load as not found in raid). Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
 | Audio | Buses: Master, Music, Effects, Voice, UI, Ambient (`default_bus_layout.tres`). Placeholder music and UI sounds are generated by `tools/make_placeholder_audio.py` |
@@ -1434,9 +1551,9 @@ WASD is screen-relative: W always moves up the screen. Every action has a key or
 
 | Step | Detail |
 |---|---|
-| 1. Map | Every map from Section 5 is listed, with its extracts from the extract table ("3: Gate 3 (always open), Office window (random, 40%), Cellars (Factory exit key, power on)"). Maps that aren't built yet show "in development" and can't be picked. Factory and Test Yard are playable |
+| 1. Map | Every map from Section 5 is listed, with its size, raid time, players, extracts from the extract table ("3: Gate 3 (always open), Office window (random, 40%), Cellars (Factory exit key, power on)"), its boss and odds ("Iron Matvei, the Furnace King · 35% · 2-4 Stokers"), how much of it you've explored ("Explored: 4 of 12 points of interest (33%)") and, for Lab Zero, its entry ("a Lab Zero access keycard (PMC, used up on entry)"). Maps that aren't built yet show "in development" and can't be picked. Factory and Test Yard are playable |
 | 2. PMC or Scav | **PMC:** your character and gear; die and lose what you brought. **Scav:** random gear, nothing from your stash at risk; AI Scavs leave you alone unless you shoot them (whoever you shoot turns hostile). AI PMCs are hostile either way |
-| 3. Loadout check | Every slot with its loaded ammo and what's inside rigs, backpacks and the secure container (insured gear marked), pockets and weight, plus warnings (heavy / overweight too): no armor, no helmet, no meds, no backpack, a gun that can't fire (a missing part) or is worn enough to jam, "if you die, everything you bring is lost, except your secure container and insured gear". A PMC gets **INSURE GEAR** (how many items and what it costs; "ALL GEAR INSURED" when there's nothing left; Section 2) |
+| 3. Loadout check | Every slot with its loaded ammo and what's inside rigs, backpacks and the secure container (insured gear marked), pockets and weight, plus warnings (heavy / overweight too): no armor, no helmet, no meds, no backpack, a gun that can't fire (a missing part) or is worn enough to jam, "if you die, everything you bring is lost, except your secure container and insured gear". A PMC gets **INSURE GEAR** (how many items and what it costs; "ALL GEAR INSURED" when there's nothing left; Section 2). The insurer picker (Prapor or Therapist, with their cost and return time) sets who INSURE GEAR pays. A map with an entry item (Lab Zero) says so; without the item the check says why you can't go ("You need a Lab Zero access keycard to enter Lab Zero"; Scavs never can) and READY is off; with it, the item is used up as the raid starts |
 | 5. In the raid | A random spawn point for your side; your extracts on screen for a few seconds; the raid clock counts down; extract (Section 5.1) or die. Every raid ends on the raid summary (Section 2), then back to the hideout |
 | 4. Loading | Map name, side, a gameplay tip and a progress bar while the map loads in the background (shown for at least 1.5 s) |
 
@@ -1532,3 +1649,4 @@ All three work at the same time. Every action goes through Godot's InputMap: key
 | 2026-10-13 | Factory map (Section 5; the request's map name and setting came through as "[MAP NAME]" / "[paste the setting from the table]" placeholders and there is no extraction table "4.2a", so the Factory from the Section 5 maps table was built, with the Section 5 extract types): a playable 60 × 48 m gray-box factory with buildings you go inside (main hall with a catwalk and the overseer's office up the stairs, dark boiler house, offices, locker rooms, med bay and lab, warehouse with an armory cage), 23 doors (F opens them, they block bullets and sight, the AI opens them) of which 2 are locked (Factory office key, Factory lab key; keys now have uses), stairs, cover, painted area names and three landmarks (smokestack, crane, water tower). 6 PMC spawns, 3 extracts (Gate 3 always open, Cellars with the Factory exit key, Office window 40% of raids), 3 Scav zones (8 Scavs) and 3 AI PMCs, 54 containers and 21 loose loot spots, 3 high-value loot areas with boosted rarity (`LootZone`). Map items (Factory map, Test Yard map): **M** in a raid (or VIEW MAP) shows the layout, you and your extracts with what they take right now; Prapor sells the maps and the exit key, Skier and Therapist barter the office and lab keys. Map scenes share `RaidLevel`; building blocks `Door`, `Stairs`, `FloorSlab`, `MapLabel`, `LootZone`, `ScavZone`. Bots wait for the navmesh to sync before pathing. 478 items |
 | 2026-10-13 | Extraction (Section 5.1; the request's extraction table, "4.2a", came through as a "[paste the table]" placeholder and this document had no 4.2a, so a table was written in Section 5.1): every map has 1–3 extracts with at least one always open to both sides, in `data/config/extracts.json` (checked on load). Types: always open; random (rolled each raid, **Unknown** until you've seen it); conditional (a key or other item, roubles paid at the extract, the power on, a **signal flare** fired in it, a gear restriction such as no backpack; quest-unlocked ones only exist once the quest is done). Test Yard cut to 3 (north-east gate; smuggler's car, paid and no backpack; signal point, flare, after Prapor's new *Flare Path*), Factory's Cellars now need the power too (new switch in the boiler house); Customs Yard, Woodland, Shoreline Resort and Labs have their 3 in the table (Labs gets an always-open elevator). Your extracts are shown for 8 s at raid start and with **O**, in the pause menu and on the map item, marked Open / Unknown / Closed / what you still need; in the world a glowing outline and a sign. 7 s countdown with a progress ring; walking out or a hit restarts it; then the extraction sound, a fade to black, the summary and **TO THE HIDEOUT** (everything saved). AI PMCs and some Scavs leave through the same extracts late in the raid. New: Red signal flare (Prapor, weapon boxes, crates), quests *Flare Path* (Prapor) and *Safe Harbour* (Skier, Shoreline's pier boat), debug overlay (F12) with every extract's state. 479 items |
 | 2026-10-17 | Input system (Section 17.1): keyboard and mouse, controller and touch at once, all through the InputMap, with the last-used device switching prompts (keys, Xbox / PlayStation / Nintendo buttons, touch icons). Touch controls: floating move stick, aim stick that fires past its ring (or a Fire button), Aim, Reload, Roll, Crouch, Melee, Quick item, Hotkeys wheel, Inventory, Map, Menu, and context Interact / Extract / Cover buttons; a 360 by spinning the stick; 3 editable layouts (drag, size, opacity). Controller: new default bindings (LB roll, RB melee, A interact, B crouch, X reload, Y inventory, d-pad quick item and hotkeys, View hotkey wheel / map), remapping in Settings, a grid cursor for the inventory and stash. Inventory and traders by touch: long-press examine, two-finger tap to turn, pinch to zoom the stash; quick move (Ctrl-click / X); hotkeys set from the inventory. Aim assist (controller with strength, light on touch), vibration and haptics. New gameplay the request named: melee swings and the parry stance (Scavs swing hatchets up close), hotkeys 1–5 and frag / flash grenades (Section 13.4.2). Phones and tablets: Android and iOS export presets, safe area for notches, Auto interface size, Mobile graphics preset with a reduced AI update rate |
+| 2026-10-17 | Points of interest, raid events, keys, insurance, Scav AI and bosses (Sections 2, 4, 5.2, 6.1, 12.2; the request's starting-POI table came through empty, so the POIs in Section 5.2 were written here). **POIs** on every map (58: tier 1–3, focus tags, key / power / lever requirements, 2–3 originals per map incl. hidden ones: a stash under the floorboards, a shuttered bunker, a wrecked van in the Test Yard; the Foreman's stash, the generator bunker and a crashed supply truck in the Factory), placed in the Test Yard and the Factory (they replace the Factory's loot zones). Dynamic loot: spawn points roll whether they spawn, items roll with tier multipliers on Rare+ (×1 / ×1.5 / ×2.5), focus tags and better odds behind locked doors. First-entry label, per-map exploration with XP, POIs on the map item. **Raid events** 1–3 a raid: airdrop (plane, flare, parachute), supply truck, weapon cache (klaxon, flare), announced and heard, AI rushes them, best Epic/Legendary odds; hot POIs draw waves and roaming AI. POI page on the debug overlay with markers on every spawn point. **Keys**: 8 new keys and keycards (14), Labs renamed **Lab Zero**, entered with the Lab Zero access keycard, used up on entry (Scavs can't enter). **Insurance** per trader (Prapor 8%, 36–48 h; Therapist 15%, 24–30 h; a game day is a real minute), items taken off your body by nearby AI, returns delivered in the main menu when due. **Secure containers** Gamma (3×3, quest) and Kappa (3×4, quest); Beta from the Workbench. **Scav AI** state machine: idle / patrol (wandering its zone), investigate (hearing by movement: sprint 20 m, walk 10 m, crouch 4 m), combat with flanking, loot, flee and treat, unstuck; random cheap Scav kits (10 guns, gear 95% Common/Uncommon); Scav waves every 150–240 s. **Bosses**: one per map with original names (Krane, Iron Matvei, Varga, Old Leshy, Captain Reyes, Director Varn), 35% chance, 2–4 guards, ×1.8 HP, class 5–6 armor, squad AI that shares targets, escorts and pushes one at a time, guaranteed Epic/Legendary loot, 1,000 XP. The Factory navmesh now matches the navigation map's 0.1 m cells (narrow doorways were cut off for the AI). 491 items. Save version 8 |

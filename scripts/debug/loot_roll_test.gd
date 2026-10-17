@@ -1,6 +1,6 @@
 extends Control
 ## Loot rate check (DESIGN.md §6.2). Rolls ROLLS times for the base table, every container type's own
-## table, loose loot on Labs and a safe on Labs, then prints expected vs rolled rarity rates to the
+## table, loose loot on Lab Zero and a safe on Lab Zero, then prints expected vs rolled rarity rates to the
 ## Output panel and shows them here, with a few sample items. Open scenes/debug/loot_roll_test.tscn and press F6, or run:
 ##   godot --path . res://scenes/debug/loot_roll_test.tscn -- --quit [--seed=123]
 ## A rate is marked "ok" when it's within 3 standard deviations of the expected one (normal noise).
@@ -40,8 +40,8 @@ func run(seed_value: int) -> void:
 	_scenario(rng, "Base table (no container, no map modifier)", base_table, null)
 	for container in _containers():
 		_scenario(rng, "%s on Test Yard" % container.display_name, container.loot_table, test_yard)
-	_scenario(rng, "Loose loot on Labs (Epic and Legendary x2)", loose_table, labs)
-	_scenario(rng, "Safe on Labs", _container("safe").loot_table, labs)
+	_scenario(rng, "Loose loot on Lab Zero (Epic and Legendary x2)", loose_table, labs)
+	_scenario(rng, "Safe on Lab Zero", _container("safe").loot_table, labs)
 
 
 func _scenario(rng: RandomNumberGenerator, title: String, table: LootTable, map: MapInfo) -> void:

@@ -5,42 +5,45 @@
 [ext_resource type="Script" path="res://scripts/world/stairs.gd" id="3_stairs"]
 [ext_resource type="Script" path="res://scripts/world/floor_slab.gd" id="4_floor_slab"]
 [ext_resource type="Script" path="res://scripts/world/map_label.gd" id="5_map_label"]
-[ext_resource type="Script" path="res://scripts/world/loot_zone.gd" id="6_loot_zone"]
-[ext_resource type="Script" path="res://scripts/world/scav_zone.gd" id="7_scav_zone"]
-[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="8_spawn_point"]
-[ext_resource type="Script" path="res://scripts/world/loot_box.gd" id="9_loot_box"]
-[ext_resource type="Script" path="res://scripts/world/loot_pickup.gd" id="10_loot_pickup"]
-[ext_resource type="Script" path="res://scripts/world/extract_zone.gd" id="11_extract_zone"]
-[ext_resource type="Script" path="res://scripts/world/dark_zone.gd" id="12_dark_zone"]
-[ext_resource type="Script" path="res://scripts/world/power_switch.gd" id="13_power_switch"]
-[ext_resource type="Script" path="res://scripts/maps/raid_level.gd" id="14_raid_level"]
-[ext_resource type="Texture2D" path="res://assets/textures/prototype_grid.png" id="15_prototype_gr"]
-[ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="16_player"]
-[ext_resource type="PackedScene" path="res://scenes/props/car.tscn" id="17_car"]
-[ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="18_top_down_cam"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="19_hud"]
-[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="20_pause_menu"]
-[ext_resource type="Script" path="res://scripts/world/player_vision.gd" id="21_player_visio"]
-[ext_resource type="Script" path="res://scripts/world/raid_environment.gd" id="22_raid_environ"]
-[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_layer.gd" id="23_inventory_la"]
-[ext_resource type="Script" path="res://scripts/raid/raid_controller.gd" id="24_raid_control"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/toolbox.tres" id="25_toolbox"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/crate.tres" id="26_crate"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="27_duffle_bag"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/jacket.tres" id="28_jacket"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="29_safe"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/filing_cabinet.tres" id="30_filing_cabin"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/pc.tres" id="31_pc"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/drawer.tres" id="32_drawer"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/server_rack.tres" id="33_server_rack"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/fridge.tres" id="34_fridge"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/kitchen_cabinet.tres" id="35_kitchen_cabi"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/store_shelf.tres" id="36_store_shelf"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/medicine_cabinet.tres" id="37_medicine_cab"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_crate.tres" id="38_medical_crat"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_bag.tres" id="39_medical_bag"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/lab_cabinet.tres" id="40_lab_cabinet"]
-[ext_resource type="Resource" path="res://data/loot_tables/containers/weapon_box.tres" id="41_weapon_box"]
+[ext_resource type="Script" path="res://scripts/world/point_of_interest.gd" id="6_point_of_int"]
+[ext_resource type="Script" path="res://scripts/world/floor_hatch.gd" id="7_floor_hatch"]
+[ext_resource type="Script" path="res://scripts/world/scav_zone.gd" id="8_scav_zone"]
+[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="9_spawn_point"]
+[ext_resource type="Script" path="res://scripts/world/loot_box.gd" id="10_loot_box"]
+[ext_resource type="Script" path="res://scripts/world/loot_pickup.gd" id="11_loot_pickup"]
+[ext_resource type="Script" path="res://scripts/world/extract_zone.gd" id="12_extract_zone"]
+[ext_resource type="Script" path="res://scripts/world/dark_zone.gd" id="13_dark_zone"]
+[ext_resource type="Script" path="res://scripts/world/power_switch.gd" id="14_power_switch"]
+[ext_resource type="Script" path="res://scripts/world/boss_spawn.gd" id="15_boss_spawn"]
+[ext_resource type="Script" path="res://scripts/maps/raid_level.gd" id="16_raid_level"]
+[ext_resource type="Texture2D" path="res://assets/textures/prototype_grid.png" id="17_prototype_gr"]
+[ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="18_player"]
+[ext_resource type="PackedScene" path="res://scenes/props/car.tscn" id="19_car"]
+[ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="20_top_down_cam"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="21_hud"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="22_pause_menu"]
+[ext_resource type="Script" path="res://scripts/world/player_vision.gd" id="23_player_visio"]
+[ext_resource type="Script" path="res://scripts/world/raid_environment.gd" id="24_raid_environ"]
+[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_layer.gd" id="25_inventory_la"]
+[ext_resource type="Script" path="res://scripts/raid/raid_controller.gd" id="26_raid_control"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/toolbox.tres" id="27_toolbox"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/crate.tres" id="28_crate"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/duffle_bag.tres" id="29_duffle_bag"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/jacket.tres" id="30_jacket"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/safe.tres" id="31_safe"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/filing_cabinet.tres" id="32_filing_cabin"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/pc.tres" id="33_pc"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/drawer.tres" id="34_drawer"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/server_rack.tres" id="35_server_rack"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/fridge.tres" id="36_fridge"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/kitchen_cabinet.tres" id="37_kitchen_cabi"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/store_shelf.tres" id="38_store_shelf"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medicine_cabinet.tres" id="39_medicine_cab"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_crate.tres" id="40_medical_crat"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/medical_bag.tres" id="41_medical_bag"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/lab_cabinet.tres" id="42_lab_cabinet"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/weapon_box.tres" id="43_weapon_box"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/floor_stash.tres" id="44_floor_stash"]
 
 [sub_resource type="Environment" id="Environment_factory"]
 background_mode = 1
@@ -53,18 +56,18 @@ tonemap_mode = 2
 [sub_resource type="NavigationMesh" id="NavigationMesh_factory"]
 geometry_parsed_geometry_type = 1
 geometry_collision_mask = 1
-cell_size = 0.2
+cell_size = 0.1
 cell_height = 0.25
 agent_height = 1.75
 agent_radius = 0.4
-agent_max_climb = 0.5
+agent_max_climb = 0.25
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(64, 1, 52)
 
 [sub_resource type="StandardMaterial3D" id="Material_ground"]
 albedo_color = Color(0.5, 0.5, 0.47, 1)
-albedo_texture = ExtResource("15_prototype_gr")
+albedo_texture = ExtResource("17_prototype_gr")
 roughness = 0.95
 uv1_triplanar = true
 uv1_world_triplanar = true
@@ -146,7 +149,7 @@ material = SubResource("Mat_Exit_Lamp_Gate3")
 size = Vector3(0.6, 0.3, 0.3)
 
 [node name="Factory" type="Node3D"]
-script = ExtResource("14_raid_level")
+script = ExtResource("16_raid_level")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_factory")
@@ -158,7 +161,7 @@ shadow_enabled = true
 directional_shadow_max_distance = 70.0
 
 [node name="RaidEnvironment" type="Node" parent="." node_paths=PackedStringArray("sun", "world_environment")]
-script = ExtResource("22_raid_environ")
+script = ExtResource("24_raid_environ")
 sun = NodePath("../Sun")
 world_environment = NodePath("../WorldEnvironment")
 
@@ -1117,7 +1120,7 @@ script = ExtResource("1_cover_box")
 size = Vector3(1.2, 1.2, 1.2)
 cover_material = 0
 
-[node name="Truck" parent="Navigation/Geometry" instance=ExtResource("17_car")]
+[node name="Truck" parent="Navigation/Geometry" instance=ExtResource("19_car")]
 position = Vector3(26.5, 0, 22.3)
 
 [node name="Water_Tower_Base" type="StaticBody3D" parent="Navigation/Geometry"]
@@ -1131,6 +1134,49 @@ position = Vector3(3, 2, -22)
 script = ExtResource("1_cover_box")
 size = Vector3(2.4, 4, 2.4)
 cover_material = 1
+
+[node name="Bunker_W_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-14, 1.5, -21.65)
+script = ExtResource("1_cover_box")
+size = Vector3(0.5, 3, 4.8)
+cover_material = 1
+
+[node name="Bunker_E_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-8.5, 1.5, -21.65)
+script = ExtResource("1_cover_box")
+size = Vector3(0.5, 3, 4.8)
+cover_material = 1
+
+[node name="Door_24" type="Node3D" parent="Doors"]
+position = Vector3(-11.25, 0, -19.5)
+script = ExtResource("2_door")
+width = 1.2
+door_name = "Bunker blast door"
+cover_material = 2
+locked = true
+needs_power = true
+
+[node name="Bunker_S_0" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-13.05, 1.5, -19.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.4, 3, 0.5)
+cover_material = 1
+
+[node name="Bunker_S_1" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-9.45, 1.5, -19.5)
+script = ExtResource("1_cover_box")
+size = Vector3(2.4, 3, 0.5)
+cover_material = 1
+
+[node name="Bunker_Generator" type="StaticBody3D" parent="Navigation/Geometry"]
+position = Vector3(-10, 0.7, -22.6)
+script = ExtResource("1_cover_box")
+size = Vector3(1.4, 1.4, 1.2)
+cover_material = 2
+
+[node name="CrashedTruck" parent="Navigation/Geometry" instance=ExtResource("19_car")]
+position = Vector3(24.5, 0.12, -3.6)
+rotation = Vector3(-0.0698, 0.3491, 0.1222)
 
 [node name="Landmarks" type="Node3D" parent="."]
 
@@ -1168,7 +1214,7 @@ mesh = SubResource("Mesh_Exit_Lamp_Gate3")
 
 [node name="BoilerDark" type="Node3D" parent="."]
 position = Vector3(0, 2, -16)
-script = ExtResource("12_dark_zone")
+script = ExtResource("13_dark_zone")
 size = Vector3(12, 4, 8)
 
 [node name="MapLabels" type="Node3D" parent="."]
@@ -1311,29 +1357,109 @@ paint_size = 64
 painted = false
 landmark = true
 
-[node name="Overseer's office" type="Node3D" parent="."]
+[node name="POIs" type="Node3D" parent="."]
+
+[node name="POI_main_hall" type="Node3D" parent="POIs"]
+position = Vector3(0, 0, 1)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "main_hall"
+size = Vector3(24, 6.5, 18)
+
+[node name="EventSpot_airdrop" type="Marker3D" parent="POIs/POI_main_hall"]
+position = Vector3(-4.5, -0, -0.75)
+
+[node name="POI_overseers_office" type="Node3D" parent="POIs"]
 position = Vector3(8.4, 3, -4.9)
-script = ExtResource("6_loot_zone")
-zone_name = "Overseer's office"
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "overseers_office"
 size = Vector3(6.6, 3, 5.6)
-rarity_multipliers = PackedFloat32Array(1, 1, 1.4, 1.8, 2.2, 2.2)
 
-[node name="Lab" type="Node3D" parent="."]
+[node name="POI_boiler_house" type="Node3D" parent="POIs"]
+position = Vector3(0, 0, -16)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "boiler_house"
+size = Vector3(12, 4, 8)
+
+[node name="EventSpot_cache" type="Marker3D" parent="POIs/POI_boiler_house"]
+position = Vector3(0.5, -0, 1.8)
+
+[node name="POI_offices" type="Node3D" parent="POIs"]
+position = Vector3(-21.5, 0, -17)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "offices"
+size = Vector3(13, 3.5, 10)
+
+[node name="POI_locker_rooms" type="Node3D" parent="POIs"]
+position = Vector3(-22, 0, 13)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "locker_rooms"
+size = Vector3(12, 3.5, 14)
+
+[node name="POI_med_bay" type="Node3D" parent="POIs"]
+position = Vector3(22, 0, -14)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "med_bay"
+size = Vector3(12, 3.5, 12)
+
+[node name="POI_lab" type="Node3D" parent="POIs"]
 position = Vector3(19, 0, -17)
-script = ExtResource("6_loot_zone")
-zone_name = "Lab"
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "lab"
 size = Vector3(6, 3.5, 6)
-rarity_multipliers = PackedFloat32Array(1, 1, 1.3, 1.7, 2, 2)
 
-[node name="Armory cage" type="Node3D" parent="."]
+[node name="POI_warehouse" type="Node3D" parent="POIs"]
+position = Vector3(22, 0, 10)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "warehouse"
+size = Vector3(12, 5, 20)
+
+[node name="EventSpot_truck" type="Marker3D" parent="POIs/POI_warehouse"]
+position = Vector3(-13.5, -0, 12)
+
+[node name="POI_armory_cage" type="Node3D" parent="POIs"]
 position = Vector3(25.5, 0, 4)
-script = ExtResource("6_loot_zone")
-zone_name = "Armory cage"
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "armory_cage"
 size = Vector3(5, 3, 7.6)
-rarity_multipliers = PackedFloat32Array(1, 1, 1.2, 1.5, 1.8, 1.6)
+
+[node name="EventSpot_cache" type="Marker3D" parent="POIs/POI_armory_cage"]
+position = Vector3(-0.9, -0, 0.8)
+
+[node name="POI_foremans_stash" type="Node3D" parent="POIs"]
+position = Vector3(-18.6, 0, 12)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "foremans_stash"
+size = Vector3(2, 2, 2)
+
+[node name="POI_generator_bunker" type="Node3D" parent="POIs"]
+position = Vector3(-11.25, 0, -21.65)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "generator_bunker"
+size = Vector3(5.5, 3, 4.3)
+
+[node name="POI_crashed_truck" type="Node3D" parent="POIs"]
+position = Vector3(23.5, 0, -4)
+script = ExtResource("6_point_of_int")
+map_id = "factory"
+poi_id = "crashed_truck"
+size = Vector3(9, 3, 7)
+
+[node name="EventSpot_airdrop" type="Marker3D" parent="POIs/POI_crashed_truck"]
+position = Vector3(-4.5, -0, -0.5)
 
 [node name="Main_hall" type="Node3D" parent="."]
-script = ExtResource("7_scav_zone")
+script = ExtResource("8_scav_zone")
 zone_name = "Main hall"
 count = 3
 
@@ -1356,7 +1482,7 @@ position = Vector3(9, 0, 6)
 position = Vector3(-9.5, 0, -1)
 
 [node name="Warehouse" type="Node3D" parent="."]
-script = ExtResource("7_scav_zone")
+script = ExtResource("8_scav_zone")
 zone_name = "Warehouse"
 count = 3
 
@@ -1376,7 +1502,7 @@ position = Vector3(25.8, 0, 16.5)
 position = Vector3(18, 0, 18)
 
 [node name="Locker_rooms" type="Node3D" parent="."]
-script = ExtResource("7_scav_zone")
+script = ExtResource("8_scav_zone")
 zone_name = "Locker rooms"
 count = 2
 
@@ -1392,88 +1518,105 @@ position = Vector3(-19, 0, 16.5)
 [node name="P4" type="Marker3D" parent="Locker_rooms"]
 position = Vector3(-25.8, 0, 18.2)
 
+[node name="BossSpawn" type="Node3D" parent="."]
+position = Vector3(0, 0, -14.4)
+script = ExtResource("15_boss_spawn")
+map_id = "factory"
+
+[node name="Haunt1" type="Marker3D" parent="BossSpawn"]
+position = Vector3(-4, 0, 0.4)
+
+[node name="Haunt2" type="Marker3D" parent="BossSpawn"]
+position = Vector3(4.6, 0, -1)
+
+[node name="Haunt3" type="Marker3D" parent="BossSpawn"]
+position = Vector3(-4.4, 0, -4.6)
+
+[node name="Haunt4" type="Marker3D" parent="BossSpawn"]
+position = Vector3(1, 0, 0.2)
+
 [node name="SpawnPoints" type="Node3D" parent="."]
 
 [node name="WestYard" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(-24, 0, -6)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "PMC"
 
 [node name="SouthWest" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(-15, 0, 22)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "PMC"
 
 [node name="NorthEastYard" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(14, 0, -21)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "PMC"
 
 [node name="LoadingDock" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(21, 0, 22.6)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "PMC"
 
 [node name="BoilerYard" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(-9, 0, -10)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "PMC"
 
 [node name="EastYard" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(14, 0, 9)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "PMC"
 
 [node name="ScavHall" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(-3, 0, 9)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "Scav"
 
 [node name="ScavWarehouse" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(21, 0, 17.5)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "Scav"
 
 [node name="ScavLockers" type="Marker3D" parent="SpawnPoints"]
 position = Vector3(-19, 0, 11.5)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("8_spawn_point")
+script = ExtResource("9_spawn_point")
 side = "Scav"
 
-[node name="Player" parent="." instance=ExtResource("16_player")]
+[node name="Player" parent="." instance=ExtResource("18_player")]
 position = Vector3(-24, 0, -6)
 
 [node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]
-script = ExtResource("24_raid_control")
+script = ExtResource("26_raid_control")
 player = NodePath("../Player")
 map_id = "factory"
 ai_pmcs = 3
 
 [node name="ExtractGate3" type="Area3D" parent="."]
 position = Vector3(0, 0, 22.2)
-script = ExtResource("11_extract_zone")
+script = ExtResource("12_extract_zone")
 extract_name = "Gate 3"
 radius = 2.2
 extract_id = "gate_3"
 
 [node name="ExtractCellars" type="Area3D" parent="."]
 position = Vector3(-4, 0, -17.8)
-script = ExtResource("11_extract_zone")
+script = ExtResource("12_extract_zone")
 extract_name = "Cellars"
 radius = 1.4
 extract_id = "cellars"
 
 [node name="ExtractOfficeWindow" type="Area3D" parent="."]
 position = Vector3(-25.5, 0, -21)
-script = ExtResource("11_extract_zone")
+script = ExtResource("12_extract_zone")
 extract_name = "Office window"
 radius = 1.1
 extract_id = "office_window"
@@ -1481,454 +1624,505 @@ extract_id = "office_window"
 [node name="PowerSwitch" type="Node3D" parent="."]
 position = Vector3(5.65, 0, -14.6)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("13_power_switch")
+script = ExtResource("14_power_switch")
 switch_name = "Boiler house power switch"
 
 [node name="Box_toolbox_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-5.6, 0, -3)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("25_toolbox")
+script = ExtResource("10_loot_box")
+container = ExtResource("27_toolbox")
 
 [node name="Box_toolbox_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(7.2, 0, 6)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("25_toolbox")
+script = ExtResource("10_loot_box")
+container = ExtResource("27_toolbox")
 
 [node name="Box_crate_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-10.8, 0, 6.5)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_crate_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(10.8, 0, -1)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_crate_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(1.5, 0, 8.6)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_duffle_bag_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-2, 0, 0.3)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("27_duffle_bag")
+script = ExtResource("10_loot_box")
+container = ExtResource("29_duffle_bag")
 
 [node name="Box_jacket_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(4, 3, -6.9)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("28_jacket")
+script = ExtResource("10_loot_box")
+container = ExtResource("30_jacket")
 
 [node name="Box_safe_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(11.4, 3, -7.3)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("29_safe")
+script = ExtResource("10_loot_box")
+container = ExtResource("31_safe")
 
 [node name="Box_filing_cabinet_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(6, 3, -7.4)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("30_filing_cabin")
+script = ExtResource("10_loot_box")
+container = ExtResource("32_filing_cabin")
 
 [node name="Box_pc_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(9.5, 3, -6.1)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("31_pc")
+script = ExtResource("10_loot_box")
+container = ExtResource("33_pc")
 
 [node name="Box_drawer_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(11.5, 3, -3.5)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("32_drawer")
+script = ExtResource("10_loot_box")
+container = ExtResource("34_drawer")
 
 [node name="Box_toolbox_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(5.3, 0, -18.6)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("25_toolbox")
+script = ExtResource("10_loot_box")
+container = ExtResource("27_toolbox")
 
 [node name="Box_crate_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-5.2, 0, -13)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_pc_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-5.5, 0, -19.4)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("31_pc")
+script = ExtResource("10_loot_box")
+container = ExtResource("33_pc")
 
 [node name="Box_filing_cabinet_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-27.4, 0, -21.3)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("30_filing_cabin")
+script = ExtResource("10_loot_box")
+container = ExtResource("32_filing_cabin")
 
 [node name="Box_filing_cabinet_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-27.4, 0, -16.5)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("30_filing_cabin")
+script = ExtResource("10_loot_box")
+container = ExtResource("32_filing_cabin")
 
 [node name="Box_drawer_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-23.4, 0, -20.6)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("32_drawer")
+script = ExtResource("10_loot_box")
+container = ExtResource("34_drawer")
 
 [node name="Box_server_rack_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-22.4, 0, -21.3)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("33_server_rack")
+script = ExtResource("10_loot_box")
+container = ExtResource("35_server_rack")
 
 [node name="Box_server_rack_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-19.65, 0, -21.3)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("33_server_rack")
+script = ExtResource("10_loot_box")
+container = ExtResource("35_server_rack")
 
 [node name="Box_pc_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-22.4, 0, -16)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("31_pc")
+script = ExtResource("10_loot_box")
+container = ExtResource("33_pc")
 
 [node name="Box_filing_cabinet_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-15.6, 0, -21.3)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("30_filing_cabin")
+script = ExtResource("10_loot_box")
+container = ExtResource("32_filing_cabin")
 
 [node name="Box_drawer_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-18.6, 0, -17)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("32_drawer")
+script = ExtResource("10_loot_box")
+container = ExtResource("34_drawer")
 
 [node name="Box_jacket_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-27, 0, -12.8)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("28_jacket")
+script = ExtResource("10_loot_box")
+container = ExtResource("30_jacket")
 
 [node name="Box_jacket_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-26.8, 0, 8.5)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("28_jacket")
+script = ExtResource("10_loot_box")
+container = ExtResource("30_jacket")
 
 [node name="Box_jacket_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-26.8, 0, 14.5)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("28_jacket")
+script = ExtResource("10_loot_box")
+container = ExtResource("30_jacket")
 
 [node name="Box_jacket_5" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-26.8, 0, 17.5)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("28_jacket")
+script = ExtResource("10_loot_box")
+container = ExtResource("30_jacket")
 
 [node name="Box_drawer_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-23, 0, 19.4)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("32_drawer")
+script = ExtResource("10_loot_box")
+container = ExtResource("34_drawer")
 
 [node name="Box_drawer_5" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-22.4, 0, 7.2)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("32_drawer")
+script = ExtResource("10_loot_box")
+container = ExtResource("34_drawer")
 
 [node name="Box_fridge_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-16.7, 0, 7)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("34_fridge")
+script = ExtResource("10_loot_box")
+container = ExtResource("36_fridge")
 
 [node name="Box_kitchen_cabinet_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-21.3, 0, 12.5)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("35_kitchen_cabi")
+script = ExtResource("10_loot_box")
+container = ExtResource("37_kitchen_cabi")
 
 [node name="Box_store_shelf_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-16.8, 0, 11.5)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("36_store_shelf")
+script = ExtResource("10_loot_box")
+container = ExtResource("38_store_shelf")
 
 [node name="Box_medicine_cabinet_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-21.5, 0, 14)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("37_medicine_cab")
+script = ExtResource("10_loot_box")
+container = ExtResource("39_medicine_cab")
 
 [node name="Box_medicine_cabinet_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(27.6, 0, -9)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("37_medicine_cab")
+script = ExtResource("10_loot_box")
+container = ExtResource("39_medicine_cab")
 
 [node name="Box_medicine_cabinet_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(27.6, 0, -12.5)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("37_medicine_cab")
+script = ExtResource("10_loot_box")
+container = ExtResource("39_medicine_cab")
 
 [node name="Box_medical_crate_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(20.5, 0, -8.6)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("38_medical_crat")
+script = ExtResource("10_loot_box")
+container = ExtResource("40_medical_crat")
 
 [node name="Box_medical_bag_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(24.5, 0, -11)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("39_medical_bag")
+script = ExtResource("10_loot_box")
+container = ExtResource("41_medical_bag")
 
 [node name="Box_lab_cabinet_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(16.6, 0, -19.2)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("40_lab_cabinet")
+script = ExtResource("10_loot_box")
+container = ExtResource("42_lab_cabinet")
 
 [node name="Box_lab_cabinet_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(21.6, 0, -19.2)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("40_lab_cabinet")
+script = ExtResource("10_loot_box")
+container = ExtResource("42_lab_cabinet")
 
 [node name="Box_pc_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(20.2, 0, -14.4)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("31_pc")
+script = ExtResource("10_loot_box")
+container = ExtResource("33_pc")
 
 [node name="Box_crate_5" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(27.4, 0, -15)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_duffle_bag_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(24, 0, -19)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("27_duffle_bag")
+script = ExtResource("10_loot_box")
+container = ExtResource("29_duffle_bag")
 
 [node name="Box_crate_6" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(19, 0, 13.2)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_crate_7" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(23.5, 0, 9)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_crate_8" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(26.8, 0, 18.8)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_duffle_bag_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(17, 0, 18.6)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("27_duffle_bag")
+script = ExtResource("10_loot_box")
+container = ExtResource("29_duffle_bag")
 
 [node name="Box_duffle_bag_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(26, 0, 10)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("27_duffle_bag")
+script = ExtResource("10_loot_box")
+container = ExtResource("29_duffle_bag")
 
 [node name="Box_toolbox_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(21, 0, 1)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("25_toolbox")
+script = ExtResource("10_loot_box")
+container = ExtResource("27_toolbox")
 
 [node name="Box_weapon_box_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(27.2, 0, 2)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("41_weapon_box")
+script = ExtResource("10_loot_box")
+container = ExtResource("43_weapon_box")
 
 [node name="Box_weapon_box_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(27.2, 0, 5)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("41_weapon_box")
+script = ExtResource("10_loot_box")
+container = ExtResource("43_weapon_box")
 
 [node name="Box_weapon_box_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(24.2, 0, 1)
 rotation = Vector3(0, 3.1416, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("41_weapon_box")
+script = ExtResource("10_loot_box")
+container = ExtResource("43_weapon_box")
 
 [node name="Box_crate_9" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(26.8, 0, 7.2)
 rotation = Vector3(0, 0, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
+
+[node name="Box_weapon_box_4" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-12.6, 0, -23.1)
+rotation = Vector3(0, 3.1416, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("43_weapon_box")
 
 [node name="Box_crate_10" type="Node3D" parent="Navigation/Loot"]
-position = Vector3(-20.5, 0, -3)
-rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
-
-[node name="Box_duffle_bag_5" type="Node3D" parent="Navigation/Loot"]
-position = Vector3(13, 0, 18.5)
+position = Vector3(-9.3, 0, -21)
 rotation = Vector3(0, 1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("27_duffle_bag")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Box_crate_11" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(21.6, 0, -2.4)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
+
+[node name="Box_medical_bag_2" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(27.2, 0, -6.2)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("41_medical_bag")
+
+[node name="Box_duffle_bag_5" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(22.6, 0, -5.8)
+rotation = Vector3(0, 0, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("29_duffle_bag")
+
+[node name="Box_crate_12" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-20.5, 0, -3)
+rotation = Vector3(0, -1.5708, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
+
+[node name="Box_duffle_bag_6" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(13, 0, 18.5)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("29_duffle_bag")
+
+[node name="Box_crate_13" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-29, 0, 3)
 rotation = Vector3(0, -1.5708, 0)
-script = ExtResource("9_loot_box")
-container = ExtResource("26_crate")
+script = ExtResource("10_loot_box")
+container = ExtResource("28_crate")
 
 [node name="Loose_1" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-8, 0, 0.5)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_2" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(2.5, 0, -1)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_3" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(10, 0, 2)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_4" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-1, 3, -7)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_5" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(0.5, 0, -15)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_6" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-4, 0, -13.5)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_7" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-27.2, 0, -13.5)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_8" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-17.5, 0, -20)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_9" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-24.5, 0, 12)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_10" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-18, 0, 18)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_11" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(19, 0, -11.5)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_12" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(19, 0, -16)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_13" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(25, 0, -16)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_14" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(21, 0, 6)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_15" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(25, 0, 3)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_16" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(21, 0, 17)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_17" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-14, 0, -4)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_18" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(14, 0, -10)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_19" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(6, 0, 18)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
 
 [node name="Loose_20" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(8, 3, -6)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 spawn_chance = 0.65
+
+[node name="Loose_21" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-11.2, 0, -21)
+script = ExtResource("11_loot_pickup")
+spawn_chance = 0.65
+
+[node name="Loose_22" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(25.6, 0, -1.2)
+script = ExtResource("11_loot_pickup")
+spawn_chance = 0.65
+
+[node name="ForemanHatch" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(-18.6, 0, 12)
+script = ExtResource("7_floor_hatch")
+hatch_name = "Loose floor panel"
+
+[node name="Stash" type="Node3D" parent="Navigation/Loot/ForemanHatch"]
+position = Vector3(0, 0, 0)
+script = ExtResource("10_loot_box")
+container = ExtResource("44_floor_stash")
+concealed = true
 
 [node name="Loose_Map" type="Node3D" parent="Navigation/Loot"]
 position = Vector3(-26.5, 0.85, -18)
-script = ExtResource("10_loot_pickup")
+script = ExtResource("11_loot_pickup")
 item_id = "factory_map"
 spawn_chance = 0.5
 
 [node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 fov = 55.0
 current = true
-script = ExtResource("18_top_down_cam")
+script = ExtResource("20_top_down_cam")
 target = NodePath("../Player")
 
-[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("19_hud")]
+[node name="HUD" parent="." node_paths=PackedStringArray("player") instance=ExtResource("21_hud")]
 player = NodePath("../Player")
 
 [node name="InventoryLayer" type="CanvasLayer" parent="." node_paths=PackedStringArray("player")]
-script = ExtResource("23_inventory_la")
+script = ExtResource("25_inventory_la")
 player = NodePath("../Player")
 
 [node name="PlayerVision" type="Node" parent="." node_paths=PackedStringArray("player")]
-script = ExtResource("21_player_visio")
+script = ExtResource("23_player_visio")
 player = NodePath("../Player")
 
-[node name="PauseMenu" parent="." instance=ExtResource("20_pause_menu")]
+[node name="PauseMenu" parent="." instance=ExtResource("22_pause_menu")]

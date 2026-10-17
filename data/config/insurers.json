@@ -1,0 +1,9 @@
+{
+  "_comment": "Insurance (DESIGN.md §2), read by Insurance. Each insurer is a trader: rate is the share of an item's value insuring it costs (at least RaidConfig.insurance_min_price), return_hours how long (game hours, random between the two) until lost insured items come back. game_hours_per_real_minute: game time runs this fast against real time (24: a game day is a real minute). taken: when you die, each insured item someone could take is gone for good with chance base + per_looter for every hostile AI alive within radius metres of where you fell (at most max); missing in action, nobody is there to take anything.",
+  "game_hours_per_real_minute": 24.0,
+  "taken": {"base": 0.05, "per_looter": 0.12, "max": 0.6, "radius": 40.0},
+  "insurers": [
+    {"id": "prapor", "name": "Prapor", "rate": 0.08, "return_hours": [36, 48], "note": "Cheap, slow"},
+    {"id": "therapist", "name": "Therapist", "rate": 0.15, "return_hours": [24, 30], "note": "Dearer, faster"}
+  ]
+}

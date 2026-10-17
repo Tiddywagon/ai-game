@@ -5,7 +5,10 @@ extends CanvasLayer
 ## catwalks, stairs, doors with the locked ones in red, named places and landmarks) and your extracts:
 ## those your side can use (quest extracts once unlocked), each with what it takes, and in a raid its
 ## mark: Open (green), Unknown (grey: a random one you haven't seen yet), Closed (red) or what it still
-## needs (amber). Scav areas and high-value loot rooms are marked too. It doesn't show where you are. M, Esc or CLOSE closes it; the raid goes on underneath.
+## needs (amber). Scav areas and high-value loot rooms are marked too, and the map's points of interest
+## (DESIGN.md §5.2) with their names, outlined by tier, the ones you've explored ticked; hidden ones
+## only once you've found them. The legend lists them with how much of the map you've explored. It
+## doesn't show where you are. M, Esc or CLOSE closes it; the raid goes on underneath.
 
 const PAPER := Color(0.13, 0.14, 0.13, 0.97)
 const INK := Color(0.82, 0.8, 0.72)
@@ -17,6 +20,8 @@ const DOOR := Color(0.95, 0.75, 0.35)
 const LOCKED := Color(0.9, 0.3, 0.25)
 const SCAV := Color(0.85, 0.35, 0.3, 0.16)
 const LOOT := Color(1.0, 0.8, 0.3)
+## Point of interest outlines by tier (1, 2, 3).
+const POI_COLORS := [Color(0.7, 0.75, 0.7, 0.8), Color(0.55, 0.8, 0.95, 0.9), Color(1.0, 0.8, 0.3, 0.95)]
 const MARGIN := 40.0
 
 var layout: MapLayout
@@ -90,7 +95,7 @@ func _ready() -> void:
 	var key := Label.new()
 	key.theme_type_variation = &"DimLabel"
 	key.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	key.text = "Doors: orange, locked red.  Hatched: catwalks and stairs.  Red areas: Scavs.  Gold outline: high-value loot.  The map doesn't show where you are."
+	key.text = "Doors: orange, locked red.  Hatched: catwalks and stairs.  Red areas: Scavs.  Outlined areas: points of interest, coloured by loot tier (grey 1, blue 2, gold 3; ✓ explored).  The map doesn't show where you are."
 	right.add_child(key)
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -161,6 +166,20 @@ func _show() -> void:
 	_canvas.queue_redraw()
 
 
+## The map's id (for exploration).
+func map_id() -> String:
+	return str(map.id) if map else (raid.map_id if raid else "")
+
+
+## Points of interest shown: all but hidden ones you haven't found yet.
+func shown_pois() -> Array:
+	return layout.pois.filter(func(entry: Dictionary) -> bool: return not entry.hidden or is_explored(entry.id))
+
+
+func is_explored(poi_id: String) -> bool:
+	return poi_id in GameState.explored.get(map_id(), [])
+
+
 func _fill_legend() -> void:
 	var lines := []
 	for entry: Dictionary in shown_extracts():
@@ -169,6 +188,14 @@ func _fill_legend() -> void:
 		if entry.zone and is_instance_valid(entry.zone) and raid:
 			status = "%s  ·  %s" % [entry.zone.status_for(player), entry.kind]
 		lines.append([entry.name, status, color])
+	var total := PoiTable.for_map(map_id()).size()
+	if total > 0:
+		lines.append(["POINTS OF INTEREST", "Explored %d of %d (%d%%)" % [GameState.explored_count(map_id()), total,
+			roundi(GameState.exploration(map_id()) * 100.0)], LOOT])
+		for entry: Dictionary in shown_pois():
+			var detail := "Tier %d%s%s" % [entry.tier, "  ·  explored" if is_explored(entry.id) else "",
+				"  ·  " + entry.requirement if entry.requirement != "" else ""]
+			lines.append([entry.name, detail, POI_COLORS[clampi(int(entry.tier), 1, 3) - 1]])
 	if _legend.get_child_count() == lines.size() * 2:
 		for i in lines.size():
 			_legend.get_child(i * 2 + 1).text = lines[i][1]
@@ -230,6 +257,15 @@ func _draw_map() -> void:
 		_canvas.draw_colored_polygon(_poly(wall.points), color)
 	for door: Dictionary in layout.doors:
 		_canvas.draw_line(to_canvas(door.from), to_canvas(door.to), LOCKED if door.locked else DOOR, maxf(3.0, s * 0.25))
+	for entry: Dictionary in shown_pois():
+		var outline := _poly(entry.points)
+		outline.append(outline[0])
+		var color: Color = POI_COLORS[clampi(int(entry.tier), 1, 3) - 1]
+		_canvas.draw_colored_polygon(_poly(entry.points), Color(color, 0.07))
+		_canvas.draw_polyline(outline, color, 1.5 if entry.tier < 3 else 2.5)
+		var name: String = ("✓ " if is_explored(entry.id) else "") + entry.name
+		_canvas.draw_string_outline(font, outline[0] + Vector2(4, 15), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 3, Color(0, 0, 0, 0.8))
+		_canvas.draw_string(font, outline[0] + Vector2(4, 15), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, color)
 	for zone: Dictionary in layout.loot_zones:
 		var outline := _poly(zone.points)
 		outline.append(outline[0])

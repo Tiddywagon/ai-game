@@ -11,7 +11,6 @@ order = 4
 size = "Large"
 raid_minutes = 45
 players = "8 PMCs · 20 Scavs"
-boss = "Sanitar"
 scene_path = ""
 climate = "Hot"
 energy_drain_multiplier = 1.1

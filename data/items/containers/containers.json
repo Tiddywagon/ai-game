@@ -1,6 +1,10 @@
 [
   {"id": "secure_alpha", "name": "Secure container Alpha", "description": "Everything in it stays yours when you die. Holds 2×2; no rigs, backpacks or other containers.", "category": "container",
    "rarity": "rare", "size": [2, 2], "weight": 0.5, "value": 0, "stats": {"grid": [2, 2], "secure": true}, "loot_weight": 0},
-  {"id": "secure_beta", "name": "Secure container Beta", "description": "A bigger secure container: 3×2.", "category": "container",
-   "rarity": "epic", "size": [2, 2], "weight": 0.6, "value": 0, "stats": {"grid": [3, 2], "secure": true}, "loot_weight": 0}
+  {"id": "secure_beta", "name": "Secure container Beta", "description": "A bigger secure container: 3×2. Built at the Workbench (level 3) from an Alpha.", "category": "container",
+   "rarity": "epic", "size": [2, 2], "weight": 0.6, "value": 0, "stats": {"grid": [3, 2], "secure": true}, "loot_weight": 0},
+  {"id": "secure_gamma", "name": "Secure container Gamma", "description": "A 3×3 secure container. Prapor hands it over once you've proven you can keep things safe (Safekeeping).", "category": "container",
+   "rarity": "epic", "size": [2, 3], "weight": 0.8, "value": 0, "stats": {"grid": [3, 3], "secure": true}, "loot_weight": 0},
+  {"id": "secure_kappa", "name": "Secure container Kappa", "description": "The biggest secure container, 3×4. Skier's reward for the Collector's Case.", "category": "container",
+   "rarity": "legendary", "size": [3, 3], "weight": 1.0, "value": 0, "stats": {"grid": [3, 4], "secure": true}, "loot_weight": 0}
 ]

@@ -46,8 +46,10 @@ var upgrade_level := 0
 ## Used up at 0.
 var charges := 0.0
 ## Insured (DESIGN.md §2, Insurance): lost when you die or go missing, it comes back to the stash
-## (without what was inside it or loaded in it). Coming back ends the insurance.
+## (without what was inside it or loaded in it). Coming back ends the insurance. `insurer`: the trader
+## who insured it (an id from data/config/insurers.json; kept on a returned item to say who sent it).
 var insured := false
+var insurer := ""
 
 
 ## A new instance of item `id` (null if there's no such item), `count` of it (capped to a stack).
@@ -300,6 +302,8 @@ func to_dict() -> Dictionary:
 		result.charges = snappedf(charges, 0.01)
 	if insured:
 		result.insured = true
+	if insurer != "":
+		result.insurer = insurer
 	return result
 
 
@@ -314,6 +318,7 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 	instance.rotated = bool(entry.get("rotated", false))
 	instance.fir = bool(entry.get("fir", false))
 	instance.insured = bool(entry.get("insured", false))
+	instance.insurer = str(entry.get("insurer", ""))
 	instance.loaded_ammo = str(entry.get("loaded_ammo", ""))
 	instance.upgrade_level = clampi(int(entry.get("upgrade", 0)), 0, GearUpgrades.max_level(instance.data))
 	if entry.has("charges") and Consumables.is_consumable(instance.data):

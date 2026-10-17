@@ -20,6 +20,9 @@ extends Resource
 @export_group("Experience")
 @export_range(0, 5000, 10) var xp_scav_kill := 100
 @export_range(0, 5000, 10) var xp_pmc_kill := 300
+## A boss and one of its guards (DESIGN.md §4.3), instead of the Scav kill's.
+@export_range(0, 10000, 10) var xp_boss_kill := 1000
+@export_range(0, 5000, 10) var xp_guard_kill := 250
 ## For each item that reaches your inventory as loot (the first time).
 @export_range(0, 1000, 1) var xp_looted_item := 10
 ## For extracting (SURVIVED; a Run Through earns no experience at all).
@@ -30,8 +33,9 @@ extends Resource
 @export_range(0, 1000, 1) var drip_trick_kill := 25
 
 @export_group("Insurance")
-## Insuring an item costs this share of its value (with its parts), rounded up to 100 roubles, and
-## at least insurance_min_price. Insured items lost when you die or go missing come back to the stash.
+## Insuring an item costs its insurer's share of its value (data/config/insurers.json; this rate only
+## if an insurer has none), with its parts, rounded up to 100 roubles, and at least
+## insurance_min_price. Insured items lost when you die or go missing come back to the stash (Insurance).
 @export_range(0.0, 1.0, 0.01) var insurance_rate := 0.1
 @export_range(0, 100000, 100) var insurance_min_price := 1000
 
@@ -51,6 +55,18 @@ extends Resource
 @export_range(1.0, 100.0, 0.5, "suffix:m") var extract_confirm_distance := 12.0
 ## Seconds of the fade to black after extracting, before the raid summary.
 @export_range(0.0, 10.0, 0.1, "suffix:s") var extract_fade_seconds := 1.5
+
+@export_group("Scav waves")
+## More Scavs turn up as the raid goes on (DESIGN.md §4): a wave of scav_wave_size Scavs every
+## scav_wave_interval seconds (random between x and y), until scav_wave_until of the raid has passed
+## and while fewer than scav_max_alive Scavs are alive. A wave spawns at a point of a Scav zone or of
+## a point of interest (hot ones, PointOfInterest.heat(), are likelier), at least
+## scav_wave_min_distance from the player and out of their sight, and roams from there.
+@export var scav_wave_interval := Vector2(150.0, 240.0)
+@export var scav_wave_size := Vector2i(2, 3)
+@export_range(0, 40) var scav_max_alive := 10
+@export_range(0.0, 200.0, 1.0, "suffix:m") var scav_wave_min_distance := 25.0
+@export_range(0.0, 1.0, 0.05) var scav_wave_until := 0.85
 
 @export_group("AI extraction")
 ## AI PMCs head for an extract they can use somewhere between these shares of the raid time (0.5:

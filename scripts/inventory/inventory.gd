@@ -261,36 +261,17 @@ static func starter() -> Inventory:
 	return inventory
 
 
-## A random Scav kit (DESIGN.md §4, §16.3): an AK-74N with PS, a Scav vest with 90 spare rounds,
-## sometimes a helmet, a hatchet or a sling bag of food and junk, often a drink in the vest, a snack in
-## the pockets and odds and ends (a bandage, junk, cigarettes). Nothing from the stash. Also what AI
-## Scavs carry (and drop): Scav bodies are one of the best places for food (DESIGN.md §13.7).
+## A random Scav kit (DESIGN.md §4, §16.3), rolled from data/bots/scav_kit.tres (BotKit): a cheap gun
+## (mostly an AK-74N, SKS, pump shotgun, Mosin or pistol; rarely something better) with its everyday
+## round and three magazines of spares, a rig, sometimes armor, a helmet, a backpack or a hatchet (mostly
+## Common and Uncommon, a small chance of Rare), something to eat or drink, often a bandage, and odds and
+## ends. Nothing from the stash. Also what AI Scavs carry (and drop): Scav bodies are one of the best
+## places for food (DESIGN.md §13.7).
 static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
-	var inventory := Inventory.new()
-	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_ps", rng.randf_range(50.0, 85.0)))
-	var vest := ItemInstance.create("scav_vest")
-	vest.contents.add(ItemInstance.create("ammo_545_ps", 60))
-	vest.contents.add(ItemInstance.create("ammo_545_ps", 30))
-	if rng.randf() < 0.6:
-		vest.contents.add(ItemInstance.create(["water_bottle", "energy_drink", "kvass", "apple_juice", "field_ration"][rng.randi() % 5]))
-	inventory.equip("rig", vest)
-	if rng.randf() < 0.25:
-		inventory.equip("helmet", ItemInstance.create("ssh68_helmet"))
-	if rng.randf() < 0.2:
-		inventory.equip("melee", ItemInstance.create("hatchet"))
-	if rng.randf() < 0.4:
-		var bag := ItemInstance.create("sling_bag")
-		for id in ["crackers", "tushonka", "bolts", "water_bottle", "sprats", "duct_tape", "cigarettes", "screwdriver"].slice(0, rng.randi_range(1, 8)):
-			bag.contents.add(ItemInstance.create(id))
-		inventory.equip("backpack", bag)
-	var snacks := ["crackers", "jerky", "oat_bar", "sunflower_seeds", "chocolate_bar", "sugar", "dried_fish"]
-	inventory.pockets.add(ItemInstance.create(snacks[rng.randi() % snacks.size()]))
-	for id in ["bandage", "bolts", "matches", "cigarettes", "toothpaste", "aa_battery"]:
-		if rng.randf() < 0.3:
-			inventory.pockets.add(ItemInstance.create(id))
-	return inventory
+		rng.randomize()
+	return (load("res://data/bots/scav_kit.tres") as BotKit).build(rng)
 
 
 ## Rolls `table` (LootTable.roll_items()) into the backpack, rig and pockets, wherever it fits: a boss's

@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="BotKit" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/bot_kit.gd" id="1_kit"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/armor.tres" id="2_armor"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/helmet.tres" id="3_helmet"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/rig.tres" id="4_rig"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/backpack.tres" id="5_backpack"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/loot.tres" id="6_loot"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/food.tres" id="7_food"]
+
+[resource]
+script = ExtResource("1_kit")
+weapons = {
+"ak_74n": 30.0,
+"partisan_sks": 16.0,
+"warden_870": 14.0,
+"mosin_rifle": 10.0,
+"pm_pistol": 12.0,
+"vektor_p9": 8.0,
+"tundra_47": 4.0,
+"hornet_smg": 3.0,
+"tempest_s12": 2.0,
+"svd": 1.0
+}
+spare_magazines = 3
+armor_chance = 0.3
+armor_table = ExtResource("2_armor")
+helmet_chance = 0.3
+helmet_table = ExtResource("3_helmet")
+rig_chance = 1.0
+rig_table = ExtResource("4_rig")
+backpack_chance = 0.4
+backpack_table = ExtResource("5_backpack")
+melee_id = "hatchet"
+melee_chance = 0.2
+loot_table = ExtResource("6_loot")
+food_table = ExtResource("7_food")
+bandage_chance = 0.5

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="BotProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/bot_profile.gd" id="1_profile"]
+[ext_resource type="Resource" path="res://data/loot_tables/boss_body.tres" id="2_body"]
+
+[resource]
+script = ExtResource("1_profile")
+display_name = "Boss"
+side = 1
+body_color = Color(0.45, 0.12, 0.1, 1)
+ammo_id = "ammo_545_bt"
+optic = 2
+walk_speed = 3.3
+sprint_speed = 5.6
+hearing = 1.5
+reaction_time = 0.35
+give_up_time = 14.0
+spread_degrees = 0.6
+recoil_control = 0.7
+burst_time = 0.4
+burst_pause = 0.35
+uses_cover = true
+cover_search_radius = 22.0
+peek_time = Vector2(1, 1.6)
+duck_time = Vector2(0.6, 1.2)
+peeks_before_move = 2
+can_roll = true
+dodge_chance = 0.4
+roll_to_cover_chance = 0.6
+melee_range = 1.6
+health_multiplier = 1.8
+pushes = true
+extra_loot = ExtResource("2_body")

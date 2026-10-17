@@ -12,7 +12,8 @@ const FADE_TIME := 0.5
 const COLORS := [Color(0.45, 0.9, 0.5), Color(0.95, 0.75, 0.3), Color(0.88, 0.26, 0.2), Color(0.88, 0.26, 0.2)]
 ## Item cells in the found-in-raid list are drawn at this size per grid cell.
 const CELL := 52.0
-const XP_PART_NAMES := {"kills": "Kills", "looting": "Looting", "trick_shots": "Trick shots", "survived": "Extracted"}
+const XP_PART_NAMES := {"kills": "Kills", "looting": "Looting", "trick_shots": "Trick shots", "exploration": "Exploration",
+	"survived": "Extracted"}
 
 
 func _ready() -> void:
@@ -103,14 +104,15 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 		lines.append(["Gear", "Kept"])
 	else:
 		lines.append(["Gear", "Lost, except your secure container (%s)" % UiFormat.money(outcome.lost_value) if outcome.lost_value > 0 else "Lost, except your secure container"])
-		if outcome.insurance_returned.is_empty():
+		if outcome.insurance_returned.is_empty() and outcome.insurance_taken.is_empty():
 			lines.append(["Insurance", "Nothing insured"])
-		else:
+		if not outcome.insurance_returned.is_empty():
 			var count := outcome.insurance_returned.size()
-			var text := "%d insured item%s back in your stash (%s)" % [count, "" if count == 1 else "s", UiFormat.money(outcome.insurance_value())]
-			if outcome.insurance_waiting > 0:
-				text += "; %d wait for room in the stash" % outcome.insurance_waiting
-			lines.append(["Insurance", text])
+			lines.append(["Insurance", "%d insured item%s (%s) on the way back with %s: in your stash in %s" % [count, "" if count == 1 else "s",
+				UiFormat.money(outcome.insurance_value()), Insurance.insurer_name(outcome.insurance_returned[0].insurer), Insurance._clock(outcome.insurance_seconds)]])
+		if not outcome.insurance_taken.is_empty():
+			var taken := outcome.insurance_taken.size()
+			lines.append(["Taken", "%d insured item%s taken off your body: gone for good" % [taken, "" if taken == 1 else "s"]])
 	return lines
 
 

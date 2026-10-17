@@ -18,6 +18,10 @@ extends CanvasLayer
 ## view blurring at 0, running effects beside the body (benefits green, drawbacks red, with the time
 ## left), what E would treat, and a progress bar with the item's name while one is being used.
 ## Stims (DESIGN.md §13.8): a row of icons over the body with countdown timers (StimIcons).
+## Points of interest (DESIGN.md §5.2): walking into one for the first time in a raid shows its name for
+## a few seconds near the top, with its tier and focus, and "NEW AREA" with the experience and how much of
+## the map you've explored the first time ever ("HIDDEN AREA FOUND" for a hidden one). Raid events
+## (airdrops, supply trucks, weapon caches) are announced in the same place (announce()).
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -71,6 +75,10 @@ var _banner: Control
 var _banner_title: Label
 var _banner_detail: Label
 var _banner_tween: Tween
+var _poi_box: VBoxContainer
+var _poi_title: Label
+var _poi_detail: Label
+var _poi_tween: Tween
 var _energy_bar: ProgressBar
 var _energy_label: Label
 var _hydration_bar: ProgressBar
@@ -118,6 +126,8 @@ func _ready() -> void:
 	_sting.bus = &"Effects"
 	add_child(_sting)
 	_build_banner()
+	_build_poi_label()
+	_connect_raid.call_deferred()
 	_build_consumables()
 	_extract_ring = Control.new()
 	_extract_ring.name = "ExtractRing"
@@ -146,6 +156,69 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Shows `text` above the stamina panel for `duration` seconds.
+## The POI name label, top centre (under the raid clock's height).
+func _build_poi_label() -> void:
+	_poi_box = VBoxContainer.new()
+	_poi_box.name = "PoiLabel"
+	_poi_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_poi_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_poi_box.offset_left = -500.0
+	_poi_box.offset_right = 500.0
+	_poi_box.offset_top = 96.0
+	_poi_box.add_theme_constant_override("separation", 2)
+	_poi_box.modulate.a = 0.0
+	_root.add_child(_poi_box)
+	_poi_title = Label.new()
+	_poi_title.name = "Title"
+	_poi_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_poi_title.add_theme_font_size_override("font_size", 34)
+	_poi_title.add_theme_constant_override("outline_size", 6)
+	_poi_title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_poi_box.add_child(_poi_title)
+	_poi_detail = Label.new()
+	_poi_detail.name = "Detail"
+	_poi_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_poi_detail.add_theme_font_size_override("font_size", 18)
+	_poi_detail.add_theme_constant_override("outline_size", 4)
+	_poi_detail.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_poi_box.add_child(_poi_detail)
+
+
+func _connect_raid() -> void:
+	if _raid == null:
+		_raid = get_tree().get_first_node_in_group("raid_controller") as RaidController
+	if _raid and not _raid.poi_entered.is_connected(_on_poi_entered):
+		_raid.poi_entered.connect(_on_poi_entered)
+
+
+func _on_poi_entered(poi: PointOfInterest, first_time: bool) -> void:
+	var detail := PoiTable.summary(poi.entry())
+	if first_time:
+		var gained := PoiTable.CONFIG.xp_discover_hidden if poi.is_hidden() else PoiTable.CONFIG.xp_discover
+		detail = "%s  ·  +%d XP  ·  %s %d%% explored" % ["HIDDEN AREA FOUND" if poi.is_hidden() else "NEW AREA", gained,
+			_raid.map.display_name if _raid and _raid.map else "Map", roundi(GameState.exploration(poi.map_id) * 100.0)]
+	var color: Color = MapOverlay.POI_COLORS[clampi(poi.tier(), 1, 3) - 1]
+	announce(poi.poi_name().to_upper(), detail, Color(color, 1.0))
+
+
+## Shows `title` and `detail` near the top for PoiConfig.label_seconds (a POI's name, a raid event).
+func announce(title: String, detail: String, color := Color(0.92, 0.9, 0.8)) -> void:
+	_poi_title.text = title
+	_poi_title.add_theme_color_override("font_color", color)
+	_poi_detail.text = detail
+	if _poi_tween:
+		_poi_tween.kill()
+	_poi_tween = create_tween()
+	_poi_tween.tween_property(_poi_box, "modulate:a", 1.0, 0.25)
+	_poi_tween.tween_interval(PoiTable.CONFIG.label_seconds)
+	_poi_tween.tween_property(_poi_box, "modulate:a", 0.0, 0.6)
+
+
+## The text of the POI / event label now ("" when it's faded out).
+func announcement() -> String:
+	return "%s · %s" % [_poi_title.text, _poi_detail.text] if _poi_box.modulate.a > 0.01 else ""
+
+
 func show_message(text: String, duration := MESSAGE_TIME) -> void:
 	_message.text = text
 	_message_time = duration

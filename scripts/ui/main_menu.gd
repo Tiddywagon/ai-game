@@ -3,7 +3,8 @@ extends Node
 ## the main buttons stacked on the left, the profile top-right and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
 ## On first launch the player picks a faction, which creates the profile. After a raid's summary it
-## opens straight on the hideout (GameState.menu_return).
+## opens straight on the hideout (GameState.menu_return). Insured items on their way back (Insurance)
+## show a countdown under the profile and arrive in the stash when due, while no screen is open.
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
 const CHARACTER_SCENE := preload("res://ui/character_screen.tscn")
@@ -13,6 +14,11 @@ const SETTINGS_SCENE := preload("res://ui/settings_menu.tscn")
 const MUSIC_FADE_IN := 3.0
 
 var _return_focus: Control
+## Insurance returns: the countdown / arrival line under the profile, checked every second.
+var _insurance_label: Label
+var _insurance_timer: Timer
+var _arrival_text := ""
+var _arrival_left := 0.0
 
 @onready var _menu: Control = %Menu
 @onready var _host: Control = %ScreenHost
@@ -38,6 +44,16 @@ func _ready() -> void:
 	_quit_dialog.confirmed.connect(get_tree().quit)
 	%BearButton.pressed.connect(_choose_faction.bind(GameState.Faction.BEAR))
 	%UsecButton.pressed.connect(_choose_faction.bind(GameState.Faction.USEC))
+	_insurance_label = Label.new()
+	_insurance_label.name = "InsuranceLabel"
+	_insurance_label.theme_type_variation = &"DimLabel"
+	_insurance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	%MoneyLabel.add_sibling(_insurance_label)
+	_insurance_timer = Timer.new()
+	_insurance_timer.wait_time = 1.0
+	_insurance_timer.timeout.connect(_check_insurance.bind(1.0))
+	add_child(_insurance_timer)
+	_insurance_timer.start()
 	_load_profile()
 
 
@@ -52,8 +68,7 @@ func _load_profile() -> void:
 	if GameState.faction == GameState.Faction.NONE and SaveManager.has_save():
 		SaveManager.load_game()
 	var has_profile := GameState.faction != GameState.Faction.NONE
-	if has_profile and not GameState.insurance_pending.is_empty() and Insurance.deliver_pending() > 0:
-		SaveManager.save_game()  # Insured items that were waiting for room in the stash arrived.
+	_check_insurance(0.0)
 	_faction_picker.visible = not has_profile
 	_menu.visible = has_profile
 	_refresh_profile()
@@ -80,6 +95,30 @@ func _refresh_profile() -> void:
 	%MoneyLabel.text = "%s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")] if has_profile else ""
 
 
+## Delivers insurance returns that are due (only while no screen is open, so nothing changes under
+## the stash) and updates the line under the profile: "Prapor returned 2 insured items to your stash"
+## for a while, else "Insurance returns in 1:42".
+func _check_insurance(delta: float) -> void:
+	if GameState.faction == GameState.Faction.NONE:
+		_insurance_label.text = ""
+		return
+	if _host.get_child_count() == 0 and not GameState.insurance_pending.is_empty():
+		var arrived := Insurance.deliver_due()
+		if not arrived.is_empty():
+			SaveManager.save_game()
+			_arrival_text = Insurance.arrival_text(arrived)
+			_arrival_left = 8.0
+			UiSounds.play_click()
+	_arrival_left -= delta
+	var countdown := Insurance.countdown_text()
+	if _arrival_left > 0.0:
+		_insurance_label.text = _arrival_text
+	elif countdown != "":
+		_insurance_label.text = "Insurance returns in %s" % countdown if Insurance.next_due() > 0.0 else "Insurance returns waiting for room in the stash"
+	else:
+		_insurance_label.text = ""
+
+
 func _open(scene: PackedScene, from: Control) -> void:
 	_return_focus = from
 	_menu.hide()
@@ -90,6 +129,7 @@ func _open(scene: PackedScene, from: Control) -> void:
 
 func _on_screen_closed() -> void:
 	_menu.show()
+	_check_insurance(0.0)
 	_refresh_profile()
 	_return_focus.grab_focus()
 

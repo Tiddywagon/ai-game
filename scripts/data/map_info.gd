@@ -10,11 +10,13 @@ extends Resource
 @export var size: String
 @export var raid_minutes: int
 @export var players: String
-## (The extracts are in data/config/extracts.json: ExtractTable.)
-@export var boss: String
+## (The extracts are in data/config/extracts.json: ExtractTable; the boss in
+## data/config/bosses.json: BossTable; the points of interest in data/config/pois.json: PoiTable.)
+## An item a PMC must carry to enter, used up on entry (Lab Zero's access keycard). Empty: none.
+@export var entry_item := ""
 ## The map's scene. Empty until the map is built; it then shows as "In development".
 @export_file("*.tscn") var scene_path: String
-## Multiplies loot rarity weights on this map, indexed by ItemData.Rarity (DESIGN.md §6.2): Labs
+## Multiplies loot rarity weights on this map, indexed by ItemData.Rarity (DESIGN.md §6.2): Lab Zero
 ## doubles Epic and Legendary. Missing entries count as 1.
 @export var loot_multipliers: PackedFloat32Array = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 ## Climate (DESIGN.md §13.7): hot maps dry you out faster. Energy and hydration drain × these.

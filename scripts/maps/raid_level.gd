@@ -5,7 +5,8 @@ extends Node3D
 ## as a PMC and the raid's ending doesn't touch your profile. Extracting plays the extraction sound and
 ## fades to black; then the raid summary (after the death screen if you were killed), and from there
 ## back to the hideout. Opens the map of the area (M) if you carry one (MapOverlay), and has the debug
-## overlay (F12, DebugOverlay), the hotkey wheel (HotkeyWheel) and the touch controls (TouchControls).
+## overlay (F12, DebugOverlay), raid events at its points of interest (RaidEvents), the hotkey wheel
+## (HotkeyWheel) and the touch controls (TouchControls).
 ## Every map scene has this (or a script extending it) on its root, with Player, HUD, RaidEnvironment,
 ## PlayerVision, Raid, InventoryLayer and a Navigation region holding the level geometry.
 
@@ -42,6 +43,9 @@ func _ready() -> void:
 	var overlay := DebugOverlay.new()
 	overlay.name = "DebugOverlay"
 	add_child(overlay)
+	var events := RaidEvents.new()
+	events.name = "RaidEvents"
+	add_child(events)
 	var wheel := HotkeyWheel.new()
 	wheel.name = "HotkeyWheel"
 	wheel.player = _player

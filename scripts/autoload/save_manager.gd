@@ -15,7 +15,9 @@ const SAVE_PATH := "user://savegame.json"
 ## Version 6 adds Drip and trick-shot stats (older profiles start at 0).
 ## Version 7 adds insurance: insured items and returns waiting for room in the stash (older saves have
 ## neither).
-const SAVE_VERSION := 7
+## Version 8 adds explored points of interest, the insurer you pick and timed insurance returns
+## ({"item", "due", "insurer"}; version 7 returns waiting for room arrive at once).
+const SAVE_VERSION := 8
 
 
 func has_save() -> bool:

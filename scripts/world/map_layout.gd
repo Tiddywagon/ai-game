@@ -3,8 +3,8 @@ extends RefCounted
 ## The layout of a raid map for the map item (DESIGN.md §5, MapOverlay), read from a map scene: the
 ## live level in a raid, or an instance of the map's scene out of raid (nothing in it runs). Walls and
 ## obstacles (CoverBox footprints; low ones marked), raised floors (FloorSlab) and Stairs, Doors (and
-## which are locked), MapLabels, high-value LootZones, ScavZones and ExtractZones. Positions are on
-## the ground plane (x, z).
+## which are locked), MapLabels, high-value LootZones, points of interest (PointOfInterest), ScavZones and
+## ExtractZones. Positions are on the ground plane (x, z).
 
 ## {"points": PackedVector2Array, "low": bool, "material": int}
 var walls: Array = []
@@ -17,6 +17,8 @@ var doors: Array = []
 var labels: Array = []
 ## High-value loot: {"points": PackedVector2Array, "name": String}
 var loot_zones: Array = []
+## Points of interest: {"points": PackedVector2Array, "id", "name", "tier", "hidden", "requirement"}.
+var pois: Array = []
 ## {"at": Vector2, "radius": float, "name": String}
 var scav_zones: Array = []
 ## {"at": Vector2, "radius": float, "name": String, "type": "always", "random" or "conditional",
@@ -62,6 +64,11 @@ func _read(node: Node, root: Node) -> void:
 		labels.append({"at": _flat(_xform(node, root).origin), "text": node.text, "landmark": node.landmark})
 	elif node is LootZone:
 		loot_zones.append({"points": BoxFootprint.corners(_xform(node, root), node.size), "name": node.zone_name})
+	elif node is PointOfInterest:
+		var entry: Dictionary = node.entry()
+		pois.append({"points": BoxFootprint.corners(_xform(node, root), node.size), "id": node.poi_id, "name": node.poi_name(),
+			"tier": node.tier(), "hidden": node.is_hidden(), "requirement": PoiTable.requirement_text(entry)})
+		return  # Its event spots aren't on the map.
 	elif node is ScavZone:
 		var points := PackedVector2Array()
 		for child in node.get_children():

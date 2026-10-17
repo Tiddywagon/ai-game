@@ -80,5 +80,32 @@
     "rewards": {"roubles": 120000, "xp": 5000, "reputation": 0.03, "items": [{"item": "scope_2_4", "count": 1}]}
   },
   {"id": "flare_path", "name": "Flare Path", "trader": "prapor", "description": "My people pick up from a signal point at the back of the Test Yard, but only for those who know how to call them. Bring me a signal flare you found out there and I'll show you the way.", "objectives": [{"type": "hand_in", "item": "signal_flare", "count": 1, "fir": true}], "rewards": {"roubles": 20000, "xp": 1200, "reputation": 0.02, "items": [{"item": "signal_flare", "count": 2}]}},
-  {"id": "safe_harbour", "name": "Safe Harbour", "trader": "skier", "description": "The pier boat on the Shoreline runs for people I trust. Two gold chains and a lighter, found out there, and you're on the list.", "objectives": [{"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}, {"type": "hand_in", "item": "lighter", "count": 1, "fir": true}], "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.02}}
+  {"id": "safe_harbour", "name": "Safe Harbour", "trader": "skier", "description": "The pier boat on the Shoreline runs for people I trust. Two gold chains and a lighter, found out there, and you're on the list.", "objectives": [{"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}, {"type": "hand_in", "item": "lighter", "count": 1, "fir": true}], "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.02}},
+  {
+    "id": "safekeeping",
+    "name": "Safekeeping",
+    "trader": "prapor",
+    "description": "You keep losing things out there. Bring me proof you can hold on to what matters, and I'll give you something that never leaves your side.",
+    "requires": ["scrap_run"],
+    "objectives": [
+      {"type": "hand_in", "item": "intel_folder", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "military_hdd", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 60000, "xp": 6000, "reputation": 0.04, "items": [{"item": "secure_gamma", "count": 1}]}
+  },
+  {
+    "id": "collectors_case",
+    "name": "The Collector's Case",
+    "trader": "skier",
+    "description": "A client of mine collects pretty things, and pays in kind. Find them yourself, out there, and the case is yours.",
+    "requires": ["safe_harbour"],
+    "objectives": [
+      {"type": "hand_in", "item": "roler", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "jeweled_egg", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "coin_collection", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "diamond_necklace", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 150000, "xp": 15000, "reputation": 0.06, "items": [{"item": "secure_kappa", "count": 1}]}
+  }
 ]

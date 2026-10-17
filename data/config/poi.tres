@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="PoiConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/poi_config.gd" id="1_poi"]
+
+[resource]
+script = ExtResource("1_poi")
+tier_multipliers = PackedFloat32Array(1, 1.5, 2.5)
+locked_bonus = PackedFloat32Array(1, 1, 1.2, 1.35, 1.5, 1.5)
+spawn_chances = PackedFloat32Array(0.55, 0.65, 0.75)
+focus_share = 0.7
+focus_weight = 3.0
+xp_discover = 25
+xp_discover_hidden = 75
+xp_map_complete = 250
+label_seconds = 3.5
+event_count = Vector2i(1, 3)
+event_window = Vector2(0.15, 0.8)
+airdrop_fall_seconds = 9.0
+truck_arrive_seconds = 6.0
+rush_chance_scav = 0.5
+rush_chance_pmc = 0.85
+event_noise_radius = 120.0
+tier_heat = PackedFloat32Array(1, 2, 4)
+event_heat = 8.0
+event_heat_seconds = 300.0

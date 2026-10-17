@@ -5,12 +5,12 @@
 [resource]
 script = ExtResource("1_map")
 id = "labs"
-display_name = "Labs"
-description = "Underground research lab. Needs a keycard; Raiders guard Epic and Legendary loot."
+display_name = "Lab Zero"
+description = "Lab Zero: the sealed underground research complex. Entry takes a Lab Zero access keycard, swiped (and used up) at the door; Cleaners guard Epic and Legendary loot."
 order = 5
 size = "Medium"
 raid_minutes = 35
-players = "6 PMCs · 12 Raiders"
-boss = "None"
+players = "6 PMCs · 12 Cleaners"
 scene_path = ""
+entry_item = "lab_keycard"
 loot_multipliers = PackedFloat32Array(1, 1, 1, 1, 2, 2)

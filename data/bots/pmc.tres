@@ -26,3 +26,7 @@ peeks_before_move = 3
 can_roll = true
 dodge_chance = 0.5
 roll_to_cover_chance = 0.7
+flee_health = 0.25
+flank_chance = 0.4
+loot_radius = 12.0
+hot_poi_chance = 0.5

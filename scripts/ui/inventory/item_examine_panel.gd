@@ -218,7 +218,7 @@ func show_item(examined: ItemInstance) -> void:
 		var cost := Insurance.price(item)
 		_insure.text = "INSURE  %s" % UiFormat.money(cost)
 		_insure.disabled = GameState.roubles < cost
-		_insure.tooltip_text = "If you die or go missing with it, it comes back to your stash" if not _insure.disabled else "Not enough roubles"
+		_insure.tooltip_text = ("Insured with %s. If you die or go missing with it and nobody takes it, it comes back to your stash" % Insurance.insurer_text()) if not _insure.disabled else "Not enough roubles"
 	_use.visible = use_check.is_valid() and Consumables.is_consumable(data)
 	if _use.visible:
 		var reason: String = use_check.call(item)
@@ -555,7 +555,7 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		if stats.get("secure", false):
 			lines.append(["Secure", "Kept when you die. No rigs, backpacks or other containers"])
 	if Insurance.is_insurable(examined):
-		lines.append(["Insurance", "Insured: comes back to your stash if you lose it" if examined.insured else "Not insured (%s)" % UiFormat.money(Insurance.price(examined))])
+		lines.append(["Insurance", ("Insured with %s: comes back to your stash if you lose it" % Insurance.insurer_name(examined.insurer)) if examined.insured else "Not insured (%s with %s)" % [UiFormat.money(Insurance.price(examined)), Insurance.insurer_name()]])
 	var needed := ItemUses.summary(data.id)
 	if needed != "":
 		lines.append(["Needed for", needed + "  (hover for the list)", ItemUses.tooltip(data.id)])

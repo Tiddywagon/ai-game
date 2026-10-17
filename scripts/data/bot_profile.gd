@@ -55,6 +55,24 @@ extends Resource
 ## (DESIGN.md §13.4.2; a parry stance stops it). 0: never.
 @export_range(0.0, 3.0, 0.1, "suffix:m") var melee_range := 0.0
 
+@export_group("Behaviour")
+## Below this share of its total HP (and not fled in the last minute or so) it breaks off a fight, runs
+## for cover away from the threat and treats itself with what it carries. 0: never (bosses).
+@export_range(0.0, 1.0, 0.05) var flee_health := 0.0
+## Chance, each time it moves to new cover in a fight, that it picks a spot off to the threat's side
+## (a flank) instead of the nearest one.
+@export_range(0.0, 1.0, 0.05) var flank_chance := 0.0
+## Out of a fight it picks up loose loot and loots ready event crates this close (0: never).
+@export_range(0.0, 50.0, 1.0, "suffix:m") var loot_radius := 0.0
+## Chance each patrol leg heads for a hot point of interest (a high tier, a fresh raid event) instead
+## of its own zone (DESIGN.md §5.2).
+@export_range(0.0, 1.0, 0.05) var hot_poi_chance := 0.0
+## Its HP (every body part; the head a bit less) × this: bosses and their guards are tougher.
+@export_range(0.5, 5.0, 0.05) var health_multiplier := 1.0
+## A boss squad pushes as a group: moving to new cover means moving closer to the threat, one member
+## at a time while the rest keep it pinned down.
+@export var pushes := false
+
 @export_group("Loot")
 ## Extra loot rolled into the bot's pack and pockets (a boss's body: data/loot_tables/boss_body.tres
 ## holds valuables and stims). Empty: just its kit.

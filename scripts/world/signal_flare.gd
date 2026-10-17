@@ -1,6 +1,7 @@
 extends Node3D
 ## A red signal flare fired from an extract (DESIGN.md §5, ExtractZone.fire_flare()): a pop and a hiss,
-## a bright red light climbing into the sky, then fading out. Loud: AI hears it from NOISE_RADIUS.
+## a bright red light climbing into the sky, then fading out. Loud: AI hears it from NOISE_RADIUS. Raid
+## events (RaidEvents) fire them too, in other colours (`color`).
 
 const NOISE_RADIUS := 60.0
 const COLOR := Color(1.0, 0.25, 0.15)
@@ -8,6 +9,8 @@ const RISE := 28.0
 const RISE_TIME := 2.5
 const BURN_TIME := 6.0
 const SOUND := preload("res://assets/audio/sfx/flare.wav")
+
+var color := COLOR
 
 
 func _ready() -> void:
@@ -18,15 +21,15 @@ func _ready() -> void:
 	ball.mesh = sphere
 	var material := StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.albedo_color = COLOR
+	material.albedo_color = color
 	material.emission_enabled = true
-	material.emission = COLOR
+	material.emission = color
 	material.emission_energy_multiplier = 4.0
 	ball.material_override = material
 	ball.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(ball)
 	var light := OmniLight3D.new()
-	light.light_color = COLOR
+	light.light_color = color
 	light.light_energy = 6.0
 	light.omni_range = 22.0
 	light.shadow_enabled = false

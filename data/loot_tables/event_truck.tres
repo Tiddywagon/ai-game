@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "Supply truck"
+rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
+rarity_multipliers = PackedFloat32Array(0.5, 0.8, 1.5, 2.4, 4, 5)
+categories = Array[int]([1, 7, 8])
+items = PackedStringArray()
+groups = PackedStringArray("Electronics", "Tech", "Medical supply")
+item_weights = {}
+item_count = Vector2i(5, 8)

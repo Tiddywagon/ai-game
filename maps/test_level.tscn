@@ -39,6 +39,12 @@
 [ext_resource type="Resource" path="res://data/loot_tables/containers/drawer.tres" id="68_drawer"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/medical_crate.tres" id="69_medcrate"]
 [ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="70_spawn"]
+[ext_resource type="Script" path="res://scripts/world/point_of_interest.gd" id="71_poi"]
+[ext_resource type="Script" path="res://scripts/world/door.gd" id="72_door"]
+[ext_resource type="Script" path="res://scripts/world/lever.gd" id="73_lever"]
+[ext_resource type="Script" path="res://scripts/world/floor_hatch.gd" id="74_hatch"]
+[ext_resource type="Resource" path="res://data/loot_tables/containers/floor_stash.tres" id="75_stash"]
+[ext_resource type="Script" path="res://scripts/world/boss_spawn.gd" id="76_boss"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -273,6 +279,23 @@ script = ExtResource("70_spawn")
 position = Vector3(-4, 0, -18)
 script = ExtResource("70_spawn")
 
+[node name="BossSpawn" type="Node3D" parent="."]
+position = Vector3(3, 0, -16)
+script = ExtResource("76_boss")
+map_id = "test_yard"
+
+[node name="Haunt1" type="Marker3D" parent="BossSpawn"]
+position = Vector3(-3, 0, -1.5)
+
+[node name="Haunt2" type="Marker3D" parent="BossSpawn"]
+position = Vector3(3, 0, -2.5)
+
+[node name="Haunt3" type="Marker3D" parent="BossSpawn"]
+position = Vector3(-4, 0, 2)
+
+[node name="Haunt4" type="Marker3D" parent="BossSpawn"]
+position = Vector3(4, 0, 2)
+
 [node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("17_raid")
 player = NodePath("../Player")
@@ -428,6 +451,161 @@ spawn_chance = 0.7
 position = Vector3(-4, 0, 11.6)
 script = ExtResource("20_pickup")
 spawn_chance = 0.7
+
+[node name="BunkerWest" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(10, 1.2, -17.7)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 4.2)
+cover_material = 1
+
+[node name="BunkerEast" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(14.6, 1.2, -17.7)
+script = ExtResource("3_cover")
+size = Vector3(0.4, 2.4, 4.2)
+cover_material = 1
+
+[node name="BunkerSouthLeft" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(10.75, 1.2, -15.6)
+script = ExtResource("3_cover")
+size = Vector3(1.9, 2.4, 0.4)
+cover_material = 1
+
+[node name="BunkerSouthRight" type="StaticBody3D" parent="Navigation/Cover"]
+position = Vector3(13.8, 1.2, -15.6)
+script = ExtResource("3_cover")
+size = Vector3(1.9, 2.4, 0.4)
+cover_material = 1
+
+[node name="WreckedVan" parent="Navigation/Cover" instance=ExtResource("4_car")]
+transform = Transform3D(0.856726, 0.133863, 0.498097, -0.104131, 0.990737, -0.0871557, -0.505151, 0.0228014, 0.86273, -5.5, 0.15, -4.5)
+
+[node name="Doors" type="Node3D" parent="."]
+
+[node name="BunkerShutter" type="Node3D" parent="Doors"]
+position = Vector3(12.3, 0, -15.6)
+script = ExtResource("72_door")
+width = 1.2
+cover_material = 2
+locked = true
+lever_id = "bunker_lever"
+door_name = "Bunker shutter"
+
+[node name="BunkerLever" type="Node3D" parent="."]
+transform = Transform3D(6.12323e-17, 0, -1, 0, 1, 0, 1, 0, 6.12323e-17, -19.65, 0, -10)
+script = ExtResource("73_lever")
+lever_id = "bunker_lever"
+lever_name = "Bunker shutter lever"
+
+[node name="BunkerWeapons" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(-1, 0, 1.22465e-16, 0, 1, 0, -1.22465e-16, 0, -1, 11.2, 0, -19.4)
+script = ExtResource("19_box")
+container = ExtResource("24_weapons")
+
+[node name="BunkerCrate" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(6.12323e-17, 0, 1, 0, 1, 0, -1, 0, 6.12323e-17, 14, 0, -18.6)
+script = ExtResource("19_box")
+container = ExtResource("21_crate")
+
+[node name="LooseBunker" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(12.9, 0, -17.2)
+script = ExtResource("20_pickup")
+spawn_chance = 0.65
+
+[node name="VanCargo" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, 0.5, -3, 0, -2.6)
+script = ExtResource("19_box")
+container = ExtResource("21_crate")
+
+[node name="VanParcels" type="Node3D" parent="Navigation/Loot"]
+transform = Transform3D(0.866025, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866025, -7.6, 0, -6.4)
+script = ExtResource("19_box")
+container = ExtResource("28_duffle")
+
+[node name="FloorHatch" type="Node3D" parent="Navigation/Loot"]
+position = Vector3(6, 0, 18)
+script = ExtResource("74_hatch")
+
+[node name="Stash" type="Node3D" parent="Navigation/Loot/FloorHatch"]
+script = ExtResource("19_box")
+container = ExtResource("75_stash")
+concealed = true
+
+[node name="POIs" type="Node3D" parent="."]
+
+[node name="POI_yard_workshop" type="Node3D" parent="POIs"]
+position = Vector3(1.5, 0, 8.5)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "yard_workshop"
+size = Vector3(13, 3, 7)
+
+[node name="EventSpot_airdrop" type="Marker3D" parent="POIs/POI_yard_workshop"]
+position = Vector3(-1.5, 0, -4)
+
+[node name="POI_dark_storeroom" type="Node3D" parent="POIs"]
+position = Vector3(-12, 0, -12)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "dark_storeroom"
+size = Vector3(8, 3, 8)
+
+[node name="EventSpot_cache" type="Marker3D" parent="POIs/POI_dark_storeroom"]
+position = Vector3(-0.5, 0, 2.4)
+
+[node name="POI_field_clinic" type="Node3D" parent="POIs"]
+position = Vector3(3, 0, -17.5)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "field_clinic"
+size = Vector3(8, 3, 5)
+
+[node name="POI_signal_hut" type="Node3D" parent="POIs"]
+position = Vector3(17.5, 0, -5.5)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "signal_hut"
+size = Vector3(5, 3, 9)
+
+[node name="POI_corner_shop" type="Node3D" parent="POIs"]
+position = Vector3(16.5, 0, 17)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "corner_shop"
+size = Vector3(7, 3, 6)
+
+[node name="EventSpot_truck" type="Marker3D" parent="POIs/POI_corner_shop"]
+position = Vector3(-5.5, 0, 1.4)
+
+[node name="POI_west_squat" type="Node3D" parent="POIs"]
+position = Vector3(-18, 0, 5)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "west_squat"
+size = Vector3(4, 3, 12)
+
+[node name="POI_floor_stash" type="Node3D" parent="POIs"]
+position = Vector3(6, 0, 18)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "floor_stash"
+size = Vector3(2, 3, 2)
+
+[node name="POI_wrecked_van" type="Node3D" parent="POIs"]
+position = Vector3(-5.5, 0, -4.5)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "wrecked_van"
+size = Vector3(6, 3, 5)
+
+[node name="EventSpot_airdrop" type="Marker3D" parent="POIs/POI_wrecked_van"]
+position = Vector3(-0.5, 0, 3.7)
+
+[node name="POI_shuttered_bunker" type="Node3D" parent="POIs"]
+position = Vector3(12.3, 0, -17.7)
+script = ExtResource("71_poi")
+map_id = "test_yard"
+poi_id = "shuttered_bunker"
+size = Vector3(4.2, 3, 4.2)
 
 [node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 fov = 55.0

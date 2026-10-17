@@ -11,5 +11,4 @@ order = 1
 size = "Medium"
 raid_minutes = 35
 players = "6 PMCs · 15 Scavs"
-boss = "Reshala"
 scene_path = ""

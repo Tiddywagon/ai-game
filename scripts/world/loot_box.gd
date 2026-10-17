@@ -3,7 +3,9 @@ extends Node3D
 ## A container to search in a raid (DESIGN.md §6.2, §7): a crate, toolbox, jacket, weapon box, medical
 ## bag, safe, filing cabinet or duffle bag, set by its LootContainer type. At the start of the raid it's
 ## filled from the type's own LootTable (with the map's multipliers, and a LootZone's if it stands in
-## one) and everything inside is hidden.
+## one) and everything inside is hidden. Inside a point of interest it's one of the POI's spawn points
+## (DESIGN.md §5.2): it may stay empty this raid, and rolls with the POI's tier and focus tags. A
+## `concealed` one (a stash under a floor hatch) can't be seen or opened until revealed.
 ## F nearby opens it beside your inventory and searches it: items turn up one by one (LootSearch).
 ## Whatever you take out is loot (found in raid if you extract with it). Big types are solid: they block
 ## movement and bullets and the AI walks around them. Placeholder shapes in the type's colour for now.
@@ -11,6 +13,16 @@ extends Node3D
 @export var container: LootContainer
 ## Rolls the same contents every time when not 0 (for tests).
 @export var loot_seed := 0
+## Hidden (under a floor hatch, FloorHatch) until reveal().
+@export var concealed := false:
+	set(value):
+		concealed = value
+		visible = not value
+## Shut, with nothing rolled into it, until unseal(): a raid event's crate on its way down, a weapon
+## cache that hasn't opened yet (RaidEvents).
+@export var sealed := false
+## Rolls only from its own table, whatever point of interest it stands in (raid event crates).
+@export var ignore_poi := false
 
 var grid: InventoryGrid
 var search: LootSearch
@@ -30,7 +42,7 @@ func title() -> String:
 
 ## Fills the grid from the type's loot table (what doesn't fit is skipped) and hides it all.
 func roll() -> void:
-	if container == null or container.loot_table == null:
+	if container == null or container.loot_table == null or sealed:
 		return
 	var rng := RandomNumberGenerator.new()
 	if loot_seed != 0:
@@ -38,20 +50,48 @@ func roll() -> void:
 	else:
 		rng.randomize()
 	var boost := LootZone.boost_at(get_tree(), global_position) if is_inside_tree() else PackedFloat32Array()
-	for item in container.loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost):
+	var poi := PointOfInterest.at(get_tree(), global_position) if is_inside_tree() and loot_seed == 0 and not ignore_poi else null
+	if poi and not poi.spot_active(self):
+		poi.record(self, "container", false, [])
+		return  # Not one of the POI's spawn points this raid: empty.
+	var focus: Array = poi.focus() if poi else []
+	if poi:
+		boost = LootTable.combine_boosts(boost, poi.loot_boost())
+	var rolled := container.loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost, focus)
+	for item in rolled:
 		grid.add(item)
+	if poi:
+		poi.record(self, "container", true, rolled)
 	search.hide_all()
 
 
+## Shows a concealed container (its hatch was opened).
+func reveal() -> void:
+	concealed = false
+
+
+## Opens a sealed container: its loot is rolled now, hidden until searched.
+func unseal() -> void:
+	if not sealed:
+		return
+	sealed = false
+	roll()
+
+
 func interact_text() -> String:
+	if sealed:
+		return "%s: sealed shut" % title()
 	return ("Open %s" if search.is_done() else "Search %s") % title()
 
 
 func can_interact(_player: Player) -> bool:
-	return true
+	return not concealed
 
 
 func interact(player: Player) -> void:
+	if sealed:
+		player.action_blocked.emit("The %s is sealed shut" % title().to_lower())
+		return
 	player.open_loot(title().to_upper(), grid, self)
 
 

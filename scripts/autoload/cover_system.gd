@@ -116,6 +116,8 @@ func find_snap_point(actor: Actor, max_distance: float, toward := Vector3.ZERO) 
 ## can shoot from. `avoid` skips spots near the cover the actor is leaving.
 func find_cover(actor: Actor, threat: Vector3, max_distance: float, avoid: CoverPoint = null) -> CoverPoint:
 	var map := actor.get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return null  # The navmesh baked at raid start hasn't synced yet.
 	var best: CoverPoint = null
 	var best_score := INF
 	for point in get_points():

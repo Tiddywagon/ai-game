@@ -1,0 +1,168 @@
+{
+  "_comment": "One boss per map (DESIGN.md §4.3), loaded by BossTable. chance: odds the boss is in a raid; guards: how many guards (x to y). boss/guard: weapons (gun id -> its round), armor/helmet (ids, one picked), rig, backpack, sidearm (gun id -> round), melee, meds. loot_focus: POI focus tags (PoiTable.FOCUS) that theme the boss's guaranteed Epic/Legendary loot (data/loot_tables/boss_loot.tres).",
+  "maps": {
+    "test_yard": {
+      "id": "krane",
+      "name": "Sergeant Major Hollis Krane",
+      "title": "the Drillmaster",
+      "theme": "A retired drill instructor who never stopped running the yard as his training ground. Calls cadence while he fights and punishes anyone who breaks formation.",
+      "chance": 0.35,
+      "guards": [2, 3],
+      "guard_name": "Instructor",
+      "loot_focus": ["intel", "military"],
+      "boss": {
+        "weapons": {"sentinel_ar": "ammo_556_epr"},
+        "sidearm": {"bastion_45": "ammo_45_match"},
+        "armor": ["armor_korund"],
+        "helmet": ["sentry_helmet"],
+        "rig": "rig_bear",
+        "backpack": "pack_pilgrim",
+        "meds": ["afak", "cat_tourniquet", "painkillers"]
+      },
+      "guard": {
+        "weapons": {"tundra_47": "ammo_762x39_us", "hornet_smg": "ammo_9x19_ap", "partisan_sks": "ammo_762x39_t45"},
+        "armor": ["armor_6b23", "armor_mmac"],
+        "helmet": ["zsh_helmet", "fast_helmet"],
+        "rig": "rig_triton",
+        "backpack": "pack_mbss",
+        "meds": ["car_medkit", "army_bandage"]
+      }
+    },
+    "factory": {
+      "id": "matvei",
+      "name": "Iron Matvei",
+      "title": "the Furnace King",
+      "theme": "The old night foreman, now a warlord in a scorched welding mask. Holds the boiler house with a shotgun and a hatchet, and his Stokers keep the fires lit.",
+      "chance": 0.35,
+      "guards": [2, 4],
+      "guard_name": "Stoker",
+      "loot_focus": ["tools", "fuel", "electronics"],
+      "boss": {
+        "weapons": {"tempest_s12": "ammo_12ga_flechette"},
+        "armor": ["armor_zabralo"],
+        "helmet": ["altyn_helmet"],
+        "rig": "rig_blackrock",
+        "backpack": "pack_trizip",
+        "melee": "hatchet",
+        "meds": ["afak", "alu_splint", "painkillers"]
+      },
+      "guard": {
+        "weapons": {"warden_870": "ammo_12ga_slug", "brigand_45": "ammo_45_match", "hornet_smg": "ammo_9x19_ap"},
+        "armor": ["armor_6b23", "gzhel_armor"],
+        "helmet": ["zsh_helmet", "kiver_helmet"],
+        "rig": "rig_triton",
+        "backpack": "pack_daypack",
+        "melee": "hatchet",
+        "meds": ["car_medkit", "army_bandage"]
+      }
+    },
+    "customs_yard": {
+      "id": "varga",
+      "name": "Bogdan \"Tollkeeper\" Varga",
+      "title": "the Tollkeeper",
+      "theme": "Runs a racket on the old customs checkpoint: everyone who crosses the yard pays, in roubles or in blood. Never far from his strongbox.",
+      "chance": 0.35,
+      "guards": [3, 4],
+      "guard_name": "Toll man",
+      "loot_focus": ["currency", "valuables"],
+      "boss": {
+        "weapons": {"grizzly_74": "ammo_545_bt"},
+        "sidearm": {"strelka_mp": "ammo_9x18_pbm"},
+        "armor": ["armor_redut"],
+        "helmet": ["sentry_helmet"],
+        "rig": "rig_bear",
+        "backpack": "pack_pilgrim",
+        "meds": ["afak", "salewa", "cat_tourniquet"]
+      },
+      "guard": {
+        "weapons": {"ak_74n": "ammo_545_bt", "tundra_47": "ammo_762x39_us", "tempest_s12": "ammo_12ga_slug"},
+        "armor": ["armor_6b23", "gzhel_armor", "armor_mmac"],
+        "helmet": ["zsh_helmet", "fast_helmet"],
+        "rig": "rig_triton",
+        "backpack": "pack_mbss",
+        "meds": ["car_medkit", "army_bandage"]
+      }
+    },
+    "woodland": {
+      "id": "leshy",
+      "name": "Old Leshy",
+      "title": "the Poacher of the Pines",
+      "theme": "A hermit hunter who knows every trail and snare in the forest. Picks raiders off from the treeline while his Trappers close the net.",
+      "chance": 0.35,
+      "guards": [2, 3],
+      "guard_name": "Trapper",
+      "loot_focus": ["food", "weapons", "tools"],
+      "boss": {
+        "weapons": {"huntsman_700": "ammo_762x51_m62"},
+        "sidearm": {"bastion_45": "ammo_45_match"},
+        "armor": ["armor_korund"],
+        "helmet": ["lynx_helmet"],
+        "rig": "rig_bear",
+        "backpack": "pack_pilgrim",
+        "meds": ["afak", "salewa", "alu_splint"]
+      },
+      "guard": {
+        "weapons": {"partisan_sks": "ammo_762x39_us", "mosin_rifle": "ammo_762x54r_t46", "warden_870": "ammo_12ga_magnum"},
+        "armor": ["armor_6b23", "gzhel_armor"],
+        "helmet": ["kiver_helmet", "fast_helmet"],
+        "rig": "rig_triton",
+        "backpack": "pack_trizip",
+        "meds": ["car_medkit", "army_bandage"]
+      }
+    },
+    "shoreline": {
+      "id": "reyes",
+      "name": "Captain Marisol \"Undertow\" Reyes",
+      "title": "the Undertow",
+      "theme": "A smuggler captain who took the resort for her headquarters. Her Deckhands move contraband off the pier at night, and nobody who sees the cargo leaves the shore.",
+      "chance": 0.35,
+      "guards": [3, 4],
+      "guard_name": "Deckhand",
+      "loot_focus": ["valuables", "currency"],
+      "boss": {
+        "weapons": {"halcyon_b5": "ammo_556_epr"},
+        "sidearm": {"vektor_p9": "ammo_9x19_ap"},
+        "armor": ["armor_hexgrid"],
+        "helmet": ["lynx_helmet"],
+        "rig": "rig_blackrock",
+        "backpack": "pack_attack2",
+        "meds": ["afak", "salewa", "cat_tourniquet"]
+      },
+      "guard": {
+        "weapons": {"sentinel_ar": "ammo_556_m856", "brigand_45": "ammo_45_fmj", "tempest_s12": "ammo_12ga_flechette"},
+        "armor": ["armor_6b23", "gzhel_armor", "armor_korund"],
+        "helmet": ["fast_helmet", "zsh_helmet"],
+        "rig": "rig_triton",
+        "backpack": "pack_mbss",
+        "meds": ["car_medkit", "army_bandage"]
+      }
+    },
+    "labs": {
+      "id": "varn",
+      "name": "Director Ilse Varn",
+      "title": "the Last Director",
+      "theme": "Lab Zero's head of security, who sealed the doors on the day it went dark and never left. Her Cleaners erase intruders and anything they touched.",
+      "chance": 0.35,
+      "guards": [3, 4],
+      "guard_name": "Cleaner",
+      "loot_focus": ["intel", "medical", "electronics"],
+      "boss": {
+        "weapons": {"wasp_pdw": "ammo_9x19_pbp"},
+        "sidearm": {"bastion_45": "ammo_45_ap"},
+        "armor": ["armor_zabralo"],
+        "helmet": ["altyn_helmet"],
+        "rig": "rig_blackrock",
+        "backpack": "pack_attack2",
+        "meds": ["afak", "surgical_kit", "cat_tourniquet"]
+      },
+      "guard": {
+        "weapons": {"bulwark_249": "ammo_556_epr", "longbow_dmr": "ammo_762x51_m80", "halcyon_b5": "ammo_556_m856"},
+        "armor": ["armor_hexgrid", "armor_korund", "armor_redut"],
+        "helmet": ["sentry_helmet", "lynx_helmet"],
+        "rig": "rig_bear",
+        "backpack": "pack_trizip",
+        "meds": ["ifak", "army_bandage"]
+      }
+    }
+  }
+}

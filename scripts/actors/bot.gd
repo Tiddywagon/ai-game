@@ -4,12 +4,22 @@ extends Actor
 ## its own cone, shorter at night, farther through a scope) and hears hostile actors, fights from the same cover points
 ## the player uses (duck, peek, shoot, move on), and — with an advanced profile — combat-rolls to
 ## dodge or to reach new cover when under fire.
+## A simple state machine: IDLE (stands and looks around) and PATROL (walks to the next point: a random
+## one of its zone's, `wander_points`, sometimes a hot point of interest, or the next stop of a fixed
+## `patrol_points` route); INVESTIGATE a noise it heard (footsteps by how the actor moves: sprinting is
+## loud, crouching quiet; gunshots far) and SEARCH where a target was last seen; COMBAT (cover, peek
+## and shoot with its profile's inaccuracy, reload ducked, sometimes flank: BotProfile.flank_chance);
+## LOOT (out of a fight, walks to loose loot or a ready event crate nearby and takes it); FLEE (low HP:
+## runs for cover away from the threat and treats itself with what it carries, then fights on);
+## EXTRACT. Pathfinding is the map's NavigationRegion3D (NavigationAgent3D).
+## A boss and its guards are a squad (BossSpawn): they share targets, guards stay with the boss, and in
+## a fight they push as a group (BotProfile.pushes). They never leave the raid.
 ## Late in the raid it heads for an extract it can use (DESIGN.md §5: the same extracts as the player,
 ## RaidConfig says when) and leaves the raid after standing in it for the extract time; a fight or a hit
 ## interrupts it. Up close (its profile's melee_range) a bot carrying a melee weapon swings it instead of
 ## shooting (Actor.melee_strike(): a parry staggers it).
 
-enum State { IDLE, INVESTIGATE, COMBAT, SEARCH, EXTRACT }
+enum State { IDLE, INVESTIGATE, COMBAT, SEARCH, EXTRACT, PATROL, LOOT, FLEE }
 
 const ARRIVE_DISTANCE := 0.3
 ## Distance to a goal above which the bot sprints instead of walking.
@@ -26,15 +36,43 @@ const PEEK_SETTLE_SPEED := 0.15
 const COVER_RETRY_TIME := 0.5
 ## With no extract it can use, try again this much later (seconds of raid time).
 const EXTRACT_RETRY_TIME := 30.0
+## Seconds it stands looking around at each patrol stop, picked at random between x and y.
+const PATROL_PAUSE := Vector2(2.0, 5.0)
+## Out of a fight it looks for loot this often (seconds); it picks something up from this close, which
+## takes LOOT_SECONDS, and gives up on loot it can't reach in LOOT_GIVE_UP seconds.
+const LOOT_SCAN_TIME := 1.5
+const LOOT_REACH := 1.2
+const LOOT_SECONDS := 1.2
+const LOOT_GIVE_UP := 15.0
+## It takes at most this many items out of an event crate.
+const CRATE_TAKES := 2
+## After fleeing once it fights on for at least this long (seconds) before fleeing again.
+const FLEE_COOLDOWN := 45.0
+## It treats itself where it is if it hasn't reached its flee spot in this long, and turns to fight a
+## target that gets this close (metres) while it flees.
+const FLEE_TIMEOUT := 8.0
+const CORNERED_DISTANCE := 6.0
+## Treatments in one go at most, and the longest one treatment takes it (seconds).
+const MAX_TREATMENTS := 3
+const MAX_TREAT_SECONDS := 6.0
+## A guard out of a fight stays this close to its boss.
+const ESCORT_DISTANCE := 3.5
+## Walking somewhere without getting STUCK_PROGRESS metres closer for this long, it gives up on the
+## spot (a corner the navmesh cuts too fine, another body in a doorway) as the closest it can get.
+const STUCK_SECONDS := 2.0
+const STUCK_PROGRESS := 0.5
 
 @export var profile: BotProfile
 ## Optional patrol route in world positions, walked in a loop.
 @export var patrol_points: PackedVector3Array
+## Points it wanders between, in random order (a ScavZone's): used instead of patrol_points if set.
+@export var wander_points: PackedVector3Array
 ## Untick to freeze the bot in place (it still takes damage).
 @export var ai_enabled := true
 
-## What the bot carries (DESIGN.md §4): a Scav or PMC kit to match its gun. Its spare rounds are the
-## ones in its rig and pockets, used up as it reloads. Lootable once it's dead, with all its gear.
+## What the bot carries (DESIGN.md §4): a random Scav kit (data/bots/scav_kit.tres), a PMC kit or,
+## set before it enters the tree, a boss's. Its gun is the one in hand; its spare rounds are the ones in
+## its rig and pockets, used up as it reloads. Lootable once it's dead, with all its gear.
 var inventory: Inventory
 ## Searching the body's pockets, rig and backpack (its equipment is in plain sight).
 var search: LootSearch
@@ -45,6 +83,17 @@ var target: Actor
 ## Seconds into the raid when it heads for an extract (-1: never), and whether it has left the raid.
 var extract_at := -1.0
 var extracted := false
+## A boss's squad: the boss and its guards (the same array for all of them; empty for other bots), and
+## a guard's boss. Set by BossSpawn; `title` is a boss's or guard's name ("" for a plain Scav or PMC).
+var squad: Array[Bot] = []
+var leader: Bot
+var title := ""
+## What it has picked up (item names), how often it flanked and what it treated itself with.
+var looted: Array[String] = []
+var flanks := 0
+var treated: Array[String] = []
+## How often it gave up on getting somewhere it was stuck on the way to.
+var stuck_count := 0
 
 var _sees_target := false
 var _seen_time := 0.0
@@ -66,6 +115,29 @@ var _view: VisionView
 ## The extract it's heading for, and how long it has stood in it.
 var _extract_zone: ExtractZone
 var _extract_time := 0.0
+## Patrol: the point it's walking to (wandering).
+var _patrol_goal := Vector3.ZERO
+var _has_patrol_goal := false
+## Loot: what it's after (a LootPickup or an event crate), how long it's been at it, the next look
+## around for some, and crates it has already looted.
+var _loot_target: Node3D
+var _loot_timer := 0.0
+var _loot_time := 0.0
+var _loot_scan := 0.0
+var _looted_boxes: Array[Node3D] = []
+## Flee: where it runs to (and the cover there), when it can flee again, how long it's been running,
+## seconds left on the treatment in hand (-1: still running), the treatment and how many it's had.
+var _flee_goal := Vector3.ZERO
+var _flee_cover: CoverPoint
+var _flee_cooldown := 0.0
+var _flee_time := 0.0
+var _treat_timer := -1.0
+var _treatment := {}
+var _treatments := 0
+## Getting stuck: where it last made progress, how long since, and whether the last _move_to() gave up.
+var _progress_at := Vector3.ZERO
+var _stuck_time := 0.0
+var _stuck := false
 
 @onready var _agent: NavigationAgent3D = $NavigationAgent3D
 
@@ -77,6 +149,8 @@ func _ready() -> void:
 		walk_speed = profile.walk_speed
 		sprint_speed = profile.sprint_speed
 		spread_degrees = profile.spread_degrees
+		if not is_equal_approx(profile.health_multiplier, 1.0):
+			health_config = _tougher(health_config, profile.health_multiplier)
 	super()
 	add_to_group("vision_hideable")
 	if profile:
@@ -86,12 +160,15 @@ func _ready() -> void:
 		material.albedo_color = profile.body_color
 		($Body/Capsule as MeshInstance3D).material_override = material
 	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	inventory = Inventory.pmc_bot(rng) if side == Side.PMC else Inventory.scav(rng)
-	if profile and profile.extra_loot:
-		inventory.add_loot(profile.extra_loot, rng)
-	spare_rounds = inventory.count_of(ammo_id)
-	weapon.spare_rounds = spare_rounds
+	if GameState.raid.has("seed"):
+		rng.seed = hash([int(GameState.raid.seed), str(get_path())])  # Repeatable kits in a seeded raid.
+	else:
+		rng.randomize()
+	if inventory == null:
+		inventory = Inventory.pmc_bot(rng) if side == Side.PMC else Inventory.scav(rng)
+		if profile and profile.extra_loot:
+			inventory.add_loot(profile.extra_loot, rng)
+	_equip_kit_gun()
 	weapon.reload_finished.connect(_on_reload_finished)
 	NoiseSystem.noise_emitted.connect(_on_noise)
 	Settings.applied.connect(_update_outline)
@@ -127,8 +204,8 @@ func leave_raid() -> void:
 ## raid, some Scavs (ai_scav_extract_chance) in ai_scav_extract_window.
 func _plan_extract() -> void:
 	var raid := _raid_controller()
-	if raid == null:
-		return
+	if raid == null or not squad.is_empty():
+		return  # A boss and its guards hold their ground.
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	var window := raid.config.ai_pmc_extract_window
@@ -137,6 +214,35 @@ func _plan_extract() -> void:
 			return
 		window = raid.config.ai_scav_extract_window
 	extract_at = raid.raid_seconds() * rng.randf_range(window.x, window.y)
+
+
+## Puts the gun in its kit in hand, loaded with the kit's rounds, with the matching rounds it carries as
+## spares. Keeps the profile's sight (AI doesn't fiddle with optics).
+func _equip_kit_gun() -> void:
+	var slot := inventory.weapon_slot()
+	var gun: ItemInstance = inventory.equipment[slot] if slot != "" else null
+	if gun and gun.data.weapon:
+		var ammo := gun.loaded_ammo if gun.loaded_ammo != "" else LootTable.ammo_for(gun.data.weapon.caliber)
+		equip_weapon(gun.data.id, ammo, inventory.count_of(ammo), WeaponStats.build(gun))
+		if gun.rounds_loaded() > 0:
+			weapon.rounds = mini(gun.rounds_loaded(), weapon.data.magazine_size)
+		if profile:
+			weapon.optic = profile.optic
+			weapon.recoil_control = profile.recoil_control
+	spare_rounds = inventory.count_of(ammo_id)
+	weapon.spare_rounds = spare_rounds
+
+
+## A copy of `base` with every body part's HP × `multiplier` (the head's × its square root, so a
+## headshot still counts).
+static func _tougher(base: HealthConfig, multiplier: float) -> HealthConfig:
+	var tough := base.duplicate() as HealthConfig
+	tough.head_hp = roundf(base.head_hp * sqrt(multiplier))
+	tough.thorax_hp = roundf(base.thorax_hp * multiplier)
+	tough.stomach_hp = roundf(base.stomach_hp * multiplier)
+	tough.arm_hp = roundf(base.arm_hp * multiplier)
+	tough.leg_hp = roundf(base.leg_hp * multiplier)
+	return tough
 
 
 func _raid_controller() -> RaidController:
@@ -148,7 +254,18 @@ func worn_gear() -> Inventory:
 
 
 func display_name() -> String:
+	if title != "":
+		return title
 	return profile.display_name if profile else super()
+
+
+## True for a boss (the leader of its squad), and for one of its guards.
+func is_boss() -> bool:
+	return not squad.is_empty() and leader == null
+
+
+func is_guard() -> bool:
+	return leader != null
 
 
 func die() -> void:
@@ -208,19 +325,26 @@ func _think(delta: float) -> void:
 	if _perceive_timer <= 0.0:
 		_perceive_timer = Settings.ai_perceive_interval()  # Longer on the Mobile graphics preset.
 		_perceive()
-	if state == State.IDLE and extract_at >= 0.0:
+	_flee_cooldown -= delta
+	if (state == State.IDLE or state == State.PATROL) and extract_at >= 0.0 and not is_guard():
 		var raid := _raid_controller()
 		if raid and not raid.is_over() and raid.elapsed >= extract_at:
 			state = State.EXTRACT
 	match state:
 		State.IDLE:
 			_do_idle(delta)
+		State.PATROL:
+			_do_patrol(delta)
 		State.INVESTIGATE, State.SEARCH:
 			_do_investigate(delta)
 		State.COMBAT:
 			_do_combat(delta)
 		State.EXTRACT:
 			_do_extract(delta)
+		State.LOOT:
+			_do_loot(delta)
+		State.FLEE:
+			_do_flee(delta)
 	if state != State.COMBAT and _look_timer <= 0.0 and not move_input.is_zero_approx():
 		aim_point = global_position + move_input * 5.0
 		has_aim = true
@@ -230,6 +354,9 @@ func _think(delta: float) -> void:
 func on_bullet_near(shooter: Actor) -> void:
 	if is_dead or not ai_enabled or shooter == null or shooter.is_dead or not is_hostile(shooter):
 		return
+	if state == State.FLEE:
+		_last_known = shooter.global_position
+		return  # Keeps running.
 	if state != State.COMBAT:
 		target = shooter
 		_enter_combat()
@@ -239,6 +366,15 @@ func on_bullet_near(shooter: Actor) -> void:
 		_duck()
 	elif cover == null and profile.can_roll and randf() < profile.dodge_chance:
 		_dodge(shooter.global_position)
+
+
+## Heads for a raid event at `point` (RaidEvents): it goes there and looks around.
+func rush_to(point: Vector3) -> void:
+	if is_dead or not ai_enabled or state == State.COMBAT or state == State.FLEE or is_guard():
+		return
+	_point_of_interest = point
+	_look_timer = 0.0
+	state = State.INVESTIGATE
 
 
 # --- Senses ---------------------------------------------------------------------------------
@@ -265,7 +401,10 @@ func _perceive() -> void:
 		_sees_target = true
 		_last_known = seen.global_position
 		_lost_time = 0.0
-		if state != State.COMBAT:
+		for mate in squad:
+			if mate != self and is_instance_valid(mate) and mate.target == seen and not mate._sees_target:
+				mate._last_known = _last_known  # The squad shares what it sees.
+		if state != State.COMBAT and state != State.FLEE:
 			_enter_combat()
 	else:
 		_sees_target = false
@@ -299,7 +438,7 @@ func _on_noise(noise_position: Vector3, radius: float, source: Node, _kind: Stri
 		return
 	if global_position.distance_to(noise_position) > radius * profile.hearing * hearing_multiplier():
 		return
-	if state == State.COMBAT:
+	if state == State.COMBAT or state == State.FLEE:
 		if other == target and not _sees_target:
 			_last_known = noise_position
 	else:
@@ -310,15 +449,180 @@ func _on_noise(noise_position: Vector3, radius: float, source: Node, _kind: Stri
 
 # --- States ---------------------------------------------------------------------------------
 
+## Stands looking around (for PATROL_PAUSE at a patrol stop), then patrols on if it has somewhere to
+## go. A guard stays with its boss instead. Picks up loot it notices nearby.
 func _do_idle(delta: float) -> void:
+	if _escort() or _notice_loot(delta):
+		return
 	if _look_timer > 0.0:
 		_look_around(delta)
 		return
-	if patrol_points.is_empty():
+	if not wander_points.is_empty() or not patrol_points.is_empty():
+		state = State.PATROL
+
+
+## Walks to its next patrol point, then stands and looks around there (IDLE).
+func _do_patrol(delta: float) -> void:
+	if _escort() or _notice_loot(delta):
 		return
-	if _move_to(patrol_points[_patrol_index], false):
-		_patrol_index = (_patrol_index + 1) % patrol_points.size()
-		_look_timer = 1.5
+	if not _has_patrol_goal:
+		_patrol_goal = _next_patrol_point()
+		_has_patrol_goal = true
+	if _move_to(_patrol_goal, false):
+		_has_patrol_goal = false
+		_look_timer = randf_range(PATROL_PAUSE.x, PATROL_PAUSE.y)
+		state = State.IDLE
+
+
+## The next point to patrol to: sometimes a hot point of interest (BotProfile.hot_poi_chance), else a
+## random point of its zone other than the one it's at, else the next stop of its route.
+func _next_patrol_point() -> Vector3:
+	var raid := _raid_controller()
+	if profile and randf() < profile.hot_poi_chance and raid and patrol_points.is_empty():
+		var hot: Variant = raid.hot_point(global_position)
+		if hot != null:
+			return hot
+	if not wander_points.is_empty():
+		var options := Array(wander_points).filter(func(point: Vector3) -> bool:
+			return point.distance_to(global_position) > 2.0)
+		if options.is_empty():
+			return wander_points[0]
+		return options[randi() % options.size()]
+	if patrol_points.is_empty():
+		return global_position
+	var point := patrol_points[_patrol_index]
+	_patrol_index = (_patrol_index + 1) % patrol_points.size()
+	return point
+
+
+## A guard out of a fight keeps near its boss (a spot of its own around it). True while it's walking
+## there; false once it's close (it then looks around like its boss) or if it has no boss left.
+func _escort() -> bool:
+	if leader == null or leader.is_dead or not is_instance_valid(leader):
+		return false
+	var index := maxi(squad.find(self), 1)
+	var angle := TAU * float(index) / float(maxi(squad.size(), 2)) + leader.rotation.y
+	var spot := leader.global_position + Vector3(sin(angle), 0.0, cos(angle)) * 2.0
+	if Vector2(spot.x - global_position.x, spot.z - global_position.z).length() <= ESCORT_DISTANCE:
+		return false
+	_move_to(spot, global_position.distance_to(spot) > SPRINT_DISTANCE * 3.0)
+	return true
+
+
+# --- Looting --------------------------------------------------------------------------------
+
+## Every LOOT_SCAN_TIME, looks for loot within its profile's loot_radius: loose items on the ground,
+## and ready raid event crates it hasn't looted (DESIGN.md §5.2). Goes for the nearest (LOOT). True if
+## it found some. Guards don't wander off to loot.
+func _notice_loot(delta: float) -> bool:
+	if profile == null or profile.loot_radius <= 0.0 or is_guard():
+		return false
+	_loot_scan -= delta
+	if _loot_scan > 0.0:
+		return false
+	_loot_scan = LOOT_SCAN_TIME
+	var found := find_loot()
+	if found == null:
+		return false
+	_loot_target = found
+	_loot_timer = 0.0
+	_loot_time = 0.0
+	state = State.LOOT
+	return true
+
+
+## The nearest loot it would go for now (null: none): a loose item or a ready, unlooted event crate
+## within its loot radius, on its floor, in sight and not already being fetched by another bot.
+func find_loot() -> Node3D:
+	var best: Node3D = null
+	var best_distance := profile.loot_radius if profile else 0.0
+	var candidates: Array[Node3D] = []
+	for node in get_tree().get_nodes_in_group("interactables"):
+		if node is LootPickup and node.item != null and not node.has_meta("bots_skip"):
+			candidates.append(node)
+	var events := get_tree().get_first_node_in_group("raid_events") as RaidEvents
+	if events:
+		for event: Dictionary in events.events:
+			var box: Variant = event.box
+			if event.ready and is_instance_valid(box) and not box in _looted_boxes and not box.grid.items.is_empty():
+				candidates.append(box)
+	for node in candidates:
+		var distance := global_position.distance_to(node.global_position)
+		if distance >= best_distance or absf(node.global_position.y - global_position.y) > 1.5:
+			continue
+		if _fetched_by_other(node) or not VisionSystem.line_clear(get_world_3d().direct_space_state, global_position, node.global_position, true):
+			continue
+		best = node
+		best_distance = distance
+	return best
+
+
+## True if another bot is already on its way to `node`.
+func _fetched_by_other(node: Node3D) -> bool:
+	for other in get_tree().get_nodes_in_group("bots"):
+		if other != self and other.state == State.LOOT and other._loot_target == node:
+			return true
+	return false
+
+
+## Walks to its loot, spends LOOT_SECONDS picking it up and takes it (or, from a crate, its best
+## CRATE_TAKES items), then stands and looks around. Drops it if the loot is gone or out of reach.
+func _do_loot(delta: float) -> void:
+	_loot_time += delta
+	var gone := not is_instance_valid(_loot_target) or (_loot_target is LootPickup and _loot_target.item == null)
+	if gone or _loot_time > LOOT_GIVE_UP:
+		_finish_loot()
+		return
+	var at := _loot_target.global_position
+	if Vector2(at.x - global_position.x, at.z - global_position.z).length() > LOOT_REACH:
+		_loot_timer = 0.0
+		_move_to(at, false)
+		if _stuck:
+			_loot_target.set_meta("bots_skip", true)  # Out of reach.
+			_finish_loot()
+		return
+	aim_point = at
+	has_aim = true
+	_loot_timer += delta
+	if _loot_timer >= LOOT_SECONDS:
+		_take_loot(_loot_target)
+		_finish_loot()
+
+
+## Takes `node`: a loose item into its rig, pockets or pack (if it doesn't fit, other bots leave it
+## too), or the most valuable items of an event crate that fit.
+func _take_loot(node: Node3D) -> void:
+	if node is LootPickup:
+		var pickup := node as LootPickup
+		pickup.item.hidden = false
+		if inventory.add(pickup.item):
+			looted.append(pickup.item.data.display_name)
+			pickup.item = null
+			pickup.queue_free()
+		else:
+			pickup.set_meta("bots_skip", true)
+	elif node is LootBox:
+		var box := node as LootBox
+		_looted_boxes.append(box)
+		var items := box.grid.items.duplicate()
+		items.sort_custom(func(a: ItemInstance, b: ItemInstance) -> bool: return a.value() > b.value())
+		var taken := 0
+		for item: ItemInstance in items:
+			if taken >= CRATE_TAKES:
+				break
+			box.grid.remove(item)
+			item.hidden = false
+			if inventory.add(item):
+				looted.append(item.data.display_name)
+				taken += 1
+			else:
+				box.grid.add(item)
+
+
+func _finish_loot() -> void:
+	_loot_target = null
+	_look_timer = 1.0
+	state = State.IDLE
 
 
 ## Walks to the nearest extract it can use, stands in it for the extract time and leaves the raid.
@@ -388,6 +692,9 @@ func _do_combat(delta: float) -> void:
 		target = null
 		_leave_combat(State.IDLE)
 		return
+	if _should_flee():
+		_start_flee(target.global_position if _sees_target else _last_known)
+		return
 	if _sees_target and profile.melee_range > 0.0 and melee_weapon() \
 			and global_position.distance_to(target.global_position) <= profile.melee_range:
 		aim_point = target.chest_point()
@@ -427,6 +734,9 @@ func _move_to_cover(delta: float, threat: Vector3) -> void:
 		return
 	var far := global_position.distance_to(_goal_cover.position) > SPRINT_DISTANCE
 	if _move_to(_goal_cover.position, far):
+		if _stuck:
+			_set_goal_cover(null)  # Can't get there: find another.
+			return
 		enter_cover(_goal_cover)
 		_goal_cover = null
 		_wants_peek = false
@@ -474,12 +784,151 @@ func _shoot_when_ready(delta: float) -> void:
 	fire_input = fmod(_burst_clock, profile.burst_time + profile.burst_pause) < profile.burst_time
 
 
+# --- Fleeing -------------------------------------------------------------------------------
+
+## Low on HP (below its profile's flee_health of the total) and not fled recently.
+func _should_flee() -> bool:
+	if profile == null or profile.flee_health <= 0.0 or _flee_cooldown > 0.0:
+		return false
+	return health.total() < health.max_total() * profile.flee_health
+
+
+## Breaks off the fight: runs (sprinting) for cover farther from `threat`, or straight away from it.
+func _start_flee(threat: Vector3) -> void:
+	exit_cover()
+	_set_goal_cover(null)
+	_wants_peek = false
+	_flee_cover = _flee_spot(threat)
+	CoverSystem.claim(self, _flee_cover)
+	if _flee_cover:
+		_flee_goal = _flee_cover.position
+	else:
+		var away := global_position - threat
+		away.y = 0.0
+		_flee_goal = global_position + (away.normalized() if away.length() > 0.1 else Vector3.FORWARD) * 12.0
+		var map := get_world_3d().navigation_map
+		if NavigationServer3D.map_get_iteration_id(map) != 0:
+			_flee_goal = NavigationServer3D.map_get_closest_point(map, _flee_goal)
+	_flee_time = 0.0
+	_treat_timer = -1.0
+	_treatments = 0
+	_look_timer = 0.0
+	_flee_cooldown = FLEE_COOLDOWN
+	state = State.FLEE
+
+
+## Cover within reach (1.5 × its search radius) that hides it from `threat` and is farther from it
+## than the bot is now: the nearest such spot it can walk to. Null if there's none.
+func _flee_spot(threat: Vector3) -> CoverPoint:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return null
+	var reach := (profile.cover_search_radius if profile else 15.0) * 1.5
+	var from_threat := global_position.distance_to(threat)
+	var best: CoverPoint = null
+	var best_distance := INF
+	for point in CoverSystem.get_points():
+		var distance := point.position.distance_to(global_position)
+		if distance > reach or distance >= best_distance or point.position.distance_to(threat) < from_threat + 3.0:
+			continue
+		if not CoverSystem.is_available(point, self) or not CoverSystem.protects(point, threat):
+			continue
+		var on_navmesh := NavigationServer3D.map_get_closest_point(map, point.position)
+		if Vector2(on_navmesh.x - point.position.x, on_navmesh.z - point.position.z).length() > CoverSystem.NAVMESH_TOLERANCE:
+			continue
+		best = point
+		best_distance = distance
+	return best
+
+
+## Runs for its flee spot; there (or after FLEE_TIMEOUT) it ducks into the cover and treats itself with
+## what it carries (Consumables.quick_pick(): bleeds first, then HP), up to MAX_TREATMENTS, each taking
+## the item's use time. Then it goes back to the fight (or searches, if it lost its target). A target
+## that comes within CORNERED_DISTANCE in sight is fought on the spot.
+func _do_flee(delta: float) -> void:
+	_flee_time += delta
+	if target and not target.is_dead and _sees_target and global_position.distance_to(target.global_position) < CORNERED_DISTANCE:
+		_end_flee()  # Cornered: fight.
+		return
+	if _treat_timer < 0.0:
+		if not _move_to(_flee_goal, true) and _flee_time < FLEE_TIMEOUT:
+			return
+		if _flee_cover and global_position.distance_to(_flee_cover.position) < 1.0:
+			enter_cover(_flee_cover)
+		_next_treatment()
+		return
+	aim_point = _last_known + Vector3.UP * 1.2
+	has_aim = true
+	_treat_timer -= delta
+	if _treat_timer > 0.0:
+		return
+	var item: ItemInstance = _treatment.get("item")
+	if item and item in inventory.all_items():
+		var result := Consumables.apply(item, health, int(_treatment.get("part", -1)))
+		if result.get("ok", false):
+			treated.append(item.data.display_name)
+			if result.get("used_up", false):
+				inventory.remove_item(item)
+	_treatments += 1
+	if _treatments < MAX_TREATMENTS and health.total() < health.max_total() * 0.9:
+		_next_treatment()
+	else:
+		_end_flee()
+
+
+## Starts its next treatment (or, with nothing to treat or nothing to treat it with, catches its
+## breath for a moment).
+func _next_treatment() -> void:
+	_treatment = pick_treatment()
+	var item: ItemInstance = _treatment.get("item")
+	_treat_timer = minf(Consumables.use_time(item.data), MAX_TREAT_SECONDS) if item else 1.5
+	if item == null:
+		_treatments = MAX_TREATMENTS  # Nothing more to do after this.
+
+
+## What it treats itself with now: what quick treatment would use (Consumables.quick_pick()), else
+## any med in its kit that helps (its backpack too: it has the time). {} if nothing.
+func pick_treatment() -> Dictionary:
+	var pick := Consumables.quick_pick(inventory, health)
+	if pick.has("item"):
+		return pick
+	for grid in inventory.grids():
+		for item in grid.items:
+			if item.data.category == ItemData.Category.MEDS and not Stims.is_stim(item.data):
+				var plan := Consumables.plan(item, health)
+				if plan.get("ok", false):
+					return {"item": item, "part": int(plan.get("part", -1))}
+	return {}
+
+
+func _end_flee() -> void:
+	_flee_cover = null
+	_treat_timer = -1.0
+	if target and not target.is_dead:
+		_lost_time = 0.0
+		exit_cover()
+		_enter_combat(false)
+	else:
+		_point_of_interest = _last_known
+		_leave_combat(State.SEARCH)
+
+
 # --- Helpers --------------------------------------------------------------------------------
 
-func _enter_combat() -> void:
+## Starts fighting its target; `alert`: its squad joins in (DESIGN.md §4: a boss's guards share
+## targets).
+func _enter_combat(alert := true) -> void:
 	state = State.COMBAT
 	_look_timer = 0.0
 	_cover_retry = 0.0
+	_loot_target = null
+	if alert and target:
+		for mate in squad:
+			if mate != self and is_instance_valid(mate) and not mate.is_dead and mate.ai_enabled and mate.state != State.COMBAT and mate.state != State.FLEE:
+				mate.target = target
+				mate._last_known = _last_known if _last_known != Vector3.ZERO else target.global_position
+				mate._lost_time = 0.0
+				mate._enter_combat(false)
 
 
 func _leave_combat(next: State) -> void:
@@ -495,12 +944,29 @@ func _duck() -> void:
 	_cover_timer = randf_range(profile.duck_time.x, profile.duck_time.y)
 
 
-## Leaves the current cover for another one; advanced AI rolls there if it's close enough.
+## Leaves the current cover for another one; advanced AI rolls there if it's close enough. Sometimes
+## (BotProfile.flank_chance) the new spot is off to the threat's side. A pushing squad (a boss's)
+## moves closer to the threat instead, one member at a time: while a squad mate is on the move the
+## others stay in their cover (as long as it still hides them) and keep peeking to pin the threat down.
 func _reposition(threat: Vector3) -> void:
 	var old := cover
+	var pushes := profile.pushes and not squad.is_empty()
+	if pushes and old and CoverSystem.protects(old, threat) and _squad_mate_moving():
+		_peeks_left = 1
+		_duck()
+		return
 	exit_cover()
 	_wants_peek = false
-	_set_goal_cover(CoverSystem.find_cover(self, threat, profile.cover_search_radius, old))
+	var next: CoverPoint = null
+	if pushes:
+		next = _push_cover(threat, old)
+	elif randf() < profile.flank_chance:
+		next = _flank_cover(threat, old)
+		if next:
+			flanks += 1
+	if next == null:
+		next = CoverSystem.find_cover(self, threat, profile.cover_search_radius, old)
+	_set_goal_cover(next)
 	_cover_retry = COVER_RETRY_TIME
 	if _goal_cover and profile.can_roll and randf() < profile.roll_to_cover_chance:
 		_roll_toward_cover()
@@ -519,6 +985,56 @@ func _dodge(threat: Vector3) -> void:
 	try_roll(sideways)
 
 
+## Cover off to the side of `threat`: seen from the threat, 40-110° around from where the bot is now,
+## no farther from it than the bot is, protected and reachable. The nearest one, or null.
+func _flank_cover(threat: Vector3, avoid: CoverPoint) -> CoverPoint:
+	var mine := Vector2(global_position.x - threat.x, global_position.z - threat.z)
+	return _best_cover(threat, avoid, func(point: CoverPoint) -> bool:
+		var theirs := Vector2(point.position.x - threat.x, point.position.z - threat.z)
+		var angle := rad_to_deg(absf(mine.angle_to(theirs)))
+		return angle >= 40.0 and angle <= 110.0 and theirs.length() <= mine.length() + 2.0)
+
+
+## Cover at least 2 m closer to `threat` than the bot is now (a squad's push). The nearest one, or null.
+func _push_cover(threat: Vector3, avoid: CoverPoint) -> CoverPoint:
+	var from_threat := global_position.distance_to(threat)
+	return _best_cover(threat, avoid, func(point: CoverPoint) -> bool:
+		return point.position.distance_to(threat) <= from_threat - 2.0)
+
+
+## The nearest cover point within its search radius that hides it from `threat`, is free, reachable,
+## not next to `avoid` and passes `accept`.
+func _best_cover(threat: Vector3, avoid: CoverPoint, accept: Callable) -> CoverPoint:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return null
+	var best: CoverPoint = null
+	var best_distance := profile.cover_search_radius
+	for point in CoverSystem.get_points():
+		var distance := point.position.distance_to(global_position)
+		if distance > best_distance or point.position.distance_to(threat) < CoverSystem.MIN_THREAT_DISTANCE:
+			continue
+		if avoid and point.position.distance_to(avoid.position) < 2.5:
+			continue
+		if not accept.call(point) or not CoverSystem.is_available(point, self) or not CoverSystem.protects(point, threat):
+			continue
+		var on_navmesh := NavigationServer3D.map_get_closest_point(map, point.position)
+		if Vector2(on_navmesh.x - point.position.x, on_navmesh.z - point.position.z).length() > CoverSystem.NAVMESH_TOLERANCE:
+			continue
+		best = point
+		best_distance = distance
+	return best
+
+
+## True if a living squad mate is moving to new cover in this fight.
+func _squad_mate_moving() -> bool:
+	for mate in squad:
+		if mate != self and is_instance_valid(mate) and not mate.is_dead and mate.state == State.COMBAT \
+				and mate.cover == null and mate._goal_cover != null:
+			return true
+	return false
+
+
 func _roll_toward_cover() -> bool:
 	if _goal_cover == null or global_position.distance_to(_goal_cover.position) > config.roll_distance + 1.5:
 		return false
@@ -530,15 +1046,30 @@ func _set_goal_cover(point: CoverPoint) -> void:
 	CoverSystem.claim(self, point)
 
 
-## Steers along the navigation mesh toward `goal`. Returns true once there.
+## Steers along the navigation mesh toward `goal`. Returns true once there, or once it has been stuck
+## on the way for STUCK_SECONDS (then `_stuck` is set: as close as it gets).
 func _move_to(goal: Vector3, sprint: bool) -> bool:
+	_stuck = false
 	var to_goal := Vector3(goal.x - global_position.x, 0.0, goal.z - global_position.z)
 	if to_goal.length() < ARRIVE_DISTANCE:
+		_stuck_time = 0.0
 		return true
 	if NavigationServer3D.map_get_iteration_id(_agent.get_navigation_map()) == 0:
 		return false  # The navmesh baked at raid start hasn't synced yet: wait a frame.
 	if _agent.target_position.distance_to(goal) > 0.05:
 		_agent.target_position = goal
+		_stuck_time = 0.0
+		_progress_at = global_position
+	if global_position.distance_to(_progress_at) > STUCK_PROGRESS:
+		_progress_at = global_position
+		_stuck_time = 0.0
+	else:
+		_stuck_time += get_physics_process_delta_time()
+		if _stuck_time > STUCK_SECONDS:
+			_stuck_time = 0.0
+			_stuck = true
+			stuck_count += 1
+			return true
 	var next := _agent.get_next_path_position()
 	var direction := Vector3(next.x - global_position.x, 0.0, next.z - global_position.z)
 	if _agent.is_navigation_finished() or direction.length() < 0.05:

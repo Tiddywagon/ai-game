@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LootContainer" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_container.gd" id="1_container"]
+[ext_resource type="Resource" path="res://data/loot_tables/event_truck.tres" id="2_table"]
+
+[resource]
+script = ExtResource("1_container")
+id = "supply_cargo"
+display_name = "Supply truck cargo"
+loot_table = ExtResource("2_table")
+grid_size = Vector2i(6, 4)
+search_time = 1.3
+look = 1
+box_size = Vector3(1.6, 0.8, 1.0)
+color = Color(0.34, 0.36, 0.22, 1)
+solid = true
+cover_material = 0

@@ -5,7 +5,9 @@ extends Node3D
 ## Closed, it blocks movement, sight and bullets (wood ones can be shot through, metal ones can't).
 ## A locked door needs its key (`key_id`) on you: F unlocks it, using one of the key's uses (the key is
 ## gone when they run out), and it stays unlocked for the raid. The AI opens unlocked doors it walks
-## up to, and never paths through locked ones (RaidLevel bakes them shut). The node's origin is the
+## up to, and never paths through locked ones (RaidLevel bakes them shut). A door can instead be shut
+## until the map's power comes on (`needs_power`: a blast door) or until a Lever is pulled (`lever_id`:
+## a bunker's shutter); then it unlocks and swings open by itself (DESIGN.md §5.2). The node's origin is the
 ## middle of the doorway at floor level; the panel lies along local X, opening toward local -Z (or +Z
 ## with `opens_back`).
 
@@ -13,6 +15,10 @@ const SWING_TIME := 0.35
 ## AI within this distance of a closed, unlocked door opens it.
 const AI_OPEN_DISTANCE := 1.4
 const LOCKED_COLOR := Color(0.75, 0.2, 0.15)
+const POWER_COLOR := Color(0.95, 0.65, 0.15)
+const LEVER_COLOR := Color(0.35, 0.55, 0.85)
+## Seconds between checks whether the power or lever has opened a shut door.
+const MECHANISM_CHECK := 0.25
 
 @export var width := 1.2:
 	set(value):
@@ -33,12 +39,16 @@ const LOCKED_COLOR := Color(0.75, 0.2, 0.15)
 		_build()
 ## The key that unlocks it (an item id), if locked.
 @export var key_id := ""
+## Locked (no key) until the map's power is on, or until the lever with this id is pulled.
+@export var needs_power := false
+@export var lever_id := ""
 ## For the map and prompts: "Office door".
 @export var door_name := "Door"
 
 var is_open := false
 ## The player who last looked at it, for the prompt (set by can_interact()).
 var _viewer: Player
+var _mechanism_timer := 0.0
 
 var _pivot: Node3D
 var _panel: StaticBody3D
@@ -65,11 +75,19 @@ func _exit_tree() -> void:
 		VisionSystem.unregister_occluder(self)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
 	if _tween and _tween.is_running():
 		VisionSystem.mark_dirty()  # Sight follows the swinging panel.
+	if locked and is_mechanical():
+		_mechanism_timer -= delta
+		if _mechanism_timer <= 0.0:
+			_mechanism_timer = MECHANISM_CHECK
+			if mechanism_ready():
+				locked = false
+				set_open(true)
+		return
 	if is_open or locked:
 		return
 	for bot in get_tree().get_nodes_in_group("bots"):
@@ -102,7 +120,24 @@ func can_interact(player: Player) -> bool:
 	return not player.is_dead
 
 
+## True for a door the power or a lever opens (rather than a key).
+func is_mechanical() -> bool:
+	return needs_power or lever_id != ""
+
+
+## True once what opens a mechanical door has happened: the power is on, or its lever is pulled.
+func mechanism_ready() -> bool:
+	if needs_power:
+		var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+		return raid != null and raid.power_state() == "on"
+	return lever_id != "" and Lever.is_pulled(get_tree(), lever_id)
+
+
 func interact_text() -> String:
+	if locked and needs_power:
+		return "Shut: the %s has no power" % door_name.to_lower()
+	if locked and lever_id != "":
+		return "Shut: the %s opens with a lever" % door_name.to_lower()
 	if locked:
 		var key := key_name()
 		return "Unlock with the %s" % key if _held_key(_viewer) else "Locked: needs the %s" % key
@@ -112,6 +147,9 @@ func interact_text() -> String:
 func interact(player: Player) -> void:
 	if not locked:
 		set_open(not is_open)
+		return
+	if is_mechanical():
+		player.action_blocked.emit(interact_text())
 		return
 	var key := _held_key(player)
 	if key == null:
@@ -202,9 +240,10 @@ func _build() -> void:
 		plate.mesh = plate_mesh
 		plate.position = Vector3(width / 2.0 - 0.18, 0.0, 0)
 		var red := StandardMaterial3D.new()
-		red.albedo_color = LOCKED_COLOR
+		var plate_color := POWER_COLOR if needs_power else LEVER_COLOR if lever_id != "" else LOCKED_COLOR
+		red.albedo_color = plate_color
 		red.emission_enabled = true
-		red.emission = LOCKED_COLOR * 0.5
+		red.emission = plate_color * 0.5
 		plate.material_override = red
 		_panel.add_child(plate)
 	_pivot.add_child(_panel)

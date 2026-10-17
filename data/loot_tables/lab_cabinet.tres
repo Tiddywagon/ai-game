@@ -8,7 +8,7 @@ display_name = "Lab cabinet"
 rarity_weights = PackedFloat32Array(55, 25, 12, 5, 2.5, 0.5)
 rarity_multipliers = PackedFloat32Array(0.4, 0.8, 1.3, 1.8, 2.5, 2.5)
 categories = Array[int]([])
-items = PackedStringArray("medical_tools", "saline_bag", "empty_injector", "ledx", "lab_keycard", "flash_drive", "ssd_drive")
+items = PackedStringArray("medical_tools", "saline_bag", "empty_injector", "ledx", "lab_keycard", "keycard_red", "keycard_violet", "flash_drive", "ssd_drive")
 types = PackedStringArray("stim")
 item_weights = {
 "saline_bag": 1.5

@@ -26,3 +26,7 @@ can_roll = false
 melee_range = 1.4
 dodge_chance = 0.0
 roll_to_cover_chance = 0.0
+flee_health = 0.35
+flank_chance = 0.25
+loot_radius = 10.0
+hot_poi_chance = 0.25

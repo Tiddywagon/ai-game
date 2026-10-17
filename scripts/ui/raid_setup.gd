@@ -16,6 +16,8 @@ var _loadout: Inventory
 var _map_buttons: Array[Button] = []
 var _insure: Button
 var _insure_note: Label
+## Who insures your gear (Insurance.insurers(): Prapor cheap and slow, Therapist dearer and faster).
+var _insurer: OptionButton
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]
 @onready var _step_labels: Array[Label] = [%MapStepLabel, %SideStepLabel, %LoadoutStepLabel]
@@ -46,6 +48,14 @@ func _ready() -> void:
 	%ScavButton.focus_entered.connect(_choose_side.bind("scav", false))
 	%BackButton.pressed.connect(_on_cancel)
 	_next.pressed.connect(_on_next)
+	_insurer = OptionButton.new()
+	_insurer.name = "InsurerPicker"
+	_insurer.custom_minimum_size = Vector2(0, 40)
+	for each: Dictionary in Insurance.insurers():
+		_insurer.add_item("Insure with %s" % Insurance.insurer_text(each.id))
+		_insurer.set_item_metadata(_insurer.item_count - 1, each.id)
+	_insurer.item_selected.connect(_pick_insurer)
+	%GearGrid.get_parent().add_child(_insurer)
 	_insure = Button.new()
 	_insure.name = "InsureButton"
 	_insure.custom_minimum_size = Vector2(0, 44)
@@ -102,11 +112,24 @@ func _select_map(map: MapInfo) -> void:
 	_map_buttons[_maps.find(map)].set_pressed_no_signal(true)
 	%MapName.text = map.display_name.to_upper()
 	%MapDescription.text = map.description
-	%MapStats.text = "Size: %s\nRaid time: %d min\nPlayers: %s\nExtracts: %s\nBoss: %s" % [
-		map.size, map.raid_minutes, map.players, ExtractTable.summary(map.id), map.boss]
+	%MapStats.text = "\n".join(map_stats(map))
 	%MapStatus.text = "" if map.is_playable() else "In development: not playable yet."
 	if _step == Step.MAP:
 		_next.disabled = not map.is_playable()
+
+
+## The map's stats: size, raid time, players, extracts, its boss (and their odds), how much of it
+## you've explored, and an entry item if it needs one.
+static func map_stats(map: MapInfo) -> Array[String]:
+	var lines: Array[String] = ["Size: %s" % map.size, "Raid time: %d min" % map.raid_minutes, "Players: %s" % map.players,
+		"Extracts: %s" % ExtractTable.summary(map.id), "Boss: %s" % BossTable.summary(map.id)]
+	var pois := PoiTable.for_map(map.id).size()
+	if pois > 0:
+		lines.append("Explored: %d of %d points of interest (%d%%)" % [GameState.explored_count(map.id), pois,
+			roundi(GameState.exploration(map.id) * 100.0)])
+	if map.entry_item != "" and ItemDB.has_item(map.entry_item):
+		lines.append("Entry: a %s (PMC, used up on entry)" % ItemDB.get_item(map.entry_item).display_name)
+	return lines
 
 
 func _choose_side(side: String, advance := true) -> void:
@@ -140,6 +163,12 @@ func _show_loadout() -> void:
 	%WeightLabel.text = "Carried weight: %s" % Settings.format_weight(weight)
 
 	var checks: Array[String] = []
+	var blocked := entry_block_reason(_map, _side, _loadout)
+	if blocked != "":
+		checks.append(blocked)
+	elif _map.entry_item != "" and ItemDB.has_item(_map.entry_item):
+		checks.append("Your %s is swiped at the door and used up." % ItemDB.get_item(_map.entry_item).display_name)
+	_next.disabled = blocked != ""
 	if _side == "scav":
 		checks.append("Scav run: random gear. Nothing from your stash is at risk.")
 		checks.append("AI Scavs leave you alone unless you shoot them.")
@@ -175,8 +204,12 @@ func _show_loadout() -> void:
 func _update_insurance() -> void:
 	_insure.visible = _side == "pmc"
 	_insure_note.visible = _side == "pmc"
+	_insurer.visible = _side == "pmc" and _insurer.item_count > 1
 	if _side != "pmc":
 		return
+	for i in _insurer.item_count:
+		if _insurer.get_item_metadata(i) == Insurance.insurer().get("id", ""):
+			_insurer.select(i)
 	var uninsured := Insurance.uninsured(GameState.inventory)
 	var cost := Insurance.total_price(uninsured)
 	if uninsured.is_empty():
@@ -186,8 +219,18 @@ func _update_insurance() -> void:
 		_insure.text = "INSURE GEAR  ·  %d item%s  ·  %s" % [uninsured.size(), "" if uninsured.size() == 1 else "s", UiFormat.money(cost)]
 		_insure.disabled = GameState.roubles < cost
 	_insure.tooltip_text = "You have %s" % UiFormat.money(GameState.roubles)
-	_insure_note.text = "Insured gear you lose comes back to your stash after the raid (guns with their parts, rigs and backpacks empty). %d%% of an item's value, at least %s each." % [
-		roundi(Insurance.CONFIG.insurance_rate * 100.0), UiFormat.money(Insurance.CONFIG.insurance_min_price)]
+	var chosen := Insurance.insurer()
+	var hours: Array = chosen.get("return_hours", [24, 24])
+	_insure_note.text = "Insured gear you lose comes back to your stash %d-%d game hours later (%s-%s real time; guns with their parts, rigs and backpacks empty), unless someone takes it off your body first. %s charges %d%% of an item's value, at least %s each." % [
+		int(hours[0]), int(hours[1]), Insurance._clock(Insurance.real_seconds(float(hours[0]))), Insurance._clock(Insurance.real_seconds(float(hours[1]))),
+		chosen.get("name", ""), roundi(float(chosen.get("rate", 0.0)) * 100.0), UiFormat.money(Insurance.CONFIG.insurance_min_price)]
+
+
+## Picks who insures your gear from now on (saved with the profile).
+func _pick_insurer(index: int) -> void:
+	GameState.insurer = str(_insurer.get_item_metadata(index))
+	SaveManager.save_game()
+	_update_insurance()
 
 
 func _insure_gear() -> void:
@@ -216,6 +259,33 @@ func _add_row(grid: GridContainer, name: String, value: String, color: Color) ->
 	grid.add_child(item_label)
 
 
+## Why `side` with `loadout` can't enter `map` ("" if it can): a map with an entry item (Lab Zero's
+## keycard) needs a PMC carrying one; Scavs never get in.
+static func entry_block_reason(map: MapInfo, side: String, loadout: Inventory) -> String:
+	if map == null or map.entry_item == "" or not ItemDB.has_item(map.entry_item):
+		return ""
+	var card := ItemDB.get_item(map.entry_item).display_name
+	if side == "scav":
+		return "Scavs can't get into %s: there's no way past the %s reader." % [map.display_name, card]
+	if loadout == null or not loadout.all_items().any(func(item: ItemInstance) -> bool: return item.data.id == map.entry_item):
+		return "You need a %s to enter %s. Bring one in your pockets, rig, backpack or secure container." % [card, map.display_name]
+	return ""
+
+
+## Uses up `map`'s entry item from `loadout` (one), as the raid starts. False if it has none.
+static func use_entry_item(map: MapInfo, loadout: Inventory) -> bool:
+	if map == null or map.entry_item == "":
+		return true
+	for grid in loadout.grids():
+		for item in grid.all_items():
+			if item.data.id == map.entry_item:
+				grid.find_holder(item).remove(item)
+				return true
+	return false
+
+
 func _start_raid() -> void:
+	if entry_block_reason(_map, _side, _loadout) != "" or not use_entry_item(_map, _loadout):
+		return
 	GameState.raid = {"map": _map.id, "side": _side, "loadout": _loadout}
 	get_tree().change_scene_to_file(LOADING_SCENE)
