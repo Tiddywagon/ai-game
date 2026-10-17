@@ -2,9 +2,11 @@ class_name PlayerVision
 extends Node
 ## The player's vision, Project Zomboid style (DESIGN.md §13.6). Several times a second (update_rate in
 ## vision.tres) it traces what the player sees (VisionSystem.visibility_polygon), draws that area into
-## two masks seen from above (visible now; seen at some point) and hands them to a full-screen shader
-## that darkens and greys out everything else. Enemies (and later loot) outside the view aren't drawn,
-## and sounds from things the player can't see are passed on to the HUD as direction markers.
+## a mask seen from above and hands it to a full-screen shader that darkens and greys out everything
+## else, leaving the layout faintly visible in the dark (nothing seen before is remembered). Enemies and
+## loot outside the view aren't drawn, sounds from things the player can't see are passed on to the HUD
+## as direction markers, and hostile rounds coming at the player glow faintly through the dark
+## (show_incoming(), BulletGlow).
 
 ## A sound the player hears but can't see the source of. `source_id` is 0 when there's no source node.
 signal sound_heard(position: Vector3, kind: StringName, source_id: int)
@@ -36,7 +38,7 @@ var _timer := 0.0
 var _bounds := Rect2()
 var _resolution := 1024.0
 var _visible_canvas: Node2D
-var _memory_canvas: Node2D
+var _glow: BulletGlow
 var _quad: MeshInstance3D
 var _material: ShaderMaterial
 
@@ -71,13 +73,11 @@ func _setup() -> void:
 	_bounds = VisionSystem.world_bounds()
 	_resolution = config.mask_resolution
 	_visible_canvas = _make_mask(SubViewport.CLEAR_MODE_ALWAYS, "visible_mask")
-	_memory_canvas = _make_mask(SubViewport.CLEAR_MODE_ONCE, "memory_mask")  # Never cleared: it remembers.
 	_material.shader = SHADER
 	_material.render_priority = Material.RENDER_PRIORITY_MAX
 	_material.set_shader_parameter("bounds", Vector4(_bounds.position.x, _bounds.position.y, _bounds.size.x, _bounds.size.y))
-	_material.set_shader_parameter("memory_brightness", config.memory_brightness)
-	_material.set_shader_parameter("memory_saturation", config.memory_saturation)
-	_material.set_shader_parameter("unseen_brightness", config.unseen_brightness)
+	_material.set_shader_parameter("dark_brightness", config.dark_brightness)
+	_material.set_shader_parameter("dark_saturation", config.dark_saturation)
 	_material.set_shader_parameter("dark_room_shading", config.dark_room_shading)
 	var zones: Array[Vector4] = []
 	for zone in VisionSystem.dark_zones().slice(0, MAX_DARK_ZONES):
@@ -102,7 +102,28 @@ func _setup() -> void:
 	if camera:
 		camera.add_child(_quad)
 		_quad.position = Vector3(0.0, 0.0, -1.0)
+	# Incoming rounds glow over the fog, under the HUD.
+	var layer := CanvasLayer.new()
+	layer.name = "IncomingFire"
+	layer.layer = -1
+	add_child(layer)
+	_glow = BulletGlow.new()
+	_glow.name = "BulletGlow"
+	_glow.vision = self
+	layer.add_child(_glow)
 	_update()
+
+
+## A round fired at (or past) the player from `from` to `to` by someone hostile (Ballistics): its path
+## glows faintly where the player can't see it.
+func show_incoming(from: Vector3, to: Vector3) -> void:
+	if _glow:
+		_glow.add(from, to)
+
+
+## The incoming-fire glow (null until set up).
+func bullet_glow() -> BulletGlow:
+	return _glow
 
 
 ## A mask viewport (transparent, 2D only, square over the level) with a canvas to draw into, bound to
@@ -165,11 +186,7 @@ func _draw_masks() -> void:
 		triangles.append_array([a, b, c, a, c, d])
 		for n in 6:
 			colors.append(VISIBLE)
-	var memory_colors := PackedColorArray()
-	memory_colors.resize(colors.size())
-	memory_colors.fill(VISIBLE)
 	_visible_canvas.set_triangles(triangles, colors)
-	_memory_canvas.set_triangles(triangles, memory_colors)
 
 
 func _to_mask(point: Vector2) -> Vector2:

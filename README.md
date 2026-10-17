@@ -59,7 +59,7 @@ Keys and controller buttons can be remapped in Settings > Controls. Menus work w
 
 Test Yard debug keys: **F1** left leg fracture, **F2** overweight, **F3** next round type for the gun's caliber, **F4** AI on/off, **F5** heal everything, **F6** cycle the gun's sight (iron, red dot, holo, 2-4x, 6-8x), **F7** time of day, **F8** weather, **F9** flashbang at the reticle, **F10** fog of war off.
 
-You only see inside a cone pointed at the reticle, plus a small circle around you; enemies outside it aren't drawn, and places you've seen before stay as a dim grey memory. Walls, cars, crates and the hedge block sight; low cover only blocks it while you crouch. Night, dark rooms, fog and rain shorten your sight; the flashlight helps. Sounds you can't see the source of show as arrows at the screen edge.
+You only see inside a cone pointed at the reticle, plus a small circle around you; enemies and loot outside it aren't drawn, and everything else out of view stays just faintly visible in the dark (nothing you've seen before is remembered). Rounds fired at you glow faintly through the dark, so you see shots coming even when you can't see the shooter. Walls, cars, crates and the hedge block sight; low cover only blocks it while you crouch. Night, dark rooms, fog and rain shorten your sight; the flashlight helps. Sounds you can't see the source of show as arrows at the screen edge.
 
 Health works per body part, as in Tarkov: head or thorax at 0 kills, any other part at 0 is "blacked" and passes further damage on to the rest of the body. Hits can cause bleeds and fractures. The silhouette in the bottom-left corner shows each part's health and effects. When you die, the death screen says what killed you.
 

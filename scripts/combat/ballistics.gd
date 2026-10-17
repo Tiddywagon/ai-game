@@ -5,8 +5,9 @@ extends RefCounted
 ## and warns everyone it passes close to that they're under fire. How far it reaches and how much
 ## damage it keeps with distance and through wood depend on its velocity. Every shot is also a loud
 ## noise for AI. Each surface or body a round hits gets a small impact burst (ImpactEffects); tracer
-## rounds draw a bright coloured streak and give the shooter away from further off. Guns call this
-## through Weapon.
+## rounds draw a bright coloured streak and give the shooter away from further off. A hostile round
+## that comes near the player glows faintly where the player can't see it (PlayerVision.show_incoming).
+## Guns call this through Weapon.
 
 const MAX_RANGE := 150.0
 ## Actors this close to a bullet's path are told they're under fire.
@@ -79,6 +80,7 @@ static func fire(shooter: Actor, origin: Vector3, direction: Vector3, ammo: Item
 	var tracer := str(ammo.stats.get("tracer", ""))
 	_warn_nearby(shooter, origin, result.end, config.tracer_warn_distance if tracer != "" else NEAR_MISS_DISTANCE)
 	_spawn_tracer(shooter, muzzle, result.end, tracer, config.tracer_time)
+	_show_incoming(shooter, muzzle, result.end, result.hit)
 	if sound:
 		var loudness := (gun.noise_multiplier if gun else 1.0) * float(ammo.stats.get("noise", 1.0))
 		NoiseSystem.emit_noise(origin, config.gunshot_noise * loudness, shooter, &"gunshot")
@@ -112,6 +114,21 @@ static func _warn_nearby(shooter: Actor, from: Vector3, to: Vector3, distance: f
 		var chest := actor.chest_point()
 		if chest.distance_to(Geometry3D.get_closest_point_to_segment(chest, from, to)) <= distance:
 			actor.on_bullet_near(shooter)
+
+
+## A round from someone hostile to the player that hit them or passed within
+## VisionConfig.incoming_glow_distance of them: the player's vision shows it glowing through the dark,
+## from the muzzle to where it passed them.
+static func _show_incoming(shooter: Actor, from: Vector3, to: Vector3, hit: Actor) -> void:
+	var player := shooter.get_tree().get_first_node_in_group("player") as Actor
+	if player == null or player == shooter or player.is_dead or not shooter.is_hostile(player):
+		return
+	var chest := player.chest_point()
+	var closest := Geometry3D.get_closest_point_to_segment(chest, from, to)
+	if hit != player and chest.distance_to(closest) > VisionSystem.config.incoming_glow_distance:
+		return
+	# Up to where it passes (or hits) the player: where it came from is what matters.
+	shooter.get_tree().call_group("player_vision", "show_incoming", from, to if hit == player else closest)
 
 
 ## The streak a round leaves. Tracer rounds (`tracer` "red" or "green") draw a thicker, brighter

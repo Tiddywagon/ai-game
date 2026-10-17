@@ -1,21 +1,21 @@
 // Fog of war for the player's vision (DESIGN.md §13.6). Drawn on a full-screen quad after the scene:
-// rebuilds each pixel's world position from the depth buffer, then looks it up in two masks drawn over
-// the level from above: what's visible right now (red; green where the flashlight beam is) and what's
-// been seen before (red). Visible: unchanged. Seen before: dim and nearly grey ("memory"). Never seen:
-// almost black. Dark rooms look darker unless the flashlight lights them.
+// rebuilds each pixel's world position from the depth buffer, then looks it up in a mask drawn over the
+// level from above: what's visible right now (red; green where the flashlight beam is). Visible:
+// unchanged. Everything else, seen before or not (nothing is remembered): dark, dim and nearly grey, so
+// the layout is only faintly there. Dark rooms look darker unless the flashlight lights them. Beyond
+// the level's edge: black.
 shader_type spatial;
 render_mode unshaded, fog_disabled, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled;
 
 uniform sampler2D screen_texture : hint_screen_texture, filter_nearest;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
 uniform sampler2D visible_mask : filter_linear, repeat_disable;
-uniform sampler2D memory_mask : filter_linear, repeat_disable;
-// Flat area the masks cover: x, z of the corner, then width, depth.
+// Flat area the mask covers: x, z of the corner, then width, depth.
 uniform vec4 bounds = vec4(-32.0, -32.0, 64.0, 64.0);
-uniform float memory_brightness = 0.3;
-uniform float memory_saturation = 0.15;
-uniform float unseen_brightness = 0.03;
-uniform vec3 memory_tint = vec3(0.85, 0.9, 1.0);
+uniform float dark_brightness = 0.17;
+uniform float dark_saturation = 0.2;
+uniform vec3 dark_tint = vec3(0.82, 0.88, 1.0);
+uniform float outside_brightness = 0.03;
 // Up to 8 dark rooms: flat rectangles (x, z, width, depth) and how dark they look.
 uniform int dark_zone_count = 0;
 uniform vec4 dark_zones[8];
@@ -38,12 +38,11 @@ void fragment() {
 	world.xyz /= world.w;
 	vec2 uv = (world.xz - bounds.xy) / bounds.zw;
 	// Pixels with nothing behind them (beyond the level's edge) rebuild to a point far off along the
-	// view ray: treat anything well below or above the level as never seen.
+	// view ray: anything well below or above the level is outside it.
 	bool inside = uv.x >= 0.0 && uv.y >= 0.0 && uv.x <= 1.0 && uv.y <= 1.0 && world.y > -3.0 && world.y < 60.0;
 	vec4 now = inside ? texture(visible_mask, uv) : vec4(0.0);
 	float visible = now.r;
 	float flashlight = now.g;
-	float seen = inside ? texture(memory_mask, uv).r : 0.0;
 
 	float shade = 1.0;
 	for (int i = 0; i < dark_zone_count; i++) {
@@ -54,8 +53,8 @@ void fragment() {
 	}
 	vec3 lit = color * shade;
 	float grey = dot(color, vec3(0.299, 0.587, 0.114));
-	vec3 memory = mix(vec3(grey), color, memory_saturation) * memory_brightness * memory_tint * shade;
-	vec3 hidden = mix(color * unseen_brightness, memory, seen);
+	vec3 dark = mix(vec3(grey), color, dark_saturation) * dark_brightness * dark_tint * shade;
+	vec3 hidden = inside ? dark : color * outside_brightness;
 	if (shade < 0.999) {
 		ALBEDO = mix(hidden, lit, visible);
 		ALPHA = 1.0;

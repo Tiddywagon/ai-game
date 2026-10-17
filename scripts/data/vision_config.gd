@@ -73,17 +73,22 @@ enum Weather { CLEAR, FOG, RAIN }
 @export_range(5.0, 120.0, 1.0) var update_rate := 30.0
 ## Ray spacing along the edge of a vision cone (smaller = rounder, slower).
 @export_range(0.5, 10.0, 0.5, "suffix:°") var arc_step_degrees := 2.0
-## Areas seen before but not visible now: brightness and colour left.
-@export_range(0.0, 1.0, 0.01) var memory_brightness := 0.3
-@export_range(0.0, 1.0, 0.01) var memory_saturation := 0.15
-## Areas never seen.
-@export_range(0.0, 1.0, 0.01) var unseen_brightness := 0.03
+## Everything you can't see right now, wherever it is (nothing is remembered): brightness and colour
+## left, so the layout stays faintly visible in the dark. Enemies and loot there still aren't drawn.
+@export_range(0.0, 1.0, 0.01) var dark_brightness := 0.17
+@export_range(0.0, 1.0, 0.01) var dark_saturation := 0.2
 ## How dark dark rooms look (1 = black) where your flashlight isn't.
 @export_range(0.0, 1.0, 0.05) var dark_room_shading := 0.6
 ## Pixels per side of the vision masks.
 @export_range(256, 4096, 64) var mask_resolution := 1024
 ## Seconds a sound direction marker stays on screen.
 @export_range(0.2, 10.0, 0.1, "suffix:s") var sound_marker_time := 1.5
+## Hostile rounds that pass this close to you (or hit you) glow faintly where you can't see their path
+## (BulletGlow), fading out over incoming_glow_time: you see shots coming at you out of the dark.
+@export_range(0.0, 20.0, 0.5, "suffix:m") var incoming_glow_distance := 4.0
+@export_range(0.05, 3.0, 0.05, "suffix:s") var incoming_glow_time := 0.5
+@export var incoming_glow_color := Color(1.0, 0.72, 0.38, 0.22)
+@export_range(1.0, 30.0, 0.5, "suffix:px") var incoming_glow_width := 5.0
 
 
 func optic(kind: int) -> OpticProfile:
