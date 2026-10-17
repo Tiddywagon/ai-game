@@ -5,9 +5,9 @@ extends Node3D
 ## as a PMC and the raid's ending doesn't touch your profile. Extracting plays the extraction sound and
 ## fades to black; then the raid summary (after the death screen if you were killed), and from there
 ## back to the hideout. Opens the map of the area (M) if you carry one (MapOverlay), and has the debug
-## overlay (F12, DebugOverlay). Every map scene has this (or a script extending it) on its root, with
-## Player, HUD, RaidEnvironment, PlayerVision, Raid, InventoryLayer and a Navigation region holding the
-## level geometry.
+## overlay (F12, DebugOverlay), the hotkey wheel (HotkeyWheel) and the touch controls (TouchControls).
+## Every map scene has this (or a script extending it) on its root, with Player, HUD, RaidEnvironment,
+## PlayerVision, Raid, InventoryLayer and a Navigation region holding the level geometry.
 
 const DEATH_SCREEN := preload("res://ui/death_screen.tscn")
 const RESULT_SCREEN := preload("res://ui/raid_result_screen.tscn")
@@ -42,6 +42,15 @@ func _ready() -> void:
 	var overlay := DebugOverlay.new()
 	overlay.name = "DebugOverlay"
 	add_child(overlay)
+	var wheel := HotkeyWheel.new()
+	wheel.name = "HotkeyWheel"
+	wheel.player = _player
+	add_child(wheel)
+	var touch := TouchControls.new()
+	touch.name = "TouchControls"
+	touch.player = _player
+	touch.wheel = wheel
+	add_child(touch)
 
 
 ## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
@@ -117,6 +126,7 @@ func fade_out(extracted: bool, then: Callable) -> void:
 	title.modulate.a = 0.0
 	layer.add_child(title)
 	if extracted:
+		InputHub.pulse("extract")
 		var sound := AudioStreamPlayer.new()
 		sound.name = "ExtractSound"
 		sound.stream = EXTRACT_SOUND

@@ -6,11 +6,11 @@ extends Actor
 ## dodge or to reach new cover when under fire.
 ## Late in the raid it heads for an extract it can use (DESIGN.md §5: the same extracts as the player,
 ## RaidConfig says when) and leaves the raid after standing in it for the extract time; a fight or a hit
-## interrupts it.
+## interrupts it. Up close (its profile's melee_range) a bot carrying a melee weapon swings it instead of
+## shooting (Actor.melee_strike(): a parry staggers it).
 
 enum State { IDLE, INVESTIGATE, COMBAT, SEARCH, EXTRACT }
 
-const PERCEIVE_INTERVAL := 0.15
 const ARRIVE_DISTANCE := 0.3
 ## Distance to a goal above which the bot sprints instead of walking.
 const SPRINT_DISTANCE := 3.0
@@ -206,7 +206,7 @@ func _think(delta: float) -> void:
 		return
 	_perceive_timer -= delta
 	if _perceive_timer <= 0.0:
-		_perceive_timer = PERCEIVE_INTERVAL
+		_perceive_timer = Settings.ai_perceive_interval()  # Longer on the Mobile graphics preset.
 		_perceive()
 	if state == State.IDLE and extract_at >= 0.0:
 		var raid := _raid_controller()
@@ -387,6 +387,12 @@ func _do_combat(delta: float) -> void:
 	if target == null or target.is_dead:
 		target = null
 		_leave_combat(State.IDLE)
+		return
+	if _sees_target and profile.melee_range > 0.0 and melee_weapon() \
+			and global_position.distance_to(target.global_position) <= profile.melee_range:
+		aim_point = target.chest_point()
+		has_aim = true
+		melee_strike()  # Up close: the hatchet, not the gun.
 		return
 	var threat := target.global_position if _sees_target else _last_known
 	var seen_point: Variant = visible_point_of(target) if _sees_target else null

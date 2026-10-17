@@ -88,6 +88,7 @@ size_flags_horizontal = 3
 mouse_filter = 2
 
 [node name="Hint" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(420, 0)
 layout_mode = 2
 size_flags_vertical = 4

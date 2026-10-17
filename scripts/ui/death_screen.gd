@@ -61,6 +61,14 @@ static func describe(cause: Dictionary) -> Array[String]:
 			if part != fatal:
 				detail += "\nThe %s was already gone: the damage spread to your %s." % [part, fatal]
 			return [headline, detail]
+		"melee":
+			var part := _part_name(cause.part)
+			return ["Hit in the %s by a %s" % [part, cause.get("attacker", "someone")],
+				"%s  ·  %d damage" % [cause.get("weapon", "Melee"), roundi(cause.damage)]]
+		"explosion":
+			var thrower := " thrown by a %s" % cause.attacker if cause.get("attacker", "") != "" else ""
+			return ["Caught in the blast of a %s%s" % [str(cause.get("weapon", "grenade")).to_lower(), thrower],
+				"%d damage to the %s" % [roundi(cause.damage), _part_name(cause.part)]]
 		"bleed":
 			var kind := "Heavy bleed" if cause.bleed == BodyHealth.Bleed.HEAVY else "Light bleed"
 			var detail := "%s from the %s" % [kind, _part_name(cause.part)]

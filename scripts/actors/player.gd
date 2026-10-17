@@ -23,6 +23,14 @@ extends Actor
 ## you carry. Each takes its use time, walking slowly (no sprinting, shooting, aiming or reloading).
 ## Shooting, rolling, sprinting, reloading, aiming, a hit that does damage, losing the item or E again
 ## interrupts it: nothing happens and nothing is used up. Energy and hydration drain while in a raid.
+## Input (DESIGN.md §17.1): every control is an InputMap action, so keyboard and mouse, a controller and
+## the touch controls all drive the same code. The right stick (controller or touch) points the reticle
+## out from the player (sensitivity per device, invert Y), with aim assist pulling it onto targets near
+## it (InputHub.aim_assist_strength()); spinning it a full circle is a 360 trick shot like the mouse.
+## Mouse events emulated from touch never move the reticle. Hotkeys 1-5 use the item set for them
+## (GameState.hotkeys): meds, stims and food are used, grenades thrown at the reticle (ThrownGrenade),
+## a signal flare fired in an extract that needs one. Melee (V / RB / touch): a tap swings the melee
+## weapon (or a fist), holding it raises the parry stance (Actor.melee_strike(), can_parry()).
 
 ## Emitted when one of the player's bullets hits someone (hit markers, damage numbers).
 signal hit_landed(target: Actor, damage: float, position: Vector3)
@@ -45,6 +53,14 @@ signal trick_shot_hit(target: Actor, damage: float, position: Vector3, killed: b
 ## Right stick: how far from the player it puts the reticle, and how fast the reticle gets there.
 const STICK_AIM_RADIUS := 360.0
 const STICK_AIM_SPEED := 2600.0
+## Aim assist (sticks only): targets this close (pixels) to where the stick points pull the reticle in;
+## the pull eases in and out at this speed (pixels a second).
+const AIM_ASSIST_RADIUS := 150.0
+const AIM_ASSIST_SPEED := 900.0
+## Holding melee this long (seconds) raises the parry stance instead of swinging.
+const PARRY_HOLD := 0.25
+## Seconds between grenade throws.
+const THROW_COOLDOWN := 0.8
 ## Camera shake strength per hit taken (0-1, scaled by Settings). Each gun sets its own kick per shot.
 const HIT_SHAKE := 0.45
 const FLASHLIGHT_ENERGY := 8.0
@@ -91,6 +107,11 @@ var trick_kills := 0
 
 var _roll_requested := false
 var _cover_requested := false
+## Seconds the melee button has been held (-1: not held), and until the next throw.
+var _melee_held := -1.0
+var _throw_cooldown := 0.0
+## Aim assist's shift of where the stick points (pixels).
+var _assist_offset := Vector2.ZERO
 var _sprint_toggled := false
 var _aim_toggled := false
 var _reload_requested := false
@@ -137,14 +158,23 @@ func _ready() -> void:
 	weapon.fired.connect(_on_round_fired)
 	weapon.reload_finished.connect(_on_reload_finished)
 	weapon.jam_cleared.connect(_on_jam_cleared)
+	hit_landed.connect(func(_target: Actor, _damage: float, _at: Vector3) -> void: InputHub.pulse("hit"))
+	hurt.connect(func(_damage: float) -> void: InputHub.pulse("damage"))
+	parried.connect(func(attacker: Actor) -> void:
+		InputHub.pulse("parry")
+		action_blocked.emit("Parried %s" % attacker.display_name()))
 	health.start_metabolism(Consumables.CONFIG, GameState.energy, GameState.hydration)
 	set_inventory(Inventory.starter())
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_released("melee"):
+		_release_melee()
 	if ui_open:
 		return
 	if event is InputEventMouseMotion:
+		if event.device == InputEvent.DEVICE_ID_EMULATION:
+			return  # A finger on a touch screen: the touch controls aim.
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			var motion: Vector2 = event.relative * _sensitivity()
 			if Settings.get_value("controls", "invert_mouse"):
@@ -174,23 +204,60 @@ func _unhandled_input(event: InputEvent) -> void:
 			cancel_use("Stopped using %s" % using_item.data.display_name)
 		else:
 			quick_use()
+	elif event.is_action_pressed("melee") and not is_dead:
+		_melee_held = 0.0
+	else:
+		for i in GameState.HOTKEY_COUNT:
+			if event.is_action_pressed("hotkey_%d" % (i + 1)) and not is_dead:
+				use_hotkey(i)
+				break
 
 
 func _process(delta: float) -> void:
 	_update_camera_view()
-	if not Settings.get_value("controls", "controller_enabled"):
+	if not InputHub.sticks_enabled() or ui_open or is_dead:
 		return
 	var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+	if Settings.get_value("controls", "invert_y"):
+		stick.y = -stick.y
 	var camera := get_viewport().get_camera_3d()
 	if stick != Vector2.ZERO and camera:
-		# Twin-stick aiming: the stick points the reticle out from the player.
+		# Twin-stick aiming: the stick points the reticle out from the player (plus aim assist's pull).
 		var center := camera.unproject_position(global_position + Vector3.UP * gun_height())
-		var speed: float = STICK_AIM_SPEED * Settings.get_value("controls", "controller_sensitivity")
-		_move_cursor(cursor_position.move_toward(center + stick * STICK_AIM_RADIUS, speed * delta) - cursor_position)
+		var speed: float = STICK_AIM_SPEED * InputHub.stick_sensitivity()
+		var aim_at := center + stick * STICK_AIM_RADIUS
+		_assist_offset = _aim_assist(camera, aim_at, delta)
+		_move_cursor(cursor_position.move_toward(aim_at + _assist_offset, speed * delta) - cursor_position)
+	else:
+		_assist_offset = Vector2.ZERO
+
+
+## Aim assist (controller and touch): how far to shift where the stick points, toward the chest of the
+## nearest hostile you can see within AIM_ASSIST_RADIUS of it: more the stronger the setting and the
+## closer it is (at full strength and close in, onto it). Eases in and out at AIM_ASSIST_SPEED.
+func _aim_assist(camera: Camera3D, aim_at: Vector2, delta: float) -> Vector2:
+	var strength := InputHub.aim_assist_strength()
+	var wanted := Vector2.ZERO
+	if strength > 0.0:
+		var best_distance := AIM_ASSIST_RADIUS
+		for node in get_tree().get_nodes_in_group("actors"):
+			var other := node as Actor
+			if other == null or other == self or other.is_dead or not is_hostile(other) or not other.is_seen():
+				continue
+			var chest := camera.unproject_position(other.chest_point())
+			var distance := chest.distance_to(aim_at)
+			if distance < best_distance:
+				best_distance = distance
+				wanted = (chest - aim_at) * minf(1.0, strength * (1.5 - distance / AIM_ASSIST_RADIUS))
+	return _assist_offset.move_toward(wanted, AIM_ASSIST_SPEED * delta)
 
 
 func _think(delta: float) -> void:
 	_update_focus()
+	_throw_cooldown = maxf(_throw_cooldown - delta, 0.0)
+	if _melee_held >= 0.0:
+		_melee_held += delta
+		parrying = _melee_held >= PARRY_HOLD and not ui_open and stagger_time <= 0.0
 	move_input = _input_direction()
 	var moving := not move_input.is_zero_approx()
 	if Settings.is_toggle("sprint_mode"):
@@ -338,6 +405,78 @@ func _update_trick_shot(delta: float) -> void:
 
 
 # --- Using items (DESIGN.md §13.7) ---------------------------------------------------------------
+
+## The melee button let go: a short press swings, a long one ends the parry stance.
+func _release_melee() -> void:
+	if _melee_held < 0.0:
+		return
+	var swing := _melee_held < PARRY_HOLD
+	_melee_held = -1.0
+	parrying = false
+	if swing and not ui_open and not is_dead:
+		var result := melee_strike()
+		if result.is_empty():
+			return
+		if result.parried:
+			action_blocked.emit("%s parried: you're staggered" % result.target.display_name())
+			InputHub.pulse("parry")
+		elif result.target:
+			InputHub.pulse("melee")
+
+
+## Uses hotkey `index` (0-4): the first item with its id you carry. Meds, stims and food are used;
+## grenades thrown at the reticle; a signal flare fired in an extract that needs one. False (and a
+## message) if it can't.
+func use_hotkey(index: int) -> bool:
+	var id := str(GameState.hotkeys[index]) if index < GameState.hotkeys.size() else ""
+	if id == "":
+		action_blocked.emit("Hotkey %d is empty: set it when examining an item" % (index + 1))
+		return false
+	var item: ItemInstance = null
+	for carried in inventory.all_items():
+		if carried.data.id == id:
+			item = carried
+			break
+	if item == null:
+		action_blocked.emit("No %s on you" % (ItemDB.get_item(id).display_name if ItemDB.has_item(id) else id))
+		return false
+	if item.data.category == ItemData.Category.THROWABLE:
+		return throw_item(item)
+	if Consumables.is_consumable(item.data):
+		return start_use(item)
+	if id == ExtractZone.FLARE_ITEM:
+		var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+		if raid and raid.extract_zone and raid.extract_zone.needs_flare and not raid.extract_zone.flare_fired:
+			return raid.extract_zone.fire_flare(self)
+		action_blocked.emit("Fire it inside an extract that needs a flare")
+		return false
+	action_blocked.emit("Can't use %s from a hotkey" % item.data.display_name)
+	return false
+
+
+## True if items of `data` can go on a hotkey: meds, stims, food and drink, grenades and the signal flare.
+static func hotkey_usable(data: ItemData) -> bool:
+	return data != null and (data.category == ItemData.Category.THROWABLE or Consumables.is_consumable(data)
+		or data.id == ExtractZone.FLARE_ITEM)
+
+
+## Throws one of `item` (a grenade) at the reticle (ThrownGrenade). False if it can't now.
+func throw_item(item: ItemInstance) -> bool:
+	if is_dead or is_rolling or _throw_cooldown > 0.0 or stagger_time > 0.0 or ui_open:
+		return false
+	_throw_cooldown = THROW_COOLDOWN
+	var data := item.data
+	if item.count > 1:
+		item.count -= 1
+		var holder := inventory.holder_of(item)
+		if holder:
+			holder.changed.emit()
+	else:
+		inventory.remove_item(item)
+	ThrownGrenade.throw(self, data, aim_point if has_aim else global_position + Vector3(vision_facing().x, 0.0, vision_facing().y) * 8.0)
+	action_blocked.emit("Threw a %s" % data.display_name)
+	return true
+
 
 ## Starts using `item` (on body part `part`, or wherever it's needed): false (with the reason in
 ## action_blocked) if it can't be used now.

@@ -5,13 +5,13 @@ extends Resource
 ## Per-copy state (rolled bonuses, durability, Found-in-Raid) lives on the item instance, not here.
 
 ## Item categories (DESIGN.md §6.1). Saved as numbers in .tres files: only add new values at the end.
-enum Category { WEAPON, AMMO, ATTACHMENT, ARMOR, RIG, BACKPACK, HELMET, MEDS, FOOD, VALUABLE, JUNK, KEY, CONTAINER, MELEE }
+enum Category { WEAPON, AMMO, ATTACHMENT, ARMOR, RIG, BACKPACK, HELMET, MEDS, FOOD, VALUABLE, JUNK, KEY, CONTAINER, MELEE, THROWABLE }
 ## Rarity scale (DESIGN.md §6.2). Same rule: only add new values at the end.
 enum Rarity { COMMON, UNCOMMON, RARE, ULTRA_RARE, EPIC, LEGENDARY }
 
 ## Names used in JSON files, indexed by Category and Rarity.
 const CATEGORY_NAMES: Array[String] = ["weapon", "ammo", "attachment", "armor", "rig", "backpack", "helmet",
-	"meds", "food", "valuable", "junk", "key", "container", "melee"]
+	"meds", "food", "valuable", "junk", "key", "container", "melee", "throwable"]
 const RARITY_IDS: Array[String] = ["common", "uncommon", "rare", "ultra_rare", "epic", "legendary"]
 ## Keys a JSON item may have.
 const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rarity", "size", "weight", "value",

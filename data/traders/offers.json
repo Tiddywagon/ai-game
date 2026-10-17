@@ -31,7 +31,9 @@
       {"item": "factory_map", "price": 10000, "currency": "RUB"},
       {"item": "test_yard_map", "price": 5500, "currency": "RUB"},
       {"item": "factory_exit_key", "price": 34000, "currency": "RUB", "ll": 2},
-      {"item": "signal_flare", "price": 17000, "currency": "RUB", "ll": 2}
+      {"item": "signal_flare", "price": 17000, "currency": "RUB", "ll": 2},
+      {"item": "flashbang_grenade", "price": 14500, "currency": "RUB"},
+      {"item": "frag_grenade", "price": 26000, "currency": "RUB", "ll": 2}
     ],
     "barters": [
       {"give": [{"item": "bolts", "count": 2, "fir": true}, {"item": "screws", "count": 2}], "get": {"item": "ammo_545_bs", "count": 30}, "ll": 3},

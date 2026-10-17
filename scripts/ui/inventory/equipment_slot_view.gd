@@ -4,10 +4,11 @@ extends Control
 ## item that belongs there to equip it (the slot lights up green, or red if it doesn't fit there); drag
 ## it out to unequip. Dropping something on an equipped rig or backpack puts it inside, and (out of
 ## raid) a weapon part on an equipped gun fits it to a free slot. Right-click examines; double-click
-## opens a rig, backpack or container.
+## opens a rig, backpack or container; Ctrl-click quick-moves it to the stash.
 
 signal examine_requested(item: ItemInstance)
 signal open_requested(item: ItemInstance)
+signal quick_move_requested(item: ItemInstance)
 
 const OK_COLOR := Color(0.35, 0.85, 0.4, 0.35)
 const BAD_COLOR := Color(0.95, 0.3, 0.25, 0.35)
@@ -78,6 +79,9 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if click.button_index == MOUSE_BUTTON_RIGHT:
 		examine_requested.emit(item())
+		accept_event()
+	elif click.button_index == MOUSE_BUTTON_LEFT and click.ctrl_pressed:
+		quick_move_requested.emit(item())
 		accept_event()
 	elif click.button_index == MOUSE_BUTTON_LEFT and click.double_click and item().contents:
 		open_requested.emit(item())

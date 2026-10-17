@@ -50,6 +50,11 @@ extends Resource
 ## Chance to roll into new cover when it's within a roll's reach.
 @export_range(0.0, 1.0, 0.05) var roll_to_cover_chance: float
 
+@export_group("Melee")
+## A target this close (metres) gets the melee weapon instead of a bullet, if the bot carries one
+## (DESIGN.md §13.4.2; a parry stance stops it). 0: never.
+@export_range(0.0, 3.0, 0.1, "suffix:m") var melee_range := 0.0
+
 @export_group("Loot")
 ## Extra loot rolled into the bot's pack and pockets (a boss's body: data/loot_tables/boss_body.tres
 ## holds valuables and stims). Empty: just its kit.

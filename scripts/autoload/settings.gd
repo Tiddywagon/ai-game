@@ -2,6 +2,9 @@ extends Node
 ## Autoload "Settings": every player option (DESIGN.md §17), saved to user://settings.cfg and applied
 ## to the engine. SCHEMA lists each option once (tab, default, type, choices); the settings menu is
 ## built from it. Code reads options with Settings.get_value("tab", "key") and listens to `applied`.
+## Key bindings (keyboard and mouse) and controller bindings are overrides of project.godot's InputMap;
+## touch layouts (up to 3) are saved here too (TouchLayout). On phones and tablets the first launch picks
+## the Mobile graphics preset.
 
 ## Emitted after apply(), so HUDs, cameras and players can pick up new values.
 signal applied
@@ -15,23 +18,45 @@ const REBINDABLE := [
 	["move_forward", "Move forward"], ["move_back", "Move back"], ["move_left", "Move left"],
 	["move_right", "Move right"], ["sprint", "Sprint"], ["crouch", "Crouch"], ["roll", "Combat roll"],
 	["take_cover", "Take cover"], ["aim", "Aim / peek"], ["shoot", "Shoot"], ["reload", "Reload"],
-	["interact", "Interact"], ["use_item", "Use item"], ["toggle_inventory", "Inventory"],
-	["map_view", "Map"], ["show_extracts", "Show extracts"],
+	["interact", "Interact"], ["melee", "Melee (hold: parry stance)"], ["use_item", "Use item"],
+	["toggle_inventory", "Inventory"], ["map_view", "Map"], ["show_extracts", "Show extracts"],
 	["hotkey_1", "Hotkey 1"], ["hotkey_2", "Hotkey 2"], ["hotkey_3", "Hotkey 3"], ["hotkey_4", "Hotkey 4"],
-	["hotkey_5", "Hotkey 5"], ["flashlight", "Flashlight"], ["binoculars", "Binoculars"],
+	["hotkey_5", "Hotkey 5"], ["hotkey_wheel", "Hotkey wheel (hold)"], ["flashlight", "Flashlight"],
+	["binoculars", "Binoculars"],
 ]
+## Controller-remappable actions, with display names (sticks stay on the sticks). The inventory ones
+## only apply while the inventory is open, so they share buttons with gameplay actions.
+const PAD_REBINDABLE := [
+	["shoot", "Shoot"], ["aim", "Aim / optics"], ["reload", "Reload"], ["interact", "Interact / loot"],
+	["crouch", "Crouch"], ["toggle_inventory", "Inventory"], ["roll", "Combat roll"],
+	["melee", "Melee (hold: parry stance)"], ["sprint", "Sprint"], ["take_cover", "Take cover"],
+	["use_item", "Use quick item"], ["hotkey_1", "Hotkey 1"], ["hotkey_2", "Hotkey 2"], ["hotkey_3", "Hotkey 3"],
+	["hotkey_4", "Hotkey 4"], ["hotkey_5", "Hotkey 5"], ["hotkey_wheel", "Hotkey wheel (hold; tap: map)"],
+	["map_view", "Map"], ["show_extracts", "Show extracts"], ["flashlight", "Flashlight"], ["binoculars", "Binoculars"],
+	["pause", "Pause"], ["inv_select", "Inventory: pick up / place"], ["inv_quick_move", "Inventory: quick move (holding: rotate)"],
+	["inv_examine", "Inventory: examine"],
+]
+## Actions used only inside the inventory (their buttons may repeat gameplay ones).
+const INVENTORY_PAD_ACTIONS := ["inv_select", "inv_quick_move", "inv_examine"]
 
-## What each graphics quality preset sets.
+## What each graphics quality preset sets. Mobile is for phones and tablets: low shadows, a lower render
+## scale and view distance, and AI that thinks less often.
 const PRESETS := {
+	"mobile": {"shadows": "low", "textures": "low", "anti_aliasing": "off", "ambient_occlusion": false,
+		"bloom": false, "view_distance": "low", "dof_quality": "off", "render_scale": 0.75, "ai_update_rate": "reduced"},
 	"low": {"shadows": "low", "textures": "low", "anti_aliasing": "off", "ambient_occlusion": false,
-		"bloom": false, "view_distance": "low", "dof_quality": "off"},
+		"bloom": false, "view_distance": "low", "dof_quality": "off", "render_scale": 1.0, "ai_update_rate": "normal"},
 	"medium": {"shadows": "medium", "textures": "medium", "anti_aliasing": "fxaa", "ambient_occlusion": false,
-		"bloom": true, "view_distance": "medium", "dof_quality": "low"},
+		"bloom": true, "view_distance": "medium", "dof_quality": "low", "render_scale": 1.0, "ai_update_rate": "normal"},
 	"high": {"shadows": "high", "textures": "high", "anti_aliasing": "msaa", "ambient_occlusion": true,
-		"bloom": true, "view_distance": "high", "dof_quality": "medium"},
+		"bloom": true, "view_distance": "high", "dof_quality": "medium", "render_scale": 1.0, "ai_update_rate": "normal"},
 	"ultra": {"shadows": "ultra", "textures": "ultra", "anti_aliasing": "taa", "ambient_occlusion": true,
-		"bloom": true, "view_distance": "ultra", "dof_quality": "high"},
+		"bloom": true, "view_distance": "ultra", "dof_quality": "high", "render_scale": 1.0, "ai_update_rate": "normal"},
 }
+## How often AI senses (seconds between looks), by "ai_update_rate".
+const AI_PERCEIVE_INTERVAL := {"normal": 0.15, "reduced": 0.3}
+## Interface size multipliers by "ui_scale" ("auto": bigger on phones, InputHub.auto_ui_scale()).
+const UI_SCALES := {"100": 1.0, "115": 1.15, "130": 1.3}
 
 const LEVELS_4 := [["low", "Low"], ["medium", "Medium"], ["high", "High"], ["ultra", "Ultra"]]
 
@@ -51,8 +76,8 @@ const SCHEMA := {
 			"min": 0.5, "max": 1.5, "step": 0.05, "format": "percent",
 			"note": "Resolution of the 3D scene; the interface stays sharp."},
 		{"key": "preset", "label": "Quality preset", "type": "choice", "default": "high",
-			"options": [["low", "Low"], ["medium", "Medium"], ["high", "High"], ["ultra", "Ultra"], ["custom", "Custom"]],
-			"note": "Sets the options below. Changing one of them switches to Custom."},
+			"options": [["mobile", "Mobile"], ["low", "Low"], ["medium", "Medium"], ["high", "High"], ["ultra", "Ultra"], ["custom", "Custom"]],
+			"note": "Sets the options below (and Render scale). Mobile: for phones and tablets. Changing one of them switches to Custom."},
 		{"key": "shadows", "label": "Shadows", "type": "choice", "default": "high",
 			"options": [["off", "Off"], ["low", "Low"], ["medium", "Medium"], ["high", "High"], ["ultra", "Ultra"]]},
 		{"key": "textures", "label": "Textures", "type": "choice", "default": "high", "options": LEVELS_4},
@@ -65,6 +90,9 @@ const SCHEMA := {
 		{"key": "motion_blur", "label": "Motion blur", "type": "toggle", "default": false,
 			"note": "Not available yet: Godot has no built-in motion blur. Saved for when it's added."},
 		{"key": "view_distance", "label": "View distance", "type": "choice", "default": "high", "options": LEVELS_4},
+		{"key": "ai_update_rate", "label": "AI update rate", "type": "choice", "default": "normal",
+			"options": [["normal", "Normal"], ["reduced", "Reduced (mobile)"]],
+			"note": "Reduced: AI looks around half as often. Saves battery and frame time on phones."},
 		{"key": "dof_quality", "label": "Depth of field quality", "type": "choice", "default": "medium",
 			"options": [["off", "Off"], ["low", "Low"], ["medium", "Medium"], ["high", "High"]],
 			"note": "Blur on out-of-focus areas, such as the main menu background."},
@@ -96,11 +124,37 @@ const SCHEMA := {
 		{"key": "aim_mode", "label": "Aim / peek", "type": "choice", "default": "hold", "options": [["hold", "Hold"], ["toggle", "Toggle"]]},
 		{"key": "keybinds", "label": "Key bindings", "type": "keybinds"},
 		{"key": "controller_enabled", "label": "Controller", "type": "toggle", "default": true,
-			"note": "Left stick moves, right stick aims, triggers aim and shoot, A rolls, B crouches, LB takes cover, Start pauses."},
-		{"key": "controller_sensitivity", "label": "Controller sensitivity", "type": "slider", "default": 1.0,
+			"note": "Left stick moves, right stick aims, LT aims, RT fires, LB rolls, RB melee (hold: parry), A interacts, B crouches, X reloads, Y inventory, D-pad quick item and hotkeys 1-3, hold View for the hotkey wheel (tap: map), Start pauses."},
+		{"key": "controller_sensitivity", "label": "Controller aim sensitivity", "type": "slider", "default": 1.0,
 			"min": 0.2, "max": 3.0, "step": 0.05, "format": "decimal"},
 		{"key": "controller_dead_zone", "label": "Stick dead zone", "type": "slider", "default": 0.2,
 			"min": 0.05, "max": 0.5, "step": 0.01, "format": "percent"},
+		{"key": "invert_y", "label": "Invert Y (aim stick)", "type": "toggle", "default": false,
+			"note": "Flips the aim stick (controller and touch) up and down."},
+		{"key": "controller_aim_assist", "label": "Controller aim assist", "type": "toggle", "default": true},
+		{"key": "aim_assist_strength", "label": "Aim assist strength", "type": "slider", "default": 0.5,
+			"min": 0.0, "max": 1.0, "step": 0.05, "format": "percent", "note": "How hard the reticle is pulled onto targets near it."},
+		{"key": "vibration", "label": "Controller vibration", "type": "toggle", "default": true},
+		{"key": "padbinds", "label": "Controller buttons", "type": "padbinds"},
+		{"key": "touch_controls", "label": "Touch controls", "type": "choice", "default": "auto",
+			"options": [["auto", "Auto"], ["on", "On"], ["off", "Off"]],
+			"note": "Auto: on only on touch screens, and hidden while you play with a controller. Off hides every on-screen button."},
+		{"key": "touch_layout", "label": "Touch layout", "type": "choice", "default": 1,
+			"options": [[1, "Layout 1"], [2, "Layout 2"], [3, "Layout 3"]]},
+		{"key": "touch_layout_editor", "label": "Edit touch layouts", "type": "action", "button": "EDIT LAYOUT",
+			"note": "Drag, resize and fade every on-screen button; save up to 3 layouts."},
+		{"key": "touch_fire_mode", "label": "Touch firing", "type": "choice", "default": "stick",
+			"options": [["stick", "Push the aim stick past its ring"], ["button", "Separate Fire button"]]},
+		{"key": "joystick_size", "label": "Joystick size", "type": "slider", "default": 1.0,
+			"min": 0.6, "max": 1.6, "step": 0.05, "format": "percent"},
+		{"key": "touch_dead_zone", "label": "Joystick dead zone", "type": "slider", "default": 0.1,
+			"min": 0.0, "max": 0.4, "step": 0.01, "format": "percent"},
+		{"key": "touch_sensitivity", "label": "Touch aim sensitivity", "type": "slider", "default": 1.0,
+			"min": 0.2, "max": 3.0, "step": 0.05, "format": "decimal"},
+		{"key": "touch_aim_assist", "label": "Touch aim assist", "type": "toggle", "default": true,
+			"note": "A light pull onto targets near the reticle. Touch only."},
+		{"key": "haptics", "label": "Haptic feedback (touch)", "type": "toggle", "default": true,
+			"note": "Short vibrations on hits, damage and extracting."},
 	],
 	"gameplay": [
 		{"key": "camera_shake", "label": "Camera shake", "type": "slider", "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.05, "format": "percent"},
@@ -118,6 +172,8 @@ const SCHEMA := {
 			"options": [["metric", "Metric (m, kg)"], ["imperial", "Imperial (ft, lb)"]]},
 	],
 	"interface": [
+		{"key": "ui_scale", "label": "Interface size", "type": "choice", "default": "auto",
+			"options": [["auto", "Auto (bigger on phones)"], ["100", "100%"], ["115", "115%"], ["130", "130%"]]},
 		{"key": "hud_scale", "label": "HUD scale", "type": "slider", "default": 1.0, "min": 0.75, "max": 1.5, "step": 0.05, "format": "percent"},
 		{"key": "hud_opacity", "label": "HUD opacity", "type": "slider", "default": 1.0, "min": 0.3, "max": 1.0, "step": 0.05, "format": "percent"},
 		{"key": "show_fps", "label": "Show FPS counter", "type": "toggle", "default": false},
@@ -170,10 +226,12 @@ const RETICLE_COLORS := {
 const COLORBLIND_INDEX := {"none": 0, "protanopia": 1, "deuteranopia": 2, "tritanopia": 3}
 const SUBTITLE_SIZES := {"small": 22, "medium": 28, "large": 36}
 
-## Current, applied values: values[tab][key]. Keybind overrides live in values["keybinds"].
+## Current, applied values: values[tab][key]. Keybind overrides live in values["keybinds"], controller
+## ones in values["padbinds"], touch layouts in values["touch_layouts"] ({"1": layout, ...}).
 var values := {}
 
 var _default_bindings := {}  # action -> binding code ("key:87", "mouse:2") from project.godot
+var _default_pad_bindings := {}  # action -> controller binding code ("joy:0", "axis:5:+")
 var _overlay: CanvasLayer
 var _filter: ColorRect
 var _fps_label: Label
@@ -185,6 +243,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	for pair in REBINDABLE:
 		_default_bindings[pair[0]] = _first_binding(pair[0])
+	for pair in PAD_REBINDABLE:
+		_default_pad_bindings[pair[0]] = _first_pad_binding(pair[0])
 	_build_overlay()
 	values = load_settings()
 	get_tree().node_added.connect(_apply_to_node)
@@ -211,14 +271,18 @@ func get_value(tab: String, key: String) -> Variant:
 	return values[tab][key]
 
 
-## A fresh copy of every default value, keybinds included (empty: no overrides).
+## A fresh copy of every default value, bindings included (empty: no overrides). On phones and
+## tablets graphics start on the Mobile preset.
 func defaults() -> Dictionary:
-	var result := {"keybinds": {}}
+	var result := {"keybinds": {}, "padbinds": {}, "touch_layouts": {}}
 	for tab: String in SCHEMA:
 		result[tab] = {}
 		for entry: Dictionary in SCHEMA[tab]:
 			if entry.has("default"):
 				result[tab][entry.key] = entry.default
+	if OS.has_feature("mobile"):
+		result.graphics.merge(PRESETS.mobile, true)
+		result.graphics.preset = "mobile"
 	return result
 
 
@@ -257,6 +321,26 @@ func choices(tab: String, key: String) -> Array:
 ## True if sprint / crouch / aim ("sprint_mode", "crouch_mode", "aim_mode") should toggle on press.
 func is_toggle(mode_key: String) -> bool:
 	return values.accessibility.hold_alternatives or values.controls[mode_key] == "toggle"
+
+
+## Seconds between an AI's looks around (the AI update rate).
+func ai_perceive_interval() -> float:
+	return AI_PERCEIVE_INTERVAL.get(values.get("graphics", {}).get("ai_update_rate", "normal"), 0.15)
+
+
+## The touch layout in `slot` (1-3; the active one by default), every widget filled in.
+func touch_layout(slot := 0) -> Dictionary:
+	if slot <= 0:
+		slot = int(values.controls.touch_layout)
+	return TouchLayout.resolve(values.get("touch_layouts", {}).get(str(slot), {}))
+
+
+## Stores touch layout `slot` (1-3) and makes it the active one, saved at once (the touch layout editor).
+func save_touch_layout(slot: int, layout: Dictionary) -> void:
+	values.touch_layouts[str(clampi(slot, 1, TouchLayout.SLOTS))] = TouchLayout.sanitize(layout)
+	values.controls.touch_layout = clampi(slot, 1, TouchLayout.SLOTS)
+	save_settings()
+	applied.emit()
 
 
 ## Camera shake multiplier, 0 when shake is turned off in Accessibility.
@@ -331,9 +415,50 @@ func binding_label(code: String) -> String:
 	return OS.get_keycode_string(on_layout if on_layout != KEY_NONE else physical)
 
 
-## Readable name of the key currently bound to `action`, e.g. "R" for reload (for on-screen hints).
-func key_label(action: String) -> String:
+## Readable name of the key currently bound to `action`, e.g. "R" for reload.
+func keyboard_label(action: String) -> String:
 	return binding_label(binding_of(action, values.keybinds))
+
+
+## What to press for `action` on the device used last, for on-screen hints: a key ("R"), a controller
+## button ("X", "Square") or a touch button ("Reload") (InputHub.label()).
+func key_label(action: String) -> String:
+	return InputHub.label(action)
+
+
+# --- Controller bindings ------------------------------------------------------------------------
+
+## Controller binding code for `action` given a set of overrides: "joy:2" (a button) or "axis:5:+" (a
+## trigger), "" if none.
+func pad_binding_of(action: String, padbinds: Dictionary) -> String:
+	return padbinds.get(action, _default_pad_bindings.get(action, ""))
+
+
+func default_pad_binding(action: String) -> String:
+	return _default_pad_bindings.get(action, "")
+
+
+## Binding code for a controller button or a trigger pulled, or "" (sticks can't be bound here).
+func pad_code_from_event(event: InputEvent) -> String:
+	if event is InputEventJoypadButton:
+		return "joy:%d" % event.button_index
+	if event is InputEventJoypadMotion and event.axis in [JOY_AXIS_TRIGGER_LEFT, JOY_AXIS_TRIGGER_RIGHT] and event.axis_value > 0.5:
+		return "axis:%d:+" % event.axis
+	return ""
+
+
+func pad_event_from_code(code: String) -> InputEvent:
+	var parts := code.split(":")
+	if parts.size() == 2 and parts[0] == "joy":
+		var button := InputEventJoypadButton.new()
+		button.button_index = int(parts[1]) as JoyButton
+		return button
+	if parts.size() == 3 and parts[0] == "axis":
+		var motion := InputEventJoypadMotion.new()
+		motion.axis = int(parts[1]) as JoyAxis
+		motion.axis_value = -1.0 if parts[2] == "-" else 1.0
+		return motion
+	return null
 
 
 # --- Saving and applying ------------------------------------------------------------------
@@ -355,6 +480,17 @@ func load_settings() -> Dictionary:
 		var saved: Variant = file.get_value("keybinds", pair[0], "")
 		if saved is String and event_from_code(saved) != null:
 			result.keybinds[pair[0]] = saved
+	for pair in PAD_REBINDABLE:
+		var saved: Variant = file.get_value("padbinds", pair[0], "")
+		if saved is String and pad_event_from_code(saved) != null:
+			result.padbinds[pair[0]] = saved
+	for slot in range(1, TouchLayout.SLOTS + 1):
+		var section := "touch_layout_%d" % slot
+		if file.has_section(section):
+			var layout := {}
+			for id: String in file.get_section_keys(section):
+				layout[id] = file.get_value(section, id)
+			result.touch_layouts[str(slot)] = TouchLayout.sanitize(layout)
 	return result
 
 
@@ -365,6 +501,12 @@ func save_settings() -> void:
 			file.set_value(tab, key, values[tab][key])
 	for action: String in values.keybinds:
 		file.set_value("keybinds", action, values.keybinds[action])
+	for action: String in values.get("padbinds", {}):
+		file.set_value("padbinds", action, values.padbinds[action])
+	for slot: String in values.get("touch_layouts", {}):
+		var layout: Dictionary = values.touch_layouts[slot]
+		for id: String in layout:
+			file.set_value("touch_layout_%s" % slot, id, layout[id])
 	var err := file.save(PATH)
 	if err != OK:
 		push_error("Settings: can't save %s (%s)" % [PATH, error_string(err)])
@@ -373,6 +515,9 @@ func save_settings() -> void:
 ## Makes `new_values` the current settings and applies them everywhere.
 func apply(new_values: Dictionary) -> void:
 	values = new_values.duplicate(true)
+	for key in ["keybinds", "padbinds", "touch_layouts"]:
+		if not values.has(key):
+			values[key] = {}
 	_apply_graphics()
 	_apply_audio()
 	_apply_controls()
@@ -470,12 +615,23 @@ func _apply_controls() -> void:
 		var event := event_from_code(binding_of(action, values.keybinds))
 		if event:
 			InputMap.action_add_event(action, event)
+	for pair in PAD_REBINDABLE:
+		var action: String = pair[0]
+		for event in InputMap.action_get_events(action):
+			if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+				InputMap.action_erase_event(action, event)
+		var pad_event := pad_event_from_code(pad_binding_of(action, values.padbinds))
+		if pad_event:
+			InputMap.action_add_event(action, pad_event)
 	var dead_zone: float = values.controls.controller_dead_zone
 	for action in ["move_forward", "move_back", "move_left", "move_right", "aim_left", "aim_right", "aim_up", "aim_down"]:
 		InputMap.action_set_deadzone(action, dead_zone)
 
 
 func _apply_interface() -> void:
+	var ui_scale: String = values.interface.ui_scale
+	if DisplayServer.get_name() != "headless":
+		get_tree().root.content_scale_factor = InputHub.auto_ui_scale() if ui_scale == "auto" else UI_SCALES.get(ui_scale, 1.0)
 	_fps_label.visible = values.interface.show_fps
 	_subtitle_label.add_theme_font_size_override("font_size", SUBTITLE_SIZES[values.interface.subtitle_size])
 
@@ -509,6 +665,14 @@ func _apply_to_node(node: Node) -> void:
 func _first_binding(action: String) -> String:
 	for event in InputMap.action_get_events(action):
 		var code := code_from_event(event)
+		if code != "":
+			return code
+	return ""
+
+
+func _first_pad_binding(action: String) -> String:
+	for event in InputMap.action_get_events(action):
+		var code := pad_code_from_event(event)
 		if code != "":
 			return code
 	return ""

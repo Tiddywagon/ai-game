@@ -7,11 +7,17 @@ extends Control
 ## Hovering an item's checkmark says "Found in raid". With `fir_only`, items that aren't found in raid
 ## are dimmed (the stash filter). Items not searched yet (in a container or on a body) are drawn as
 ## unknown and can't be moved; the one being searched shows a ring filling up (`search`).
+## Ctrl-click quick-moves an item (to the stash, or back to you). `cell_size` zooms the grid (pinching
+## the stash on a touch screen: zoom()).
 
 signal examine_requested(item: ItemInstance)
 signal open_requested(item: ItemInstance)
+signal quick_move_requested(item: ItemInstance)
 
 const CELL := 52.0
+## How far zoom() goes (pixels per cell).
+const MIN_CELL := 32.0
+const MAX_CELL := 96.0
 const LINE_COLOR := Color(1, 1, 1, 0.07)
 const FITS_COLOR := Color(0.35, 0.85, 0.4, 0.35)
 const BLOCKED_COLOR := Color(0.95, 0.3, 0.25, 0.35)
@@ -25,7 +31,15 @@ var grid: InventoryGrid:
 		grid = value
 		if grid:
 			grid.changed.connect(queue_redraw)
-			custom_minimum_size = Vector2(grid.size) * CELL
+			custom_minimum_size = Vector2(grid.size) * cell_size
+		queue_redraw()
+## Pixels per cell (CELL unless zoomed).
+var cell_size := CELL:
+	set(value):
+		cell_size = clampf(value, MIN_CELL, MAX_CELL)
+		if grid:
+			custom_minimum_size = Vector2(grid.size) * cell_size
+			size = custom_minimum_size
 		queue_redraw()
 ## The character's inventory, so items can be dragged from here onto equipment slots.
 var inventory: Inventory
@@ -45,7 +59,17 @@ func _ready() -> void:
 
 
 func cell_at(at: Vector2) -> Vector2i:
-	return Vector2i((at / CELL).floor())
+	return Vector2i((at / cell_size).floor())
+
+
+## Zooms the grid by `factor` (within MIN_CELL..MAX_CELL per cell).
+func zoom(factor: float) -> void:
+	cell_size = cell_size * factor
+
+
+## The centre of `cell` in this view's local coordinates.
+func cell_centre(cell: Vector2i) -> Vector2:
+	return (Vector2(cell) + Vector2(0.5, 0.5)) * cell_size
 
 
 func _get_drag_data(at: Vector2) -> Variant:
@@ -62,7 +86,7 @@ func _can_drop_data(at: Vector2, data: Variant) -> bool:
 	if not data is InventoryDrag:
 		return false
 	var drag: InventoryDrag = data
-	var top_left := drag.target_cell(at / CELL)
+	var top_left := drag.target_cell(at / cell_size)
 	var plan := drag.plan_grid(grid, cell_at(at), top_left)
 	_hover = {"cell": top_left, "size": drag.footprint(), "plan": plan}
 	queue_redraw()
@@ -71,7 +95,7 @@ func _can_drop_data(at: Vector2, data: Variant) -> bool:
 
 func _drop_data(at: Vector2, data: Variant) -> void:
 	var drag: InventoryDrag = data
-	drag.drop_on_grid(grid, drag.plan_grid(grid, cell_at(at), drag.target_cell(at / CELL)))
+	drag.drop_on_grid(grid, drag.plan_grid(grid, cell_at(at), drag.target_cell(at / cell_size)))
 	_hover = {}
 	queue_redraw()
 
@@ -92,6 +116,9 @@ func _gui_input(event: InputEvent) -> void:
 	if click.button_index == MOUSE_BUTTON_RIGHT:
 		examine_requested.emit(item)
 		accept_event()
+	elif click.button_index == MOUSE_BUTTON_LEFT and click.ctrl_pressed:
+		quick_move_requested.emit(item)
+		accept_event()
 	elif click.button_index == MOUSE_BUTTON_LEFT and click.double_click and item.contents:
 		open_requested.emit(item)
 		accept_event()
@@ -111,18 +138,18 @@ func _get_tooltip(at: Vector2) -> String:
 
 
 func _rect_of(item: ItemInstance) -> Rect2:
-	return Rect2(Vector2(item.cell) * CELL, Vector2(item.footprint()) * CELL).grow(-2.0)
+	return Rect2(Vector2(item.cell) * cell_size, Vector2(item.footprint()) * cell_size).grow(-2.0)
 
 
 func _draw() -> void:
 	if grid == null:
 		return
-	var area := Vector2(grid.size) * CELL
+	var area := Vector2(grid.size) * cell_size
 	draw_rect(Rect2(Vector2.ZERO, area), Color(0, 0, 0, 0.35))
 	for x in grid.size.x + 1:
-		draw_line(Vector2(x * CELL, 0), Vector2(x * CELL, area.y), LINE_COLOR)
+		draw_line(Vector2(x * cell_size, 0), Vector2(x * cell_size, area.y), LINE_COLOR)
 	for y in grid.size.y + 1:
-		draw_line(Vector2(0, y * CELL), Vector2(area.x, y * CELL), LINE_COLOR)
+		draw_line(Vector2(0, y * cell_size), Vector2(area.x, y * cell_size), LINE_COLOR)
 	var lifted: ItemInstance = InventoryDrag.current.item if InventoryDrag.current and not InventoryDrag.current.splitting else null
 	for item in grid.items:
 		var alpha := 1.0
@@ -137,11 +164,11 @@ func _draw() -> void:
 	if _hover.is_empty():
 		return
 	var plan: Dictionary = _hover.plan
-	var rect := Rect2(Vector2(_hover.cell) * CELL, Vector2(_hover.size) * CELL).intersection(Rect2(Vector2.ZERO, area))
+	var rect := Rect2(Vector2(_hover.cell) * cell_size, Vector2(_hover.size) * cell_size).intersection(Rect2(Vector2.ZERO, area))
 	var color := FITS_COLOR if not plan.is_empty() else BLOCKED_COLOR
 	if plan.has("target"):
 		var target: ItemInstance = plan.target
-		rect = Rect2(Vector2(target.cell) * CELL, Vector2(target.footprint()) * CELL)
+		rect = Rect2(Vector2(target.cell) * cell_size, Vector2(target.footprint()) * cell_size)
 		color = COMBINE_COLOR
 	draw_rect(rect, color)
 	# A solid outline too: the see-through item being dragged covers the fill.

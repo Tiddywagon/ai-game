@@ -1,0 +1,8 @@
+[
+  {"id": "frag_grenade", "name": "F-1 frag grenade", "category": "throwable", "rarity": "uncommon", "weight": 0.6, "value": 22000,
+   "stats": {"grenade": "frag", "fuse": 3.0, "radius": 7.0, "damage": 140.0},
+   "description": "Defensive fragmentation grenade. Throw it at the reticle (a hotkey or the hotkey wheel): it goes off 3 s after the pin is pulled and hurts everyone in the open within 7 m, most up close."},
+  {"id": "flashbang_grenade", "name": "Zarya flashbang", "category": "throwable", "rarity": "common", "weight": 0.35, "value": 12000,
+   "stats": {"grenade": "flash", "fuse": 1.6},
+   "description": "Stun grenade. Throw it at the reticle (a hotkey or the hotkey wheel): a blinding flash and a bang 1.6 s later, worst for anyone looking at it."}
+]

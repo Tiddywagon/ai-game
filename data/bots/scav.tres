@@ -23,5 +23,6 @@ peek_time = Vector2(1.2, 2.0)
 duck_time = Vector2(1.5, 3.0)
 peeks_before_move = 5
 can_roll = false
+melee_range = 1.4
 dodge_chance = 0.0
 roll_to_cover_chance = 0.0

@@ -1,7 +1,10 @@
 extends MenuScreen
 ## Tabbed settings menu (DESIGN.md §17), built from Settings.SCHEMA. Edits stay pending until Apply,
 ## which applies them and saves user://settings.cfg. Reset to Defaults resets the open tab.
-## Used from the main menu and the in-raid pause menu.
+## Used from the main menu and the in-raid pause menu. Controls has key bindings (press a key or mouse
+## button) and controller bindings (press a controller button or pull a trigger; Esc cancels), each
+## flagging clashes, and EDIT LAYOUT opens the touch layout editor (TouchLayoutEditor), which saves on
+## its own.
 
 const LABEL_WIDTH := 380
 const CONTROL_WIDTH := 440
@@ -13,7 +16,11 @@ var _controls := {}
 var _slider_labels := {}
 ## action -> {"button": Button, "conflict": Label, "reset": Button}
 var _bind_rows := {}
+var _pad_rows := {}
 var _capturing := ""
+## The controller binding waiting for a button ("" for none).
+var _capturing_pad := ""
+var _editor: TouchLayoutEditor
 
 @onready var _tabs: TabContainer = %Tabs
 @onready var _status: Label = %Status
@@ -35,6 +42,9 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _capturing_pad != "":
+		_capture_pad(event)
+		return
 	if _capturing == "":
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
@@ -76,6 +86,9 @@ func _build_tab(tab: String, title: String) -> void:
 	for entry: Dictionary in Settings.SCHEMA[tab]:
 		if entry.type == "keybinds":
 			rows.add_child(_build_keybinds())
+			continue
+		if entry.type == "padbinds":
+			rows.add_child(_build_padbinds())
 			continue
 		var row := VBoxContainer.new()
 		row.add_theme_constant_override("separation", 2)
@@ -131,6 +144,14 @@ func _make_control(tab: String, entry: Dictionary) -> Control:
 			_controls[tab][key] = slider
 			_slider_labels[slider] = value_label
 			return box
+		"action":
+			var button := Button.new()
+			button.name = key.to_pascal_case() + "Button"
+			button.text = entry.get("button", entry.label)
+			button.custom_minimum_size = Vector2(220, 40)
+			if key == "touch_layout_editor":
+				button.pressed.connect(open_layout_editor)
+			return button
 	return Control.new()
 
 
@@ -143,7 +164,7 @@ func _build_keybinds() -> Control:
 	box.add_child(title)
 	var hint := Label.new()
 	hint.theme_type_variation = &"DimLabel"
-	hint.text = "Select a binding, then press a key or mouse button (Esc cancels). Controller buttons are fixed for now."
+	hint.text = "Select a binding, then press a key or mouse button (Esc cancels). Controller buttons are further down."
 	box.add_child(hint)
 	var grid := GridContainer.new()
 	grid.columns = 4
@@ -169,6 +190,50 @@ func _build_keybinds() -> Control:
 		for control: Control in [label, button, conflict, reset]:
 			grid.add_child(control)
 		_bind_rows[action] = {"button": button, "conflict": conflict, "reset": reset}
+	box.add_child(grid)
+	return box
+
+
+## Controller bindings: one row per remappable action (the sticks stay on the sticks).
+func _build_padbinds() -> Control:
+	var box := VBoxContainer.new()
+	box.name = "Padbinds"
+	box.add_theme_constant_override("separation", 6)
+	var title := Label.new()
+	title.text = "Controller buttons"
+	title.theme_type_variation = &"AccentLabel"
+	box.add_child(title)
+	var hint := Label.new()
+	hint.theme_type_variation = &"DimLabel"
+	hint.text = "Select a binding, then press a controller button or pull a trigger (Esc cancels). The sticks always move and aim. Inventory buttons only work in the inventory, so they may share buttons."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size.x = LABEL_WIDTH + 24 + CONTROL_WIDTH
+	box.add_child(hint)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 24)
+	grid.add_theme_constant_override("v_separation", 6)
+	for pair in Settings.PAD_REBINDABLE:
+		var action: String = pair[0]
+		var label := Label.new()
+		label.text = pair[1]
+		label.custom_minimum_size.x = LABEL_WIDTH - 24
+		var button := Button.new()
+		button.name = "Pad_" + action
+		button.custom_minimum_size.x = 220
+		button.pressed.connect(_start_pad_capture.bind(action))
+		var conflict := Label.new()
+		conflict.add_theme_color_override("font_color", WARNING_COLOR)
+		conflict.custom_minimum_size.x = 240
+		var reset := Button.new()
+		reset.text = "Reset"
+		reset.tooltip_text = "Back to the default button"
+		reset.pressed.connect(func() -> void:
+			_pending.padbinds.erase(action)
+			_refresh())
+		for control: Control in [label, button, conflict, reset]:
+			grid.add_child(control)
+		_pad_rows[action] = {"button": button, "conflict": conflict, "reset": reset}
 	box.add_child(grid)
 	return box
 
@@ -205,6 +270,58 @@ func _finish_capture(code: String) -> void:
 	(_bind_rows[action].button as Button).grab_focus.call_deferred()
 
 
+func _start_pad_capture(action: String) -> void:
+	_capturing_pad = action
+	(_pad_rows[action].button as Button).text = "Press a button…"
+
+
+## While waiting for a controller binding: a button or trigger binds it, Esc (or a mouse click) cancels.
+func _capture_pad(event: InputEvent) -> void:
+	var code := Settings.pad_code_from_event(event) if not (event is InputEventJoypadButton and not event.pressed) else ""
+	if code != "":
+		_finish_pad_capture(code)
+	elif (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE) \
+			or (event is InputEventMouseButton and event.pressed):
+		_finish_pad_capture("")
+	elif not (event is InputEventJoypadButton or event is InputEventJoypadMotion):
+		return
+	get_viewport().set_input_as_handled()
+
+
+func _finish_pad_capture(code: String) -> void:
+	var action := _capturing_pad
+	_capturing_pad = ""
+	if code != "":
+		if code == Settings.default_pad_binding(action):
+			_pending.padbinds.erase(action)
+		else:
+			_pending.padbinds[action] = code
+	_refresh()
+	(_pad_rows[action].button as Button).grab_focus.call_deferred()
+
+
+## Opens the touch layout editor over the menu (it saves layouts on its own).
+func open_layout_editor() -> TouchLayoutEditor:
+	if is_instance_valid(_editor):
+		return _editor
+	_editor = TouchLayoutEditor.new()
+	_editor.name = "TouchLayoutEditor"
+	_editor.slot = int(_pending.controls.touch_layout)
+	_editor.stick_size = float(_pending.controls.joystick_size)
+	_editor.saved.connect(_on_layout_saved)
+	_editor.closed.connect(func() -> void: _focus_first.call_deferred())
+	add_child(_editor)
+	return _editor
+
+
+## A layout was saved (and made active) in the editor: the menu shows that without other edits
+## becoming applied.
+func _on_layout_saved(slot: int) -> void:
+	_pending.touch_layouts = Settings.values.touch_layouts.duplicate(true)
+	_pending.controls.touch_layout = slot
+	_refresh()
+
+
 func _on_apply() -> void:
 	Settings.apply(_pending)
 	Settings.save_settings()
@@ -218,11 +335,12 @@ func _on_reset() -> void:
 	_pending[tab] = Settings.defaults()[tab]
 	if tab == "controls":
 		_pending.keybinds = {}
+		_pending.padbinds = {}
 	_refresh()
 
 
 func _on_back() -> void:
-	if _capturing != "":
+	if _capturing != "" or _capturing_pad != "" or is_instance_valid(_editor):
 		return
 	if is_dirty():
 		_discard_dialog.popup_centered()
@@ -252,6 +370,7 @@ func _refresh() -> void:
 				(control as HSlider).set_value_no_signal(value)
 				(_slider_labels[control] as Label).text = _format(Settings.schema_entry(tab, key), value)
 	_refresh_keybinds()
+	_refresh_padbinds()
 	_status.text = "Unsaved changes" if is_dirty() else ""
 
 
@@ -283,6 +402,28 @@ func _refresh_keybinds() -> void:
 		var others: Array = by_code[code].filter(func(name: String) -> bool: return name != pair[1])
 		(row.conflict as Label).text = "" if others.is_empty() else "Also: " + ", ".join(others)
 		(row.reset as Button).disabled = not _pending.keybinds.has(action)
+
+
+## Controller bindings, flagging buttons used twice (gameplay and inventory buttons are checked apart).
+func _refresh_padbinds() -> void:
+	var by_code := {}
+	for pair in Settings.PAD_REBINDABLE:
+		var key := _pad_clash_key(pair[0])
+		by_code[key] = by_code.get(key, []) + [pair[1]]
+	for pair in Settings.PAD_REBINDABLE:
+		var action: String = pair[0]
+		var row: Dictionary = _pad_rows[action]
+		var code := Settings.pad_binding_of(action, _pending.padbinds)
+		if action != _capturing_pad:
+			(row.button as Button).text = InputHub.pad_label(code, InputHub.family) if code != "" else "—"
+		var others: Array = by_code[_pad_clash_key(action)].filter(func(name: String) -> bool: return name != pair[1])
+		(row.conflict as Label).text = "" if others.is_empty() or code == "" else "Also: " + ", ".join(others)
+		(row.reset as Button).disabled = not _pending.padbinds.has(action)
+
+
+func _pad_clash_key(action: String) -> String:
+	var code := Settings.pad_binding_of(action, _pending.padbinds)
+	return ("inventory " if action in Settings.INVENTORY_PAD_ACTIONS else "") + code
 
 
 func _format(entry: Dictionary, value: float) -> String:

@@ -1,9 +1,15 @@
 class_name MenuScreen
 extends Control
 ## Base for screens opened from the main or pause menu (DESIGN.md §16). Esc / B goes back, and
-## `closed` tells the menu underneath to show itself again.
+## `closed` tells the menu underneath to show itself again. On phones and tablets the content (the
+## "Margin" container) keeps clear of notches and rounded corners (InputHub.pad_to_safe_area()).
 
 signal closed
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_READY:
+		InputHub.pad_to_safe_area(get_node_or_null("Margin") as MarginContainer)
 
 
 func _unhandled_input(event: InputEvent) -> void:

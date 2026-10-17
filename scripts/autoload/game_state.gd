@@ -27,8 +27,11 @@ const STARTER_STASH := [
 	{"id": "bandage", "x": 8, "y": 0}, {"id": "bandage", "x": 9, "y": 0}, {"id": "bolts", "x": 5, "y": 1},
 	{"id": "bolts", "x": 6, "y": 1}, {"id": "tourniquet", "x": 7, "y": 1}, {"id": "splint", "x": 8, "y": 1},
 	{"id": "ai2_medkit", "x": 9, "y": 1}, {"id": "water_bottle", "x": 0, "y": 2}, {"id": "crackers", "x": 1, "y": 2},
-	{"id": "crackers", "x": 2, "y": 2},
+	{"id": "crackers", "x": 2, "y": 2}, {"id": "frag_grenade", "x": 3, "y": 2}, {"id": "flashbang_grenade", "x": 4, "y": 2},
 ]
+## What a new character's hotkeys 1-5 use (item ids; DESIGN.md §17.1).
+const DEFAULT_HOTKEYS := ["bandage", "painkillers", "ai2_medkit", "frag_grenade", "flashbang_grenade"]
+const HOTKEY_COUNT := 5
 ## A new character starts with full energy and hydration (DESIGN.md §13.7).
 const START_ENERGY := 100.0
 const START_HYDRATION := 100.0
@@ -63,6 +66,8 @@ var metabolism_time := 0.0
 ## Insured items that came back but didn't fit in the stash yet (DESIGN.md §2, Insurance), as
 ## ItemInstance.to_dict() entries. Delivered when there's room.
 var insurance_pending: Array = []
+## Hotkeys 1-5: the item id each one uses (the first one you carry), "" for none.
+var hotkeys: Array = DEFAULT_HOTKEYS.duplicate()
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -96,6 +101,20 @@ func scav_loadout() -> Inventory:
 	return Inventory.scav()
 
 
+## Puts item `id` on hotkey `index` (0-4; "" clears it), taking it off any other hotkey.
+func set_hotkey(index: int, id: String) -> void:
+	for i in hotkeys.size():
+		if hotkeys[i] == id:
+			hotkeys[i] = ""
+	if index >= 0 and index < HOTKEY_COUNT:
+		hotkeys[index] = id
+
+
+## The hotkey (0-4) item `id` is on, or -1.
+func hotkey_of(id: String) -> int:
+	return hotkeys.find(id) if id != "" else -1
+
+
 func _reset(new_faction: Faction) -> void:
 	faction = new_faction
 	level = 1
@@ -118,6 +137,7 @@ func _reset(new_faction: Faction) -> void:
 	quests = {}
 	hideout = {}
 	insurance_pending = []
+	hotkeys = DEFAULT_HOTKEYS.duplicate()
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -146,6 +166,7 @@ func to_dict() -> Dictionary:
 			"hideout": hideout.duplicate(),
 			"metabolism": {"energy": snappedf(energy, 0.01), "hydration": snappedf(hydration, 0.01), "time": metabolism_time},
 			"insurance_pending": insurance_pending.duplicate(true),
+			"hotkeys": hotkeys.duplicate(),
 		},
 		"stash": stash.to_array(),
 	}
@@ -194,6 +215,9 @@ func from_dict(data: Dictionary) -> void:
 		quests[quest] = {"state": str(entry.get("state", "active")),
 			"progress": entry.get("progress", []).map(func(n: Variant) -> int: return int(n))}
 	insurance_pending = profile.get("insurance_pending", []).duplicate(true)
+	var saved_hotkeys: Array = profile.get("hotkeys", DEFAULT_HOTKEYS)
+	for i in HOTKEY_COUNT:
+		hotkeys[i] = str(saved_hotkeys[i]) if i < saved_hotkeys.size() else ""
 	var saved_hideout: Dictionary = profile.get("hideout", {})
 	for station: String in saved_hideout:
 		hideout[station] = int(saved_hideout[station])

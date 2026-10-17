@@ -21,28 +21,33 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 
 ## Controls
 
-| Keyboard / mouse | Controller | Action |
-|---|---|---|
-| W A S D | Left stick | Move (relative to the screen) |
-| Mouse | Right stick | Aim (the mouse is captured in a raid and moves the reticle) |
-| Left click | RT | Shoot (hold for full-auto) |
-| R | X | Reload |
-| Right click | LT | Aim (raises the sight: no hip-fire spread, and a scope sees farther and narrower); in cover, peek out |
-| Space | A | Combat roll |
-| Q | LB | Take / leave cover |
-| Shift | L3 | Sprint (uses stamina) |
-| C | B | Crouch / stand: slower and quieter |
-| Tab | Back | Inventory (open / close; moving items needs the mouse for now) |
-| F | Y | Search a container or body, pick up an item |
-| E | RB | Treat your worst injury (or eat / drink) with what's in your pockets, rig or secure container; press again to stop |
-| L | — | Flashlight |
-| B | — | Binoculars (right-click to look through them; can't shoot while holding them) |
-| M | — | Map: the layout, where you are and your extracts, if you carry a map of this map |
-| O | — | Show your extracts and what each still needs |
-| F12 | — | Debug overlay: the raid, the AI and every extract's state |
-| Esc | Start | Pause menu (resume, settings, leave raid, quit) |
+| Keyboard / mouse | Controller | Touch | Action |
+|---|---|---|---|
+| W A S D | Left stick | Move stick (touch the left half) | Move (relative to the screen) |
+| Mouse | Right stick | Aim stick (right) | Aim (the mouse is captured in a raid and moves the reticle) |
+| Left click | RT | Push the aim stick past its ring (or a Fire button) | Shoot (hold for full-auto) |
+| R | X | Reload | Reload |
+| Right click | LT | Aim | Aim (raises the sight: no hip-fire spread, and a scope sees farther and narrower); in cover, peek out |
+| Space | LB | Roll | Combat roll |
+| V | RB | Melee | Melee swing; hold for the parry stance (a swing at you is blocked and the attacker staggered) |
+| Q | R3 | Cover (when next to cover) | Take / leave cover |
+| Shift | L3 | Push the move stick all the way | Sprint (uses stamina) |
+| C | B | Crouch | Crouch / stand: slower and quieter |
+| Tab | Y | Inventory | Inventory (open / close) |
+| F | A | Interact (when something's in reach) | Search a container or body, pick up an item, open a door |
+| E | D-pad up | Quick item | Treat your worst injury (or eat / drink) with what's in your pockets, rig or secure container; press again to stop |
+| 1 – 5 | D-pad right / down / left (1–3) | Hotkeys wheel | Hotkeys: meds, stims, food, grenades (set them in the inventory: press 1–5 over an item, or in its examine panel) |
+| G (hold) | View (hold) | Hotkeys | Hotkey wheel: hotkeys 1–5, flashlight, binoculars, extracts; point and let go |
+| L | Wheel | Wheel | Flashlight |
+| B | Wheel | Wheel | Binoculars (right-click to look through them; can't shoot while holding them) |
+| M | View (tap) | Map | Map: the layout, where you are and your extracts, if you carry a map of this map |
+| O | Wheel | Wheel / Extract (in an extract) | Show your extracts and what each still needs |
+| F12 | — | — | Debug overlay: the raid, the AI and every extract's state |
+| Esc | Start | Menu | Pause menu (resume, settings, leave raid, quit) |
 
-**Inventory** (mouse only for now): drag items to move them; the cells underneath turn green where the item fits, amber where it stacks or goes inside a rig or backpack, red where it can't go. **R** while dragging turns it; **Shift**-drag splits a stack in half (the mouse wheel changes how many); **right-click** examines (stats, rarity, value); **double-click** a rig, backpack or case to open it. Drop guns, armor, rigs and so on onto the equipment slots to wear them. Everything you carry has weight: from 25 kg you slow down and sprinting tires you faster; from 40 kg you're overweight and can't sprint or roll (thresholds in `data/config/inventory.tres`).
+Keyboard and mouse, controller and touch all work at the same time, and on-screen prompts switch to whichever you used last (keys, Xbox / PlayStation / Nintendo buttons, or touch buttons). Touch controls are on by themselves on touch screens (Settings > Controls: Auto / On / Off); EDIT LAYOUT there lets you drag, resize and fade every on-screen button and save up to 3 layouts. Aim assist (controller and touch), vibration and haptics can be turned off there too.
+
+**Inventory**: drag items to move them; the cells underneath turn green where the item fits, amber where it stacks or goes inside a rig or backpack, red where it can't go. **R** while dragging turns it; **Shift**-drag splits a stack in half (the mouse wheel changes how many); **right-click** examines (stats, rarity, value); **double-click** a rig, backpack or case to open it; **Ctrl-click** quick-moves an item to the stash (or the container you're searching) and back. With a controller a cursor moves cell by cell: **A** picks up and puts down, **X** quick-moves (turns while holding), **View** examines. On touch: drag to move, **long-press** to examine, tap a **second finger** while dragging to turn, **pinch** the stash to zoom. Drop guns, armor, rigs and so on onto the equipment slots to wear them. Everything you carry has weight: from 25 kg you slow down and sprinting tires you faster; from 40 kg you're overweight and can't sprint or roll (thresholds in `data/config/inventory.tres`).
 
 **Raids and found in raid.** Search containers (crates, toolboxes, jackets, weapon boxes, medical bags, safes, filing cabinets, PCs, server racks, chests of drawers, medical crates) and bodies with **F**: they open beside your inventory and their contents turn up one item at a time while open (small items faster; closing pauses). Drag what you want across, or drag gear straight off a body's slots, and pick up loose items on the ground. You start at a random spawn point. To get out, stand in an extract you can use for 7 seconds before the clock (top right) runs out: a ring fills around you, and walking out or getting hit starts it over. Then the raid fades out to the summary, and from there you go back to the hideout with everything saved. Every map has one to three extracts, at least one always open. Some are random (open only some raids: "Unknown" until you've seen it up close), some conditional: carry a key, pay roubles at the extract (F), throw the map's power switch, fire a signal flare in it (F), or leave your backpack behind. Some only appear once you've finished a quest. Your extracts show at the top right for a few seconds when the raid starts and whenever you press **O**, in the pause menu (Esc) and on the map item, each marked Open, Unknown, Closed or with what you still need. In the world each has a glowing ring and a sign in the same colours: green when you can use it, amber while something's missing, red when it's closed, grey while unknown. On the Test Yard: the north-east gate (always open), the smuggler's car (7,000 roubles, no backpack) and, after Prapor's Flare Path quest, the signal point (fire a flare). AI PMCs and some Scavs leave through the same extracts late in the raid. Anything you looted gets a faded checkmark; if you extract it turns solid: the item is **found in raid** (FIR). Dying, running out of time, LEAVE RAID, or a **Run Through** (extracting within 7 minutes with under 200 raid experience) gives nothing FIR; a Run Through also earns no experience, while extracting properly earns 300 more. As a PMC, dying or leaving loses everything except your secure container and **insured** gear: press INSURE GEAR in the loadout check (or INSURE when examining an item) to insure guns, armor, helmets, rigs and backpacks for 10% of their value, and what you lose comes back to your stash after the raid. Every raid ends on a summary with your kills, the value of the loot you carried out (or lost), the experience you earned and where it came from, and what happened to your gear. Bought, bartered and reward items are never FIR; hideout crafts always are; what you bring in keeps its status. Quests, hideout upgrades and some barters only take FIR items where the requirement shows the checkmark. Hover a checkmark for "Found in raid"; the stash's **FIR only** filter dims the rest; examine a gun to see (or UNLOAD) its rounds by status.
 
@@ -50,7 +55,7 @@ On first launch you pick a faction (BEAR or USEC); that creates your profile. Fr
 
 **Weapon modding** (out of raid): right-click a gun in the inventory and press **MODIFY**. Drag parts from the list on the right onto the gun's slots (a rail handguard adds slots for a foregrip, a laser and a sight); drag a part off, or double-click it, to take it off. Hover a part to see what it would do: the recoil pattern and spread circles show the change drawn over the gun as it is, and the stats show the new values, green if better, red if worse. Rarer parts have bigger bonuses (Common about 4%, Legendary about 23%), but every part adds weight, and heavy builds sway more and settle slower. You can also drop a part straight onto a gun in the inventory to fit it to a free slot. Guns wear with every shot; below 85 durability they start to jam (**R** clears a jam, "JAMMED" on the HUD). **REPAIR** in the modding screen fixes a gun for roubles, but lowers its max durability a little each time. Mechanic and Skier sell parts.
 
-Keyboard and mouse keys can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
+Keys and controller buttons can be remapped in Settings > Controls. Menus work with the arrow keys, Enter and Esc, or the D-pad, A and B; Q / E or LB / RB switch settings tabs.
 
 Test Yard debug keys: **F1** left leg fracture, **F2** overweight, **F3** next round type for the gun's caliber, **F4** AI on/off, **F5** heal everything, **F6** cycle the gun's sight (iron, red dot, holo, 2-4x, 6-8x), **F7** time of day, **F8** weather, **F9** flashbang at the reticle, **F10** fog of war off.
 

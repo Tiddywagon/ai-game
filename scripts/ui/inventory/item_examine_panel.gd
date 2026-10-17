@@ -17,7 +17,10 @@ extends PanelContainer
 ## full list (ItemUses).
 ## Gear that can be insured (Insurance) says whether it is; out of raid INSURE insures it for its
 ## price. A map item has VIEW MAP (MapOverlay).
-## Right-click any item in the inventory to open it; Esc or CLOSE hides it.
+## Meds, stims, food and drink, grenades and the signal flare have a hotkey picker (DESIGN.md §17.1):
+## put the item on hotkey 1-5 (it comes off any other), or none.
+## Right-click any item in the inventory to open it (long-press on touch, View on a controller); Esc or
+## CLOSE hides it. With a controller, CLOSE has the focus.
 
 signal closed
 ## UNLOAD pressed for a gun.
@@ -39,6 +42,8 @@ var item: ItemInstance
 var can_modify := false
 ## Why an item can't be used right now ("" if it can): set by the inventory. Unset: no USE button.
 var use_check: Callable
+## Shows the hotkey picker (the inventory; not trader offers).
+var can_set_hotkey := true
 
 var _icon: TextureRect
 var _name: Label
@@ -52,6 +57,8 @@ var _upgrade: Button
 var _insure: Button
 var _map: Button
 var _use: Button
+var _hotkey: OptionButton
+var _close: Button
 var _parts: VBoxContainer
 
 
@@ -114,6 +121,15 @@ func _ready() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	buttons.add_theme_constant_override("separation", 10)
 	rows.add_child(buttons)
+	_hotkey = OptionButton.new()
+	_hotkey.name = "HotkeyPicker"
+	_hotkey.custom_minimum_size = Vector2(130, 36)
+	_hotkey.tooltip_text = "Use it with this hotkey in a raid (the first one you carry)"
+	_hotkey.add_item("NO HOTKEY", 0)
+	for i in GameState.HOTKEY_COUNT:
+		_hotkey.add_item("HOTKEY %d" % (i + 1), i + 1)
+	_hotkey.item_selected.connect(_on_hotkey_selected)
+	buttons.add_child(_hotkey)
 	_use = Button.new()
 	_use.name = "UseButton"
 	_use.text = "USE"
@@ -151,11 +167,12 @@ func _ready() -> void:
 	_map.custom_minimum_size = Vector2(120, 36)
 	_map.pressed.connect(_on_view_map)
 	buttons.add_child(_map)
-	var close_button := Button.new()
-	close_button.text = "CLOSE"
-	close_button.custom_minimum_size = Vector2(120, 36)
-	close_button.pressed.connect(close)
-	buttons.add_child(close_button)
+	_close = Button.new()
+	_close.name = "CloseButton"
+	_close.text = "CLOSE"
+	_close.custom_minimum_size = Vector2(120, 36)
+	_close.pressed.connect(close)
+	buttons.add_child(_close)
 	hide()
 
 
@@ -207,6 +224,9 @@ func show_item(examined: ItemInstance) -> void:
 		var reason: String = use_check.call(item)
 		_use.disabled = reason != ""
 		_use.tooltip_text = reason if reason != "" else "Takes %.1f s" % Consumables.use_time(data)
+	_hotkey.visible = can_set_hotkey and Player.hotkey_usable(data)
+	if _hotkey.visible:
+		_hotkey.select(GameState.hotkey_of(data.id) + 1)
 	_build_parts()
 	_description.text = data.description
 	_description.visible = data.description != ""
@@ -217,6 +237,20 @@ func show_item(examined: ItemInstance) -> void:
 		_chart.show_caliber(str(data.stats.get("caliber", "")), data.id)
 	show()
 	_fit.call_deferred()
+	if InputHub.is_controller():
+		_close.grab_focus.call_deferred()
+
+
+## Puts the examined item on the picked hotkey (index 0: none); saved at once out of raid.
+func _on_hotkey_selected(index: int) -> void:
+	if index == 0:
+		var current := GameState.hotkey_of(item.data.id)
+		if current >= 0:
+			GameState.set_hotkey(current, "")
+	else:
+		GameState.set_hotkey(index - 1, item.data.id)
+	if can_modify:
+		SaveManager.save_game()
 
 
 ## Opens the map: the live one (with your extracts' statuses) in a raid on that map, else the map

@@ -27,6 +27,7 @@ func _ready() -> void:
 	(_music.stream as AudioStreamOggVorbis).loop = true
 	_music.volume_db = -40.0
 	_music.play()
+	InputHub.fit_to_safe_area(_menu)  # Clear of notches on phones and tablets.
 	create_tween().tween_property(_music, "volume_db", 0.0, MUSIC_FADE_IN).set_ease(Tween.EASE_OUT)
 	%EnterRaidButton.pressed.connect(_open.bind(RAID_SETUP_SCENE, %EnterRaidButton))
 	%HideoutButton.pressed.connect(_open.bind(HIDEOUT_SCENE, %HideoutButton))

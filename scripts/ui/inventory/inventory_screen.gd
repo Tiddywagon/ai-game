@@ -13,6 +13,12 @@ extends MenuScreen
 ## raid the player uses it over its use time (the header shows progress; the game goes on); out of
 ## raid food and drink go straight to the profile's energy and hydration. The header shows both, and
 ## hovering a food or drink previews what one use would do under them ("Crackers: Energy 62 → 77 (+15)  ·  ...").
+## Ctrl-click quick-moves an item to the stash (or the container or body being searched), or back onto
+## you from there. Pressing 1-5 over a med, stim, food, drink, grenade or flare puts it on that hotkey.
+## Every device works it (DESIGN.md §17.1): on touch, a finger is the mouse (tap, drag and drop),
+## long-press examines, a second finger's tap turns the item being dragged and pinching zooms the
+## stash (TouchGestures); with a controller, a cursor moves cell by cell and its buttons pick up, turn,
+## quick-move and examine (GridCursor). The header's hint matches the device.
 
 ## Equipment slot layout: two columns of [slot, size in cells].
 const SLOT_COLUMNS := [
@@ -25,6 +31,12 @@ const HEAVY_COLOR := Color(0.95, 0.7, 0.3)
 ## Width of the energy / water status in the header.
 const BODY_STATUS_WIDTH := 430.0
 const OVERWEIGHT_COLOR := Color(0.9, 0.32, 0.25)
+## The header's hint for each device (InputHub.Device order: keyboard and mouse, controller, touch).
+const HINTS := [
+	"Drag to move  ·  R: turn  ·  Shift-drag: split (wheel: how many)  ·  Right-click: examine  ·  Double-click: open  ·  Ctrl-click: quick move  ·  1-5 over a med: hotkey  ·  Checkmark: found in raid",
+	"D-pad or left stick: move the cursor  ·  The buttons below pick up, turn, quick-move and examine  ·  Checkmark: found in raid",
+	"Drag to move  ·  Second-finger tap while dragging: turn  ·  Long-press: examine  ·  Double-tap: open  ·  Pinch the stash: zoom  ·  Checkmark: found in raid",
+]
 
 ## The character's equipment and pockets.
 var inventory: Inventory
@@ -49,6 +61,9 @@ var _body_label: Label
 var _use_label: Label
 var _use_message := ""
 var _use_message_time := 0.0
+## The controller's cell cursor and the touch gestures.
+var cursor: GridCursor
+var gestures: TouchGestures
 
 
 func _ready() -> void:
@@ -91,6 +106,106 @@ func _ready() -> void:
 		Consumables.recover_profile()
 	_update_header()
 	_update_loot_title()
+	cursor = GridCursor.new()
+	cursor.name = "GridCursor"
+	cursor.screen = self
+	add_child(cursor)
+	gestures = TouchGestures.new()
+	gestures.name = "TouchGestures"
+	gestures.two_finger_tap.connect(_on_two_finger_tap)
+	gestures.pinched.connect(_on_pinched)
+	add_child(gestures)
+	InputHub.device_changed.connect(_update_hint)
+	_update_hint(InputHub.device)
+
+
+func _update_hint(device: int) -> void:
+	%Hint.text = HINTS[device] if device >= 0 and device < HINTS.size() else HINTS[0]
+	%CloseButton.text = "CLOSE  (%s)" % Settings.key_label("toggle_inventory")
+
+
+## A second finger tapped while the first drags an item: turn it.
+func _on_two_finger_tap(_at: Vector2) -> void:
+	if get_viewport().gui_is_dragging() and InventoryDrag.current:
+		InventoryDrag.current.rotate()
+
+
+## Two fingers pinching or spreading over the stash zoom it.
+func _on_pinched(factor: float, centre: Vector2) -> void:
+	var view: InventoryGridView = %StashView
+	if view.is_visible_in_tree() and (%StashPanel as Control).get_global_rect().has_point(centre):
+		view.zoom(factor)
+
+
+## True when the controller cursor may work the screen (nothing open over the grids).
+func cursor_allowed() -> bool:
+	if _examine.visible or get_node_or_null("WeaponModScreen"):
+		return false
+	var upgrade_panel := %Overlay.get_node_or_null("GearUpgradePanel") as GearUpgradePanel
+	return not (upgrade_panel and upgrade_panel.visible)
+
+
+func examine(item: ItemInstance) -> void:
+	_examine_item(item)
+
+
+## Moves `item` straight across: from you to the stash (out of raid) or the container or body being
+## searched, or from there back into your pockets, rig or backpack. What doesn't fit stays where it
+## was. False if it didn't all move.
+func quick_move(item: ItemInstance) -> bool:
+	if item == null or item.hidden:
+		return false
+	var source := _source_of(item)
+	if source.is_empty() or (not source.away and stash == null and loot == null):
+		return false
+	var from_grid: InventoryGrid = source.get("grid")
+	var cell := item.cell
+	var turned := item.rotated
+	if from_grid:
+		from_grid.remove(item)
+	else:
+		(source.owner as Inventory).unequip(source.slot)
+	var moved := false
+	if source.away:
+		moved = inventory.add(item)
+	elif stash:
+		moved = stash.add(item)
+	elif loot is InventoryGrid:
+		moved = (loot as InventoryGrid).add(item)
+	elif loot is Inventory:
+		moved = (loot as Inventory).add(item)
+	if not moved and item.count > 0:
+		if from_grid:
+			from_grid.place(item, cell, turned)
+		else:
+			(source.owner as Inventory).equip(source.slot, item)
+	inventory.changed.emit()
+	for other: Variant in [stash, loot]:
+		if other:
+			other.changed.emit()
+	return moved
+
+
+## Where `item` is: {"grid"} or {"owner", "slot"}, and "away" if that's the stash or what's being
+## searched rather than you. {} if it's nowhere on screen.
+func _source_of(item: ItemInstance) -> Dictionary:
+	var slot := inventory.slot_of(item)
+	if slot != "":
+		return {"owner": inventory, "slot": slot, "away": false}
+	var grid := inventory.holder_of(item)
+	if grid:
+		return {"grid": grid, "away": false}
+	if loot is Inventory:
+		var body: Inventory = loot
+		slot = body.slot_of(item)
+		if slot != "":
+			return {"owner": body, "slot": slot, "away": true}
+		grid = body.holder_of(item)
+	elif loot is InventoryGrid:
+		grid = (loot as InventoryGrid).find_holder(item)
+	elif stash:
+		grid = stash.find_holder(item)
+	return {"grid": grid, "away": true} if grid else {}
 
 
 func _process(delta: float) -> void:
@@ -132,6 +247,12 @@ func _input(event: InputEvent) -> void:
 			InventoryDrag.current.change_amount(1 if wheel.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
 			get_viewport().set_input_as_handled()
 			return
+	if event is InputEventKey and not get_viewport().gui_is_dragging():
+		for i in GameState.HOTKEY_COUNT:
+			if event.is_action_pressed("hotkey_%d" % (i + 1)):
+				assign_hotkey(hovered_item(), i)
+				get_viewport().set_input_as_handled()
+				return
 	if user and user.using_item and event.is_action_pressed("use_item"):
 		user.cancel_use("Stopped using %s" % user.using_item.data.display_name)
 		get_viewport().set_input_as_handled()
@@ -199,6 +320,7 @@ func _build_equipment() -> void:
 			view.setup(inventory, slot, _slot_name(slot), entry[1])
 			view.examine_requested.connect(_examine_item)
 			view.open_requested.connect(_open_window)
+			view.quick_move_requested.connect(quick_move)
 			rows.add_child(view)
 
 
@@ -266,6 +388,7 @@ func _build_loot_body() -> void:
 			view.setup(body, slot, _slot_name(slot), entry[1])
 			view.examine_requested.connect(_examine_item)
 			view.open_requested.connect(_open_window)
+			view.quick_move_requested.connect(quick_move)
 			box.add_child(view)
 			slots.add_child(box)
 	_add_section("POCKETS", body.pockets, %LootBody, body, "LootGrid_")
@@ -313,6 +436,20 @@ func use_item(item: ItemInstance) -> void:
 	if holder:
 		holder.changed.emit()
 	SaveManager.save_game()
+
+
+## Puts `item` on hotkey `index` (0-4) if it can go on one, and says so. False if it can't.
+func assign_hotkey(item: ItemInstance, index: int) -> bool:
+	if item == null:
+		return false
+	if not Player.hotkey_usable(item.data):
+		_show_use_message("%s can't go on a hotkey" % item.data.display_name)
+		return false
+	GameState.set_hotkey(index, item.data.id)
+	_show_use_message("Hotkey %d: %s" % [index + 1, item.data.display_name])
+	if stash:
+		SaveManager.save_game()
+	return true
 
 
 func _use_reason(item: ItemInstance) -> String:
@@ -454,6 +591,7 @@ func _on_modding_closed() -> void:
 func _hook_view(view: InventoryGridView) -> void:
 	view.examine_requested.connect(_examine_item)
 	view.open_requested.connect(_open_window)
+	view.quick_move_requested.connect(quick_move)
 
 
 func _examine_item(item: ItemInstance) -> void:

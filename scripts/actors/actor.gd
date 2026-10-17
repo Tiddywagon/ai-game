@@ -16,6 +16,9 @@ signal roll_finished(direction: Vector3)
 signal action_blocked(reason: String)
 ## A hit did damage (bleeding doesn't count): an extract countdown starts again (DESIGN.md §5).
 signal hurt(damage: float)
+## Melee (DESIGN.md §13.4.2): this actor swung (`target` null for a miss), or parried `attacker`'s swing.
+signal melee_swung(target: Actor, parried: bool)
+signal parried(attacker: Actor)
 
 enum Side { PMC, SCAV }
 enum Move { IDLE, WALK, SPRINT, CROUCH, ROLL, COVER }
@@ -34,6 +37,17 @@ const MAX_AIM_ERROR_DEGREES := 25.0
 const FOOTSTEP_INTERVAL := 0.4
 ## Chest height as a share of hitbox height: the middle of the thorax.
 const CHEST_HEIGHT_RATIO := 0.72
+## Melee (DESIGN.md §13.4.2) *(tune)*: seconds between swings; fists (no melee weapon) damage and
+## reach; how far either side of facing a swing reaches; how far either side of facing a parry
+## covers; how long a parried attacker is staggered (can't move, shoot or swing); speed while parrying.
+const MELEE_COOLDOWN := 0.75
+const FIST_DAMAGE := 12.0
+const FIST_REACH := 1.3
+const MELEE_REACH := 1.7
+const MELEE_ARC_DEGREES := 60.0
+const PARRY_ARC_DEGREES := 100.0
+const PARRY_STAGGER := 1.2
+const PARRY_SPEED := 0.5
 
 @export var side := Side.PMC
 ## Roll, cover and bullet tuning shared by everyone.
@@ -124,6 +138,11 @@ var _height := 0.0
 var _sway_time := 0.0
 ## Seconds left blinded (flashbang), and how long the blindness was when it started.
 var blind_time := 0.0
+## Melee: holding the parry stance (a swing from the front is parried), staggered seconds left (after
+## being parried), and the swing cooldown.
+var parrying := false
+var stagger_time := 0.0
+var _melee_cooldown := 0.0
 var _blind_length := 0.0
 
 @onready var _collision: CollisionShape3D = $CollisionShape3D
@@ -185,6 +204,16 @@ func _physics_process(delta: float) -> void:
 	weapon.reload_speed = health.reload_multiplier()
 	stamina = minf(stamina, stamina_cap())
 	_think(delta)
+	_melee_cooldown = maxf(_melee_cooldown - delta, 0.0)
+	if stagger_time > 0.0:
+		stagger_time = maxf(stagger_time - delta, 0.0)
+		move_input = Vector3.ZERO
+		fire_input = false
+		peek_input = false
+		sprint_input = false
+	if parrying:
+		fire_input = false
+		sprint_input = false
 	_roll_cooldown = maxf(_roll_cooldown - delta, 0.0)
 	if is_rolling:
 		_step_roll(delta)
@@ -395,6 +424,98 @@ func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionar
 	return outcome
 
 
+## Damage that isn't a bullet (DESIGN.md §13.4.2): a melee swing or a grenade blast (`kind` "melee" or
+## "explosion"), with what did it (`weapon_name`), landing at `at`. No armor stops it. Returns
+## {"damage", "part"}.
+func take_blow(damage: float, from: Actor, kind: String, weapon_name: String, at: Vector3) -> Dictionary:
+	if is_dead or damage <= 0.0:
+		return {}
+	if from and from != self and not is_hostile(from):
+		enemies.append(from)
+	var part := body_part_at(at, from.global_position if from else at)
+	if part < 0:
+		part = BodyHealth.Part.THORAX
+	var cause := {"kind": kind, "part": part, "damage": damage, "weapon": weapon_name}
+	if from:
+		cause.attacker = from.display_name()
+		cause.distance = from.global_position.distance_to(global_position)
+	health.hit(part, damage, cause)
+	hurt.emit(damage)
+	if health.is_dead:
+		die()
+	return {"damage": damage, "part": part}
+
+
+## The melee weapon worn (the melee slot), or null for fists.
+func melee_weapon() -> ItemInstance:
+	var gear := worn_gear()
+	return gear.equipment.get("melee") if gear else null
+
+
+func melee_damage() -> float:
+	var item := melee_weapon()
+	return float(item.data.stats.get("damage", 30.0)) if item else FIST_DAMAGE
+
+
+func melee_reach() -> float:
+	var item := melee_weapon()
+	return float(item.data.stats.get("reach", MELEE_REACH)) if item else FIST_REACH
+
+
+## Swings the melee weapon (or a fist) at the nearest actor in front within reach. A target holding
+## the parry stance and facing the swing parries it and staggers this actor instead. Returns
+## {"target" (or null), "parried", "damage"}, or {} if it can't swing now.
+func melee_strike() -> Dictionary:
+	if is_dead or stagger_time > 0.0 or _melee_cooldown > 0.0 or is_rolling or parrying:
+		return {}
+	_melee_cooldown = MELEE_COOLDOWN
+	NoiseSystem.emit_noise(global_position, 6.0, self, &"melee")
+	var target := melee_target()
+	if target == null:
+		melee_swung.emit(null, false)
+		return {"target": null, "parried": false, "damage": 0.0}
+	if target.can_parry(self):
+		stagger_time = PARRY_STAGGER
+		target.parried.emit(self)
+		melee_swung.emit(target, true)
+		return {"target": target, "parried": true, "damage": 0.0}
+	var damage := melee_damage()
+	var item := melee_weapon()
+	target.take_blow(damage, self, "melee", item.data.display_name if item else "Fists", target.chest_point())
+	on_hit_landed(target, damage, target.chest_point())
+	melee_swung.emit(target, false)
+	return {"target": target, "parried": false, "damage": damage}
+
+
+## The actor a swing would hit: the nearest living one within reach and within the swing's arc.
+func melee_target() -> Actor:
+	var facing := vision_facing()
+	var reach := melee_reach() + BODY_RADIUS
+	var best: Actor = null
+	var best_distance := INF
+	for node in get_tree().get_nodes_in_group("actors"):
+		var other := node as Actor
+		if other == null or other == self or other.is_dead:
+			continue
+		var to := Vector2(other.global_position.x - global_position.x, other.global_position.z - global_position.z)
+		var distance := to.length()
+		if distance > reach or distance >= best_distance or absf(other.global_position.y - global_position.y) > 1.2:
+			continue
+		if distance > 0.05 and absf(rad_to_deg(facing.angle_to(to))) > MELEE_ARC_DEGREES:
+			continue
+		best = other
+		best_distance = distance
+	return best
+
+
+## True if this actor, holding the parry stance, faces `attacker`'s swing.
+func can_parry(attacker: Actor) -> bool:
+	if not parrying or is_dead or stagger_time > 0.0:
+		return false
+	var to := Vector2(attacker.global_position.x - global_position.x, attacker.global_position.z - global_position.z)
+	return to.length() < 0.05 or absf(rad_to_deg(vision_facing().angle_to(to))) <= PARRY_ARC_DEGREES
+
+
 ## The kit this actor wears (armor and helmets stop rounds), or null.
 func worn_gear() -> Inventory:
 	return null
@@ -558,6 +679,11 @@ func set_seen(seen: bool) -> void:
 	_body.visible = seen
 
 
+## True while the player can see this actor (set_seen()).
+func is_seen() -> bool:
+	return _body.visible
+
+
 # --- Body points ----------------------------------------------------------------------------
 
 func gun_height() -> float:
@@ -623,6 +749,8 @@ func _step_free(delta: float) -> void:
 	if injured_legs:
 		speed *= health_config.injured_leg_speed
 	speed *= _move_multiplier() * inventory_config.speed_multiplier(load_weight()) * health.speed_multiplier()
+	if parrying:
+		speed *= PARRY_SPEED
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z).move_toward(move_input * speed, acceleration * delta)
 	velocity = Vector3(horizontal.x, velocity.y, horizontal.z)
 	_apply_gravity(delta)

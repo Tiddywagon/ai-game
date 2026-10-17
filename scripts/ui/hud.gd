@@ -58,6 +58,9 @@ var _message_time := 0.0
 var _raid: RaidController
 var _raid_line := ""
 var _prompt: Label
+## The prompt's button icon (keycap, controller button), and the row holding both.
+var _prompt_icon: PromptIcon
+var _prompt_row: Control
 var _extract: Label
 var _extract_ring: Control
 ## Seconds the extract list stays up.
@@ -106,7 +109,7 @@ func _ready() -> void:
 		player.trick_shot_ready.connect(_on_trick_shot_ready)
 		player.trick_shot_hit.connect(_on_trick_shot_hit)
 	%SoundMarkers.player = player
-	_prompt = _add_center_label(-210.0, 22, NORMAL_COLOR)
+	_build_prompt()
 	_extract = _add_center_label(-470.0, 40, EXTRACT_COLOR)
 	_trick_ready = _add_center_label(-330.0, 34, Player.TRICK_COLOR)  # Below the player, above the F prompt.
 	_trick_ready.name = "TrickReady"
@@ -125,6 +128,8 @@ func _ready() -> void:
 	_extract_list_left = RAID_CONFIG.extract_list_seconds
 	VisionSystem.conditions_changed.connect(_update_raid_info)
 	_update_raid_info()
+	for panel: Control in [%TopRight, _bottom_left, %BottomRight]:
+		InputHub.nudge_to_safe_area(panel)  # Clear of notches on phones.
 	_connect_vision.call_deferred()
 	Settings.applied.connect(_apply_settings)
 	_apply_settings()
@@ -204,9 +209,9 @@ func _update_raid_prompts() -> void:
 	if _trick_ready.visible:
 		_trick_ready.text = "TRICK SHOT READY  %.1f" % player.trick_window_left
 	var target := player.focused_interactable if player and not player.ui_open and not player.is_dead else null
-	_prompt.visible = target != null
+	_prompt_row.visible = target != null and not InputHub.touch_controls_visible()  # On touch the Interact button says it.
 	if target:
-		_prompt.text = "%s   %s" % [Settings.key_label("interact"), target.interact_text()]
+		_prompt.text = target.interact_text()
 	var left := _raid.extract_remaining() if _raid else -1.0
 	var blocked := _raid.extract_block() if _raid else ""
 	_extract.visible = left >= 0.0 or blocked != ""
@@ -433,6 +438,38 @@ func _info_label(parent: Control, node_name: String, color: Color) -> Label:
 	label.hide()
 	parent.add_child(label)
 	return label
+
+
+## The F prompt: the interact button's icon for the device in use, then what it would do.
+func _build_prompt() -> void:
+	var centre := CenterContainer.new()
+	centre.name = "Prompt"
+	centre.anchor_left = 0.0
+	centre.anchor_right = 1.0
+	centre.anchor_top = 1.0
+	centre.anchor_bottom = 1.0
+	centre.offset_top = -214.0
+	centre.offset_bottom = -174.0
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	centre.hide()
+	_root.add_child(centre)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	centre.add_child(row)
+	_prompt_icon = PromptIcon.new()
+	_prompt_icon.action = "interact"
+	_prompt_icon.icon_size = 30.0
+	_prompt_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_prompt_icon)
+	_prompt = Label.new()
+	_prompt.add_theme_font_size_override("font_size", 22)
+	_prompt.add_theme_color_override("font_color", NORMAL_COLOR)
+	_prompt.add_theme_color_override("font_outline_color", Color.BLACK)
+	_prompt.add_theme_constant_override("outline_size", 6)
+	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(_prompt)
+	_prompt_row = centre
 
 
 func _add_center_label(from_bottom: float, size: int, color: Color) -> Label:

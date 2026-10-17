@@ -5,6 +5,7 @@ extends MenuScreen
 ## caliber: AmmoChart) and, at Ragman, UPGRADE gear (GearUpgradeRow). Offers above your loyalty level with a trader show the level they need.
 ## Everything you get goes to the stash and is never found in raid. Requirements marked with the
 ## found-in-raid checkmark only take items that have it (Trading, QuestLog). Each deal saves the game.
+## Right-click an item (long-press on touch: TouchGestures) to examine it.
 
 const TRADERS := [
 	{"id": "prapor", "name": "Prapor", "specialty": "Eastern weapons and ammo", "currency": "Roubles", "unique": "Insurance: cheap, slow"},
@@ -24,6 +25,7 @@ var _buttons: Array[Button] = []
 var _trader: Dictionary = {}
 ## The caliber the AMMO tab compares ("" = the gun in hand's).
 var _ammo_caliber := ""
+var _examine: ItemExaminePanel
 
 
 func _ready() -> void:
@@ -43,7 +45,21 @@ func _ready() -> void:
 		%TraderList.add_child(button)
 		_buttons.append(button)
 	_buttons[0].grab_focus.call_deferred()
+	_examine = ItemExaminePanel.new()
+	_examine.name = "ItemExaminePanel"
+	_examine.can_set_hotkey = false
+	add_child(_examine)
+	var gestures := TouchGestures.new()
+	gestures.name = "TouchGestures"
+	add_child(gestures)
 	_show(TRADERS[0])
+
+
+func _on_cancel() -> void:
+	if _examine.visible:
+		_examine.close()
+	else:
+		close()
 
 
 func _show(trader: Dictionary) -> void:
@@ -327,6 +343,7 @@ func _cell(item: ItemInstance) -> ItemCell:
 	var fit := Vector2(item.data.size) * OFFER_CELL
 	cell.box = fit * minf(1.0, minf(OFFER_MAX.x / fit.x, OFFER_MAX.y / fit.y))
 	cell.item = item
+	cell.examine_requested.connect(_examine.show_item)
 	return cell
 
 
