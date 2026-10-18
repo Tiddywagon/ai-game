@@ -88,20 +88,32 @@ static func price(item: ItemInstance, insurer_id := "") -> int:
 ## anything in the pockets, rig and backpack, at any depth; parts fitted to a gun or helmet go with it.
 static func uninsured(inventory: Inventory) -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []
-	for slot: String in inventory.equipment:
-		if slot != "secure" and inventory.equipment[slot]:
-			_collect(inventory.equipment[slot], result)
-	for item in inventory.pockets.items:
-		_collect(item, result)
+	for entry in gear(inventory):
+		if not entry.item.insured:
+			result.append(entry.item)
 	return result
 
 
-static func _collect(item: ItemInstance, into: Array[ItemInstance]) -> void:
-	if is_insurable(item) and not item.insured:
-		into.append(item)
+## Everything on `inventory` that can be insured, insured or not, in the same order as uninsured():
+## [{"item", "where"}], `where` being its slot ("Primary weapon") or what holds it ("In Pockets",
+## "In Scav vest").
+static func gear(inventory: Inventory) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for slot: Array in Inventory.SLOTS:
+		var item: ItemInstance = inventory.equipment[slot[0]]
+		if slot[0] != "secure" and item:
+			_collect(item, slot[1], result)
+	for item in inventory.pockets.items:
+		_collect(item, "In Pockets", result)
+	return result
+
+
+static func _collect(item: ItemInstance, where: String, into: Array[Dictionary]) -> void:
+	if is_insurable(item):
+		into.append({"item": item, "where": where})
 	if item.contents and item.contents.kind != &"secure":
 		for inside in item.contents.items:
-			_collect(inside, into)
+			_collect(inside, "In " + item.data.display_name, into)
 
 
 static func total_price(items: Array, insurer_id := "") -> int:
@@ -261,3 +273,19 @@ static func _clock(seconds: float) -> String:
 static func countdown_text() -> String:
 	var left := next_due()
 	return "" if left < 0.0 else _clock(left)
+
+
+## What insurer `id` has on its way back to you: "2 insured items on the way back: in your stash in
+## 1:12" ("waiting for room in your stash" once due; "" for nothing).
+static func pending_text(id: String) -> String:
+	var count := 0
+	var soonest := -1.0
+	for entry: Dictionary in pending():
+		if str(entry.insurer) == id:
+			count += 1
+			var left := maxf(float(entry.due) - now(), 0.0)
+			soonest = left if soonest < 0.0 else minf(soonest, left)
+	if count == 0:
+		return ""
+	return "%d insured item%s on the way back: %s" % [count, "" if count == 1 else "s",
+		"in your stash in %s" % _clock(soonest) if soonest > 0.0 else "waiting for room in your stash"]

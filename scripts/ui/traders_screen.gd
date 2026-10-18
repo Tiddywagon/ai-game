@@ -2,14 +2,15 @@ extends MenuScreen
 ## TRADERS screen (DESIGN.md §10, §11, §16.2): every trader with your loyalty level, reputation and
 ## what the next level needs, and tabs to BUY (roubles or dollars), BARTER (items for an item), do
 ## their TASKS (accept, hand over, turn in), compare AMMO (every round of the gun in hand, or of any
-## caliber: AmmoChart) and, at Ragman, UPGRADE gear (GearUpgradeRow). Offers above your loyalty level with a trader show the level they need.
+## caliber: AmmoChart), at Ragman, UPGRADE gear (GearUpgradeRow) and, at the insurers (Prapor and
+## Therapist: Insurance), INSURE the gear you'd take into a raid. Offers above your loyalty level with a trader show the level they need.
 ## Everything you get goes to the stash and is never found in raid. Requirements marked with the
 ## found-in-raid checkmark only take items that have it (Trading, QuestLog). Each deal saves the game.
 ## Right-click an item (long-press on touch: TouchGestures) to examine it.
 
 const TRADERS := [
 	{"id": "prapor", "name": "Prapor", "specialty": "Eastern weapons and ammo", "currency": "Roubles", "unique": "Insurance: cheap, slow"},
-	{"id": "therapist", "name": "Therapist", "specialty": "Meds, food and valuables", "currency": "Roubles", "unique": "Pays the most for valuables"},
+	{"id": "therapist", "name": "Therapist", "specialty": "Meds, food and valuables", "currency": "Roubles", "unique": "Insurance: dearer, faster · pays the most for valuables"},
 	{"id": "skier", "name": "Skier", "specialty": "Black market and attachments", "currency": "Roubles and dollars", "unique": "Cheap barters"},
 	{"id": "peacekeeper", "name": "Peacekeeper", "specialty": "Western weapons", "currency": "Dollars", "unique": "Pays well for weapons"},
 	{"id": "mechanic", "name": "Mechanic", "specialty": "Attachments and weapon parts", "currency": "Roubles", "unique": "Gunsmith quests"},
@@ -94,6 +95,8 @@ func _refresh() -> void:
 	_build_ammo()
 	if trader.id in GearUpgrades.sources():
 		_build_upgrades(trader)
+	if Insurance.insurers().any(func(each: Dictionary) -> bool: return each.id == trader.id):
+		_build_insurance(trader)
 	%Tabs.current_tab = clampi(tab, 0, %Tabs.get_tab_count() - 1)
 	var lines := ["Loyalty level %d  ·  reputation %.2f  ·  spent %s" % [loyalty.level, loyalty.reputation, UiFormat.money(loyalty.spent)]]
 	var next: int = loyalty.level + 1
@@ -275,6 +278,76 @@ func _build_upgrades(trader: Dictionary) -> void:
 		rows.add_child(HSeparator.new())
 	if owned.is_empty():
 		rows.add_child(_note("You have no gear to upgrade: armor, helmets, face shields, headsets, rigs and backpacks."))
+
+
+## The INSURE tab (insurers): what this trader charges and how long returns take, what's on its way
+## back from them, and every piece of gear on your character that can be insured, each with INSURE
+## (or who insures it), plus INSURE ALL and making them the insurer the loadout check's INSURE GEAR
+## uses.
+func _build_insurance(trader: Dictionary) -> void:
+	var rows := _add_tab("INSURE")
+	var insurer := Insurance.insurer(trader.id)
+	var hours: Array = insurer.return_hours
+	rows.add_child(_note("%s insures your gear for %d%% of its value, at least %s an item. If you die or go missing with it and nobody takes it off your body, it comes back to your stash %d-%d game hours later (%s-%s real time): guns with their parts, rigs and backpacks empty, no rounds. Ammo, meds, food, valuables and keys can't be insured; the secure container is never lost. Anything in your stash can be insured from its examine panel." % [
+		trader.name, roundi(float(insurer.rate) * 100.0), UiFormat.money(Insurance.CONFIG.insurance_min_price), int(hours[0]), int(hours[1]),
+		Insurance._clock(Insurance.real_seconds(float(hours[0]))), Insurance._clock(Insurance.real_seconds(float(hours[1])))]))
+	var returning := Label.new()
+	returning.name = "InsuranceReturning"
+	returning.theme_type_variation = &"AccentLabel"
+	rows.add_child(returning)
+	var tick := func() -> void:
+		returning.text = Insurance.pending_text(trader.id)
+		returning.visible = returning.text != ""
+	tick.call()
+	var timer := Timer.new()
+	timer.timeout.connect(tick)  # Counts down, and goes once it's arrived.
+	returning.add_child(timer)
+	timer.autostart = true
+	var gear: Array[Dictionary] = []
+	var uninsured: Array[ItemInstance] = []
+	if GameState.inventory:
+		gear = Insurance.gear(GameState.inventory)
+		uninsured = Insurance.uninsured(GameState.inventory)
+	var total := Insurance.total_price(uninsured, trader.id)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 14)
+	var summary := Label.new()
+	summary.text = "Your gear: %d of %d insured%s" % [gear.size() - uninsured.size(), gear.size(),
+		"\nINSURE GEAR in the loadout check uses %s" % Insurance.insurer_name() if GameState.insurer != trader.id else "\n%s is your insurer in the loadout check" % trader.name]
+	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(summary)
+	if GameState.insurer != trader.id:
+		top.add_child(_action_button("USE %s" % trader.name.to_upper(), "", func() -> String:
+			GameState.insurer = trader.id
+			return ""))
+	var all_reason := "All your gear is insured" if uninsured.is_empty() else ("Not enough roubles: %s needed" % UiFormat.money(total) if GameState.roubles < total else "")
+	var insure_all := _action_button("INSURE ALL  ·  %s" % UiFormat.money(total) if not uninsured.is_empty() else "ALL INSURED", all_reason,
+		func() -> String: return Insurance.insure(uninsured, trader.id))
+	insure_all.name = "InsureAllButton"
+	top.add_child(insure_all)
+	rows.add_child(top)
+	rows.add_child(HSeparator.new())
+	for entry: Dictionary in gear:
+		var item: ItemInstance = entry.item
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
+		row.add_child(_cell(item))
+		var name := Label.new()
+		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if item.insured:
+			name.text = "%s\n%s  ·  insured with %s" % [item.data.display_name, entry.where, Insurance.insurer_name(item.insurer)]
+			name.theme_type_variation = &"DimLabel"
+			row.add_child(name)
+		else:
+			var price := Insurance.price(item, trader.id)
+			name.text = "%s\n%s  ·  %s" % [item.data.display_name, entry.where, UiFormat.money(price)]
+			row.add_child(name)
+			row.add_child(_action_button("INSURE", "Not enough roubles" if GameState.roubles < price else "",
+				func() -> String: return Insurance.insure([item], trader.id)))
+		rows.add_child(row)
+	if gear.is_empty():
+		rows.add_child(_note("You carry nothing that can be insured: guns, weapon parts, armor, helmets, rigs, backpacks and melee weapons."))
 
 
 ## The gun you'd raid with (in hand), or null.
