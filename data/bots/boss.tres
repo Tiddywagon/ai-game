@@ -30,4 +30,5 @@ roll_to_cover_chance = 0.6
 melee_range = 1.6
 health_multiplier = 1.8
 pushes = true
+haunt_radius = 25.0
 extra_loot = ExtResource("2_body")

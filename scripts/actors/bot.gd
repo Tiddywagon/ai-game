@@ -7,13 +7,16 @@ extends Actor
 ## A simple state machine: IDLE (stands and looks around) and PATROL (walks to the next point: a random
 ## one of its zone's, `wander_points`, sometimes a hot point of interest, or the next stop of a fixed
 ## `patrol_points` route); INVESTIGATE a noise it heard (footsteps by how the actor moves: sprinting is
-## loud, crouching quiet; gunshots far) and SEARCH where a target was last seen; COMBAT (cover, peek
-## and shoot with its profile's inaccuracy, reload ducked, sometimes flank: BotProfile.flank_chance);
+## loud, crouching quiet, and it walks over carefully; a gunshot or explosion carries far, and it runs
+## there and calls the Scavs of its zone nearby to come too) and SEARCH where a target was last seen;
+## COMBAT (cover, peek and shoot with its profile's inaccuracy, reload ducked, sometimes flank:
+## BotProfile.flank_chance);
 ## LOOT (out of a fight, walks to loose loot or a ready event crate nearby and takes it); FLEE (low HP:
 ## runs for cover away from the threat and treats itself with what it carries, then fights on);
 ## EXTRACT. Pathfinding is the map's NavigationRegion3D (NavigationAgent3D).
 ## A boss and its guards are a squad (BossSpawn): they share targets, guards stay with the boss, and in
-## a fight they push as a group (BotProfile.pushes). They never leave the raid.
+## a fight they push as a group (BotProfile.pushes). They never leave the raid, and raid events don't
+## pull them off their haunt, nor a fight they hear farther off (BotProfile.haunt_radius).
 ## Late in the raid it heads for an extract it can use (DESIGN.md §5: the same extracts as the player,
 ## RaidConfig says when) and leaves the raid after standing in it for the extract time; a fight or a hit
 ## interrupts it. Up close (its profile's melee_range) a bot carrying a melee weapon swings it instead of
@@ -26,6 +29,9 @@ const ARRIVE_DISTANCE := 0.3
 const SPRINT_DISTANCE := 3.0
 ## Seconds spent looking around at a noise or the target's last known position.
 const LOOK_AROUND_TIME := 4.0
+## Noises that alarm a bot: it runs (sprints) to investigate and alerts its zone (BotProfile.alert_radius).
+## Anything else (footsteps, a roll) it walks over to carefully.
+const ALARMING_NOISES: Array[StringName] = [&"gunshot", &"explosion"]
 ## High-contrast outline colours (Settings > Accessibility): hostile to the player, or not.
 const HOSTILE_OUTLINE := Color(1.0, 0.3, 0.15)
 const NEUTRAL_OUTLINE := Color(0.3, 0.85, 1.0)
@@ -67,6 +73,10 @@ const STUCK_PROGRESS := 0.5
 @export var patrol_points: PackedVector3Array
 ## Points it wanders between, in random order (a ScavZone's): used instead of patrol_points if set.
 @export var wander_points: PackedVector3Array
+## The Scav zone it belongs to: a Scav placed in the scene roams this zone's points (when it has no
+## wander_points or patrol_points of its own); ScavZone sets it on the Scavs it spawns. Gunshots alert
+## the Scavs of the same zone.
+@export var zone: ScavZone
 ## Untick to freeze the bot in place (it still takes damage).
 @export var ai_enabled := true
 
@@ -85,8 +95,10 @@ var extract_at := -1.0
 var extracted := false
 ## A boss's squad: the boss and its guards (the same array for all of them; empty for other bots), and
 ## a guard's boss. Set by BossSpawn; `title` is a boss's or guard's name ("" for a plain Scav or PMC).
+## `boss_spawn` is the squad's haunt (near_haunt()).
 var squad: Array[Bot] = []
 var leader: Bot
+var boss_spawn: BossSpawn
 var title := ""
 ## What it has picked up (item names), how often it flanked and what it treated itself with.
 var looted: Array[String] = []
@@ -94,7 +106,11 @@ var flanks := 0
 var treated: Array[String] = []
 ## How often it gave up on getting somewhere it was stuck on the way to.
 var stuck_count := 0
+## The Scav wave that brought it (RaidController.spawn_wave(); 0: none). A wave counts as its zone.
+var wave := 0
 
+## Investigating something alarming (a gunshot): it runs there instead of walking.
+var _urgent := false
 var _sees_target := false
 var _seen_time := 0.0
 var _lost_time := 0.0
@@ -169,6 +185,8 @@ func _ready() -> void:
 		if profile and profile.extra_loot:
 			inventory.add_loot(profile.extra_loot, rng)
 	_equip_kit_gun()
+	if zone and wander_points.is_empty() and patrol_points.is_empty():
+		wander_points = zone.patrol_points()
 	weapon.reload_finished.connect(_on_reload_finished)
 	NoiseSystem.noise_emitted.connect(_on_noise)
 	Settings.applied.connect(_update_outline)
@@ -368,12 +386,14 @@ func on_bullet_near(shooter: Actor) -> void:
 		_dodge(shooter.global_position)
 
 
-## Heads for a raid event at `point` (RaidEvents): it goes there and looks around.
+## Heads for a raid event at `point` (RaidEvents): it goes there and looks around. A boss and its
+## guards stay on their haunt.
 func rush_to(point: Vector3) -> void:
-	if is_dead or not ai_enabled or state == State.COMBAT or state == State.FLEE or is_guard():
+	if is_dead or not ai_enabled or state == State.COMBAT or state == State.FLEE or not squad.is_empty():
 		return
 	_point_of_interest = point
 	_look_timer = 0.0
+	_urgent = false
 	state = State.INVESTIGATE
 
 
@@ -430,7 +450,11 @@ func vision_cones() -> Array[Vector3]:
 	return cones
 
 
-func _on_noise(noise_position: Vector3, radius: float, source: Node, _kind: StringName) -> void:
+## A noise from a hostile actor within earshot (its radius × the bot's hearing): out of a fight it goes
+## to investigate. Footsteps and the like it walks over to carefully; a gunshot or explosion
+## (ALARMING_NOISES) it runs to, calling the Scavs of its zone within its alert radius to come too. A
+## boss and its guards only go after noises near their haunt (near_haunt()).
+func _on_noise(noise_position: Vector3, radius: float, source: Node, kind: StringName) -> void:
 	if is_dead or not ai_enabled or source == self:
 		return
 	var other := source as Actor
@@ -441,10 +465,53 @@ func _on_noise(noise_position: Vector3, radius: float, source: Node, _kind: Stri
 	if state == State.COMBAT or state == State.FLEE:
 		if other == target and not _sees_target:
 			_last_known = noise_position
-	else:
-		_point_of_interest = noise_position
-		_look_timer = 0.0
-		state = State.INVESTIGATE
+		return
+	if not near_haunt(noise_position):
+		return  # A fight away from its haunt doesn't draw a boss squad off it.
+	var alarming := kind in ALARMING_NOISES
+	if state == State.INVESTIGATE and _urgent and not alarming:
+		return  # Already running to a gunshot: a footstep doesn't change that.
+	investigate(noise_position, alarming)
+	if alarming:
+		_alert_zone(noise_position)
+
+
+## True if `point` is within its profile's haunt_radius of its haunt (boss_spawn): the only noises a
+## boss or guard leaves the haunt for (DESIGN.md §4.3). Always true for other bots.
+func near_haunt(point: Vector3) -> bool:
+	if boss_spawn == null or profile == null or profile.haunt_radius <= 0.0:
+		return true
+	return point.distance_to(boss_spawn.global_position) <= profile.haunt_radius
+
+
+## Goes to look at `point` (INVESTIGATE): running if `urgent`, walking otherwise.
+func investigate(point: Vector3, urgent := false) -> void:
+	_point_of_interest = point
+	_look_timer = 0.0
+	_urgent = urgent
+	state = State.INVESTIGATE
+
+
+## True if `other` is a Scav of its zone (the same ScavZone, or the same wave).
+func same_zone(other: Bot) -> bool:
+	if other == self or other.side != side or not other.squad.is_empty():
+		return false
+	return (zone != null and other.zone == zone) or (zone == null and wave > 0 and other.wave == wave)
+
+
+## A gunshot it heard: the Scavs of its zone within its profile's alert_radius that aren't fighting run
+## there too.
+func _alert_zone(point: Vector3) -> void:
+	if profile == null or profile.alert_radius <= 0.0 or not squad.is_empty():
+		return
+	for node in get_tree().get_nodes_in_group("bots"):
+		var mate := node as Bot
+		if mate == null or mate.is_dead or not mate.ai_enabled or not same_zone(mate):
+			continue
+		if mate.state == State.COMBAT or mate.state == State.FLEE or mate.state == State.EXTRACT:
+			continue
+		if mate.global_position.distance_to(global_position) <= profile.alert_radius:
+			mate.investigate(point, true)
 
 
 # --- States ---------------------------------------------------------------------------------
@@ -676,14 +743,17 @@ func _nearest_extract() -> ExtractZone:
 	return best
 
 
-## Walks to the point of interest (a noise, or where the target was last seen) and looks around.
+## Walks to the point of interest (a noise, or where the target was last seen) and looks around. It
+## runs to something alarming (a gunshot) while it's more than SPRINT_DISTANCE away.
 func _do_investigate(delta: float) -> void:
 	if _look_timer > 0.0:
 		_look_around(delta)
 		if _look_timer <= 0.0:
+			_urgent = false
 			state = State.IDLE
 		return
-	if _move_to(_point_of_interest, false):
+	var far := global_position.distance_to(_point_of_interest) > SPRINT_DISTANCE
+	if _move_to(_point_of_interest, _urgent and far):
 		_look_timer = LOOK_AROUND_TIME
 
 
@@ -936,6 +1006,7 @@ func _leave_combat(next: State) -> void:
 	_set_goal_cover(null)
 	_wants_peek = false
 	_look_timer = 0.0
+	_urgent = false
 	state = next
 
 

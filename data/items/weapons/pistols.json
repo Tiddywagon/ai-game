@@ -1,4 +1,6 @@
 [
+  {"id": "drover_revolver", "name": "Drover revolver", "description": "Worn six-shot .45 ACP revolver out of a farmhouse drawer. Rust in the flutes and a heavy double-action pull, and every reload is six rounds by hand.", "category": "weapon", "rarity": "common", "size": [2, 1], "weight": 1.05, "value": 6500, "weapon": "res://data/weapons/drover_revolver.tres",
+   "stats": {"class": "pistol"}},
   {"id": "vektor_p9", "name": "Vektor P9", "description": "Polymer-frame 9x19 service pistol. Seventeen rounds, light trigger, takes a light and a mini sight.", "category": "weapon", "rarity": "uncommon", "size": [2, 1], "weight": 0.55, "value": 12800, "weapon": "res://data/weapons/vektor_p9.tres",
    "stats": {"class": "pistol"}},
   {"id": "bastion_45", "name": "Bastion 45", "description": "All-steel .45 ACP pistol of the old school. Eight heavy rounds that hit like a hammer.", "category": "weapon", "rarity": "rare", "size": [2, 1], "weight": 0.97, "value": 23900, "weapon": "res://data/weapons/bastion_45.tres",

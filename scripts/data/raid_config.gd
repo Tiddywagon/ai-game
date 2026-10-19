@@ -59,7 +59,8 @@ extends Resource
 @export_group("Scav waves")
 ## More Scavs turn up as the raid goes on (DESIGN.md §4): a wave of scav_wave_size Scavs every
 ## scav_wave_interval seconds (random between x and y), until scav_wave_until of the raid has passed
-## and while fewer than scav_max_alive Scavs are alive. A wave spawns at a point of a Scav zone or of
+## and while fewer than scav_max_alive Scavs are alive (a boss and its guards don't count: a boss raid
+## still gets its waves). A wave spawns at a point of a Scav zone or of
 ## a point of interest (hot ones, PointOfInterest.heat(), are likelier), at least
 ## scav_wave_min_distance from the player and out of their sight, and roams from there.
 @export var scav_wave_interval := Vector2(150.0, 240.0)

@@ -5,6 +5,8 @@ extends VBoxContainer
 ## between shots), for the gun as it is (grey while previewing) and with the change being previewed
 ## (amber), on the same side kicks so they compare fairly. Under it, the numbers before and after.
 
+## Shots shown for a gun that isn't automatic (fired as fast as it cycles), at most a magazine.
+const SEMI_AUTO_SHOTS := 8
 const BEFORE_COLOR := Color(0.75, 0.75, 0.72, 0.55)
 const AFTER_COLOR := Color(0.95, 0.75, 0.3)
 const GRID_COLOR := Color(1, 1, 1, 0.07)
@@ -34,8 +36,9 @@ func _ready() -> void:
 
 ## Shows `before` (the gun now) and, if given, `after` (the change being previewed).
 func show_builds(before: WeaponData, after: WeaponData = null) -> void:
-	var shots := mini(WeaponStats.CONFIG.pattern_shots, maxi(before.magazine_size, 1)) if before.automatic else 8
-	_title.text = "RECOIL PATTERN  ·  %d %s" % [shots, "rounds held" if before.automatic else "rounds, fast as it fires"]
+	var shots := mini(WeaponStats.CONFIG.pattern_shots if before.automatic else SEMI_AUTO_SHOTS, maxi(before.magazine_size, 1))
+	var how := " held" if before.automatic else ", fast as it fires"
+	_title.text = "RECOIL PATTERN  ·  %s" % ("1 round" if shots == 1 else "%d rounds%s" % [shots, how])
 	_canvas.before = WeaponStats.recoil_pattern(before, shots)
 	_canvas.after = WeaponStats.recoil_pattern(after, shots) if after else PackedVector2Array()
 	_canvas.queue_redraw()

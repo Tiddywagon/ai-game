@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BotKit" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="BotKit" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/bot_kit.gd" id="1_kit"]
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/armor.tres" id="2_armor"]
@@ -7,22 +7,14 @@
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/backpack.tres" id="5_backpack"]
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/loot.tres" id="6_loot"]
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/food.tres" id="7_food"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/gun.tres" id="8_gun"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/medkit.tres" id="9_medkit"]
 
 [resource]
 script = ExtResource("1_kit")
-weapons = {
-"ak_74n": 30.0,
-"partisan_sks": 16.0,
-"warden_870": 14.0,
-"mosin_rifle": 10.0,
-"pm_pistol": 12.0,
-"vektor_p9": 8.0,
-"tundra_47": 4.0,
-"hornet_smg": 3.0,
-"tempest_s12": 2.0,
-"svd": 1.0
-}
+gun_table = ExtResource("8_gun")
 spare_magazines = 3
+min_spare_rounds = 12
 armor_chance = 0.3
 armor_table = ExtResource("2_armor")
 helmet_chance = 0.3
@@ -36,3 +28,5 @@ melee_chance = 0.2
 loot_table = ExtResource("6_loot")
 food_table = ExtResource("7_food")
 bandage_chance = 0.5
+medkit_chance = 0.7
+medkit_table = ExtResource("9_medkit")

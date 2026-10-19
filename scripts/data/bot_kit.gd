@@ -1,15 +1,20 @@
 class_name BotKit
 extends Resource
-## What an AI bot spawns carrying (DESIGN.md §4): a gun from a weighted list with its everyday round and
-## a few magazines of spares, then each gear slot rolled from its own loot table with a chance (a Scav's
-## tables are mostly Common and Uncommon with a small chance of Rare), some loot in its pockets, rig and
-## backpack, always something to eat or drink, and sometimes a bandage. One .tres per kind of bot in
-## data/bots/ (scav_kit.tres).
+## What an AI bot spawns carrying (DESIGN.md §4): a gun rolled from its gun table (a rarity by weight,
+## then a gun of that rarity by its item weight: a Scav's is mostly Common and Uncommon, rarely Rare,
+## very rarely Ultra Rare) with its everyday round and a few magazines of spares, then each gear slot
+## rolled from its own loot table with a chance (a Scav's tables are mostly Common and Uncommon with a
+## small chance of Rare), some loot in its pockets, rig and backpack, always something to eat or drink,
+## often a medkit that restores HP (so it can heal when it flees) and sometimes a bandage. One .tres per
+## kind of bot in data/bots/ (scav_kit.tres).
 
-## Gun item id -> weight.
-@export var weapons: Dictionary = {}
-## Spare rounds: this many full magazines, in the rig (or pockets).
+## The gun: one item of this table (its items list names the guns, item_weights weigh them within their
+## rarity, rarity_weights pick the rarity).
+@export var gun_table: LootTable
+## Spare rounds: this many full magazines, in the rig (or pockets), and at least min_spare_rounds (a
+## single-shot gun's three "magazines" would be three shells).
 @export_range(0, 10) var spare_magazines := 3
+@export_range(0, 60) var min_spare_rounds := 12
 @export_range(0.0, 1.0, 0.05) var armor_chance := 0.3
 @export var armor_table: LootTable
 @export_range(0.0, 1.0, 0.05) var helmet_chance := 0.3
@@ -26,6 +31,9 @@ extends Resource
 ## Something to eat or drink, always (one item of this table).
 @export var food_table: LootTable
 @export_range(0.0, 1.0, 0.05) var bandage_chance := 0.5
+## Something that restores HP (one item of medkit_table: a small medkit) carried this often.
+@export_range(0.0, 1.0, 0.05) var medkit_chance := 0.7
+@export var medkit_table: LootTable
 
 
 ## A full kit, rolled with `rng`.
@@ -49,7 +57,7 @@ func build(rng: RandomNumberGenerator) -> Inventory:
 		var slot := "pistol" if str(data.stats.get("class", "")) == "pistol" else "primary"
 		inventory.equip(slot, gun)
 		if ammo != "" and data.weapon:
-			var spare := data.weapon.magazine_size * spare_magazines
+			var spare := maxi(data.weapon.magazine_size * spare_magazines, min_spare_rounds)
 			var stack := ItemDB.get_item(ammo).max_stack
 			while spare > 0:
 				var rounds := ItemInstance.create(ammo, mini(spare, stack))
@@ -61,20 +69,22 @@ func build(rng: RandomNumberGenerator) -> Inventory:
 			break
 	if rng.randf() < bandage_chance:
 		inventory.add(ItemInstance.create("bandage"))
+	if rng.randf() < medkit_chance and medkit_table:
+		var medkit := medkit_table.roll_item(rng)
+		if medkit:
+			inventory.add(ItemInstance.create(medkit.id))
 	if loot_table:
 		for item in loot_table.roll_items(rng):
 			inventory.add(item)
 	return inventory
 
 
-## A gun id picked by weight ("" if the list is empty).
+## A gun id rolled from the gun table ("" if there's none).
 func pick_weapon(rng: RandomNumberGenerator) -> String:
-	var ids: Array = weapons.keys().filter(func(id: String) -> bool: return ItemDB.has_item(id))
-	var weights := PackedFloat32Array()
-	for id in ids:
-		weights.append(float(weapons[id]))
-	var index := LootTable._pick(rng, weights)
-	return ids[index] if index >= 0 else ""
+	if gun_table == null:
+		return ""
+	var gun := gun_table.roll_item(rng)
+	return gun.id if gun and gun.weapon else ""
 
 
 static func _equip(inventory: Inventory, slot: String, table: LootTable, rng: RandomNumberGenerator) -> void:

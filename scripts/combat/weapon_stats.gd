@@ -276,7 +276,7 @@ static func rows(gun: ItemInstance, skills: Dictionary = {}) -> Array[Dictionary
 		_row("velocity", "Muzzle velocity", data.muzzle_velocity, "%d m/s" % data.muzzle_velocity, 1, -1.0),
 		_row("aim_time", "Aim time", aim_time, "%.2f s" % aim_time, -1, -1.0),
 		_row("noise", "Shot heard at", noise, "%d m" % roundi(noise), -1, clampf(noise / 120.0, 0.0, 1.0)),
-		_row("magazine", "Magazine", data.magazine_size, "%d rounds" % data.magazine_size if data.magazine_size > 0 else "None", 1, -1.0),
+		_row("magazine", "Magazine", data.magazine_size, ("%d round%s" % [data.magazine_size, "" if data.magazine_size == 1 else "s"]) if data.magazine_size > 0 else "None", 1, -1.0),
 		_row("fire_rate", "Fire rate", data.fire_rate, "%d rpm  ·  %s" % [data.fire_rate, "auto" if data.automatic else "semi"], 0, -1.0),
 		_row("weight", "Weight", data.weight, weight_text(data.weight), -1, -1.0),
 		_row("durability", "Durability", gun.durability, "%.1f / %.1f" % [gun.durability, gun.max_durability], 1,

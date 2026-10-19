@@ -210,11 +210,12 @@ func _announce(event: Dictionary) -> void:
 	NoiseSystem.emit_noise(event.at, config.event_noise_radius, null, &"event")
 
 
-## AI within earshot that isn't fighting may head for it (Scavs less keen than PMCs).
+## AI within earshot that isn't fighting may head for it (Scavs less keen than PMCs). A boss and its
+## guards stay on their haunt.
 func _call_ai(event: Dictionary) -> void:
 	for node in get_tree().get_nodes_in_group("bots"):
 		var bot := node as Bot
-		if bot == null or bot.is_dead or not bot.ai_enabled or bot.state == Bot.State.COMBAT:
+		if bot == null or bot.is_dead or not bot.ai_enabled or bot.state == Bot.State.COMBAT or not bot.squad.is_empty():
 			continue
 		if bot.global_position.distance_to(event.at) > config.event_noise_radius:
 			continue

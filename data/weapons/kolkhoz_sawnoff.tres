@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = "12ga"
+skill = "shotguns"
+weapon_class = "shotgun"
+fire_rate = 60
+automatic = false
+magazine_size = 1
+reload_time = 2.2
+empty_reload_time = 2.2
+vertical_recoil = 2.4
+horizontal_recoil = 0.8
+recoil_recovery = 5.5
+recovery_delay = 0.12
+camera_kick = 0.38
+base_spread = 2.0
+bloom_per_shot = 0.6
+max_bloom = 3.0
+bloom_recovery = 7.0
+bloom_delay = 0.3
+hip_spread = 0.8
+move_spread = 2.6
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.3
+platform = "kolkhoz"
+ergonomics = 58
+muzzle_velocity = 360
+slots = Array[Dictionary]([])
+default_mods = {}
+durability_per_shot = 0.08

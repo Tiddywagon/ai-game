@@ -22,6 +22,9 @@ extends Resource
 @export_range(0.0, 3.0, 0.05, "suffix:s") var reaction_time: float
 ## Without sight of the target for this long, the bot goes to search for it.
 @export_range(0.5, 30.0, 0.5, "suffix:s") var give_up_time: float
+## Hearing a gunshot (or an explosion) it runs to investigate and calls the Scavs of its zone within
+## this distance to come too (0: it calls nobody). Footsteps it walks over to on its own.
+@export_range(0.0, 60.0, 1.0, "suffix:m") var alert_radius := 0.0
 
 @export_group("Shooting")
 ## Aim error: random spread added to the gun's own spread and recoil.
@@ -72,6 +75,10 @@ extends Resource
 ## A boss squad pushes as a group: moving to new cover means moving closer to the threat, one member
 ## at a time while the rest keep it pinned down.
 @export var pushes := false
+## A boss or guard keeps to its haunt (its BossSpawn): out of a fight it only goes after noises this
+## close to it, so a fight farther off doesn't draw it away (DESIGN.md §4.3). 0: no limit. Only for a
+## boss squad.
+@export_range(0.0, 100.0, 1.0, "suffix:m") var haunt_radius := 0.0
 
 @export_group("Loot")
 ## Extra loot rolled into the bot's pack and pockets (a boss's body: data/loot_tables/boss_body.tres

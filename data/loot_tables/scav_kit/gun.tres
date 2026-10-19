@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "Scav gun"
+rarity_weights = PackedFloat32Array(28, 60, 11, 1, 0, 0)
+rarity_multipliers = PackedFloat32Array(1, 1, 1, 1, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray("kolkhoz_sawnoff", "drover_revolver", "partisan_sks", "warden_870", "pm_pistol", "mosin_rifle", "vektor_p9", "ak_74n", "tundra_47", "hornet_smg", "tempest_s12", "svd", "huntsman_700")
+item_weights = {
+"ak_74n": 30.0,
+"drover_revolver": 10.0,
+"hornet_smg": 3.0,
+"huntsman_700": 1.0,
+"kolkhoz_sawnoff": 12.0,
+"mosin_rifle": 10.0,
+"partisan_sks": 16.0,
+"pm_pistol": 12.0,
+"svd": 1.0,
+"tempest_s12": 2.0,
+"tundra_47": 4.0,
+"vektor_p9": 8.0,
+"warden_870": 14.0
+}
+item_count = Vector2i(1, 1)

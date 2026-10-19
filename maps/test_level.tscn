@@ -45,6 +45,7 @@
 [ext_resource type="Script" path="res://scripts/world/floor_hatch.gd" id="74_hatch"]
 [ext_resource type="Resource" path="res://data/loot_tables/containers/floor_stash.tres" id="75_stash"]
 [ext_resource type="Script" path="res://scripts/world/boss_spawn.gd" id="76_boss"]
+[ext_resource type="Script" path="res://scripts/world/scav_zone.gd" id="77_scav_zone"]
 
 [sub_resource type="Environment" id="Environment_level"]
 background_mode = 1
@@ -239,15 +240,57 @@ size = Vector3(8, 2.4, 8)
 [node name="Player" parent="." instance=ExtResource("5_player")]
 position = Vector3(-14, 0, 17)
 
-[node name="ScavPatrol" parent="." instance=ExtResource("6_bot")]
+[node name="NorthYard" type="Node3D" parent="."]
+position = Vector3(6, 0, -10)
+script = ExtResource("77_scav_zone")
+zone_name = "North yard"
+count = 0
+
+[node name="P1" type="Marker3D" parent="NorthYard"]
+position = Vector3(3, 0, -1)
+
+[node name="P2" type="Marker3D" parent="NorthYard"]
+position = Vector3(-3, 0, -1)
+
+[node name="P3" type="Marker3D" parent="NorthYard"]
+position = Vector3(-8, 0, 0)
+
+[node name="P4" type="Marker3D" parent="NorthYard"]
+position = Vector3(0, 0, 1.5)
+
+[node name="P5" type="Marker3D" parent="NorthYard"]
+position = Vector3(7, 0, -0.5)
+
+[node name="EastYard" type="Node3D" parent="."]
+position = Vector3(16, 0, -4)
+script = ExtResource("77_scav_zone")
+zone_name = "East yard"
+count = 0
+
+[node name="P1" type="Marker3D" parent="EastYard"]
+position = Vector3(0, 0, -8)
+
+[node name="P2" type="Marker3D" parent="EastYard"]
+position = Vector3(0, 0, 2)
+
+[node name="P3" type="Marker3D" parent="EastYard"]
+position = Vector3(1.5, 0, -3)
+
+[node name="P4" type="Marker3D" parent="EastYard"]
+position = Vector3(-2, 0, 1)
+
+[node name="P5" type="Marker3D" parent="EastYard"]
+position = Vector3(0, 0, 9)
+
+[node name="ScavPatrol" parent="." node_paths=PackedStringArray("zone") instance=ExtResource("6_bot")]
 position = Vector3(9, 0, -11)
 profile = ExtResource("7_scav")
-patrol_points = PackedVector3Array(9, 0, -11, 3, 0, -11)
+zone = NodePath("../NorthYard")
 
-[node name="ScavEast" parent="." instance=ExtResource("6_bot")]
+[node name="ScavEast" parent="." node_paths=PackedStringArray("zone") instance=ExtResource("6_bot")]
 position = Vector3(16, 0, -12)
 profile = ExtResource("7_scav")
-patrol_points = PackedVector3Array(16, 0, -12, 16, 0, -2)
+zone = NodePath("../EastYard")
 
 [node name="PMC" parent="." instance=ExtResource("6_bot")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -12, 0, -12)

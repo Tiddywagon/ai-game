@@ -29,3 +29,4 @@ roll_to_cover_chance = 0.5
 melee_range = 1.4
 health_multiplier = 1.3
 pushes = true
+haunt_radius = 25.0

@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+caliber = ".45 ACP"
+skill = "pistols"
+weapon_class = "pistol"
+fire_rate = 180
+automatic = false
+magazine_size = 6
+reload_time = 3.4
+empty_reload_time = 3.6
+vertical_recoil = 1.5
+horizontal_recoil = 0.6
+recoil_recovery = 8.0
+recovery_delay = 0.08
+camera_kick = 0.12
+base_spread = 1.1
+bloom_per_shot = 1.0
+max_bloom = 5.0
+bloom_recovery = 10.0
+bloom_delay = 0.25
+hip_spread = 1.3
+move_spread = 3.5
+sprint_spread = 2.0
+roll_spread = 6.0
+sway = 0.16
+platform = "drover"
+ergonomics = 64
+muzzle_velocity = 240
+slots = Array[Dictionary]([])
+default_mods = {}
+durability_per_shot = 0.05
