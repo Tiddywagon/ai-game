@@ -111,8 +111,9 @@ func text() -> String:
 	lines.append("AI: %d Scavs, %d PMCs alive  ·  heading out: %s  ·  left: %s" % [scavs, pmcs,
 		", ".join(leaving) if not leaving.is_empty() else "none",
 		", ".join(raid.ai_extracts.map(func(entry: Dictionary) -> String: return "%s (%s)" % [entry.name, entry.extract])) if not raid.ai_extracts.is_empty() else "none"])
-	lines.append("Boss: %s  ·  Scav waves: %d so far, %s" % [boss_text(), raid.waves,
-		"next at %d:%02d" % [int(raid.next_wave) / 60, int(raid.next_wave) % 60] if raid.next_wave >= 0.0 else "no more"])
+	lines.append("Boss: %s  ·  Scav waves: %d so far, %s (%d of %d Scavs alive, the boss squad not counted)" % [boss_text(), raid.waves,
+		"next at %d:%02d" % [int(raid.next_wave) / 60, int(raid.next_wave) % 60] if raid.next_wave >= 0.0 else "no more",
+		raid.scavs_alive(), raid.config.scav_max_alive])
 	var doing := {}
 	for bot: Bot in get_tree().get_nodes_in_group("bots"):
 		if not bot.is_dead:

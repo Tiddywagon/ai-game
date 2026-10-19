@@ -380,6 +380,11 @@ func _build_slots() -> void:
 		_slots.remove_child(child)
 		child.queue_free()
 	_slot_views.clear()
+	if WeaponMods.slots_of(gun).is_empty():
+		var none := Label.new()
+		none.theme_type_variation = &"DimLabel"
+		none.text = "No slots: nothing fits this gun."
+		_slots.add_child(none)
 	for entry in WeaponMods.walk(gun):
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 10)
@@ -461,6 +466,8 @@ func _build_parts() -> void:
 		note.custom_minimum_size.x = 500
 		note.text = "No parts you own fit %s. Tinker sells them; weapon boxes and duffle bags hold them, and guns you find carry theirs." \
 			% ("this slot" if _selected_path != "" else "this gun")
+		if WeaponMods.slots_of(gun).is_empty():
+			note.text = "This gun takes no parts."  # A junk gun (the sawn-off, the revolver).
 		_parts.add_child(note)
 
 

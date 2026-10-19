@@ -262,10 +262,11 @@ static func starter() -> Inventory:
 
 
 ## A random Scav kit (DESIGN.md §4, §16.3), rolled from data/bots/scav_kit.tres (BotKit): a cheap gun
-## (mostly an AK-74N, SKS, pump shotgun, Mosin or pistol; rarely something better) with its everyday
-## round and three magazines of spares, a rig, sometimes armor, a helmet, a backpack or a hatchet (mostly
-## Common and Uncommon, a small chance of Rare), something to eat or drink, often a bandage, and odds and
-## ends. Nothing from the stash. Also what AI Scavs carry (and drop): Scav bodies are one of the best
+## (mostly a Common or Uncommon one: a sawn-off, a revolver, an SKS, a pump shotgun, a Mosin or a
+## pistol; sometimes an AK-74N or another Rare gun, very rarely better) with its everyday round and three
+## magazines of spares, a rig, sometimes armor, a helmet, a backpack or a hatchet (mostly Common and
+## Uncommon, a small chance of Rare), something to eat or drink, often a small medkit and a bandage, and
+## odds and ends. Nothing from the stash. Also what AI Scavs carry (and drop): Scav bodies are one of the best
 ## places for food (DESIGN.md §13.7).
 static func scav(rng: RandomNumberGenerator = null) -> Inventory:
 	if rng == null:

@@ -4,9 +4,11 @@ extends Node3D
 ## it rolls the boss's chance (35%; seeded by the raid; GameState.raid "boss": true or false forces it)
 ## and if it comes up, the boss stands here with 2-4 guards at its Marker3D children (its haunt, which
 ## the boss then wanders, the guards staying with it). Boss and guards are a squad: they share targets
-## and push as a group (Bot). The boss is tougher (data/bots/boss.tres; guards: guard.tres), wears
-## class 5-6 armor and always carries Epic or Legendary loot. Place it before the RaidController, so
-## the player's spawn keeps away from the squad.
+## and push as a group (Bot), and raid events don't pull them away from here, nor a fight they hear
+## farther than their profile's haunt_radius from here (Bot.near_haunt()). The boss is tougher
+## (data/bots/boss.tres; guards: guard.tres), wears class 5-6 armor (guards 4-5) and always carries its
+## unique and Epic or Legendary loot (BossTable.add_boss_loot()). Place it before the RaidController,
+## so the player's spawn keeps away from the squad.
 
 const BOT_SCENE := preload("res://scenes/actors/bot.tscn")
 const BOSS_PROFILE := preload("res://data/bots/boss.tres")
@@ -16,7 +18,7 @@ const GUARD_PROFILE := preload("res://data/bots/guard.tres")
 @export var map_id := ""
 
 ## This raid's boss and guards (null and empty if the boss didn't show), its entry, and the guaranteed
-## loot it carries.
+## loot it carries (its unique first).
 var boss: Bot
 var guards: Array[Bot] = []
 var entry := {}
@@ -85,6 +87,7 @@ func _make(profile: BotProfile, title: String, kit: Inventory, at: Vector3) -> B
 	bot.profile = profile
 	bot.title = title
 	bot.inventory = kit
+	bot.boss_spawn = self
 	bot.position = at
 	add_child(bot)
 	return bot

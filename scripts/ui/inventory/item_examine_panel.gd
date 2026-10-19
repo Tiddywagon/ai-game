@@ -460,7 +460,7 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Type", gun.class_title()])
 		lines.append(["Caliber", "%s (%d round types)" % [gun.caliber, ItemDB.ammo_of(gun.caliber).size()]])
 		lines.append(["Fire rate", "%d rpm, %s" % [gun.fire_rate, "automatic" if gun.automatic else "semi-automatic"]])
-		lines.append(["Magazine", "%d rounds" % gun.magazine_size if gun.magazine_size > 0 else "none fitted"])
+		lines.append(["Magazine", ("%d round%s" % [gun.magazine_size, "" if gun.magazine_size == 1 else "s"]) if gun.magazine_size > 0 else "none fitted"])
 		lines.append(["Reload", "%.1f s (empty %.1f s)" % [gun.reload_time, gun.empty_reload_time]])
 		lines.append(["Recoil", "%.2f° climb, ±%.2f° side a shot, recovers %.1f / s" % [gun.vertical_recoil, gun.horizontal_recoil, gun.recoil_recovery]])
 		lines.append(["Spread", "%.2f° aimed, +%.2f° from the hip, +%.2f° a shot up to +%.1f°" % [gun.base_spread, gun.hip_spread,

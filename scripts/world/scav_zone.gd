@@ -1,7 +1,9 @@
 class_name ScavZone
 extends Node3D
 ## Where AI Scavs spawn and roam (DESIGN.md §4, §5): at raid start `count` Scavs appear on random
-## points of the zone (its Marker3D children) and wander between them (Bot.wander_points). Scav waves
+## points of the zone (its Marker3D children) and wander between them (Bot.wander_points). Scavs placed
+## in the scene can belong to a zone too (Bot.zone: they wander its points; set `count` to 0 if they're
+## all it needs). A gunshot one of its Scavs hears brings the others nearby (Bot.same_zone()). Scav waves
 ## during the raid can spawn at its points too (RaidController.spawn_wave()). A player Scav's spawn points sit
 ## in these zones too (SpawnPoint, side Scav). Shown on the map item as a Scav area. Place zones before
 ## the RaidController in the scene, so its spawn choice knows where the Scavs are.
@@ -34,6 +36,7 @@ func _ready() -> void:
 		var bot: Bot = BOT_SCENE.instantiate()
 		bot.name = "%s_Scav%d" % [name, i + 1]
 		bot.profile = profile
+		bot.zone = self
 		bot.wander_points = points
 		bot.position = start + Vector3(rng.randf_range(-0.4, 0.4), 0, rng.randf_range(-0.4, 0.4))
 		add_child(bot)

@@ -13,6 +13,7 @@ sprint_speed = 5.0
 hearing = 1.0
 reaction_time = 0.8
 give_up_time = 6.0
+alert_radius = 20.0
 spread_degrees = 2.8
 recoil_control = 0.3
 burst_time = 0.3

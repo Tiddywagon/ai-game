@@ -1,5 +1,5 @@
 {
-  "_comment": "One boss per map (DESIGN.md §4.3), loaded by BossTable. chance: odds the boss is in a raid; guards: how many guards (x to y). boss/guard: weapons (gun id -> its round), armor/helmet (ids, one picked), rig, backpack, sidearm (gun id -> round), melee, meds. loot_focus: POI focus tags (PoiTable.FOCUS) that theme the boss's guaranteed Epic/Legendary loot (data/loot_tables/boss_loot.tres).",
+  "_comment": "One boss per map (DESIGN.md §4.3), loaded by BossTable (checked on load: BossTable.problems()). chance: odds the boss is in a raid; guards: how many guards (x to y); guard_name and guard_plural (optional, else guard_name + s). boss/guard: weapons (gun id -> its round), armor/helmet (ids, one picked; class 5+ for a boss, 4+ for guards), rig, backpack, sidearm (gun id -> round), melee, meds. loot_focus: POI focus tags (PoiTable.FOCUS) that theme the boss's guaranteed Epic/Legendary loot (data/loot_tables/boss_loot.tres); each needs an Epic/Legendary item there or the unique to match it. unique: the Legendary item (loot_weight 0) only this boss carries, always.",
   "maps": {
     "test_yard": {
       "id": "krane",
@@ -10,6 +10,7 @@
       "guards": [2, 3],
       "guard_name": "Instructor",
       "loot_focus": ["intel", "military"],
+      "unique": "drillmaster_whistle",
       "boss": {
         "weapons": {"sentinel_ar": "ammo_556_epr"},
         "sidearm": {"bastion_45": "ammo_45_match"},
@@ -21,7 +22,7 @@
       },
       "guard": {
         "weapons": {"tundra_47": "ammo_762x39_us", "hornet_smg": "ammo_9x19_ap", "partisan_sks": "ammo_762x39_t45"},
-        "armor": ["armor_6b23", "armor_mmac"],
+        "armor": ["armor_6b23", "gzhel_armor"],
         "helmet": ["zsh_helmet", "fast_helmet"],
         "rig": "rig_triton",
         "backpack": "pack_mbss",
@@ -36,7 +37,8 @@
       "chance": 0.35,
       "guards": [2, 4],
       "guard_name": "Stoker",
-      "loot_focus": ["tools", "fuel", "electronics"],
+      "loot_focus": ["tools", "electronics"],
+      "unique": "furnace_king_wrench",
       "boss": {
         "weapons": {"tempest_s12": "ammo_12ga_flechette"},
         "armor": ["armor_zabralo"],
@@ -49,7 +51,7 @@
       "guard": {
         "weapons": {"warden_870": "ammo_12ga_slug", "brigand_45": "ammo_45_match", "hornet_smg": "ammo_9x19_ap"},
         "armor": ["armor_6b23", "gzhel_armor"],
-        "helmet": ["zsh_helmet", "kiver_helmet"],
+        "helmet": ["zsh_helmet", "fast_helmet"],
         "rig": "rig_triton",
         "backpack": "pack_daypack",
         "melee": "hatchet",
@@ -64,7 +66,9 @@
       "chance": 0.35,
       "guards": [3, 4],
       "guard_name": "Toll man",
+      "guard_plural": "Toll men",
       "loot_focus": ["currency", "valuables"],
+      "unique": "tollkeeper_cash_brick",
       "boss": {
         "weapons": {"grizzly_74": "ammo_545_bt"},
         "sidearm": {"strelka_mp": "ammo_9x18_pbm"},
@@ -76,7 +80,7 @@
       },
       "guard": {
         "weapons": {"ak_74n": "ammo_545_bt", "tundra_47": "ammo_762x39_us", "tempest_s12": "ammo_12ga_slug"},
-        "armor": ["armor_6b23", "gzhel_armor", "armor_mmac"],
+        "armor": ["armor_6b23", "gzhel_armor", "armor_korund"],
         "helmet": ["zsh_helmet", "fast_helmet"],
         "rig": "rig_triton",
         "backpack": "pack_mbss",
@@ -91,7 +95,8 @@
       "chance": 0.35,
       "guards": [2, 3],
       "guard_name": "Trapper",
-      "loot_focus": ["food", "weapons", "tools"],
+      "loot_focus": ["weapons", "gear"],
+      "unique": "snow_leopard_pelt",
       "boss": {
         "weapons": {"huntsman_700": "ammo_762x51_m62"},
         "sidearm": {"bastion_45": "ammo_45_match"},
@@ -104,7 +109,7 @@
       "guard": {
         "weapons": {"partisan_sks": "ammo_762x39_us", "mosin_rifle": "ammo_762x54r_t46", "warden_870": "ammo_12ga_magnum"},
         "armor": ["armor_6b23", "gzhel_armor"],
-        "helmet": ["kiver_helmet", "fast_helmet"],
+        "helmet": ["zsh_helmet", "fast_helmet"],
         "rig": "rig_triton",
         "backpack": "pack_trizip",
         "meds": ["car_medkit", "army_bandage"]
@@ -119,6 +124,7 @@
       "guards": [3, 4],
       "guard_name": "Deckhand",
       "loot_focus": ["valuables", "currency"],
+      "unique": "undertow_pearl",
       "boss": {
         "weapons": {"halcyon_b5": "ammo_556_epr"},
         "sidearm": {"vektor_p9": "ammo_9x19_ap"},
@@ -141,11 +147,12 @@
       "id": "varn",
       "name": "Director Ilse Varn",
       "title": "the Last Director",
-      "theme": "Lab Zero's head of security, who sealed the doors on the day it went dark and never left. Her Cleaners erase intruders and anything they touched.",
+      "theme": "Lab Zero's head of security, who sealed the doors on the day it went dark and never left. Her Custodians erase intruders and anything they touched.",
       "chance": 0.35,
       "guards": [3, 4],
-      "guard_name": "Cleaner",
+      "guard_name": "Custodian",
       "loot_focus": ["intel", "medical", "electronics"],
+      "unique": "director_black_box",
       "boss": {
         "weapons": {"wasp_pdw": "ammo_9x19_pbp"},
         "sidearm": {"bastion_45": "ammo_45_ap"},

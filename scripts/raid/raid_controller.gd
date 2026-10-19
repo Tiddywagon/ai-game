@@ -292,16 +292,15 @@ func _place_player() -> void:
 
 
 ## A wave of Scavs (RaidConfig scav waves): 2-3 together at a spawn spot out of the player's sight,
-## roaming the points around it. Skipped (and tried again later) while too many Scavs are alive or
-## there's nowhere to spawn. Returns the Scavs it spawned.
+## roaming the points around it. Skipped (and tried again later) while too many Scavs are alive (a boss
+## and its guards don't count) or there's nowhere to spawn. Returns the Scavs it spawned.
 func spawn_wave() -> Array[Bot]:
 	var spawned: Array[Bot] = []
 	next_wave = elapsed + rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
 	if elapsed > raid_seconds() * config.scav_wave_until:
 		next_wave = -1.0
 		return spawned
-	var alive := get_tree().get_nodes_in_group("bots").filter(func(bot: Bot) -> bool:
-		return not bot.is_dead and bot.side == Actor.Side.SCAV).size()
+	var alive := scavs_alive()
 	var size := mini(rng.randi_range(config.scav_wave_size.x, config.scav_wave_size.y), config.scav_max_alive - alive)
 	var at: Variant = wave_spot()
 	if size <= 0 or at == null:
@@ -312,12 +311,20 @@ func spawn_wave() -> Array[Bot]:
 		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
 		bot.name = "Wave%d_Scav%d" % [waves, i + 1]
 		bot.profile = scav_profile
+		bot.wave = waves
 		bot.wander_points = roam
 		var angle := TAU * i / size
 		bot.position = at + Vector3(cos(angle), 0.0, sin(angle)) * 1.2
 		get_parent().add_child(bot)
 		spawned.append(bot)
 	return spawned
+
+
+## Ordinary Scavs alive (zone, wave and scene Scavs): what RaidConfig.scav_max_alive caps. A boss and
+## its guards (side Scav too) aren't counted, so a boss raid still gets its waves.
+func scavs_alive() -> int:
+	return get_tree().get_nodes_in_group("bots").filter(func(bot: Bot) -> bool:
+		return not bot.is_dead and bot.side == Actor.Side.SCAV and bot.squad.is_empty()).size()
 
 
 ## Where a Scav wave can spawn now: a Scav zone point (weight 1) or a point of interest (its heat:
