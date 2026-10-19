@@ -1,0 +1,113 @@
+{
+  "_comment": "The traders (DESIGN.md §10), read by TraderTable, in the order the TRADERS screen lists them. Each: id (offers.json, quests, insurers and saves use it), name, role, specialty (what they stock), personality (flavour), greetings (one is picked each visit to the TRADERS screen), currency (RUB or USD: what their prices are in), unique (what sets them apart), unlock (null: open from the start; {\"quest\": id}: trades once that quest is done), locked_greeting (with an unlock: what they say until then, instead of a greeting), max_loyalty (leave out for the top loyalty level in progression.json) and notice (optional: shown at the top of the BUY and BARTER tabs). Selling prices and restocks get their own fields when selling is built.",
+  "traders": [
+    {
+      "id": "bulat",
+      "name": "Bulat",
+      "role": "Weapons dealer",
+      "specialty": "Eastern and civilian guns, ammo, grenades, hunting rifles and shells",
+      "personality": "A gruff ex-army quartermaster who runs his depot out of a shipping container at the edge of the yard. He counts every round twice and writes it in a ledger older than you are. Heroes bore him; he respects people who come back alive.",
+      "greetings": [
+        "Back in one piece. Good. Now we talk.",
+        "Every round in this crate is counted. So are the ones you owe me.",
+        "Wipe your boots. Then tell me what you need."
+      ],
+      "currency": "RUB",
+      "unique": "Insurance: cheap, slow",
+      "unlock": null
+    },
+    {
+      "id": "vera",
+      "name": "Doc Vera",
+      "role": "Medic",
+      "specialty": "Meds, stims, food and drink",
+      "personality": "She was a field surgeon at the city hospital until the city stopped needing one; now she patches people up from what's left of its supply room. Tired and dry-humoured, she has seen every wound twice. Nothing makes her angrier than a wasted bandage.",
+      "greetings": [
+        "Sit. Show me where it hurts, then show me your money.",
+        "You again. At least you're walking this time.",
+        "Don't bleed on the counter. I just cleaned it."
+      ],
+      "currency": "RUB",
+      "unique": "Insurance: dearer, faster",
+      "unlock": null
+    },
+    {
+      "id": "zoya",
+      "name": "Auntie Zoya",
+      "role": "General goods and barter",
+      "specialty": "Tools, household goods, batteries, fuel, basic food, survival gear and cheap barters",
+      "personality": "Auntie Zoya has kept a market stall through two wars and a collapse, and she isn't stopping for this one. She trades anything for anything, never forgets a face and always knows who has what. Call her auntie and she might knock something off the price.",
+      "greetings": [
+        "Come, come, look. Everything is for sale, even the things that aren't.",
+        "Eat something first, you look like a ghost. Then we trade.",
+        "I heard you were coming. I hear everything."
+      ],
+      "currency": "RUB",
+      "unique": "Cheap barters · can introduce you to The Broker",
+      "unlock": null
+    },
+    {
+      "id": "stitch",
+      "name": "Stitch",
+      "role": "Gear and armor",
+      "specialty": "Armor, helmets, rigs, backpacks, headsets, cloth materials and gear upgrades",
+      "personality": "A quiet tailor who sews plate carriers from whatever you bring him, in a back room lit by one lamp. He measures twice, cuts once and never rushes a seam. If a strap sits crooked he will unpick the whole rig and start again.",
+      "greetings": [
+        "Arms up. Let me see how it sits.",
+        "Leave it on the table. I'll look at the stitching.",
+        "Mm. That rig is held together with hope. Sit."
+      ],
+      "currency": "RUB",
+      "unique": "Upgrades gear",
+      "unlock": null
+    },
+    {
+      "id": "tinker",
+      "name": "Tinker",
+      "role": "Mechanic",
+      "specialty": "Weapon parts, mods, magazines and sights",
+      "personality": "An obsessive gunsmith in a basement workshop full of half-built rifles, every one of them with a name. He talks to guns more than to people, and the guns seem to listen. Show him something rare and broken and he forgets you're in the room.",
+      "greetings": [
+        "Shh, she's nearly zeroed. Right. What do you want?",
+        "Put it on the bench. Barrel first. Gently.",
+        "Every gun has a story. Yours is a sad one. Let's fix it."
+      ],
+      "currency": "RUB",
+      "unique": "Gunsmith quests",
+      "unlock": null
+    },
+    {
+      "id": "mole",
+      "name": "Mole",
+      "role": "Fence",
+      "specialty": "Buys anything, at a low price; later sells used gear",
+      "personality": "A shifty dealer who works from a sewer junction under the yard, behind a curtain of dripping pipes. He asks no questions and takes anything, just never for much. He remembers who shoots Scavs and who leaves them be.",
+      "greetings": [
+        "No names. Show me what you've got.",
+        "Down here nobody asks where things come from. Me least of all.",
+        "Mind the water. And mind who followed you."
+      ],
+      "currency": "RUB",
+      "unique": "Buys anything (selling isn't open yet)",
+      "unlock": null,
+      "max_loyalty": 1,
+      "notice": "Selling isn't open yet. Once it is, Mole buys anything you bring him, at a low price; later he sells used gear too. Nothing to buy or barter here for now."
+    },
+    {
+      "id": "broker",
+      "name": "The Broker",
+      "role": "High-end dealer",
+      "specialty": "Western guns, top armor and optics, rare goods",
+      "personality": "A polished fixer who works from a hotel suite with the curtains drawn, in a pressed suit, with a glass of something he never drinks. He deals only with people who come recommended, and only in dollars. With him everything has a price, the introduction included.",
+      "greetings": [
+        "Please, sit. Auntie Zoya speaks well of you, and she rarely speaks well of anyone.",
+        "Dollars, of course. I don't handle paper that burns.",
+        "Discretion is the first thing I sell. The rest is on the list."
+      ],
+      "currency": "USD",
+      "unique": "Dollars only · unlocked by Auntie Zoya's introduction",
+      "unlock": {"quest": "zoya_introduction"},
+      "locked_greeting": "I don't believe we've been introduced. Come back when someone I trust has said your name."
+    }
+  ]
+}

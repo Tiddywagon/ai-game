@@ -6,7 +6,7 @@
 script = ExtResource("1_map")
 id = "test_yard"
 display_name = "Test Yard"
-description = "A walled practice yard with concrete, wood and metal cover, two Scavs and an AI PMC. Leave by the north-east gate, the smuggler's car (paid, no backpack) or, once Prapor trusts you, the signal point (fire a flare)."
+description = "A walled practice yard with concrete, wood and metal cover, two Scavs and an AI PMC. Leave by the north-east gate, the smuggler's car (paid, no backpack) or, once Bulat trusts you, the signal point (fire a flare)."
 order = 0
 size = "Small"
 raid_minutes = 15

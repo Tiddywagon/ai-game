@@ -153,7 +153,7 @@ func _ready() -> void:
 	_upgrade.name = "UpgradeButton"
 	_upgrade.text = "UPGRADE"
 	_upgrade.custom_minimum_size = Vector2(120, 36)
-	_upgrade.tooltip_text = "Raise its level at the Workbench or Ragman: more durability, room or hearing"
+	_upgrade.tooltip_text = "Raise its level at the Workbench or with Stitch: more durability, room or hearing"
 	_upgrade.pressed.connect(func() -> void: upgrade_requested.emit(item))
 	buttons.add_child(_upgrade)
 	_insure = Button.new()

@@ -1,6 +1,7 @@
 extends Node
 ## Main menu (DESIGN.md §16): a slowly panning dusk scene with ambient music, the title top-left,
-## the main buttons stacked on the left, the profile top-right and Settings bottom-right.
+## the main buttons stacked on the left, the profile top-right (faction, "LEVEL 10 · 36,250 / 39,500
+## XP" with a thin bar toward the next level, money) and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
 ## On first launch the player picks a faction, which creates the profile. After a raid's summary it
 ## opens straight on the hideout (GameState.menu_return). Insured items on their way back (Insurance)
@@ -13,7 +14,7 @@ const HIDEOUT_SCENE := preload("res://ui/hideout_screen.tscn")
 const TRADERS_SCENE := preload("res://ui/traders_screen.tscn")
 const SETTINGS_SCENE := preload("res://ui/settings_menu.tscn")
 const MUSIC_FADE_IN := 3.0
-## Seconds "Prapor returned 2 insured items to your stash" stays up.
+## Seconds "Bulat returned 2 insured items to your stash" stays up.
 const ARRIVAL_TIME := 8.0
 
 var _return_focus: Control
@@ -104,13 +105,15 @@ func _choose_faction(faction: int) -> void:
 func _refresh_profile() -> void:
 	var has_profile := GameState.faction != GameState.Faction.NONE
 	%FactionLabel.text = GameState.Faction.find_key(GameState.faction) if has_profile else ""
-	%LevelLabel.text = "LEVEL %d" % GameState.level if has_profile else ""
+	%LevelLabel.text = "LEVEL %d   ·   %s" % [GameState.level, Progression.xp_text(GameState.xp, GameState.level)] if has_profile else ""
+	%XpBar.value = Progression.level_progress(GameState.xp, GameState.level) * 100.0
+	%XpBar.visible = has_profile
 	%MoneyLabel.text = "%s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")] if has_profile else ""
 
 
 ## Delivers insurance returns that are due, on time whatever screen is open (grid views redraw when
 ## the stash changes, and a drag only moves its item when dropped), and updates the line under the
-## profile: "Prapor returned 2 insured items to your stash" for a while (also over an open screen),
+## profile: "Bulat returned 2 insured items to your stash" for a while (also over an open screen),
 ## else "Insurance returns in 1:42".
 func _check_insurance(delta: float) -> void:
 	if GameState.faction == GameState.Faction.NONE:

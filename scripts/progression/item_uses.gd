@@ -3,7 +3,8 @@ extends RefCounted
 ## What an item is needed for (DESIGN.md §6.5): the quests, hideout upgrades, trader barters, hideout
 ## crafts and gear upgrades that take it. Examining an item shows a "Needed for" line with the full list
 ## as its tooltip, and the hover text in the inventory sums it up. Quests already completed and hideout
-## levels already built drop out; barters, crafts and gear upgrades can be done again, so they stay.
+## levels already built drop out; barters, crafts and gear upgrades can be done again, so they stay (a
+## barter with a trader who doesn't trade with you yet says "(locked)").
 
 ## Kinds of use, in the order they're listed, with their names (one, many).
 const KINDS := {
@@ -26,7 +27,7 @@ static func of(id: String) -> Array[Dictionary]:
 			continue
 		for objective: Dictionary in quest.get("objectives", []):
 			if objective.get("type", "") == "hand_in" and objective.get("item", "") == id:
-				result.append(_use("quest", "%s (%s)" % [quest.name, str(quest.get("trader", "")).capitalize()], objective))
+				result.append(_use("quest", "%s (%s)" % [quest.name, TraderTable.display_name(str(quest.get("trader", "")))], objective))
 	for station in Hideout.stations():
 		for entry: Dictionary in station.levels:
 			if int(entry.level) <= Hideout.level(station):
@@ -34,11 +35,12 @@ static func of(id: String) -> Array[Dictionary]:
 			for requirement: Dictionary in entry.get("requires", []):
 				if requirement.get("item", "") == id:
 					result.append(_use("upgrade", "%s level %d" % [station.name, int(entry.level)], requirement))
-	for trader: String in GameState.TRADERS:
+	for trader: String in TraderTable.ids():
 		for barter: Dictionary in Trading.offers(trader).get("barters", []):
 			for give: Dictionary in barter.get("give", []):
 				if give.get("item", "") == id:
-					result.append(_use("barter", "%s → %s" % [trader.capitalize(), _output_text(barter.get("get", {}))], give))
+					result.append(_use("barter", "%s → %s%s" % [TraderTable.display_name(trader), _output_text(barter.get("get", {})),
+						TraderTable.locked_suffix(trader)], give))
 	for station in Hideout.stations():
 		for entry: Dictionary in station.levels:
 			for recipe: Dictionary in entry.get("crafts", []):
@@ -77,7 +79,7 @@ static func summary(id: String) -> String:
 
 
 ## Every use, one a line under a heading per kind, for the examine tooltip:
-## "Quests\n  Scrap Run (Prapor) — 3 needed, found in raid\nBarters\n  Therapist → CMS surgical kit — 1 needed".
+## "Quests\n  Scrap Run (Bulat) — 3 needed, found in raid\nBarters\n  Doc Vera → CMS surgical kit — 1 needed".
 static func tooltip(id: String) -> String:
 	var lines := []
 	var kind := ""

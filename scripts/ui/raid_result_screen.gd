@@ -2,10 +2,11 @@ extends CanvasLayer
 ## The raid summary (DESIGN.md §2, §16.5), after every raid: SURVIVED, RUN THROUGH, KILLED IN ACTION or
 ## MISSING IN ACTION; the map, side and time in raid; kills (by side); the loot you carried out (or
 ## lost) and its value; experience with where it came from (kills, looting, trick shots, extracting;
-## none for a Run Through); what happened to your gear (kept, lost, insured items coming back); and the
-## loot that is now found in raid, each with its checkmark turned solid. A Run Through or MIA explains
-## why nothing gained the checkmark. TO THE HIDEOUT goes back to the hideout (the profile is already
-## saved: loot, gear, found-in-raid status, quest progress).
+## none for a Run Through) and the level you reached if it went up ("Level 11 → 12"); what happened
+## to your gear (kept, lost, insured items coming back); and the loot that is now found in raid, each
+## with its checkmark turned solid. A Run Through or MIA explains why nothing gained the checkmark. TO
+## THE HIDEOUT goes back to the hideout (the profile is already saved: loot, gear, found-in-raid status,
+## quest progress, level).
 
 const MAIN_MENU := "res://ui/main_menu.tscn"
 const FADE_TIME := 0.5
@@ -67,7 +68,7 @@ func show_outcome(outcome: RaidOutcome, raid: RaidController) -> void:
 
 
 ## The summary rows, [name, value]: map, side, time, kills, loot, experience (and where it came from),
-## gear and insurance.
+## the level if it went up, gear and insurance.
 static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> Array:
 	var lines := []
 	var map := raid.map if raid else MapInfo.find(GameState.raid.get("map", ""))
@@ -91,6 +92,8 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 			var amount := int(outcome.xp_parts.get(part, 0))
 			if amount > 0:
 				lines.append(["    " + XP_PART_NAMES[part], "+%s" % UiFormat.thousands(amount)])
+	if outcome.level_after > outcome.level_before:
+		lines.append(["Level", "%d → %d" % [outcome.level_before, outcome.level_after]])
 	if outcome.trick_hits > 0:
 		lines.append(["Trick shots", "%d hits, %d kills  ·  +%d Drip" % [outcome.trick_hits, outcome.trick_kills, outcome.drip]])
 	if outcome.side == "scav":

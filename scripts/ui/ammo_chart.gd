@@ -135,11 +135,12 @@ static func signed_percent(value: float) -> String:
 	return ("%+d%%" % roundi(value)).replace("-", "−")
 
 
-## Where round `id` comes from: the traders that sell or barter it (with the loyalty level needed),
-## the hideout crafts that make it (with the station level), else loot only.
+## Where round `id` comes from: the traders that sell or barter it (with the loyalty level needed;
+## "(locked)" after one who doesn't trade with you yet), the hideout crafts that make it (with the
+## station level), else loot only.
 static func sources(id: String) -> Array[String]:
 	var result: Array[String] = []
-	for trader: String in GameState.TRADERS:
+	for trader: String in TraderTable.ids():
 		var offers := Trading.offers(trader)
 		var levels: Array[int] = []
 		for offer: Dictionary in offers.get("buy", []):
@@ -149,7 +150,7 @@ static func sources(id: String) -> Array[String]:
 			if str(Trading.barter_reward(offer).item) == id:
 				levels.append(Trading.offer_level(offer))
 		if not levels.is_empty():
-			result.append("%s LL%d" % [trader.capitalize(), levels.min()])
+			result.append("%s LL%d%s" % [TraderTable.display_name(trader), levels.min(), TraderTable.locked_suffix(trader)])
 	for station in Hideout.stations():
 		for entry in Hideout.all_crafts(station):
 			if str(entry[1].output.item) == id:

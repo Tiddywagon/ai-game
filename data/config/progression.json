@@ -1,0 +1,17 @@
+{
+  "_comment": "Player levels and trader loyalty (DESIGN.md §10, §15), read by Progression. level_xp: the total experience each level 1-50 needs (index 0 is level 1). The curve is 33,000 x ((level - 1) / 9) ^ 1.68, rounded: an extracted raid earns about 1,000-3,000 XP (raid.tres, poi.tres) and the quests add about 97,000 over a profile, so with about 2,000 XP a good raid level 10 comes after about 10 good raids, 15 after about 20, 25 after about 50, 35 after about 100 and 50 after about 250. loyalty: what each loyalty level above 1 needs with a trader (player level, reputation, roubles spent with them). dollar_rate: roubles a dollar counts as when a dollar purchase adds to money spent. reputation.barter: reputation each barter with a trader adds, up to reputation.barter_cap from barters per trader (quests add the rest; DESIGN.md §10 sums it up per trader).",
+  "level_xp": [
+    0, 800, 2650, 5200, 8450, 12500, 16500, 21500, 27000, 33000,
+    39500, 46000, 53500, 61000, 69500, 78000, 87000, 96000, 106000, 116000,
+    126000, 137000, 148000, 160000, 171000, 184000, 196000, 209000, 222000, 236000,
+    249000, 264000, 278000, 293000, 308000, 323000, 339000, 355000, 371000, 388000,
+    404000, 422000, 439000, 457000, 475000, 493000, 511000, 530000, 549000, 569000
+  ],
+  "loyalty": [
+    {"level": 2, "player_level": 15, "reputation": 0.20, "spent": 750000},
+    {"level": 3, "player_level": 25, "reputation": 0.35, "spent": 1500000},
+    {"level": 4, "player_level": 35, "reputation": 0.50, "spent": 2500000}
+  ],
+  "dollar_rate": 140,
+  "reputation": {"barter": 0.01, "barter_cap": 0.30}
+}

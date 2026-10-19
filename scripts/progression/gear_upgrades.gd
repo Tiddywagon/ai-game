@@ -1,6 +1,6 @@
 class_name GearUpgrades
 extends RefCounted
-## Gear upgrades (DESIGN.md §12.2): a trader (Ragman) or the hideout Workbench raises a piece of gear's
+## Gear upgrades (DESIGN.md §12.2): a trader (Stitch) or the hideout Workbench raises a piece of gear's
 ## level (ItemInstance.upgrade_level, +1 to +5) for roubles and barter items. The highest level depends
 ## on the item's rarity; how far a source can take it on its loyalty level or the Workbench's level.
 ## Armor (vests, armored rigs, helmets, face shields) gets more durability, lets less blunt damage
@@ -145,7 +145,10 @@ static func sources() -> Array[String]:
 	return result
 
 
+## "Workbench", or the trader's name (TraderTable).
 static func source_name(source: String) -> String:
+	if TraderTable.has(source):
+		return TraderTable.display_name(source)
 	return str(config().get("sources", {}).get(source, {}).get("name", source.capitalize()))
 
 

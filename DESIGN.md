@@ -24,7 +24,7 @@
 | 3 | **Loot** | Fight Scavs/PMCs, search containers & bodies (**F**), pick up loose items, complete in-raid quest objectives | Backpack fills |
 | 4a | **Extract** | Stand in an extract you can use for 7 s *(tune)* before the timer ends; a hit starts the count over. Every map has 1–3: always open, random, or conditional (a key, roubles, the power on, a flare fired, no backpack; some unlocked by quests). Section 5.1 | Fade out; keep everything carried; loot becomes found in raid |
 | 4b | **Die / MIA** | Killed, the raid timer runs out, or LEAVE RAID from the pause menu | Lose all gear except the secure container; insured items come back to the stash 1–2 real minutes later, unless someone took them off your body |
-| 5 | **Raid summary** | Every raid ends on the summary: outcome, map, side, time, kills, loot value, experience (with where it came from), gear and insurance, and what's now found in raid | Back to the hideout (everything already saved) |
+| 5 | **Raid summary** | Every raid ends on the summary: outcome, map, side, time, kills, loot value, experience (with where it came from) and the level you reached if it went up ("Level 11 → 12"), gear and insurance, and what's now found in raid | Back to the hideout (everything already saved) |
 
 **Retention rules** (built: `RaidOutcome`)
 
@@ -36,16 +36,16 @@
 | Experience | SURVIVED: everything earned plus 300 for extracting. **Run Through: none at all** (you keep the loot, but not as found in raid) | Kills, looting and trick shots count; no extract bonus |
 | Scav run | Everything the Scav carries goes to the stash (what doesn't fit is left behind) | Nothing from the stash was at risk |
 
-**Raid experience** *(tune, `data/config/raid.tres`, `data/config/poi.tres`)*: 100 per Scav kill, 300 per PMC kill, 1,000 per boss and 250 per boss guard (Section 4.3), 10 per item looted, 250 more per 360 trick-shot kill, 25 for each point of interest you explore for the first time (75 for a hidden one, 250 more when the whole map is explored; Section 5.2), 300 for extracting (SURVIVED). Added to the profile however the raid ends, except a Run Through, which earns nothing.
+**Raid experience** *(tune, `data/config/raid.tres`, `data/config/poi.tres`)*: 100 per Scav kill, 300 per PMC kill, 1,000 per boss and 250 per boss guard (Section 4.3), 10 per item looted, 250 more per 360 trick-shot kill, 25 for each point of interest you explore for the first time (75 for a hidden one, 250 more when the whole map is explored; Section 5.2), 300 for extracting (SURVIVED). Added to the profile however the raid ends, except a Run Through, which earns nothing. Experience raises your player level (Section 2.2).
 
-**Insurance** *(tune: `data/config/insurers.json`, `insurance_min_price` in `raid.tres`)*: before a raid, pay a trader to insure guns (with their parts), weapon parts, armor, helmets, rigs, backpacks and melee weapons. **INSURE GEAR** in the loadout check insures everything you'd bring that isn't yet, **INSURE** in an item's examine panel insures one item; the loadout check's insurer picker says who (saved with the profile). At the trader, Prapor's and Therapist's **INSURE** tab (TRADERS screen) says what they charge and how long returns take, lists every piece of gear on your character that can be insured (where it is, what it costs with them, or who already insures it) with **INSURE** for one item and **INSURE ALL** for the rest, shows what's on its way back from them (counting down), and **USE PRAPOR / USE THERAPIST** makes them the insurer INSURE GEAR pays. Insured items have a blue corner and say so (and with whom) when hovered or examined. Ammo, meds, food, barter goods, valuables and keys can't be insured; the secure container never needs it. Insurance lasts until the item comes back.
+**Insurance** *(tune: `data/config/insurers.json`, `insurance_min_price` in `raid.tres`)*: before a raid, pay a trader to insure guns (with their parts), weapon parts, armor, helmets, rigs, backpacks and melee weapons. **INSURE GEAR** in the loadout check insures everything you'd bring that isn't yet, **INSURE** in an item's examine panel insures one item; the loadout check's insurer picker says who (saved with the profile). At the trader, Bulat's and Doc Vera's **INSURE** tab (TRADERS screen) says what they charge and how long returns take, lists every piece of gear on your character that can be insured (where it is, what it costs with them, or who already insures it) with **INSURE** for one item and **INSURE ALL** for the rest, shows what's on its way back from them (counting down), and **USE BULAT / USE DOC VERA** makes them the insurer INSURE GEAR pays. Insured items have a blue corner and say so (and with whom) when hovered or examined. Ammo, meds, food, barter goods, valuables and keys can't be insured; the secure container never needs it. Insurance lasts until the item comes back.
 
 | Insurer | Cost (share of value, at least 1,000 ₽) | Back after (game time) | Real time |
 |---|---|---|---|
-| Prapor | 8% | 36–48 h | 1:30–2:00 |
-| Therapist | 15% | 24–30 h | 1:00–1:15 |
+| Bulat | 8% | 36–48 h | 1:30–2:00 |
+| Doc Vera | 15% | 24–30 h | 1:00–1:15 |
 
-Game time runs 24× real time for insurance: a game day is a real minute. When you die or go missing, your insured items are claimed: **killed**, each one is taken (gone for good) with a chance of 5% plus 12% for every hostile AI alive within 40 m of your body, at most 60%; **missing in action** nobody is there, so everything comes back. The rest is on its way: the raid summary says how many items, with whom and when ("2 insured items on the way back with Prapor: in your stash in 1:42", and "1 insured item taken off your body"). The main menu counts down ("Insurance returns in 1:12") and delivers them when due, whatever screen is open (the hideout, traders, the stash: grids redraw, and a drag only moves its item when dropped), saying so under the profile and, over an open screen, in a notice at the top for 8 s ("Prapor returned 2 insured items to your stash"); with a full stash they wait for room. During a raid they wait and arrive when you're back. One roll per insurer per claim, so a claim arrives together.
+Game time runs 24× real time for insurance: a game day is a real minute. When you die or go missing, your insured items are claimed: **killed**, each one is taken (gone for good) with a chance of 5% plus 12% for every hostile AI alive within 40 m of your body, at most 60%; **missing in action** nobody is there, so everything comes back. The rest is on its way: the raid summary says how many items, with whom and when ("2 insured items on the way back with Bulat: in your stash in 1:42", and "1 insured item taken off your body"). The main menu counts down ("Insurance returns in 1:12") and delivers them when due, whatever screen is open (the hideout, traders, the stash: grids redraw, and a drag only moves its item when dropped), saying so under the profile and, over an open screen, in a notice at the top for 8 s ("Bulat returned 2 insured items to your stash"); with a full stash they wait for room. During a raid they wait and arrive when you're back. One roll per insurer per claim, so a claim arrives together.
 
 ### 2.1 Found in Raid (FIR)
 
@@ -62,6 +62,25 @@ Game time runs 24× real time for insurance: a game day is a real minute. When y
 | Stash filter | **FIR only** (stash header, inventory and Character screen) dims everything else |
 | Requirements | Quest hand-ins, hideout upgrades and certain barters that require FIR only accept items with the checkmark; the requirement shows the same checkmark next to the item name. Requirements without it use non-FIR items first, so FIR items are kept |
 
+### 2.2 Player Level *(tune: `data/config/progression.json`)*
+
+Experience from raids (above) and quests (Section 11) adds up to a **player level**, 1 to 50. `GameState.add_xp()` is the one place experience is added: it raises the level as the total crosses each threshold (several levels at once if need be, with one `level_changed(old, new)` signal), never lowers it, and checks every trader's loyalty again (Section 10). The main menu profile shows "LEVEL 11 · 41,000 / 46,000 XP" with a thin bar toward the next level, the Character screen the level, the XP toward the next one and a bar, and the raid summary "Level 11 → 12" when a raid took you up. Trader loyalty levels 2–4 need player level 15, 25 and 35 (Section 10).
+
+The curve is 33,000 × ((level − 1) / 9)^1.68, rounded. It is calibrated on the real sources: a typical extracted raid earns 1,000–3,000 XP (a few Scav kills at 100, a PMC at 300, 20–40 items looted at 10, 300 for extracting, a point of interest or two; a boss 1,000 more), and the quests add about 97,000 over a profile. With about 2,000 XP a raid and the quests done as they come:
+
+| Level | Total XP | About |
+|---|---|---|
+| 2 | 800 | the first raid |
+| 5 | 8,450 | 3 good raids |
+| 10 | 33,000 | 10 good raids |
+| 15 | 69,500 | 20 raids (loyalty level 2) |
+| 20 | 116,000 | 33 raids |
+| 25 | 171,000 | 50 raids (LL3) |
+| 35 | 308,000 | 100 raids (LL4) |
+| 50 | 569,000 | 250 raids: a long-term goal |
+
+Saves keep the experience and the level; loading works the level out again from the experience and keeps the higher of the two, so old profiles that earned XP at level 1 get their level.
+
 ## 3. Factions
 
 Player chooses a PMC faction per character. Both are hostile to Scavs and to the other faction.
@@ -70,7 +89,7 @@ Player chooses a PMC faction per character. Both are hostile to Scavs and to the
 |---|---|---|
 | Background | Russian-backed PMC | Western private military contractor |
 | Starting gear bias | AK platform, Eastern armor | AR platform, Western armor |
-| Starting trader rep bonus | Prapor +0.05 | Peacekeeper +0.05 |
+| Starting trader rep bonus | Bulat +0.05 | Tinker +0.05 |
 | Exclusive quest line | "Motherland" chain | "Contract" chain |
 | Voice / dog tags | Russian | English |
 
@@ -158,7 +177,7 @@ Every map has **1 to 3 extracts**, and at least one of them is **always open** t
 |---|---|---|---|
 | Test Yard | North-east gate | Always open | — |
 | | Smuggler's car | Conditional | Pay 7,000 ₽ at the car; no backpack |
-| | Signal point | Conditional (quest) | Prapor's *Flare Path* done; fire a signal flare in it |
+| | Signal point | Conditional (quest) | Bulat's *Flare Path* done; fire a signal flare in it |
 | Customs Yard | Crossroads | Always open | — |
 | | Trailer park | Random | 50% |
 | | Scav checkpoint | Conditional | Scavs only |
@@ -170,7 +189,7 @@ Every map has **1 to 3 extracts**, and at least one of them is **always open** t
 | | Cellars | Conditional | Carry the Factory exit key (not used up); the power on (the boiler house switch) |
 | Shoreline Resort | Coastal road | Always open | — |
 | | Rock passage | Conditional | No backpack |
-| | Pier boat | Conditional (quest) | Skier's *Safe Harbour* done; pay 15,000 ₽ |
+| | Pier boat | Conditional (quest) | Auntie Zoya's *Safe Harbour* done; pay 15,000 ₽ |
 | Lab Zero | Main elevator | Always open | — |
 | | Parking gate | Conditional | The power on |
 | | Ventilation shaft | Conditional | No backpack, no body armor |
@@ -194,7 +213,7 @@ Every map has **1 to 3 extracts**, and at least one of them is **always open** t
 
 **AI uses the same extracts** (Section 4). AI PMCs head for the nearest extract they can use somewhere between 45% and 85% of the raid time; half of the AI Scavs leave, between 60% and 95% *(tune: `ai_pmc_extract_window`, `ai_scav_extract_chance`, `ai_scav_extract_window`)*. They stand in it for the same 7 s (a hit restarts the count, a fight interrupts it) and leave the raid with everything they carry. AI never pays, fires flares or uses quest extracts; conditional ones it uses once it meets them (the power is on, it has no backpack...). With none it can use, it carries on and tries again 30 s later.
 
-**Signal flares.** The Red signal flare (Common, Military) is in weapon boxes and crates, Prapor sells it at LL2 (17,000 ₽), and *Flare Path* hands out two.
+**Signal flares.** The Red signal flare (Common, Military) is in weapon boxes and crates, Bulat sells it at LL2 (17,000 ₽), and *Flare Path* hands out two.
 
 **Debug overlay** (**F12**, every raid map; hidden at start): the raid (map, side, seed, clock, power), your position and extract countdown, the AI (alive, heading for an extract with its progress, already left), and every extract with its id, type, what it takes and its state this raid: open or closed, known or unknown, locked behind a quest, paid, flare fired, and your mark.
 
@@ -204,7 +223,7 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 
 **Climate** (`climate`, `energy_drain_multiplier`, `hydration_drain_multiplier` in each map's `.tres`; Section 13.7): Shoreline Resort and Factory are **hot** (hydration drains ×1.5 and ×1.35, energy ×1.1), Woodland is **cold** (energy ×1.15, hydration ×0.9), the rest temperate. The HUD shows HOT or COLD next to the weather.
 
-**Test Yard** (playable): 15-minute raid, six spawn points, three extracts (Section 5.1): the **north-east gate** (always open), the **smuggler's car** by the west car (7,000 ₽, no backpack) and, once Prapor's *Flare Path* is done, the **signal point** in the north-west corner (fire a flare); one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour. Nine points of interest (Section 5.2), with the original ones: a **wrecked courier van** in the middle of the yard, a **shuttered bunker** on the north wall (its lever is on the west wall) and a **stash under the floorboards** behind the south hedge. In 35% of raids **Sergeant Major Hollis Krane** drills his Instructors by the field clinic (Section 4.3).
+**Test Yard** (playable): 15-minute raid, six spawn points, three extracts (Section 5.1): the **north-east gate** (always open), the **smuggler's car** by the west car (7,000 ₽, no backpack) and, once Bulat's *Flare Path* is done, the **signal point** in the north-west corner (fire a flare); one of each container type (crate, toolbox, jacket, weapon box, medical bag, safe, filing cabinet, duffle bag, a medicine cabinet and a lab cabinet in the north, a medical crate against the north wall, a PC and a server rack on the east wall, a chest of drawers on the west wall, and the food spots: a fridge and store shelf in the south-east corner, a gas station counter on the east wall, a kitchen cabinet on the west wall; rolled from their tables at raid start) and eight loose loot spots. Containers are placeholder shapes in each type's colour. Nine points of interest (Section 5.2), with the original ones: a **wrecked courier van** in the middle of the yard, a **shuttered bunker** on the north wall (its lever is on the west wall) and a **stash under the floorboards** behind the south hedge. In 35% of raids **Sergeant Major Hollis Krane** drills his Instructors by the field clinic (Section 4.3).
 
 **Factory** (playable, gray-box): a 60 × 48 m walled factory compound (`maps/factory.tscn`, written by a generator script so the layout is easy to redo), close quarters, 20-minute raids. North is the top of the screen.
 
@@ -234,9 +253,9 @@ The raid clock turns amber with 5 minutes left and red in the last minute.
 
 **Loot:** containers (filing cabinets and PCs in the offices, medicine and lab cabinets in the med bay and lab, toolboxes and crates on the floor, weapon boxes in the armory...) and loose loot spots, all of them spawn points of the Factory's 12 **points of interest** (Section 5.2), which decide which of them spawn this raid and how rare their loot is. The original ones: the **Foreman's stash** under the break room floor (hidden), the **generator bunker** behind the power-driven blast door in the boiler yard (hidden) and a **crashed supply truck** between the med bay and the warehouse.
 
-**Keys:** the Factory office key (Skier barter, LL2), the Factory lab key (Therapist barter, LL2) and the Factory exit key (Prapor, LL2) also turn up in filing cabinets.
+**Keys:** the Factory office key (Auntie Zoya barter, LL2), the Factory lab key (Doc Vera barter, LL2) and the Factory exit key (Bulat, LL2) also turn up in filing cabinets.
 
-**Map items** (`"type": "map"` items, tag `map`): the **Factory map** (Prapor, 10,000 ₽; filing cabinets; the guard's desk) and the **Test Yard map**. Carry a map of the map you're on and press **M** (or VIEW MAP when examining it) to open it: the layout (walls, low cover, floors, stairs, doors with locked ones marked, landmarks and area names, points of interest outlined in their tier's colour with their names, Scav zones in red), you, and your extracts with their marks and types ("Office window: Unknown · Random (40%)"); the legend lists the points of interest with their tier, which you've explored and what they need, under how much of the map you've explored. You can't shoot while it's open. Without one, M says "No map of Factory". Out of raid, VIEW MAP shows the layout and every extract.
+**Map items** (`"type": "map"` items, tag `map`): the **Factory map** (Bulat, 10,000 ₽; filing cabinets; the guard's desk) and the **Test Yard map**. Carry a map of the map you're on and press **M** (or VIEW MAP when examining it) to open it: the layout (walls, low cover, floors, stairs, doors with locked ones marked, landmarks and area names, points of interest outlined in their tier's colour with their names, Scav zones in red), you, and your extracts with their marks and types ("Office window: Unknown · Random (40%)"); the legend lists the points of interest with their tier, which you've explored and what they need, under how much of the map you've explored. You can't shoot while it's open. Without one, M says "No map of Factory". Out of raid, VIEW MAP shows the layout and every extract.
 
 ### 5.2 Points of Interest & Raid Events *(tune: `data/config/pois.json`, `data/config/poi.tres`)*
 
@@ -486,26 +505,26 @@ The starter arsenal: **22 guns** in seven classes, **10 calibers with 4–6 roun
 
 | Gun | Class | Inspired by | Caliber | Fire | Magazine | Ergonomics | Climb / side | Rarity | Where |
 |---|---|---|---|---|---|---|---|---|---|
-| PM pistol | Pistol | Soviet service pistol | 9x18 | 450 rpm semi | 8 | 70 | 1.0° / 0.55° | Uncommon | Prapor |
-| Vektor P9 | Pistol | Polymer-frame striker pistol | 9x19 | 450 rpm semi | 17 | 76 | 0.85° / 0.45° | Uncommon | Peacekeeper |
-| Bastion 45 | Pistol | All-steel .45 single-action | .45 ACP | 400 rpm semi | 8 | 68 | 1.25° / 0.55° | Rare | Peacekeeper |
-| Strelka MP | Pistol | Select-fire machine pistol with a holster stock | 9x18 | 750 rpm auto | 20 | 62 | 0.6° / 0.5° | Rare | Prapor |
-| Hornet SMG | SMG | Roller-delayed SMG | 9x19 | 800 rpm auto | 30 | 66 | 0.32° / 0.26° | Rare | Peacekeeper |
-| Brigand 45 | SMG | Polymer .45 SMG | .45 ACP | 600 rpm auto | 25 | 63 | 0.45° / 0.3° | Rare | Skier |
-| Wasp PDW | SMG | Short-stroke piston PDW | 9x19 | 850 rpm auto | 30 | 70 | 0.3° / 0.27° | Ultra Rare | Peacekeeper |
-| Warden 870 | Shotgun | Pump-action tube shotgun | 12ga | 70 rpm pump | 6 (tube) | 50 | 1.9° / 0.6° | Uncommon | Skier, Jaeger |
-| Tempest S12 | Shotgun | Semi-auto box-fed shotgun on an AK receiver | 12ga | 300 rpm semi | 5 | 46 | 1.6° / 0.55° | Rare | Skier |
-| AK-74N | Assault rifle | 5.45 Kalashnikov | 5.45x39 | 650 rpm auto | 30 | 50 | 0.55° / 0.35° | Rare | Prapor |
-| Tundra 47 | Assault rifle | 7.62x39 stamped Kalashnikov | 7.62x39 | 600 rpm auto | 30 | 46 | 0.72° / 0.42° | Rare | Prapor |
-| Sentinel AR | Assault rifle | Direct-impingement carbine | 5.56x45 | 800 rpm auto | 30 | 56 | 0.45° / 0.28° | Ultra Rare | Peacekeeper |
+| PM pistol | Pistol | Soviet service pistol | 9x18 | 450 rpm semi | 8 | 70 | 1.0° / 0.55° | Uncommon | Bulat |
+| Vektor P9 | Pistol | Polymer-frame striker pistol | 9x19 | 450 rpm semi | 17 | 76 | 0.85° / 0.45° | Uncommon | The Broker |
+| Bastion 45 | Pistol | All-steel .45 single-action | .45 ACP | 400 rpm semi | 8 | 68 | 1.25° / 0.55° | Rare | The Broker |
+| Strelka MP | Pistol | Select-fire machine pistol with a holster stock | 9x18 | 750 rpm auto | 20 | 62 | 0.6° / 0.5° | Rare | Bulat |
+| Hornet SMG | SMG | Roller-delayed SMG | 9x19 | 800 rpm auto | 30 | 66 | 0.32° / 0.26° | Rare | The Broker |
+| Brigand 45 | SMG | Polymer .45 SMG | .45 ACP | 600 rpm auto | 25 | 63 | 0.45° / 0.3° | Rare | Bulat |
+| Wasp PDW | SMG | Short-stroke piston PDW | 9x19 | 850 rpm auto | 30 | 70 | 0.3° / 0.27° | Ultra Rare | The Broker |
+| Warden 870 | Shotgun | Pump-action tube shotgun | 12ga | 70 rpm pump | 6 (tube) | 50 | 1.9° / 0.6° | Uncommon | Bulat |
+| Tempest S12 | Shotgun | Semi-auto box-fed shotgun on an AK receiver | 12ga | 300 rpm semi | 5 | 46 | 1.6° / 0.55° | Rare | Bulat |
+| AK-74N | Assault rifle | 5.45 Kalashnikov | 5.45x39 | 650 rpm auto | 30 | 50 | 0.55° / 0.35° | Rare | Bulat |
+| Tundra 47 | Assault rifle | 7.62x39 stamped Kalashnikov | 7.62x39 | 600 rpm auto | 30 | 46 | 0.72° / 0.42° | Rare | Bulat |
+| Sentinel AR | Assault rifle | Direct-impingement carbine | 5.56x45 | 800 rpm auto | 30 | 56 | 0.45° / 0.28° | Ultra Rare | The Broker |
 | Halcyon B5 | Assault rifle | Bullpup rifle | 5.56x45 | 700 rpm auto | 30 | 58 | 0.4° / 0.3° | Epic | Loot |
-| Partisan | DMR | Semi-auto carbine with a fixed 10-round magazine | 7.62x39 | 350 rpm semi | 10 (fixed) | 45 | 1.0° / 0.35° | Uncommon | Prapor |
-| SVD marksman rifle | DMR | Soviet marksman rifle | 7.62x54R | 300 rpm semi | 10 | 40 | 1.4° / 0.4° | Rare | Prapor |
-| Longbow DMR | DMR | Big-frame AR marksman rifle | 7.62x51 | 400 rpm semi | 20 | 42 | 1.15° / 0.38° | Epic | Loot |
-| Mosin rifle | Bolt-action | Soviet infantry rifle | 7.62x54R | 50 rpm bolt | 5 | 35 | 2.4° / 0.5° | Uncommon | Prapor |
-| Huntsman 700 | Bolt-action | Hunting / police sniper rifle | 7.62x51 | 45 rpm bolt | 5 | 38 | 2.2° / 0.45° | Ultra Rare | Peacekeeper, Jaeger |
-| Leviathan .338 | Bolt-action | Magnum chassis sniper rifle | .338 Lapua | 40 rpm bolt | 5 | 30 | 3.0° / 0.6° | Legendary | Loot (Jaeger barter once he unlocks) |
-| Grizzly 74 | LMG | Kalashnikov squad automatic | 5.45x39 | 600 rpm auto | 45 | 36 | 0.46° / 0.32° | Rare | Prapor |
+| Partisan | DMR | Semi-auto carbine with a fixed 10-round magazine | 7.62x39 | 350 rpm semi | 10 (fixed) | 45 | 1.0° / 0.35° | Uncommon | Bulat |
+| SVD marksman rifle | DMR | Soviet marksman rifle | 7.62x54R | 300 rpm semi | 10 | 40 | 1.4° / 0.4° | Rare | Bulat |
+| Longbow DMR | DMR | Big-frame AR marksman rifle | 7.62x51 | 400 rpm semi | 20 | 42 | 1.15° / 0.38° | Epic | Loot (barter: The Broker) |
+| Mosin rifle | Bolt-action | Soviet infantry rifle | 7.62x54R | 50 rpm bolt | 5 | 35 | 2.4° / 0.5° | Uncommon | Bulat |
+| Huntsman 700 | Bolt-action | Hunting / police sniper rifle | 7.62x51 | 45 rpm bolt | 5 | 38 | 2.2° / 0.45° | Ultra Rare | Bulat, The Broker |
+| Leviathan .338 | Bolt-action | Magnum chassis sniper rifle | .338 Lapua | 40 rpm bolt | 5 | 30 | 3.0° / 0.6° | Legendary | Loot (barter: Tinker, The Broker) |
+| Grizzly 74 | LMG | Kalashnikov squad automatic | 5.45x39 | 600 rpm auto | 45 | 36 | 0.46° / 0.32° | Rare | Bulat |
 | Bulwark 249 | LMG | Belt-fed squad automatic | 5.56x45 | 750 rpm auto | 100 (box) | 28 | 0.42° / 0.34° | Epic | Loot |
 | Anvil PK | LMG | General-purpose machine gun | 7.62x54R | 650 rpm auto | 100 (box) | 22 | 0.7° / 0.45° | Epic | Loot |
 
@@ -513,55 +532,55 @@ The starter arsenal: **22 guns** in seven classes, **10 calibers with 4–6 roun
 
 | Caliber | Round | Rarity | Damage | Pen | Armor dmg | Frag | Velocity | Recoil | Accuracy | Ricochet | Bleed L / H | Where (trader LL, Workbench level) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 9x18 | PM P | C | 46 | 5 | 20% | 25% | 300 m/s | — | −5% | 15% | 35% / 12% | Prapor 1 |
-| 9x18 | PM PSt | C | 50 | 12 | 28% | 15% | 302 m/s | — | — | 25% | 30% / 10% | Prapor 1, Skier 1 |
-| 9x18 | PM HP | U | 66 | 3 | 15% | 55% | 310 m/s | — | −5% | 5% | 55% / 30% | Prapor 2 |
-| 9x18 | PM PBM | E | 40 | 28 | 55% | 5% | 519 m/s | +10% | +5% | 40% | 20% / 5% | Prapor 4 |
-| 9x19 | FMJ | C | 54 | 18 | 30% | 20% | 380 m/s | — | — | 25% | 35% / 12% | Peacekeeper 1 |
-| 9x19 | HP | U | 70 | 6 | 15% | 55% | 370 m/s | — | −5% | 5% | 55% / 30% | Skier 1 |
-| 9x19 | Green Tracer | U | 58 | 14 | 33% | 15% | 365 m/s | — | −5% | 25% | 35% / 12% | Peacekeeper 2 |
-| 9x19 | AP | R | 49 | 30 | 55% | 5% | 392 m/s | +5% | — | 40% | 20% / 6% | Peacekeeper 3 |
-| 9x19 | PBP | E | 52 | 39 | 65% | 3% | 560 m/s | +15% | +5% | 45% | 20% / 5% | Skier 4, Workbench 2 |
-| .45 ACP | FMJ | C | 66 | 19 | 35% | 15% | 260 m/s | — | — | 20% | 40% / 15% | Peacekeeper 1 |
-| .45 ACP | HP | U | 82 | 8 | 20% | 50% | 300 m/s | +5% | −5% | 5% | 60% / 35% | Skier 1 |
-| .45 ACP | Match | R | 70 | 25 | 40% | 10% | 255 m/s | — | +20% | 25% | 40% / 15% | Peacekeeper 3 |
-| .45 ACP | AP | E | 64 | 38 | 60% | 3% | 300 m/s | +10% | — | 45% | 25% / 8% | Peacekeeper 4 |
-| 12ga | 7mm buckshot | C | 37 × 8 | 3 | 20% | 0% | 415 m/s | — | — | 30% | 15% / 4% | Skier 1, Jaeger 1 |
-| 12ga | magnum buckshot | U | 50 × 8 | 2 | 22% | 0% | 400 m/s | +15% | −5% | 30% | 20% / 6% | Skier 2, Jaeger 1 |
-| 12ga | slug | U | 167 | 15 | 45% | 15% | 410 m/s | +10% | +15% | 10% | 55% / 35% | Skier 2, Jaeger 1 |
-| 12ga | flechette | R | 25 × 8 | 31 | 33% | 0% | 450 m/s | −5% | +10% | 35% | 30% / 10% | Skier 3 |
-| 12ga | AP-20 slug | E | 164 | 37 | 65% | 5% | 510 m/s | +15% | +10% | 35% | 45% / 25% | Skier 4, Workbench 2 |
-| 5.45x39 | PS | C | 50 | 28 | 40% | 20% | 890 m/s | — | — | 25% | 35% / 12% | Prapor 1 |
-| 5.45x39 | HP | U | 62 | 9 | 15% | 55% | 884 m/s | — | −5% | 5% | 55% / 30% | Prapor 2 |
-| 5.45x39 | BT (red tracer) | R | 48 | 37 | 50% | 12% | 880 m/s | — | — | 35% | 30% / 10% | Prapor 3 |
-| 5.45x39 | BS | E | 40 | 45 | 80% | 3% | 830 m/s | +5% | — | 45% | 20% / 6% | Prapor 3, Workbench 1 |
+| 9x18 | PM P | C | 46 | 5 | 20% | 25% | 300 m/s | — | −5% | 15% | 35% / 12% | Bulat 1 |
+| 9x18 | PM PSt | C | 50 | 12 | 28% | 15% | 302 m/s | — | — | 25% | 30% / 10% | Bulat 1, Auntie Zoya 1 |
+| 9x18 | PM HP | U | 66 | 3 | 15% | 55% | 310 m/s | — | −5% | 5% | 55% / 30% | Bulat 2 |
+| 9x18 | PM PBM | E | 40 | 28 | 55% | 5% | 519 m/s | +10% | +5% | 40% | 20% / 5% | Bulat 4 |
+| 9x19 | FMJ | C | 54 | 18 | 30% | 20% | 380 m/s | — | — | 25% | 35% / 12% | Bulat 1, The Broker 1 |
+| 9x19 | HP | U | 70 | 6 | 15% | 55% | 370 m/s | — | −5% | 5% | 55% / 30% | Bulat 1 |
+| 9x19 | Green Tracer | U | 58 | 14 | 33% | 15% | 365 m/s | — | −5% | 25% | 35% / 12% | Bulat 2, The Broker 2 |
+| 9x19 | AP | R | 49 | 30 | 55% | 5% | 392 m/s | +5% | — | 40% | 20% / 6% | The Broker 3 |
+| 9x19 | PBP | E | 52 | 39 | 65% | 3% | 560 m/s | +15% | +5% | 45% | 20% / 5% | Bulat 4, Workbench 2 |
+| .45 ACP | FMJ | C | 66 | 19 | 35% | 15% | 260 m/s | — | — | 20% | 40% / 15% | Bulat 1, The Broker 1 |
+| .45 ACP | HP | U | 82 | 8 | 20% | 50% | 300 m/s | +5% | −5% | 5% | 60% / 35% | Bulat 1 |
+| .45 ACP | Match | R | 70 | 25 | 40% | 10% | 255 m/s | — | +20% | 25% | 40% / 15% | The Broker 3 |
+| .45 ACP | AP | E | 64 | 38 | 60% | 3% | 300 m/s | +10% | — | 45% | 25% / 8% | The Broker 4 |
+| 12ga | 7mm buckshot | C | 37 × 8 | 3 | 20% | 0% | 415 m/s | — | — | 30% | 15% / 4% | Bulat 1 |
+| 12ga | magnum buckshot | U | 50 × 8 | 2 | 22% | 0% | 400 m/s | +15% | −5% | 30% | 20% / 6% | Bulat 2 |
+| 12ga | slug | U | 167 | 15 | 45% | 15% | 410 m/s | +10% | +15% | 10% | 55% / 35% | Bulat 2 |
+| 12ga | flechette | R | 25 × 8 | 31 | 33% | 0% | 450 m/s | −5% | +10% | 35% | 30% / 10% | Bulat 3 |
+| 12ga | AP-20 slug | E | 164 | 37 | 65% | 5% | 510 m/s | +15% | +10% | 35% | 45% / 25% | Bulat 4, Workbench 2 |
+| 5.45x39 | PS | C | 50 | 28 | 40% | 20% | 890 m/s | — | — | 25% | 35% / 12% | Bulat 1 |
+| 5.45x39 | HP | U | 62 | 9 | 15% | 55% | 884 m/s | — | −5% | 5% | 55% / 30% | Bulat 2 |
+| 5.45x39 | BT (red tracer) | R | 48 | 37 | 50% | 12% | 880 m/s | — | — | 35% | 30% / 10% | Bulat 1, Workbench 2 |
+| 5.45x39 | BS | E | 40 | 45 | 80% | 3% | 830 m/s | +5% | — | 45% | 20% / 6% | Bulat 3, Workbench 1 |
 | 5.45x39 | PPBS "Needle" | L | 37 | 62 | 90% | 2% | 905 m/s | +5% | +5% | 50% | 15% / 5% | Workbench 3 |
-| 5.56x45 | FMJ | C | 54 | 23 | 33% | 35% | 957 m/s | — | — | 25% | 40% / 15% | Peacekeeper 1 |
-| 5.56x45 | HP | U | 68 | 9 | 16% | 60% | 936 m/s | — | −5% | 5% | 60% / 30% | Peacekeeper 2 |
-| 5.56x45 | M856 tracer | U | 54 | 20 | 35% | 30% | 874 m/s | — | −5% | 25% | 35% / 12% | Peacekeeper 2 |
-| 5.56x45 | EPR | R | 49 | 44 | 52% | 15% | 945 m/s | +5% | +5% | 35% | 30% / 10% | Peacekeeper 3 |
-| 5.56x45 | AP | E | 42 | 53 | 58% | 4% | 1013 m/s | +10% | — | 45% | 20% / 6% | Peacekeeper 4 |
+| 5.56x45 | FMJ | C | 54 | 23 | 33% | 35% | 957 m/s | — | — | 25% | 40% / 15% | Bulat 1, The Broker 1 |
+| 5.56x45 | HP | U | 68 | 9 | 16% | 60% | 936 m/s | — | −5% | 5% | 60% / 30% | Bulat 2, The Broker 2 |
+| 5.56x45 | M856 tracer | U | 54 | 20 | 35% | 30% | 874 m/s | — | −5% | 25% | 35% / 12% | Bulat 2, The Broker 2 |
+| 5.56x45 | EPR | R | 49 | 44 | 52% | 15% | 945 m/s | +5% | +5% | 35% | 30% / 10% | The Broker 3 |
+| 5.56x45 | AP | E | 42 | 53 | 58% | 4% | 1013 m/s | +10% | — | 45% | 20% / 6% | The Broker 4 |
 | 5.56x45 | SSA AP | L | 38 | 57 | 60% | 2% | 990 m/s | +5% | +10% | 50% | 15% / 5% | Workbench 3 |
-| 7.62x39 | PS | C | 57 | 35 | 52% | 15% | 718 m/s | — | — | 30% | 35% / 15% | Prapor 1 |
-| 7.62x39 | HP | U | 80 | 15 | 20% | 50% | 754 m/s | — | −5% | 5% | 60% / 35% | Prapor 2 |
-| 7.62x39 | US (subsonic) | U | 56 | 29 | 35% | 12% | 301 m/s | −15% | −10% | 25% | 30% / 10% | Prapor 2 |
-| 7.62x39 | T-45M tracer | U | 64 | 30 | 49% | 15% | 720 m/s | — | −5% | 30% | 35% / 15% | Prapor 2 |
-| 7.62x39 | BP | E | 58 | 47 | 63% | 4% | 730 m/s | +5% | — | 45% | 25% / 8% | Prapor 3, Workbench 2 |
+| 7.62x39 | PS | C | 57 | 35 | 52% | 15% | 718 m/s | — | — | 30% | 35% / 15% | Bulat 1 |
+| 7.62x39 | HP | U | 80 | 15 | 20% | 50% | 754 m/s | — | −5% | 5% | 60% / 35% | Bulat 2 |
+| 7.62x39 | US (subsonic) | U | 56 | 29 | 35% | 12% | 301 m/s | −15% | −10% | 25% | 30% / 10% | Bulat 2 |
+| 7.62x39 | T-45M tracer | U | 64 | 30 | 49% | 15% | 720 m/s | — | −5% | 30% | 35% / 15% | Bulat 2 |
+| 7.62x39 | BP | E | 58 | 47 | 63% | 4% | 730 m/s | +5% | — | 45% | 25% / 8% | Bulat 2, Workbench 2 |
 | 7.62x39 | MAI AP | L | 53 | 58 | 70% | 3% | 730 m/s | +5% | +5% | 50% | 20% / 6% | Workbench 3 |
-| 7.62x51 | FMJ | C | 80 | 29 | 45% | 20% | 833 m/s | — | — | 30% | 40% / 18% | Peacekeeper 1 |
-| 7.62x51 | SP | U | 102 | 18 | 30% | 45% | 822 m/s | — | — | 5% | 60% / 40% | Peacekeeper 2, Jaeger 1 |
-| 7.62x51 | M80 | R | 80 | 41 | 66% | 15% | 833 m/s | — | +5% | 35% | 35% / 15% | Peacekeeper 3 |
-| 7.62x51 | M62 tracer | R | 79 | 44 | 75% | 12% | 838 m/s | — | −5% | 35% | 35% / 15% | Peacekeeper 3 |
-| 7.62x51 | M61 | E | 70 | 64 | 83% | 4% | 849 m/s | +5% | — | 45% | 25% / 10% | Peacekeeper 4 |
+| 7.62x51 | FMJ | C | 80 | 29 | 45% | 20% | 833 m/s | — | — | 30% | 40% / 18% | Bulat 1, The Broker 1 |
+| 7.62x51 | SP | U | 102 | 18 | 30% | 45% | 822 m/s | — | — | 5% | 60% / 40% | Bulat 2, The Broker 2 |
+| 7.62x51 | M80 | R | 80 | 41 | 66% | 15% | 833 m/s | — | +5% | 35% | 35% / 15% | The Broker 3 |
+| 7.62x51 | M62 tracer | R | 79 | 44 | 75% | 12% | 838 m/s | — | −5% | 35% | 35% / 15% | The Broker 3 |
+| 7.62x51 | M61 | E | 70 | 64 | 83% | 4% | 849 m/s | +5% | — | 45% | 25% / 10% | The Broker 4 |
 | 7.62x51 | M993 | L | 67 | 70 | 85% | 3% | 910 m/s | +5% | +10% | 50% | 20% / 8% | Workbench 3 |
-| 7.62x54R | LPS | C | 81 | 41 | 66% | 15% | 865 m/s | — | — | 35% | 35% / 15% | Prapor 1 |
-| 7.62x54R | SP | U | 92 | 27 | 32% | 45% | 830 m/s | — | — | 5% | 60% / 40% | Prapor 2, Jaeger 1 |
-| 7.62x54R | T-46M tracer | U | 82 | 39 | 83% | 15% | 800 m/s | — | −5% | 35% | 35% / 15% | Prapor 2 |
-| 7.62x54R | SNB | E | 75 | 62 | 88% | 4% | 875 m/s | +5% | +10% | 45% | 25% / 10% | Prapor 4 |
+| 7.62x54R | LPS | C | 81 | 41 | 66% | 15% | 865 m/s | — | — | 35% | 35% / 15% | Bulat 1 |
+| 7.62x54R | SP | U | 92 | 27 | 32% | 45% | 830 m/s | — | — | 5% | 60% / 40% | Bulat 2 |
+| 7.62x54R | T-46M tracer | U | 82 | 39 | 83% | 15% | 800 m/s | — | −5% | 35% | 35% / 15% | Bulat 2 |
+| 7.62x54R | SNB | E | 75 | 62 | 88% | 4% | 875 m/s | +5% | +10% | 45% | 25% / 10% | Bulat 4 |
 | 7.62x54R | BS | L | 72 | 70 | 88% | 3% | 785 m/s | +10% | +5% | 50% | 20% / 8% | Workbench 3 |
-| .338 Lapua | FMJ | C | 122 | 47 | 83% | 15% | 890 m/s | — | — | 35% | 50% / 30% | Jaeger 1 |
-| .338 Lapua | UCW | U | 142 | 32 | 70% | 30% | 849 m/s | — | — | 15% | 60% / 40% | Jaeger 2 |
-| .338 Lapua | TAC-X | R | 196 | 18 | 55% | 50% | 880 m/s | — | +5% | 5% | 70% / 50% | Jaeger 3 |
+| .338 Lapua | FMJ | C | 122 | 47 | 83% | 15% | 890 m/s | — | — | 35% | 50% / 30% | Bulat 1 |
+| .338 Lapua | UCW | U | 142 | 32 | 70% | 30% | 849 m/s | — | — | 15% | 60% / 40% | Bulat 2 |
+| .338 Lapua | TAC-X | R | 196 | 18 | 55% | 50% | 880 m/s | — | +5% | 5% | 70% / 50% | Bulat 3 |
 | .338 Lapua | AP | L | 115 | 79 | 89% | 3% | 849 m/s | +10% | +5% | 50% | 35% / 15% | Workbench 3 |
 
 Where: the trader and the loyalty level you need with them (Section 10), and the Workbench level that crafts it (Section 9). Legendary rounds aren't sold: they're found in raid or made at the Workbench.
@@ -595,7 +614,7 @@ Every piece of armor, with its class, zones, durability and blunt share, is in S
 
 | Rule | Detail |
 |---|---|
-| Ammo charts | Examining a gun or a round shows every round of its caliber side by side: damage, penetration, armor damage and six squares for armor classes 1–6, each filled to the round's chance to get through new armor of that class and coloured by it (green → red; a colorblind-safe scale in the colorblind modes); hover for the numbers. The round loaded (or examined) is marked ▶; tracers have a coloured dot. The trader screen's **AMMO** tab shows the same for the gun in hand (or any caliber you pick), with velocity out of that gun, fragmentation, bleeds, recoil, accuracy and where to get each round |
+| Ammo charts | Examining a gun or a round shows every round of its caliber side by side: damage, penetration, armor damage and six squares for armor classes 1–6, each filled to the round's chance to get through new armor of that class and coloured by it (green → red; a colorblind-safe scale in the colorblind modes); hover for the numbers. The round loaded (or examined) is marked ▶; tracers have a coloured dot. The trader screen's **AMMO** tab shows the same for the gun in hand (or any caliber you pick), with velocity out of that gun, fragmentation, bleeds, recoil, accuracy and where to get each round (a trader who doesn't trade with you yet is marked "(locked)", e.g. "The Broker LL1 (locked)") |
 | Loading | Drag rounds onto a gun (in a grid or an equipment slot, in raid or out) to load them. Rounds of another type come out first, into the grid the new ones came from (else your pockets, rig or backpack; any with nowhere to go stay in, under the new ones), then the new ones fill the magazine. The gun reloads with that type from then on, and fires whatever is on top of its magazine |
 | Running out | Reloading with none of the gun's round type left switches to another round of the same caliber you carry ("Loading 12ga slug") |
 | Everyday round | Found guns come loaded with their caliber's everyday round (the commonest, then least penetrating: `ItemDB.ammo_of()`). Debug F3 in the test level cycles the gun's caliber |
@@ -691,99 +710,99 @@ Barter goods (junk, 56 items) and valuables (27) are what you sell, barter, craf
 | Filing cabinet | Its keys, drives and papers, plus Intel |
 | Crate, duffle bag | Any barter goods (by category) |
 
-**Needed for.** Examining an item shows **Needed for** with a summary ("1 quest, 2 hideout upgrades, 3 barters"); hover it for the full list: every quest that asks for it (with the count and whether it must be found in raid), every hideout level that needs it, every trader barter and hideout craft that takes it, and the gear upgrades that use it. Completed quests and hideout levels already built drop out. Valuables nothing needs say "Nothing: it's worth its value". Hovering an item in the inventory shows the summary too (`ItemUses`).
+**Needed for.** Examining an item shows **Needed for** with a summary ("1 quest, 2 hideout upgrades, 3 barters"); hover it for the full list: every quest that asks for it (with the count and whether it must be found in raid), every hideout level that needs it, every trader barter and hideout craft that takes it (a barter with a trader who doesn't trade with you yet ends in "(locked)"), and the gear upgrades that use it. Completed quests and hideout levels already built drop out. Valuables nothing needs say "Nothing: it's worth its value". Hovering an item in the inventory shows the summary too (`ItemUses`).
 
-**New uses.** Two quests: Clinic Supplies (Therapist, after Shortage: 2 medical blood sets and an ophthalmoscope, found in raid) and Server Room (Mechanic, after Gunsmith part 0: 3 RAM modules, 2 power cords, a cordless drill). Hideout upgrades now also want a pressure gauge (Generator 2), medical blood sets (Medstation 3), an adjustable wrench (Workbench 2), a cordless drill (Workbench 3), bleach (Lavatory 2), a propane tank (Nutrition Unit 2) and power cords (Rest Space 3). New crafts: bleach (Lavatory 1), hex nuts (Workbench 1), a multitool (Workbench 2), blood sets (Medstation 2), thermite and a server blade (Workbench 3). New barters at every trader take the new items (a gold bar for an SVD, banded dollars for a Sentinel AR, a defibrillator for a Surv12, the jeweled egg or a tank battery for a Leviathan .338, and more). Trader prices for barter goods rose with their values.
+**New uses.** Two quests: Clinic Supplies (Doc Vera, after Shortage: 2 medical blood sets and an ophthalmoscope, found in raid) and Server Room (Tinker, after Gunsmith part 0: 3 RAM modules, 2 power cords, a cordless drill). Hideout upgrades now also want a pressure gauge (Generator 2), medical blood sets (Medstation 3), an adjustable wrench (Workbench 2), a cordless drill (Workbench 3), bleach (Lavatory 2), a propane tank (Nutrition Unit 2) and power cords (Rest Space 3). New crafts: bleach (Lavatory 1), hex nuts (Workbench 1), a multitool (Workbench 2), blood sets (Medstation 2), thermite and a server blade (Workbench 3). New barters at every trader take the new items (a gold bar for an SVD, banded dollars for a Sentinel AR, a defibrillator for a Surv12, the jeweled egg or a tank battery for a Leviathan .338, and more). Trader prices for barter goods rose with their values.
 
 | Barter good | Group | Rarity | Size | Value (₽) | Tags | Needed for |
 |---|---|---|---|---|---|---|
-| Pack of nails | Hardware | Common | 1×1 | 6,000 | metal, building | upgrades (Rest Space 1); barters (Jaeger) |
+| Pack of nails | Hardware | Common | 1×1 | 6,000 | metal, building | upgrades (Rest Space 1); barters (Auntie Zoya) |
 | Hex nuts *(new)* | Hardware | Common | 1×1 | 6,500 | metal, building | crafts (Workbench) |
-| Screw nuts | Hardware | Common | 1×1 | 7,000 | metal, building | quests (Scrap Run); upgrades (Workbench 1, Workbench 2); barters (Mechanic, Prapor); crafts (Workbench); gear upgrades (headsets) |
-| Bolts | Hardware | Common | 1×1 | 8,000 | metal, building | quests (Scrap Run); upgrades (Workbench 1, Workbench 2); barters (Mechanic, Prapor); crafts (Workbench); gear upgrades (armor) |
-| Duct tape | Hardware | Common | 1×1 | 11,000 | building, adhesive | quests (Textile); upgrades (Lavatory 1, Lavatory 2, Rest Space 1); barters (Prapor, Ragman, Skier); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); gear upgrades (armor, rigs and backpacks, every Workbench upgrade) |
-| WD-40 can | Hardware | Uncommon | 1×1 | 26,000 | chemical, flammable, lubricant | barters (Mechanic); crafts (Lavatory, Workbench) |
-| Corrugated hose | Hardware | Uncommon | 2×1 | 29,000 | building, plumbing | upgrades (Nutrition Unit 1, Nutrition Unit 3); barters (Jaeger); crafts (Nutrition Unit) |
+| Screw nuts | Hardware | Common | 1×1 | 7,000 | metal, building | quests (Scrap Run); upgrades (Workbench 1, Workbench 2); barters (Bulat, Tinker); crafts (Workbench); gear upgrades (headsets) |
+| Bolts | Hardware | Common | 1×1 | 8,000 | metal, building | quests (Scrap Run); upgrades (Workbench 1, Workbench 2); barters (Bulat, Tinker); crafts (Workbench); gear upgrades (armor) |
+| Duct tape | Hardware | Common | 1×1 | 11,000 | building, adhesive | quests (Textile); upgrades (Lavatory 1, Lavatory 2, Rest Space 1); barters (Auntie Zoya, Bulat, Stitch); crafts (Lavatory, Medstation, Nutrition Unit, Workbench); gear upgrades (armor, rigs and backpacks, every Workbench upgrade) |
+| WD-40 can | Hardware | Uncommon | 1×1 | 26,000 | chemical, flammable, lubricant | barters (Tinker); crafts (Lavatory, Workbench) |
+| Corrugated hose | Hardware | Uncommon | 2×1 | 29,000 | building, plumbing | upgrades (Nutrition Unit 1, Nutrition Unit 3); barters (Auntie Zoya); crafts (Nutrition Unit) |
 | Pressure gauge *(new)* | Hardware | Uncommon | 1×1 | 31,000 | metal, plumbing, fragile | upgrades (Generator 2) |
-| Screwdriver | Tools | Common | 1×1 | 7,000 | tool, metal | barters (Mechanic); crafts (Workbench); gear upgrades (headsets) |
-| Pliers | Tools | Common | 1×1 | 9,000 | tool, metal | barters (Mechanic); crafts (Workbench) |
-| Adjustable wrench *(new)* | Tools | Common | 1×2 | 14,000 | tool, metal | upgrades (Workbench 2); barters (Jaeger) |
-| Multitool *(new)* | Tools | Uncommon | 1×1 | 44,000 | tool, metal | barters (Skier) |
+| Screwdriver | Tools | Common | 1×1 | 7,000 | tool, metal | barters (Tinker); crafts (Workbench); gear upgrades (headsets) |
+| Pliers | Tools | Common | 1×1 | 9,000 | tool, metal | barters (Tinker); crafts (Workbench) |
+| Adjustable wrench *(new)* | Tools | Common | 1×2 | 14,000 | tool, metal | upgrades (Workbench 2); barters (Auntie Zoya) |
+| Multitool *(new)* | Tools | Uncommon | 1×1 | 44,000 | tool, metal | barters (Auntie Zoya) |
 | Cordless drill *(new)* | Tools | Rare | 2×1 | 96,000 | tool, electronics, battery | quests (Server Room); upgrades (Workbench 3) |
 | AA battery | Electronics | Common | 1×1 | 6,000 | electronics, battery | crafts (Workbench) |
 | Light bulb | Electronics | Common | 1×1 | 6,000 | electronics, glass, fragile | upgrades (Medstation 3, Nutrition Unit 2, Rest Space 1, Rest Space 2) |
 | Power cord *(new)* | Electronics | Common | 1×1 | 8,500 | electronics, cable, copper | quests (Server Room); upgrades (Rest Space 3); crafts (Workbench) |
-| Wires | Electronics | Common | 1×1 | 9,000 | electronics, cable, copper | quests (Gunsmith, Part 0); upgrades (Generator 2, Generator 3, Workbench 3); barters (Mechanic, Ragman); crafts (Lavatory, Workbench); gear upgrades (headsets) |
-| Capacitors | Electronics | Uncommon | 1×1 | 27,000 | electronics | upgrades (Nutrition Unit 3); barters (Mechanic); crafts (Workbench) |
-| Printed circuit board | Electronics | Uncommon | 1×1 | 33,000 | electronics, computer | upgrades (Rest Space 3); barters (Mechanic); crafts (Workbench) |
-| Rechargeable battery | Electronics | Uncommon | 1×1 | 34,000 | electronics, battery | upgrades (Nutrition Unit 2, Rest Space 2); barters (Mechanic); crafts (Workbench) |
-| Military power cable | Electronics | Rare | 1×1 | 68,000 | electronics, cable, military | upgrades (Workbench 3, Rest Space 3); barters (Mechanic, Prapor) |
+| Wires | Electronics | Common | 1×1 | 9,000 | electronics, cable, copper | quests (Gunsmith, Part 0); upgrades (Generator 2, Generator 3, Workbench 3); barters (Stitch, Tinker); crafts (Lavatory, Workbench); gear upgrades (headsets) |
+| Capacitors | Electronics | Uncommon | 1×1 | 27,000 | electronics | upgrades (Nutrition Unit 3); barters (Tinker); crafts (Workbench) |
+| Printed circuit board | Electronics | Uncommon | 1×1 | 33,000 | electronics, computer | upgrades (Rest Space 3); barters (Tinker); crafts (Workbench) |
+| Rechargeable battery | Electronics | Uncommon | 1×1 | 34,000 | electronics, battery | upgrades (Nutrition Unit 2, Rest Space 2); barters (Tinker); crafts (Workbench) |
+| Military power cable | Electronics | Rare | 1×1 | 68,000 | electronics, cable, military | upgrades (Workbench 3, Rest Space 3); barters (Bulat, Tinker) |
 | Car battery | Electronics | Rare | 2×2 | 92,000 | electronics, battery, heavy | upgrades (Generator 3) |
-| Electric motor | Electronics | Rare | 2×2 | 98,000 | electronics, metal, heavy | upgrades (Generator 3, Workbench 3); barters (Mechanic); crafts (Workbench) |
-| VHF radio transmitter *(new)* | Electronics | Rare | 1×2 | 118,000 | electronics, military, radio | barters (Mechanic) |
-| Encrypted field transmitter *(new)* | Electronics | Epic | 1×2 | 820,000 | electronics, military, radio, intel, valuable | barters (Mechanic) |
-| Military tank battery *(new)* | Electronics | Legendary | 3×2 | 1,250,000 | electronics, battery, military, heavy | barters (Mechanic) |
-| RAM module *(new)* | Tech | Uncommon | 1×1 | 36,000 | electronics, computer | quests (Server Room); barters (Mechanic); crafts (Workbench) |
-| Server blade *(new)* | Tech | Ultra Rare | 2×1 | 240,000 | electronics, computer, data | barters (Mechanic) |
-| Thermal imaging module *(new)* | Tech | Epic | 1×1 | 640,000 | electronics, military, optics, valuable | barters (Peacekeeper) |
-| Toothpaste | Household | Common | 1×1 | 5,000 | hygiene | upgrades (Medstation 2, Medstation 3, Lavatory 2, Nutrition Unit 3); barters (Ragman, Therapist); crafts (Lavatory) |
-| Soap | Household | Common | 1×1 | 5,000 | hygiene | upgrades (Medstation 2, Medstation 3, Lavatory 2, Rest Space 2); barters (Ragman, Therapist); crafts (Lavatory, Medstation) |
-| Toilet paper | Household | Common | 1×1 | 5,000 | hygiene, paper, flammable | quests (Textile); upgrades (Lavatory 1, Lavatory 2); barters (Therapist); crafts (Lavatory) |
-| Lighter | Household | Common | 1×1 | 5,500 | fire, flammable | upgrades (Nutrition Unit 1); barters (Jaeger, Prapor, Ragman); crafts (Nutrition Unit) |
-| Matches | Household | Common | 1×1 | 5,500 | fire, flammable | barters (Jaeger, Skier); crafts (Lavatory, Nutrition Unit) |
-| Cigarettes | Household | Common | 1×1 | 6,500 | tobacco, flammable | barters (Prapor, Ragman, Skier, Therapist) |
+| Electric motor | Electronics | Rare | 2×2 | 98,000 | electronics, metal, heavy | upgrades (Generator 3, Workbench 3); barters (Tinker); crafts (Workbench) |
+| VHF radio transmitter *(new)* | Electronics | Rare | 1×2 | 118,000 | electronics, military, radio | barters (Tinker) |
+| Encrypted field transmitter *(new)* | Electronics | Epic | 1×2 | 820,000 | electronics, military, radio, intel, valuable | barters (Tinker) |
+| Military tank battery *(new)* | Electronics | Legendary | 3×2 | 1,250,000 | electronics, battery, military, heavy | barters (Tinker) |
+| RAM module *(new)* | Tech | Uncommon | 1×1 | 36,000 | electronics, computer | quests (Server Room); barters (Tinker); crafts (Workbench) |
+| Server blade *(new)* | Tech | Ultra Rare | 2×1 | 240,000 | electronics, computer, data | barters (Tinker) |
+| Thermal imaging module *(new)* | Tech | Epic | 1×1 | 640,000 | electronics, military, optics, valuable | quests (Fine Print); barters (The Broker) |
+| Toothpaste | Household | Common | 1×1 | 5,000 | hygiene | upgrades (Medstation 2, Medstation 3, Lavatory 2, Nutrition Unit 3); barters (Doc Vera, Stitch); crafts (Lavatory) |
+| Soap | Household | Common | 1×1 | 5,000 | hygiene | upgrades (Medstation 2, Medstation 3, Lavatory 2, Rest Space 2); barters (Doc Vera, Stitch); crafts (Lavatory, Medstation) |
+| Toilet paper | Household | Common | 1×1 | 5,000 | hygiene, paper, flammable | quests (Textile); upgrades (Lavatory 1, Lavatory 2); barters (Doc Vera); crafts (Lavatory) |
+| Lighter | Household | Common | 1×1 | 5,500 | fire, flammable | quests (Safe Harbour); upgrades (Nutrition Unit 1); barters (Auntie Zoya, Bulat, Stitch); crafts (Nutrition Unit) |
+| Matches | Household | Common | 1×1 | 5,500 | fire, flammable | barters (Auntie Zoya); crafts (Lavatory, Nutrition Unit) |
+| Cigarettes | Household | Common | 1×1 | 6,500 | tobacco, flammable | barters (Auntie Zoya, Bulat, Doc Vera, Stitch) |
 | Bleach *(new)* | Household | Common | 1×2 | 7,000 | chemical, cleaning, hygiene | upgrades (Lavatory 2) |
-| Sewing kit *(new)* | Household | Common | 1×1 | 9,500 | cloth, tool | barters (Ragman) |
+| Sewing kit *(new)* | Household | Common | 1×1 | 9,500 | cloth, tool | quests (Patchwork); barters (Stitch) |
 | Kettle | Household | Uncommon | 1×2 | 25,000 | metal, kitchen | upgrades (Nutrition Unit 1, Nutrition Unit 2, Nutrition Unit 3) |
 | Empty autoinjector | Medical supply | Common | 1×1 | 8,000 | medical | crafts (Medstation) |
-| Medical blood set *(new)* | Medical supply | Uncommon | 1×1 | 27,000 | medical | quests (Clinic Supplies); upgrades (Medstation 3); barters (Therapist) |
-| Saline solution | Medical supply | Uncommon | 1×2 | 28,000 | medical, liquid | barters (Therapist); crafts (Medstation) |
-| Medical tools | Medical supply | Uncommon | 1×1 | 42,000 | medical, metal | upgrades (Medstation 3); barters (Therapist); crafts (Medstation) |
-| Ophthalmoscope *(new)* | Medical supply | Rare | 1×1 | 125,000 | medical, electronics, optics | quests (Clinic Supplies); barters (Therapist) |
-| Portable defibrillator *(new)* | Medical supply | Ultra Rare | 2×2 | 310,000 | medical, electronics, battery | barters (Therapist) |
-| Propane tank *(new)* | Fuel | Uncommon | 2×2 | 48,000 | fuel, flammable, gas, metal, heavy | upgrades (Nutrition Unit 2); barters (Jaeger) |
+| Medical blood set *(new)* | Medical supply | Uncommon | 1×1 | 27,000 | medical | quests (Clinic Supplies); upgrades (Medstation 3); barters (Doc Vera) |
+| Saline solution | Medical supply | Uncommon | 1×2 | 28,000 | medical, liquid | barters (Doc Vera); crafts (Medstation) |
+| Medical tools | Medical supply | Uncommon | 1×1 | 42,000 | medical, metal | upgrades (Medstation 3); barters (Doc Vera); crafts (Medstation) |
+| Ophthalmoscope *(new)* | Medical supply | Rare | 1×1 | 125,000 | medical, electronics, optics | quests (Clinic Supplies); barters (Doc Vera) |
+| Portable defibrillator *(new)* | Medical supply | Ultra Rare | 2×2 | 310,000 | medical, electronics, battery | barters (Doc Vera) |
+| Propane tank *(new)* | Fuel | Uncommon | 2×2 | 48,000 | fuel, flammable, gas, metal, heavy | upgrades (Nutrition Unit 2); barters (Auntie Zoya) |
 | Fuel can | Fuel | Uncommon | 2×2 | 52,000 | fuel, flammable, liquid | upgrades (Generator 1, Generator 2) |
-| Fuel conditioner | Fuel | Rare | 1×2 | 84,000 | fuel, chemical, flammable | upgrades (Generator 3); barters (Jaeger) |
-| Weapon parts | Military | Uncommon | 2×1 | 38,000 | weapon, metal | quests (Gunsmith, Part 0); upgrades (Workbench 3); barters (Mechanic, Prapor); crafts (Workbench) |
-| Gunpowder "Kite" | Military | Uncommon | 1×1 | 40,000 | explosive, flammable | barters (Prapor); crafts (Workbench) |
-| Thermite charge *(new)* | Military | Rare | 1×2 | 88,000 | explosive, flammable, metal | barters (Prapor) |
-| Military gyroscope *(new)* | Military | Ultra Rare | 1×1 | 280,000 | electronics, military, optics | barters (Mechanic) |
+| Fuel conditioner | Fuel | Rare | 1×2 | 84,000 | fuel, chemical, flammable | upgrades (Generator 3); barters (Bulat) |
+| Weapon parts | Military | Uncommon | 2×1 | 38,000 | weapon, metal | quests (Gunsmith, Part 0); upgrades (Workbench 3); barters (Bulat, Tinker); crafts (Workbench) |
+| Gunpowder "Kite" | Military | Uncommon | 1×1 | 40,000 | explosive, flammable | barters (Bulat); crafts (Workbench) |
+| Thermite charge *(new)* | Military | Rare | 1×2 | 88,000 | explosive, flammable, metal | barters (Bulat) |
+| Military gyroscope *(new)* | Military | Ultra Rare | 1×1 | 280,000 | electronics, military, optics | barters (Tinker) |
 | Red signal flare *(new)* | Military | Common | 1×1 | 14,000 | fire, flammable, military | quests (Flare Path); fired at flare extracts (Section 5.1) |
-| Paracord | Materials | Common | 1×1 | 7,500 | cloth, rope | gear upgrades (rigs and backpacks) |
-| Ripstop fabric | Materials | Common | 1×1 | 9,000 | cloth | barters (Ragman); gear upgrades (rigs and backpacks) |
-| Aramid fabric | Materials | Uncommon | 1×1 | 36,000 | cloth, ballistic | gear upgrades (armor) |
-| Epoxy resin | Materials | Rare | 1×1 | 64,000 | chemical, adhesive | gear upgrades (armor, rigs and backpacks) |
-| Ceramic plate shards | Materials | Ultra Rare | 1×1 | 175,000 | ballistic, fragile | gear upgrades (armor) |
+| Paracord | Materials | Common | 1×1 | 7,500 | cloth, rope | quests (Patchwork); gear upgrades (rigs and backpacks) |
+| Ripstop fabric | Materials | Common | 1×1 | 9,000 | cloth | quests (Patchwork); barters (Stitch); gear upgrades (rigs and backpacks) |
+| Aramid fabric | Materials | Uncommon | 1×1 | 36,000 | cloth, ballistic | quests (Hard Plates); gear upgrades (armor) |
+| Epoxy resin | Materials | Rare | 1×1 | 64,000 | chemical, adhesive | quests (Hard Plates); gear upgrades (armor, rigs and backpacks) |
+| Ceramic plate shards | Materials | Ultra Rare | 1×1 | 175,000 | ballistic, fragile | quests (Hard Plates); gear upgrades (armor) |
 
 | Valuable | Group | Rarity | Size | Value (₽) | Tags | Needed for |
 |---|---|---|---|---|---|---|
-| Hard drive | Tech | Uncommon | 1×1 | 45,000 | electronics, computer, data, valuable | upgrades (Rest Space 3); barters (Skier) |
-| SSD drive | Tech | Rare | 1×1 | 105,000 | electronics, computer, data, valuable | barters (Peacekeeper, Skier, Therapist); crafts (Workbench) |
-| Secure flash drive | Tech | Rare | 1×1 | 135,000 | electronics, data, intel, valuable | gear upgrades (headsets) |
-| Encrypted military hard drive | Tech | Ultra Rare | 1×1 | 330,000 | electronics, computer, data, military, intel, valuable | barters (Peacekeeper, Therapist) |
-| Graphics card | Tech | Epic | 2×1 | 900,000 | electronics, computer, valuable | barters (Peacekeeper, Skier); crafts (Workbench); gear upgrades (headsets) |
-| Cold-wallet crypto drive | Tech | Legendary | 1×1 | 1,650,000 | electronics, data, currency, valuable | barters (Therapist) |
-| Silver signet ring *(new)* | Jewelry | Uncommon | 1×1 | 32,000 | jewelry, silver, valuable | barters (Skier) |
-| Old wrist watch | Jewelry | Uncommon | 1×1 | 38,000 | jewelry, watch, valuable | barters (Skier, Therapist) |
-| Gold chain | Jewelry | Rare | 1×1 | 72,000 | jewelry, gold, valuable | barters (Peacekeeper, Prapor, Skier, Therapist); crafts (Workbench) |
-| Antique pocket watch | Jewelry | Rare | 1×1 | 88,000 | jewelry, watch, silver, antique, valuable | barters (Therapist) |
-| Roler Submariner gold wrist watch | Jewelry | Epic | 1×1 | 480,000 | jewelry, watch, gold, valuable | barters (Peacekeeper, Therapist) |
-| Diamond necklace *(new)* | Jewelry | Epic | 1×1 | 720,000 | jewelry, gold, gem, valuable | barters (Therapist) |
-| Pre-war banknotes *(new)* | Currency | Common | 1×1 | 14,000 | currency, paper, valuable | barters (Prapor) |
-| Old silver coin | Currency | Uncommon | 1×1 | 30,000 | currency, silver, antique, valuable | barters (Skier) |
-| Banded dollars *(new)* | Currency | Rare | 1×1 | 115,000 | currency, paper, valuable | barters (Peacekeeper) |
-| Antique gold coin | Currency | Ultra Rare | 1×1 | 210,000 | currency, gold, antique, valuable | barters (Therapist) |
-| Gold bar (100 g) *(new)* | Currency | Ultra Rare | 1×1 | 360,000 | currency, gold, valuable | barters (Prapor) |
-| Rare coin collection | Currency | Epic | 2×1 | 640,000 | currency, antique, valuable | barters (Therapist) |
+| Hard drive | Tech | Uncommon | 1×1 | 45,000 | electronics, computer, data, valuable | upgrades (Rest Space 3); barters (Auntie Zoya) |
+| SSD drive | Tech | Rare | 1×1 | 105,000 | electronics, computer, data, valuable | barters (Auntie Zoya, Doc Vera, The Broker); crafts (Workbench) |
+| Secure flash drive | Tech | Rare | 1×1 | 135,000 | electronics, data, intel, valuable | quests (Due Diligence); gear upgrades (headsets) |
+| Encrypted military hard drive | Tech | Ultra Rare | 1×1 | 330,000 | electronics, computer, data, military, intel, valuable | quests (Safekeeping, Due Diligence); barters (Doc Vera, The Broker) |
+| Graphics card | Tech | Epic | 2×1 | 900,000 | electronics, computer, valuable | barters (Auntie Zoya, The Broker); crafts (Workbench); gear upgrades (headsets) |
+| Cold-wallet crypto drive | Tech | Legendary | 1×1 | 1,650,000 | electronics, data, currency, valuable | barters (Doc Vera) |
+| Silver signet ring *(new)* | Jewelry | Uncommon | 1×1 | 32,000 | jewelry, silver, valuable | barters (Auntie Zoya) |
+| Old wrist watch | Jewelry | Uncommon | 1×1 | 38,000 | jewelry, watch, valuable | barters (Auntie Zoya, Doc Vera) |
+| Gold chain | Jewelry | Rare | 1×1 | 72,000 | jewelry, gold, valuable | quests (Safe Harbour, Safekeeping); barters (Auntie Zoya, Bulat, Doc Vera, The Broker); crafts (Workbench) |
+| Antique pocket watch | Jewelry | Rare | 1×1 | 88,000 | jewelry, watch, silver, antique, valuable | quests (A Word in His Ear); barters (Doc Vera) |
+| Roler Submariner gold wrist watch | Jewelry | Epic | 1×1 | 480,000 | jewelry, watch, gold, valuable | quests (The Collector's Case); barters (Doc Vera, The Broker) |
+| Diamond necklace *(new)* | Jewelry | Epic | 1×1 | 720,000 | jewelry, gold, gem, valuable | quests (The Collector's Case); barters (Doc Vera) |
+| Pre-war banknotes *(new)* | Currency | Common | 1×1 | 14,000 | currency, paper, valuable | barters (Bulat) |
+| Old silver coin | Currency | Uncommon | 1×1 | 30,000 | currency, silver, antique, valuable | quests (A Word in His Ear); barters (Auntie Zoya) |
+| Banded dollars *(new)* | Currency | Rare | 1×1 | 115,000 | currency, paper, valuable | barters (The Broker) |
+| Antique gold coin | Currency | Ultra Rare | 1×1 | 210,000 | currency, gold, antique, valuable | barters (Doc Vera) |
+| Gold bar (100 g) *(new)* | Currency | Ultra Rare | 1×1 | 360,000 | currency, gold, valuable | barters (Bulat) |
+| Rare coin collection | Currency | Epic | 2×1 | 640,000 | currency, antique, valuable | quests (The Collector's Case); barters (Doc Vera) |
 | Physical bitcoin | Currency | Epic | 1×1 | 780,000 | currency, gold, valuable | — |
-| Order of the Red Star *(new)* | Collectibles | Uncommon | 1×1 | 46,000 | antique, metal, military, valuable | barters (Jaeger, Prapor) |
-| Vintage rangefinder camera *(new)* | Collectibles | Rare | 1×1 | 78,000 | antique, optics, fragile, valuable | barters (Skier) |
-| Bronze lion | Collectibles | Ultra Rare | 2×2 | 260,000 | antique, metal, heavy, valuable | barters (Ragman) |
-| Antique icon *(new)* | Collectibles | Ultra Rare | 1×2 | 290,000 | antique, religious, wood, valuable | barters (Ragman) |
-| Imperial jeweled egg *(new)* | Collectibles | Legendary | 1×1 | 2,600,000 | jewelry, gold, gem, antique, fragile, valuable | barters (Jaeger) |
-| Intelligence folder | Intel | Epic | 2×1 | 520,000 | paper, intel, valuable | barters (Therapist) |
-| Encrypted satellite phone *(new)* | Intel | Epic | 1×2 | 560,000 | electronics, military, radio, intel, valuable | barters (Skier) |
-| LEDX Skin Transilluminator | Medical supply | Legendary | 1×1 | 1,400,000 | medical, electronics, optics, valuable | barters (Jaeger, Therapist) |
+| Order of the Red Star *(new)* | Collectibles | Uncommon | 1×1 | 46,000 | antique, metal, military, valuable | barters (Auntie Zoya, Bulat) |
+| Vintage rangefinder camera *(new)* | Collectibles | Rare | 1×1 | 78,000 | antique, optics, fragile, valuable | barters (Auntie Zoya) |
+| Bronze lion | Collectibles | Ultra Rare | 2×2 | 260,000 | antique, metal, heavy, valuable | barters (Stitch) |
+| Antique icon *(new)* | Collectibles | Ultra Rare | 1×2 | 290,000 | antique, religious, wood, valuable | barters (Stitch) |
+| Imperial jeweled egg *(new)* | Collectibles | Legendary | 1×1 | 2,600,000 | jewelry, gold, gem, antique, fragile, valuable | quests (The Collector's Case); barters (The Broker) |
+| Intelligence folder | Intel | Epic | 2×1 | 520,000 | paper, intel, valuable | quests (Safekeeping); barters (Doc Vera) |
+| Encrypted satellite phone *(new)* | Intel | Epic | 1×2 | 560,000 | electronics, military, radio, intel, valuable | quests (Fine Print); barters (Auntie Zoya) |
+| LEDX Skin Transilluminator | Medical supply | Legendary | 1×1 | 1,400,000 | medical, electronics, optics, valuable | barters (Doc Vera, The Broker) |
 
 ## 7. Grid Inventory
 
@@ -820,7 +839,7 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 | Station | Max lvl | Function | Example upgrade cost (lvl 2) |
 |---|---|---|---|
 | Generator | 3 | Powers stations; consumes fuel | 2× Fuel can, 1× Wires |
-| Stash | 4 | Increases stash size | 500k ₽, Prapor LL2 |
+| Stash | 4 | Increases stash size | 500k ₽, Bulat LL2 |
 | Medstation | 3 | Crafts meds and Common–Rare stims | 2× Bandage, 1× Medical tools |
 | Nutrition Unit | 3 | Crafts food/drink; faster energy/hydration refill | 1× Hose, 1× Kettle |
 | Rest Space | 3 | Faster energy/hydration refill between raids | 2× Light bulb, 1× Rechargeable battery |
@@ -835,25 +854,55 @@ Features: sort, filter by category, search, tagging, quick-sell to traders.
 
 Upgrades require items (often FIR), roubles, trader LL, other station levels, and real-time build duration.
 
-**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Ragman; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, the Surv12 and the Legendary Grizzly, which traders never sell. It also makes Common to Rare stims from medical supplies (empty autoinjectors, saline, sugar, coffee, bandages, splints, painkillers): Glucose shots and Caffeine autoinjectors at level 1, Electrolyte boosters, Coagulant pens, Bonelock and Adrenaline at level 2, Packmule and Hawkeye at level 3 (Section 13.8); Ultra Rare and better stims are loot and barters only. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. New barter goods (Section 6.5) are needed too: a pressure gauge (Generator 2), medical blood sets (Medstation 3), an adjustable wrench and a cordless drill (Workbench 2 and 3), bleach (Lavatory 2), a propane tank (Nutrition Unit 2), power cords (Rest Space 3); and crafted: bleach (Lavatory 1), hex nuts (Workbench 1), a multitool (Workbench 2), blood sets (Medstation 2), thermite and server blades (Workbench 3). Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
+**Built so far** (`data/hideout/stations.json`, HIDEOUT screen): Generator, Medstation, Workbench, Lavatory, Nutrition Unit and Rest Space. Each starts unbuilt; level 1 costs roubles and ordinary items, level 2+ asks for found-in-raid items (and sometimes another station's level). Levels unlock crafts (inputs → one item, into the stash, **found in raid**). The Workbench also upgrades gear (GEAR UPGRADES: up to +2 at level 1, +4 at level 2, +5 at level 3, for less money than Stitch; Section 12.2). It hand-loads ammo: 5.45 BS at level 1, 9x19 PBP, 12ga AP-20 and 7.62x39 BP at level 2, and at level 3 (generator level 2, found-in-raid weapon parts, an electric motor and wires) the six Legendary AP rounds traders never sell (Section 6.4). The Medstation makes meds from supplies: an AI-2 and army bandages at level 1; the CALOK-B, a Salewa and morphine at level 2; and at level 3 (generator level 2, found-in-raid medical tools, toothpaste, soap and light bulbs) the AFAK, the Surv12 and the Legendary Grizzly, which traders never sell. It also makes Common to Rare stims from medical supplies (empty autoinjectors, saline, sugar, coffee, bandages, splints, painkillers): Glucose shots and Caffeine autoinjectors at level 1, Electrolyte boosters, Coagulant pens, Bonelock and Adrenaline at level 2, Packmule and Hawkeye at level 3 (Section 13.8); Ultra Rare and better stims are loot and barters only. The Workbench also makes circuit boards, rechargeable batteries, 5.45 BT rounds (gunpowder) and military cable; the Lavatory soap, hoses and cigarettes; the **Nutrition Unit** (level 1: hose, kettle, lighter) makes food and drink from junk (water + sugar + coffee = two energy drinks; field rations, tea, water rations, Aquamari, MREs), at level 2 kvass, buckwheat, Hot Rod, vodka and moonshine, and at level 3 Survivor's emergency kits, isotonic drinks and chocolate (Section 13.7). The Nutrition Unit (+50% a level) and the **Rest Space** (three levels of bunks, heater and TV; +75% a level) make energy and hydration refill faster between raids. A craft that makes several items that don't stack gives that many items. New barter goods (Section 6.5) are needed too: a pressure gauge (Generator 2), medical blood sets (Medstation 3), an adjustable wrench and a cordless drill (Workbench 2 and 3), bleach (Lavatory 2), a propane tank (Nutrition Unit 2), power cords (Rest Space 3); and crafted: bleach (Lavatory 1), hex nuts (Workbench 1), a multitool (Workbench 2), blood sets (Medstation 2), thermite and server blades (Workbench 3). Generator level 3 now also wants a car battery and fuel conditioner. Upgrades and crafts are instant for now; build and craft timers, trader LL requirements and the other stations are planned.
 
 ## 10. Traders
 
-| Trader | Specialty | Currency | Unique |
-|---|---|---|---|
-| Prapor | Eastern weapons, ammo | ₽ | Insurance (cheap, slow) |
-| Therapist | Meds, food, valuables | ₽ | Buys valuables at best price |
-| Skier | Black-market, attachments | ₽ / $ | Cheap barters |
-| Peacekeeper | Western weapons | $ | Buys weapons high |
-| Mechanic | Attachments, weapon parts | ₽ | Gunsmith quests |
-| Ragman | Clothing, rigs, backpacks, armor | ₽ | Cosmetics |
-| Jaeger | Survival gear, hunting rifles | ₽ | Unlocked by quest |
+Seven traders, each with an original name, a role and a personality (`data/traders/traders.json`, read by `TraderTable`). They replaced the placeholder roster on 2026-10-18 (the changelog has the mapping).
+
+| Trader | Role | Stocks | Currency | Unique |
+|---|---|---|---|---|
+| **Bulat** | Weapons dealer | Eastern and civilian guns, ammo, grenades, hunting rifles and shells (and the map items, the Factory exit key and flares) | ₽ | Insurance: cheap, slow (Section 2) |
+| **Doc Vera** | Medic | Meds, stims, food and drink | ₽ | Insurance: dearer, faster; the only trader for Epic and Legendary stims |
+| **Auntie Zoya** | General goods and barter | Tools, household goods, batteries, fuel, basic food, survival gear | ₽ | Cheap barters; introduces you to The Broker |
+| **Stitch** | Gear and armor | Armor, helmets, rigs, backpacks, headsets, cloth materials | ₽ | Upgrades gear (Section 12.2) |
+| **Tinker** | Mechanic | Weapon parts, mods, magazines, sights | ₽ | Gunsmith quests |
+| **Mole** | Fence | Buys anything at a low price once selling is built; later used gear | ₽ | One loyalty level for now (his standing will follow Scav karma) |
+| **The Broker** | High-end dealer | Western guns, top armor and optics, rare goods | $ | Locked until Auntie Zoya introduces you (player level 10) |
+
+**Who they are.** The TRADERS screen shows each one's role, stock, personality and one of three greetings, picked each visit.
+
+| Trader | Personality |
+|---|---|
+| Bulat | A gruff ex-army quartermaster who runs his depot out of a shipping container at the edge of the yard. He counts every round twice and writes it in a ledger older than you are. Heroes bore him; he respects people who come back alive. |
+| Doc Vera | She was a field surgeon at the city hospital until the city stopped needing one; now she patches people up from what's left of its supply room. Tired and dry-humoured, she has seen every wound twice. Nothing makes her angrier than a wasted bandage. |
+| Auntie Zoya | Auntie Zoya has kept a market stall through two wars and a collapse, and she isn't stopping for this one. She trades anything for anything, never forgets a face and always knows who has what. Call her auntie and she might knock something off the price. |
+| Stitch | A quiet tailor who sews plate carriers from whatever you bring him, in a back room lit by one lamp. He measures twice, cuts once and never rushes a seam. If a strap sits crooked he will unpick the whole rig and start again. |
+| Tinker | An obsessive gunsmith in a basement workshop full of half-built rifles, every one of them with a name. He talks to guns more than to people, and the guns seem to listen. Show him something rare and broken and he forgets you're in the room. |
+| Mole | A shifty dealer who works from a sewer junction under the yard, behind a curtain of dripping pipes. He asks no questions and takes anything, just never for much. He remembers who shoots Scavs and who leaves them be. |
+| The Broker | A polished fixer who works from a hotel suite with the curtains drawn, in a pressed suit, with a glass of something he never drinks. He deals only with people who come recommended, and only in dollars. With him everything has a price, the introduction included. |
 
 **Actions:** Buy · Sell · Barter (items-for-item) · Repair · Insure · Quests.
 
-**Built so far** (`data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid. Prapor also sells the Mosin, the SVD, the Tundra 47, Partisan, Strelka MP and Grizzly 74 and Eastern rounds; Peacekeeper sells Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), rounds and AR parts for dollars and barters the Sentinel and Hornet; Skier sells the Brigand 45, Tempest S12 and Warden 870, 9x19 and .45 hollow points, buckshot, slugs and small parts and barters the 9mm suppressor; Therapist sells meds and food by loyalty level (bandages, the AI-2, car medkit and basic food at LL1; the CAT, ibuprofen, Salewa, morphine and adrenaline at LL2; the CALOK-B, aluminium splint, IFAK, CMS, Aquamari and MREs at LL3) and barters medkits and stims for barter goods and valuables (toothpaste and soap for a car medkit, a Roler for an AFAK, up to a rare coin collection for the Grizzly at LL4; Section 13.7). As the medic, she sells Common and Uncommon stims, empty autoinjectors and saline, and is the only trader for Epic and Legendary stims, by barter only (Quickhands, Ghost serum, Zagustin, SJ6, eTG-c, Obdolbos, Phoenix; Section 13.8); Prapor, Skier, Mechanic, Jaeger, Ragman and Peacekeeper barter for cigarettes, gunpowder, drives, watches, coins and the rest; Ragman sells the gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials, and upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4); Jaeger's stock is ready for when he unlocks (Warden 870, Huntsman 700, shells, chokes, hunting rounds, the Leviathan .338 for a LEDX); Mechanic also sells magazines, a choke and parts for the new guns and barters the free-float AR handguard and the bipod grip (Section 6.4). Mechanic sells AK and PM parts (and the SVD magazine) (compensator, short barrel, rail handguard, grips, stocks, railed dust cover, magazines, laser) and barters the match barrel and the AK suppressor; Skier sells rail parts and the quad rail and barters the PM suppressor. Guns are repaired in the modding screen for roubles (Section 12.1). **Loyalty levels** go up on their own as soon as you meet the next level's player level, reputation (from quests) and roubles spent with that trader (table below). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Prapor and Therapist insure gear in their **INSURE** tab (Section 2). Selling, trader repair and restocks are planned.
+**Built so far** (`data/traders/traders.json`, `data/traders/offers.json`, TRADERS screen tabs): **BUY** (roubles or dollars; counts toward money spent for loyalty), **BARTER** (items for an item; some ask for found-in-raid items) and **TASKS** (Section 11). What you get goes to the stash and is never found in raid.
+
+| Trader | Sells | Barters |
+|---|---|---|
+| Bulat | The AK-74N, PM, Mosin, SVD, Tundra 47, Partisan, Strelka MP, Grizzly 74, Brigand 45, Tempest S12, Warden 870 and Huntsman 700; Eastern rounds, the everyday Western rounds (5.56x45, 9x19, .45 and 7.62x51 FMJ and the 9x19 and .45 hollow points at LL1; 5.56 HP and M856, 9x19 Green Tracer and 7.62x51 SP at LL2), every 12ga shell and the .338 Lapua rounds (LL1–4, Section 6.4); grenades, red signal flares, the Factory and Test Yard maps and the Factory exit key | Rounds for cigarettes, vodka, gunpowder and valuables; the PM, the SVD (a gold bar) and the Huntsman 700 |
+| Doc Vera | Meds and food by loyalty level (bandages, the AI-2, car medkit and basic food at LL1; the CAT, ibuprofen, Salewa, morphine and adrenaline at LL2; the CALOK-B, aluminium splint, IFAK, CMS, Aquamari and MREs at LL3); Common and Uncommon stims, empty autoinjectors and saline | Medkits and stims for barter goods and valuables (toothpaste and soap for a car medkit, a Roler for an AFAK, up to a rare coin collection for the Grizzly at LL4; Section 13.7); the only trader for Epic and Legendary stims (Quickhands, Ghost serum, Zagustin, SJ6, eTG-c, Obdolbos, Phoenix; Section 13.8); the Factory lab key |
+| Auntie Zoya | Tools (screwdriver, pliers, adjustable wrench), hardware (nails, screw nuts, duct tape, a hose), AA batteries, light bulbs and rechargeable batteries, household goods (soap, toothpaste, toilet paper, matches, lighters, bleach, a kettle), fuel cans, jerky, sunflower seeds, dried fish and the dorm key; about 1.25× their value, Common goods at LL1 and Uncommon at LL2 | The cheap barters: sights, suppressors and foregrips for watches, coins, drives and cigarettes; chokes and stocks for food and junk; the Factory office key; the LPVO for a satellite phone |
+| Stitch | The gear in Section 12.2 by loyalty level (LL1 Common/Uncommon … LL4 Epic) and the cloth upgrade materials | Packs, rigs, ripstop and paracord; upgrades gear in his **UPGRADES** tab (up to +2 at LL1 … +5 at LL4) |
+| Tinker | AK, PM, AR and SVD parts (compensator, short barrel, rail handguards, grips, stocks, railed dust cover, the quad rail, the AR 9in M-LOK handguard and 5.56 compensator), magazines for the new guns (STANAG 20, 30 and 40 included), sights (red dot, mini reflex, prism), foregrips, a laser, chokes and gun stocks, weapon parts and wires | The match barrel, the AK suppressor, the free-float AR handguard, the bipod grip, scopes, the graphics card and the Leviathan .338 (a military tank battery) |
+| Mole | Nothing yet: his BUY and BARTER tabs say selling isn't open | — |
+| The Broker | For dollars: Western guns (Vektor P9, Bastion 45, Hornet SMG, Wasp PDW, Sentinel AR, Huntsman 700), Western rounds (the armor-piercing ones only from him: 5.56 EPR and AP, 9x19 AP, .45 Match and AP, 7.62x51 M80, M62 and M61), AR parts, the reflex and holographic sights, the 2-4x and 6-8x scopes, the FAST and Sentry helmets and the Hexgrid plate carrier | The Sentinel AR, Hornet, Wasp, the 2-4x scope, the Longbow DMR (a thermal module) and the Leviathan .338 (a LEDX or the jeweled egg) |
+
+Guns are repaired in the modding screen for roubles (Section 12.1). Offers can need a loyalty level (`"ll"` in `offers.json`; BUY shows "LL3" and the button says "Needs loyalty level 3"): ammo is gated so cheap rounds are LL1 and AP rounds LL3–4 (Section 6.4). The **AMMO** tab compares every round of the gun in hand (or any caliber). Bulat and Doc Vera insure gear in their **INSURE** tab (Section 2). Selling, trader repair and restocks are planned.
+
+**The Broker** shows LOCKED in the list, and his panel says how to unlock him instead of showing tabs, until you finish Auntie Zoya's *A Word in His Ear* (from player level 10: an antique pocket watch and 2 old silver coins found in raid, and 150,000 ₽). Until then he doesn't greet you either: his panel shows his own line for strangers (`"locked_greeting"`). Whether he's unlocked comes from that quest's state, so nothing extra is saved; then his tabs appear and his own tasks open (Section 11). Feeding a Western gun found in the first raids doesn't wait on him: every caliber a gun uses has an LL1 round from Bulat, and the STANAG magazines and the common AR parts are Tinker's too. A trader's `"unlock"` (`null` or `{"quest": id}`) sets this; a locked trader refuses every deal.
 
 ### Loyalty Levels (LL)
+
+Loyalty levels go up on their own as soon as you meet the next level's player level, reputation and money spent with that trader (`data/config/progression.json`), checked after every deal, quest turn-in and level-up. The TRADERS screen shows your level with each trader, the reputation (and how much of it barters earned), the money spent and what the next level needs.
 
 | LL | Player level | Reputation | Spent with trader | Unlocks |
 |---|---|---|---|---|
@@ -861,6 +910,26 @@ Upgrades require items (often FIR), roubles, trader LL, other station levels, an
 | 2 | 15 | 0.20 | 750k ₽ | Mid-tier gear, more barters; soft rounds, tracers, subsonic |
 | 3 | 25 | 0.35 | 1.5M ₽ | High-tier gear, better buy prices; armor-piercing rounds |
 | 4 | 35 | 0.50 | 2.5M ₽ | Top-tier gear, best prices; the best AP rounds traders sell |
+
+| Need | Where it comes from |
+|---|---|
+| Player level | Experience (Section 2.2): 15 after about 20 good raids, 25 after 50, 35 after 100 |
+| Reputation | That trader's quests (Section 11), plus **0.01 for every barter** with them, at most **0.30 from barters** per trader; the faction trader starts at +0.05 (Section 3). Kept to 0.001, so the sums land exactly on 0.20, 0.35 and 0.50 |
+| Money spent | Roubles paid to that trader (buying, gear upgrades), and **dollars at 140 ₽ each** (`dollar_rate`) |
+
+The reputation for LL4 is reachable with every trader but Mole (`progression_test` adds it up from the data); the money-spent part only becomes reachable once selling and currency exchange exist (below):
+
+| Trader | Quest reputation | + barters (most) | Total |
+|---|---|---|---|
+| Bulat | Scrap Run 0.05, Flare Path 0.05, Showboat 0.05, Safekeeping 0.10 = 0.25 | 0.30 | 0.55 |
+| Doc Vera | Shortage 0.06, Sanitary Standards 0.09, Clinic Supplies 0.10 = 0.25 | 0.30 | 0.55 |
+| Auntie Zoya | Safe Harbour 0.06, Spin Doctor 0.07, The Collector's Case 0.10, A Word in His Ear 0.05 = 0.28 | 0.30 | 0.58 |
+| Stitch | Textile 0.05, Patchwork 0.08, Hard Plates 0.12 = 0.25 | 0.30 | 0.55 |
+| Tinker | Gunsmith Part 0 0.07, Server Room 0.10, Around the World 0.08 = 0.25 | 0.30 | 0.55 |
+| The Broker | Due Diligence 0.10, Fine Print 0.15 = 0.25 | 0.30 | 0.55 |
+| Mole | — | — | LL1 only (`"max_loyalty": 1`) |
+
+So LL4 takes all of a trader's quests and about 25 barters with them, or fewer quests and the full 30. Money spent is the other half: every trader but Mole sells without limit, and The Broker's 2.5M ₽ is about $17,900. Until selling and currency exchange are built (planned next), money only comes from the starting 500,000 ₽ and quest rewards (about 1M ₽ and $2,100 over a profile), so spending enough for LL2–4 waits on them.
 
 Stock restocks every 1 h *(tune)*; some items have per-restock limits.
 
@@ -875,22 +944,30 @@ Stock restocks every 1 h *(tune)*; some items have per-restock limits.
 
 Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked, may require FIR) → turn-in → rewards. Some rewards unlock trader items or barters.
 
-**Built so far** (`data/quests/quests.json`, the trader's TASKS tab): hand-in quests. Accept, then HAND OVER per objective (part now, the rest later) from the stash and your character, including inside containers; FIR objectives only take items with the checkmark. TURN IN when everything is handed over: roubles, experience, reputation with the trader, and reward items in the stash (never FIR). Prior-quest prerequisites work. Seven quests: Scrap Run (Prapor), Shortage, Sanitary Standards and Clinic Supplies (Therapist), Textile (Ragman), Gunsmith Part 0 and Server Room (Mechanic). Examining an item lists the open quests that want it (Section 6.5).
+**Built so far** (`data/quests/quests.json`, the trader's TASKS tab): hand-in quests. Accept, then HAND OVER per objective (part now, the rest later) from the stash and your character, including inside containers; FIR objectives only take items with the checkmark. An objective can also ask for money (`{"type": "roubles", "count"}`: HAND OVER pays what you have toward it). TURN IN when everything is handed over: roubles (or dollars), experience (through `GameState.add_xp()`, so the level may go up; Section 2.2), reputation with the trader (their loyalty is checked again; Section 10), and reward items in the stash (never FIR). Prerequisites: earlier quests (`"requires"`) and a player level (`"level"`); a quest that isn't open yet shows LOCKED with the reason ("Needs player level 10", "Finish Patchwork first"). Sixteen hand-in quests: Scrap Run, Flare Path and Safekeeping (Bulat); Shortage, Sanitary Standards and Clinic Supplies (Doc Vera); Safe Harbour, The Collector's Case and A Word in His Ear (Auntie Zoya); Textile, Patchwork and Hard Plates (Stitch); Gunsmith Part 0 and Server Room (Tinker); Due Diligence and Fine Print (The Broker). Their reputation was raised so every trader's quests give at least 0.25 (Section 10 adds it up). Examining an item lists the open quests that want it (Section 6.5).
+
+| Quest | Trader | Needs | Objective | Rewards |
+|---|---|---|---|---|
+| A Word in His Ear | Auntie Zoya | Player level 10 | An antique pocket watch and 2 old silver coins (FIR), 150,000 ₽ | 6,000 XP, +0.05 reputation; unlocks The Broker |
+| Due Diligence | The Broker | A Word in His Ear | An encrypted military hard drive and a secure flash drive (FIR) | $600, 8,000 XP, +0.10 |
+| Fine Print | The Broker | Due Diligence, player level 20 | A thermal imaging module and an encrypted satellite phone (FIR) | $1,500, 12,000 XP, +0.15 |
+| Patchwork | Stitch | Textile | 2 sewing kits and 2 paracord (FIR), 2 ripstop fabric | 45,000 ₽, 3,000 XP, +0.08, a Patrol armored vest |
+| Hard Plates | Stitch | Patchwork, player level 15 | 2 aramid fabric, an epoxy resin and ceramic plate shards (FIR) | 120,000 ₽, 7,000 XP, +0.12, Korund-VM body armor |
 
 **Kill objectives** (`data/quests/trick_shots.json`): `{"type": "trick_kill", "count", "target": "pmc" / "scav", "weapon_class": "bolt_action" / "dmr"}` counts 360 trick-shot kills (Section 13.4) matching the filters, added up at the end of each raid while the quest is active, whether you survive or not; the TASKS tab shows them with a gold "360" and the count so far. Rewards can include Drip.
 
 | Quest | Trader | Needs | Objective | Rewards |
 |---|---|---|---|---|
-| Showboat | Prapor | — | 1 trick-shot kill | 40,000 ₽, 3,000 XP, 25 Drip, 40× 7.62x54R LPS |
-| Around the World | Mechanic | Showboat | 3 trick-shot kills with a bolt-action rifle | 90,000 ₽, 6,000 XP, 50 Drip, 2-4x scope |
-| Spin Doctor | Skier | Showboat | 2 trick-shot kills on PMCs | 120,000 ₽, 8,000 XP, 100 Drip, 6-8x scope |
+| Showboat | Bulat | — | 1 trick-shot kill | 40,000 ₽, 3,000 XP, 25 Drip, 40× 7.62x54R LPS |
+| Around the World | Tinker | Showboat | 3 trick-shot kills with a bolt-action rifle | 90,000 ₽, 6,000 XP, 50 Drip, 2-4x scope |
+| Spin Doctor | Auntie Zoya | Showboat | 2 trick-shot kills on PMCs | 120,000 ₽, 8,000 XP, 100 Drip, 6-8x scope |
 
 **Extract quests** (Section 5.1): finishing these unlocks an extract (`"quest"` in `data/config/extracts.json`; the TASKS tab says so under the rewards).
 
 | Quest | Trader | Objective | Rewards | Unlocks |
 |---|---|---|---|---|
-| Flare Path | Prapor | Hand over 1 Red signal flare (FIR) | 20,000 ₽, 1,200 XP, 2 signal flares | Test Yard: Signal point (fire a flare) |
-| Safe Harbour | Skier | Hand over 2 gold chains and a lighter (FIR) | 40,000 ₽, 2,500 XP | Shoreline Resort: Pier boat (15,000 ₽) |
+| Flare Path | Bulat | Hand over 1 Red signal flare (FIR) | 20,000 ₽, 1,200 XP, 2 signal flares | Test Yard: Signal point (fire a flare) |
+| Safe Harbour | Auntie Zoya | Hand over 2 gold chains and a lighter (FIR) | 40,000 ₽, 2,500 XP | Shoreline Resort: Pier boat (15,000 ₽) |
 
 ## 12. Weapon & Gear Upgrades
 
@@ -951,27 +1028,27 @@ Quest structure: prerequisites (level, LL, prior quest) → objectives (tracked,
 | Sight (any sight slot) | Red dot (R: base spread +0.3; aim speed +2%); holographic (R: ergonomics −2; aim speed +2%); 2-4x (UR: base spread +0.8, ergonomics −3; aim speed −8%); 6-8x (E: base spread +1.2, ergonomics −5; aim speed −15%). You aim through the strongest sight fitted (Section 13.6) |
 | PM | Grip (C, standard) or rubber grip (U: climb and side +0.5, recovery +0.5, ergonomics +1.2); 8-round (C, standard) or 12-round magazine (U: ergonomics −2; jams +10%); suppressor (R: climb +0.6, side +0.5, ergonomics −4; noise −40%, velocity −4%) |
 
-These are the first 40 parts; the other 143 (every new gun's standard parts and upgrades, shared muzzle devices and magazines, more rail parts and sights) are listed in Section 6.4. Parts come from Mechanic, Skier, Peacekeeper and Jaeger (Section 10), weapon boxes and duffle bags, and the guns you find.
+These are the first 40 parts; the other 143 (every new gun's standard parts and upgrades, shared muzzle devices and magazines, more rail parts and sights) are listed in Section 6.4. Parts come from Tinker, The Broker and Auntie Zoya's barters (Section 10), weapon boxes and duffle bags, and the guns you find.
 
 ### 12.2 Gear & Gear Upgrades
 
-**Gear** *(tune: `data/items/armor/`, `helmets/`, `rigs/`, `backpacks/` and `attachments/helmet_mods.json`)*: 13 vests and 7 armored rigs in classes 1–6, 10 helmets in classes 1–6 with 7 face shields and 6 headsets, and 9 rigs and 9 backpacks from 3×1 to 8×8 (47 new pieces, every rarity). How armor stops rounds (penetration against class, durability loss) is in Section 6.4. Ragman sells gear by loyalty level (Common and Uncommon at LL1, Rare LL2, Ultra Rare LL3, Epic LL4; Legendary gear is only found in raid); all of it can turn up as loose loot or on bodies.
+**Gear** *(tune: `data/items/armor/`, `helmets/`, `rigs/`, `backpacks/` and `attachments/helmet_mods.json`)*: 13 vests and 7 armored rigs in classes 1–6, 10 helmets in classes 1–6 with 7 face shields and 6 headsets, and 9 rigs and 9 backpacks from 3×1 to 8×8 (47 new pieces, every rarity). How armor stops rounds (penetration against class, durability loss) is in Section 6.4. Stitch sells gear by loyalty level (Common and Uncommon at LL1, Rare LL2, Ultra Rare LL3, Epic LL4; Legendary gear is only found in raid), The Broker a few Western helmets and a plate carrier for dollars; all of it can turn up as loose loot or on bodies.
 
 **Body armor**
 
 | Armor | Class | Covers | Durability | Material | Blunt | Weight | Rarity (max upgrade) | Where |
 |---|---|---|---|---|---|---|---|---|
-| Trooper soft vest | 1 | Thorax, Stomach | 35 | Aramid | 40% | 2.2 kg | C (+1) | Ragman LL1 |
-| Module-3M body armor | 2 | Thorax, Stomach | 40 | Aramid | 38% | 2.8 kg | C (+1) | Ragman LL1 |
-| PACA soft armor | 2 | Thorax, Stomach | 50 | Aramid | 35% | 3.5 kg | U (+2) | Ragman LL1 |
-| Zhuk-3 press vest | 3 | Thorax, Stomach | 52 | Titanium | 30% | 5.2 kg | U (+2) | Ragman LL1 |
-| MMAC plate carrier | 3 | Thorax | 46 | Polyethylene | 28% | 3.6 kg | R (+3) | Ragman LL2 |
-| 6B23-1 body armor | 4 | Thorax, Stomach | 49 | Steel | 25% | 8.6 kg | R (+3) | Ragman LL2 |
-| Gzhel-K body armor | 5 | Thorax, Stomach | 65 | Ceramic | 20% | 9.0 kg | UR (+4) | Ragman LL3 |
-| Korund-VM body armor | 5 | Thorax, Stomach | 60 | Ceramic | 20% | 10.2 kg | UR (+4) | Ragman LL3 |
-| Redut-T5 body armor | 5 | Thorax, Stomach, arms | 75 | Steel | 22% | 13.4 kg | UR (+4) | Ragman LL3 |
-| Hexgrid plate carrier | 5 | Thorax | 55 | Ceramic | 18% | 6.4 kg | E (+5) | Ragman LL4 |
-| Zabralo-Sh body armor | 6 | Thorax, Stomach, arms | 85 | Steel | 18% | 18.0 kg | E (+5) | Ragman LL4 |
+| Trooper soft vest | 1 | Thorax, Stomach | 35 | Aramid | 40% | 2.2 kg | C (+1) | Stitch LL1 |
+| Module-3M body armor | 2 | Thorax, Stomach | 40 | Aramid | 38% | 2.8 kg | C (+1) | Stitch LL1 |
+| PACA soft armor | 2 | Thorax, Stomach | 50 | Aramid | 35% | 3.5 kg | U (+2) | Stitch LL1 |
+| Zhuk-3 press vest | 3 | Thorax, Stomach | 52 | Titanium | 30% | 5.2 kg | U (+2) | Stitch LL1 |
+| MMAC plate carrier | 3 | Thorax | 46 | Polyethylene | 28% | 3.6 kg | R (+3) | Stitch LL2 |
+| 6B23-1 body armor | 4 | Thorax, Stomach | 49 | Steel | 25% | 8.6 kg | R (+3) | Stitch LL2 |
+| Gzhel-K body armor | 5 | Thorax, Stomach | 65 | Ceramic | 20% | 9.0 kg | UR (+4) | Stitch LL3 |
+| Korund-VM body armor | 5 | Thorax, Stomach | 60 | Ceramic | 20% | 10.2 kg | UR (+4) | Stitch LL3 |
+| Redut-T5 body armor | 5 | Thorax, Stomach, arms | 75 | Steel | 22% | 13.4 kg | UR (+4) | Stitch LL3 |
+| Hexgrid plate carrier | 5 | Thorax | 55 | Ceramic | 18% | 6.4 kg | E (+5) | Stitch LL4, The Broker LL4 |
+| Zabralo-Sh body armor | 6 | Thorax, Stomach, arms | 85 | Steel | 18% | 18.0 kg | E (+5) | Stitch LL4 |
 | Slick plate carrier | 6 | Thorax | 80 | Ceramic | 15% | 9.5 kg | L (+5) | Loot |
 | Atlas heavy assault armor | 6 | Thorax, Stomach, arms | 110 | Ceramic | 12% | 20.0 kg | L (+5) | Loot |
 
@@ -979,37 +1056,37 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 
 | Rig | Class | Covers | Durability | Grid | Weight | Rarity (max upgrade) | Where |
 |---|---|---|---|---|---|---|---|
-| Improvised plate rig | 1 | Thorax | 25 | 3×1 | 3.0 kg | C (+1) | Ragman LL1 |
-| Patrol armored vest | 2 | Thorax, Stomach | 38 | 4×1 | 2.6 kg | U (+2) | Ragman LL1 |
-| 6B5 armored rig | 3 | Thorax, Stomach | 45 | 4×2 | 7.5 kg | U (+2) | Ragman LL1 |
-| Thor plate rig | 4 | Thorax | 50 | 4×3 | 6.2 kg | R (+3) | Ragman LL2 |
-| Bagariy armored rig | 5 | Thorax, Stomach | 60 | 5×2 | 9.5 kg | UR (+4) | Ragman LL3 |
-| AVS assault rig | 5 | Thorax, Stomach | 70 | 6×2 | 8.0 kg | E (+5) | Ragman LL4 |
+| Improvised plate rig | 1 | Thorax | 25 | 3×1 | 3.0 kg | C (+1) | Stitch LL1 |
+| Patrol armored vest | 2 | Thorax, Stomach | 38 | 4×1 | 2.6 kg | U (+2) | Stitch LL1 |
+| 6B5 armored rig | 3 | Thorax, Stomach | 45 | 4×2 | 7.5 kg | U (+2) | Stitch LL1 |
+| Thor plate rig | 4 | Thorax | 50 | 4×3 | 6.2 kg | R (+3) | Stitch LL2 |
+| Bagariy armored rig | 5 | Thorax, Stomach | 60 | 5×2 | 9.5 kg | UR (+4) | Stitch LL3 |
+| AVS assault rig | 5 | Thorax, Stomach | 70 | 6×2 | 8.0 kg | E (+5) | Stitch LL4 |
 | TSR combat rig | 6 | Thorax | 80 | 6×3 | 9.0 kg | L (+5) | Loot |
 
 **Helmets** (cover the head except the face; face shield and headset slots)
 
 | Helmet | Class | Durability | Ricochet | Hearing | Slots | Comes with | Rarity (max upgrade) | Where |
 |---|---|---|---|---|---|---|---|---|
-| Bump cap | 1 | 20 | ×0.2 | — | headset | — | C (+1) | Ragman LL1 |
-| Kolpak riot helmet | 1 | 26 | ×0.3 | −5% | face shield, headset | — | C (+1) | Ragman LL1 |
-| SSh-68 steel helmet | 2 | 30 | ×0.5 | −10% | headset | — | U (+2) | Ragman LL1 |
-| Kiver-M helmet | 3 | 34 | ×0.3 | −15% | face shield, headset | — | U (+2) | Ragman LL1 |
-| ZSh-1-2M helmet | 4 | 36 | ×0.4 | −15% | face shield, headset | — | R (+3) | Ragman LL2 |
-| FAST high-cut helmet | 4 | 30 | ×0.35 | −5% | face shield, headset | — | R (+3) | Ragman LL2 |
-| Sentry ballistic helmet | 5 | 38 | ×0.4 | −5% | face shield, headset | — | UR (+4) | Ragman LL3 |
-| Altyn assault helmet | 5 | 50 | ×0.6 | −25% | face shield, headset | Altyn face shield | E (+5) | Ragman LL4 |
-| Lynx-T helmet | 5 | 44 | ×0.5 | −20% | face shield, headset | Lynx-T face shield | E (+5) | Ragman LL4 |
+| Bump cap | 1 | 20 | ×0.2 | — | headset | — | C (+1) | Stitch LL1 |
+| Kolpak riot helmet | 1 | 26 | ×0.3 | −5% | face shield, headset | — | C (+1) | Stitch LL1 |
+| SSh-68 steel helmet | 2 | 30 | ×0.5 | −10% | headset | — | U (+2) | Stitch LL1 |
+| Kiver-M helmet | 3 | 34 | ×0.3 | −15% | face shield, headset | — | U (+2) | Stitch LL1 |
+| ZSh-1-2M helmet | 4 | 36 | ×0.4 | −15% | face shield, headset | — | R (+3) | Stitch LL2 |
+| FAST high-cut helmet | 4 | 30 | ×0.35 | −5% | face shield, headset | — | R (+3) | Stitch LL2, The Broker LL2 |
+| Sentry ballistic helmet | 5 | 38 | ×0.4 | −5% | face shield, headset | — | UR (+4) | Stitch LL3, The Broker LL3 |
+| Altyn assault helmet | 5 | 50 | ×0.6 | −25% | face shield, headset | Altyn face shield | E (+5) | Stitch LL4 |
+| Lynx-T helmet | 5 | 44 | ×0.5 | −20% | face shield, headset | Lynx-T face shield | E (+5) | Stitch LL4 |
 | Vulkan-6 heavy helmet | 6 | 60 | ×0.6 | −30% | face shield, headset | Vulkan-6 face shield | L (+5) | Loot |
 
 **Face shields** (cover the face: head hits from the front)
 
 | Face shield | Class | Durability | Ricochet | Hearing | Fits | Rarity (max upgrade) | Where |
 |---|---|---|---|---|---|---|---|
-| Kolpak riot visor | 1 | 20 | ×0.3 | −5% | Kolpak riot helmet | C (+1) | Ragman LL1 |
-| Kiver face shield | 2 | 28 | ×0.4 | −10% | Kiver-M helmet | U (+2) | Ragman LL1 |
-| Ballistic rail visor | 3 | 30 | ×0.45 | −5% | FAST high-cut helmet, Sentry ballistic helmet | R (+3) | Ragman LL2 |
-| ZSh armored visor | 4 | 36 | ×0.5 | −10% | ZSh-1-2M helmet | UR (+4) | Ragman LL3 |
+| Kolpak riot visor | 1 | 20 | ×0.3 | −5% | Kolpak riot helmet | C (+1) | Stitch LL1 |
+| Kiver face shield | 2 | 28 | ×0.4 | −10% | Kiver-M helmet | U (+2) | Stitch LL1 |
+| Ballistic rail visor | 3 | 30 | ×0.45 | −5% | FAST high-cut helmet, Sentry ballistic helmet | R (+3) | Stitch LL2 |
+| ZSh armored visor | 4 | 36 | ×0.5 | −10% | ZSh-1-2M helmet | UR (+4) | Stitch LL3 |
 | Altyn face shield | 5 | 50 | ×0.6 | −10% | Altyn assault helmet | E (+5) | Loot |
 | Lynx-T face shield | 5 | 46 | ×0.55 | −10% | Lynx-T helmet | E (+5) | Loot |
 | Vulkan-6 face shield | 6 | 60 | ×0.6 | −15% | Vulkan-6 heavy helmet | L (+5) | Loot |
@@ -1018,32 +1095,32 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 
 | Headset | Hearing | Weight | Rarity (max upgrade) | Where |
 |---|---|---|---|---|
-| GSSh-01 headset | +15% | 0.15 kg | C (+1) | Ragman LL1 |
-| Sordin headset | +25% | 0.30 kg | U (+2) | Ragman LL1 |
-| ComTac headset | +35% | 0.35 kg | R (+3) | Ragman LL2 |
-| Tactical Sport headset | +40% | 0.25 kg | UR (+4) | Ragman LL3 |
-| Razor headset | +45% | 0.30 kg | E (+5) | Ragman LL4 |
+| GSSh-01 headset | +15% | 0.15 kg | C (+1) | Stitch LL1 |
+| Sordin headset | +25% | 0.30 kg | U (+2) | Stitch LL1 |
+| ComTac headset | +35% | 0.35 kg | R (+3) | Stitch LL2 |
+| Tactical Sport headset | +40% | 0.25 kg | UR (+4) | Stitch LL3 |
+| Razor headset | +45% | 0.30 kg | E (+5) | Stitch LL4 |
 | Ghost headset | +55% | 0.25 kg | L (+5) | Loot |
 
 **Rigs and backpacks** (plain)
 
 | Item | Kind | Grid | Item size | Weight | Rarity (max upgrade) | Where |
 |---|---|---|---|---|---|---|
-| Sling bag | Backpack | 3×3 | 2×3 | 0.3 kg | C (+1) | Ragman LL1 |
-| Daypack | Backpack | 4×4 | 3×4 | 0.6 kg | C (+1) | Ragman LL1 |
-| MBSS backpack | Backpack | 4×5 | 3×4 | 0.9 kg | U (+2) | Ragman LL1 |
-| Tourist backpack | Backpack | 5×6 | 4×5 | 1.4 kg | U (+2) | Ragman LL1 |
-| Trizip backpack | Backpack | 6×6 | 4×5 | 1.8 kg | R (+3) | Ragman LL2 |
-| Large raid pack | Backpack | 6×8 | 5×6 | 3.6 kg | R (+3) | Ragman LL2 |
-| Pilgrim tourist backpack | Backpack | 7×7 | 5×6 | 3.2 kg | UR (+4) | Ragman LL3 |
-| Attack 2 raid backpack | Backpack | 6×8 | 5×6 | 2.4 kg | E (+5) | Ragman LL4 |
+| Sling bag | Backpack | 3×3 | 2×3 | 0.3 kg | C (+1) | Stitch LL1 |
+| Daypack | Backpack | 4×4 | 3×4 | 0.6 kg | C (+1) | Stitch LL1 |
+| MBSS backpack | Backpack | 4×5 | 3×4 | 0.9 kg | U (+2) | Stitch LL1 |
+| Tourist backpack | Backpack | 5×6 | 4×5 | 1.4 kg | U (+2) | Stitch LL1 |
+| Trizip backpack | Backpack | 6×6 | 4×5 | 1.8 kg | R (+3) | Stitch LL2 |
+| Large raid pack | Backpack | 6×8 | 5×6 | 3.6 kg | R (+3) | Stitch LL2 |
+| Pilgrim tourist backpack | Backpack | 7×7 | 5×6 | 3.2 kg | UR (+4) | Stitch LL3 |
+| Attack 2 raid backpack | Backpack | 6×8 | 5×6 | 2.4 kg | E (+5) | Stitch LL4 |
 | Blackjack 50 backpack | Backpack | 8×8 | 5×6 | 2.0 kg | L (+5) | Loot |
-| Battle belt | Rig | 3×1 | 2×1 | 0.4 kg | C (+1) | Ragman LL1 |
-| Scav vest | Rig | 4×1 | 2×2 | 0.3 kg | C (+1) | Ragman LL1 |
-| Tactical chest rig | Rig | 4×2 | 3×3 | 1.0 kg | U (+2) | Ragman LL1 |
-| Triton chest rig | Rig | 6×2 | 3×3 | 1.2 kg | R (+3) | Ragman LL2 |
-| Bear assault rig | Rig | 6×3 | 3×3 | 1.6 kg | UR (+4) | Ragman LL3 |
-| Blackrock chest rig | Rig | 7×3 | 3×3 | 1.3 kg | E (+5) | Ragman LL4 |
+| Battle belt | Rig | 3×1 | 2×1 | 0.4 kg | C (+1) | Stitch LL1 |
+| Scav vest | Rig | 4×1 | 2×2 | 0.3 kg | C (+1) | Stitch LL1 |
+| Tactical chest rig | Rig | 4×2 | 3×3 | 1.0 kg | U (+2) | Stitch LL1 |
+| Triton chest rig | Rig | 6×2 | 3×3 | 1.2 kg | R (+3) | Stitch LL2 |
+| Bear assault rig | Rig | 6×3 | 3×3 | 1.6 kg | UR (+4) | Stitch LL3 |
+| Blackrock chest rig | Rig | 7×3 | 3×3 | 1.3 kg | E (+5) | Stitch LL4 |
 | Operator chest rig | Rig | 8×3 | 3×3 | 1.1 kg | L (+5) | Loot |
 
 | Helmet rule | Detail |
@@ -1058,16 +1135,16 @@ These are the first 40 parts; the other 143 (every new gun's standard parts and 
 | What | Armor (vests, armored rigs, helmets, face shields), plain rigs and backpacks, and headsets. Guns are modded, not upgraded (Section 12.1); secure containers, meds and the rest don't upgrade |
 | Max level | By rarity: Common +1, Uncommon +2, Rare +3, Ultra Rare +4, Epic and Legendary +5 |
 | Effects per level | Armor: **+10% max durability** (the current durability goes up as much), **−4% blunt damage**; helmets and face shields **+6% ricochet**. Rigs and backpacks: **5% lighter**, **+1 row of room at +2, +2 rows at +4, +1 column and +2 rows at +5** (armored rigs get both). Headsets: **+5% hearing** |
-| Where | **Ragman** (UPGRADES tab): up to +2 at LL1, +3 at LL2, +4 at LL3, +5 at LL4; full price, counted as money spent with him. **Workbench** (hideout, GEAR UPGRADES): up to +2 at level 1, +4 at level 2, +5 at level 3; 40% of the money but an extra roll of duct tape. Out of raid, **UPGRADE** in the examine panel opens a dialog with both |
-| Cost | Roubles: 15 / 25 / 40 / 60 / 85% of the item's value for +1 … +5 (at least 3,000). Barter items: armor needs aramid fabric (then bolts, epoxy resin, ceramic plate shards); rigs and backpacks paracord and ripstop fabric (then duct tape, epoxy resin); headsets wires (then screws, a screwdriver, a flash drive, a GPU). Ragman sells ripstop fabric and paracord (LL1) and aramid fabric (LL2); the rest is loot |
-| Showing it | The item's name gets "+N" (examine, tooltips, lists) and a gold "+N" in its grid cell; examine shows "Upgrade: +1 of +3 (Rare)" and the durability, blunt share, ricochet, room and hearing at its level. Each row in the upgrade lists shows what the next level changes, the price (red if you can't afford it), the items (with how many you have) and UPGRADE, disabled with the reason ("Needs a higher loyalty level with Ragman", "Upgrade the Workbench for +3", "Missing items") |
+| Where | **Stitch** (UPGRADES tab): up to +2 at LL1, +3 at LL2, +4 at LL3, +5 at LL4; full price, counted as money spent with him. **Workbench** (hideout, GEAR UPGRADES): up to +2 at level 1, +4 at level 2, +5 at level 3; 40% of the money but an extra roll of duct tape. Out of raid, **UPGRADE** in the examine panel opens a dialog with both |
+| Cost | Roubles: 15 / 25 / 40 / 60 / 85% of the item's value for +1 … +5 (at least 3,000). Barter items: armor needs aramid fabric (then bolts, epoxy resin, ceramic plate shards); rigs and backpacks paracord and ripstop fabric (then duct tape, epoxy resin); headsets wires (then screws, a screwdriver, a flash drive, a GPU). Stitch sells ripstop fabric and paracord (LL1) and aramid fabric (LL2); the rest is loot |
+| Showing it | The item's name gets "+N" (examine, tooltips, lists) and a gold "+N" in its grid cell; examine shows "Upgrade: +1 of +3 (Rare)" and the durability, blunt share, ricochet, room and hearing at its level. Each row in the upgrade lists shows what the next level changes, the price (red if you can't afford it), the items (with how many you have) and UPGRADE, disabled with the reason ("Needs a higher loyalty level with Stitch", "Upgrade the Workbench for +3", "Missing items") |
 | Saving | The level is saved with the item (`"upgrade"`); its max durability and grid are rebuilt from it on load |
 
 | Planned gear upgrades | Upgrade path | Effect |
 |---|---|---|
 | Armor | Repair kits, plate inserts (class swap) | Restore durability, raise class |
 | Helmets | NVG mounts | Night vision |
-| Secure container | Alpha 2×2 (every new PMC) → **Beta 3×2** (Workbench level 3: an Alpha, 2 military cables, 3 duct tape, 4 found-in-raid bolts) → **Gamma 3×3** (Prapor's *Safekeeping*: an intelligence folder, a military HDD and 2 gold chains, found in raid) → **Kappa 3×4** (Skier's *The Collector's Case*: a Roler, a jeweled egg, a coin collection and a diamond necklace, found in raid). Never lost on death; never loot | Safer loot |
+| Secure container | Alpha 2×2 (every new PMC) → **Beta 3×2** (Workbench level 3: an Alpha, 2 military cables, 3 duct tape, 4 found-in-raid bolts) → **Gamma 3×3** (Bulat's *Safekeeping*: an intelligence folder, a military HDD and 2 gold chains, found in raid) → **Kappa 3×4** (Auntie Zoya's *The Collector's Case*: a Roler, a jeweled egg, a coin collection and a diamond necklace, found in raid). Never lost on death; never loot | Safer loot |
 
 ### 12.3 Player Skills
 
@@ -1195,7 +1272,7 @@ A risk / reward move for bolt-action rifles and DMRs (`WeaponData.weapon_class` 
 | Melee | Tap `melee` (V, RB, the Melee touch button): a swing with the melee slot's weapon (hatchet 40, from its `damage` stat) or a fist (12) at the nearest actor in front within reach (1.3 m fists, the weapon's `reach` or 1.7 m) and a 60° arc. 0.75 s between swings; no armor stops it; it makes noise (6 m). A rumble or buzz on a hit |
 | Parry stance | Hold `melee` for 0.25 s: half speed, no firing or sprinting. A swing at you from within 100° of where you face is parried: no damage, the attacker is staggered for 1.2 s (can't move, shoot or swing). Letting go after holding doesn't swing |
 | AI | Scavs (profile `melee_range` 1.4 m) swing their hatchet or fists instead of shooting when you're that close. The death screen says "melee" with the weapon |
-| Grenades | Hotkeys or the hotkey wheel throw one at the reticle (at most 20 m, in an arc; 0.8 s between throws). The F-1 frag goes off after 3 s: 140 damage at the centre falling to 0 at 7 m, to everyone not behind something solid, no armor stops it; the Zarya flashbang after 1.6 s: a Flashbang (Section 13.6). Both are loud (70 m). In crates and weapon boxes; Prapor sells them (frag at LL2). A new stash has one of each |
+| Grenades | Hotkeys or the hotkey wheel throw one at the reticle (at most 20 m, in an arc; 0.8 s between throws). The F-1 frag goes off after 3 s: 140 damage at the centre falling to 0 at 7 m, to everyone not behind something solid, no armor stops it; the Zarya flashbang after 1.6 s: a Flashbang (Section 13.6). Both are loud (70 m). In crates and weapon boxes; Bulat sells them (frag at LL2). A new stash has one of each |
 | Hotkeys | Hotkeys 1–5 hold an item kind each (default: bandage, painkillers, AI-2 medkit, frag, flashbang): pressing one uses the first you carry (meds, stims, food and drink start their use; grenades are thrown; the signal flare fires in a flare extract). Set them in the inventory: press 1–5 over an item, or the hotkey picker in the examine panel. Saved with the profile |
 
 ### 13.5 Health & Status Effects *(tune)*
@@ -1391,7 +1468,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | HUD | A row of icons over the body: each stim's icon with a ring for its phase (grey: waiting for its delay, "in 3"; green: buffs running; red: only side effects left) and the time until that phase ends; a red OD icon while an Overdose runs. Buffs and side effects are also listed with their numbers beside the body |
 | Examine | Kicks in (delay), every buff and side effect with its number and duration, whether a side effect runs during or after the buffs, energy and hydration at once, and the Overdose rule |
 | Where they spawn | Medical bags and the new **medicine cabinet** (medical POIs), the new **lab cabinet** (labs; Epic and Legendary ×2.5), safes (stims weigh ×0.3 next to valuables and keys), and boss bodies (`data/loot_tables/boss_body.tres`, rolled into every boss's kit; Section 4.3). AI PMCs carry a cheap stim 30% of the time. Epic and Legendary stims drop half as often as other items of their rarity |
-| Traders | Therapist (the medic) sells Common and Uncommon stims, empty autoinjectors and saline, and barters the Epic and Legendary ones for valuables: Quickhands, Ghost serum (LL3), Zagustin, SJ6, eTG-c, Obdolbos, Phoenix (LL4). She never sells Epic or Legendary stims |
+| Traders | Doc Vera (the medic) sells Common and Uncommon stims, empty autoinjectors and saline, and barters the Epic and Legendary ones for valuables: Quickhands, Ghost serum (LL3), Zagustin, SJ6, eTG-c, Obdolbos, Phoenix (LL4). She never sells Epic or Legendary stims |
 | Medstation | Crafts Common to Rare stims from medical supplies (empty autoinjectors, saline solution, sugar, coffee, bandages, splints, painkillers, medical tools): Glucose shot and Caffeine autoinjector (level 1), Electrolyte booster, Coagulant pen, Bonelock and Adrenaline (level 2), Packmule and Hawkeye (level 3), plus Morphine. Ultra Rare and better stims are loot and barters only |
 
 | Stim | Rarity | Delay | Buffs | Side effects during | Side effects after | Value (₽) |
@@ -1460,7 +1537,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Item icons | Until there's art, `ItemData.get_icon()` makes a placeholder (`ItemIcons`, `scripts/ui/`): the grid footprint at 64 px per cell, a dark box tinted and outlined in the rarity colour (colorblind palette aware) with a symbol per category. Setting `icon` replaces it. Inventory grids draw them with `ItemDraw` |
 | Weapons | `WeaponData` `Resource` (`scripts/data/weapon_data.gd`): caliber, weapon skill, class (`weapon_class`: pistol, smg, shotgun, assault_rifle, dmr, bolt_action, lmg), fire rate, auto/semi, magazine, reload and empty-reload time; recoil (vertical, horizontal, recovery rate and delay, camera kick); spread and bloom (base spread, bloom per shot, max bloom, bloom recovery and delay, hip-fire, moving, sprint and roll spread, sway). Modding fields: platform, ergonomics, muzzle velocity, `slots` and `default_mods`; durability: wear per shot, malfunction threshold, jam chance at 0 durability, time to clear a jam. One `.tres` per gun in `data/weapons/`, referenced by the gun's item. Every gun, player's and AI's, is the same `Weapon` node (`scripts/combat/weapon.gd`, scene `scenes/weapons/weapon.tscn`: placeholder model, muzzle, flash, light), so a new gun is just a new data file. `ImpactEffects` (`scripts/combat/`) spawns the hit bursts |
 | Content files | Guns: `data/weapons/<gun>.tres` plus their items in `data/items/weapons/<class>.json`; ammo: `data/items/ammo/<caliber>.json` (stats `caliber`, `damage`, `penetration`, `armor_damage`, `fragmentation`, `velocity`, `recoil`, `accuracy`, `ricochet`, `light_bleed`, `heavy_bleed`, optional `pellets`, `pellet_spread`, `noise`, `tracer`); armor: `class`, `durability`, `zones`, `material`, `blunt`, `ricochet`, `destructibility`; parts: `data/items/attachments/<family>_mods.json`. `ItemDB.ammo_of(caliber)` lists a caliber's rounds (commonest first); `LootTable.ammo_for()` picks the everyday one. `Weapon.pull_trigger` fires one `Ballistics.fire` per pellet (`sound` only on the first); `InventoryDrag.can_load()` / `load_into()` load rounds dropped on a gun; `Player` chambers the top round of the magazine and switches round type on reload |
-| Gear and upgrades | Helmets use the mod slot tree (`WeaponMods`: `slots_of()` reads a helmet's `"slots"`, `platform_of()` its `"platform"`, `install_defaults()` its `"default_mods"`; `has_slots()`, `is_gear_mod()`); face shields and headsets are attachment items with a `"mod"` stat of kind `face_shield` / `headset`. `ArmorRules.armor_for(gear, part, frontal)` checks face shields before helmets (`is_frontal()`), `Actor.hearing_multiplier()` adds up helmet hearing. `Inventory.accepts()` keeps body armor and armored rigs apart. `GearUpgrades` (`scripts/progression/`, data in `data/config/gear_upgrades.json`): groups, max level, effects (`blunt()`, `ricochet()`, `hearing()`, `weight_multiplier()`, `grid_size()`, `apply()`), sources and limits, `cost()`, `block_reason()`, `upgrade()`, `owned()`. `ItemInstance.upgrade_level` (saved as `"upgrade"`) and `title()`. UI: `GearUpgradeRow` (`scripts/ui/`), `GearUpgradePanel` (`scripts/ui/inventory/`, from the examine panel's UPGRADE), Ragman's UPGRADES tab, the Workbench's GEAR UPGRADES |
+| Gear and upgrades | Helmets use the mod slot tree (`WeaponMods`: `slots_of()` reads a helmet's `"slots"`, `platform_of()` its `"platform"`, `install_defaults()` its `"default_mods"`; `has_slots()`, `is_gear_mod()`); face shields and headsets are attachment items with a `"mod"` stat of kind `face_shield` / `headset`. `ArmorRules.armor_for(gear, part, frontal)` checks face shields before helmets (`is_frontal()`), `Actor.hearing_multiplier()` adds up helmet hearing. `Inventory.accepts()` keeps body armor and armored rigs apart. `GearUpgrades` (`scripts/progression/`, data in `data/config/gear_upgrades.json`): groups, max level, effects (`blunt()`, `ricochet()`, `hearing()`, `weight_multiplier()`, `grid_size()`, `apply()`), sources and limits, `cost()`, `block_reason()`, `upgrade()`, `owned()`. `ItemInstance.upgrade_level` (saved as `"upgrade"`) and `title()`. UI: `GearUpgradeRow` (`scripts/ui/`), `GearUpgradePanel` (`scripts/ui/inventory/`, from the examine panel's UPGRADE), Stitch's UPGRADES tab, the Workbench's GEAR UPGRADES |
 | Armor and rounds | `ArmorRules` (`scripts/combat/`): resistance, penetration chance, `resolve()` (penetration, ricochet, blunt, wear, fragmentation, bleed chances) and `effectiveness()` for the charts. `Actor.take_hit(damage, from, position, shot)` resolves a round (`ArmorRules.shot()`) against `worn_gear()` and returns the outcome, which `Ballistics` passes to `on_hit_landed()` (`Player.last_hit` drives the armor hit marker). `BodyHealth.hit` takes the round's bleed chances from the cause. `WeaponStats.shot_speed()` gives a round's speed out of a gun; `Weapon.ammo_recoil()` / `ammo_spread()` apply the round's recoil and accuracy. Armor `ItemInstance`s keep their durability (`is_armor()`, `has_durability()`). `AmmoChart` (`scripts/ui/`) draws the charts; `Trading.offer_level()`, `loyalty_block_reason()` and `update_loyalty()` gate offers by loyalty level |
 | Loot tables | `LootTable` Resource, one per container type (`data/loot_tables/*.tres`: base rarity weights, the table's rarity multipliers, categories, an item list, item groups and tags with their side-line weight, types, item weights, item count) with `roll_rarity()`, `roll_item()`, `roll()`, `roll_items()` (ready-made, guns loaded) and `chances()`; pass a `RandomNumberGenerator` for repeatable rolls. Container types are `LootContainer` resources (`data/loot_tables/containers/`: their table, grid size, search time, placeholder look, solid or not, bullet material); maps add `MapInfo.loot_multipliers`, and `LootZone`s in a map add a `boost` (rarity multipliers) to rolls inside them |
 | Item instances | `ItemInstance` (`scripts/inventory/`, RefCounted): the `ItemData`, stack count, grid cell, turned or not, Found-in-Raid (`fir`, plus raid-only `fir_pending` and `brought_in`), its own `InventoryGrid` for rigs / backpacks / containers, for guns the round type and the magazine (ammo instances bottom to top, so each run of rounds keeps its status), `durability` / `max_durability`, and for guns and parts the parts fitted (`mods`, slot id → `ItemInstance`, nested); saved per instance (`to_dict()` / `from_dict()`). *Planned:* rolled bonuses and gunsmith mods (`AffixData` / `GunsmithModData` Resources) |
@@ -1473,11 +1550,11 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | Points of interest | `PoiTable` (`scripts/data/`) reads `data/config/pois.json` (`maps()`, `for_map()`, `find()`, `loot_boost()` with the tier and locked-room multipliers, `spawn_chance()`, `matches_focus()`, `focus_table()`, `summary()`, `requirement_text()`, `problems()`); `PoiConfig` (`data/config/poi.tres`): multipliers, spawn chances, focus weight, experience, label time, event count / window / timings, rush chances, heat. `PointOfInterest` (`scripts/world/`, group `pois`; `map_id`, `poi_id`, `size`): `at(tree, point)` (smallest containing), `spot_active()` (seeded by raid seed + POI + spot path), `record()` / `spots` (what each spawn point rolled, for the overlay), `requirement_met()`, `heat()`, `event_spots()` (its `EventSpot_<kind>` markers). `LootBox` and `LootPickup` ask the POI they're in (`concealed`, `sealed`, `ignore_poi`). `Lever` (group `levers`, `lever_id`; doors with that `lever_id` open), `FloorHatch` (conceals its `LootBox` children until opened), `Door.needs_power` / `lever_id`. `RaidEvents` (`scripts/raid/`, added by `RaidLevel`, group `raid_events`): `schedule`, `events`, `caches`, `spots()`, `pick()`, `start(kind, poi, at)`, `describe()`. Exploration: `GameState.explored`, `explore()`, `explored_count()`, `exploration()`; `RaidController.poi_entered`, `current_poi`; `HUD.announce()` / `announcement()`; `MapLayout.pois`, `MapOverlay.shown_pois()` |
 | AI | `Bot` (`scripts/actors/bot.gd`): `State` (IDLE, INVESTIGATE, COMBAT, SEARCH, EXTRACT, PATROL, LOOT, FLEE; append new ones, tests use the numbers), `wander_points` (a zone's, random order) or `patrol_points` (a route), `find_loot()`, `pick_treatment()`, `_flank_cover()`, `_push_cover()`, `_best_cover()`, stuck detection in `_move_to()` (`stuck_count`), `rush_to()`, squads (`squad`, `leader`, `title`, `is_boss()`, `is_guard()`), `looted` / `treated` / `flanks` for tests. `BotProfile` adds `flee_health`, `flank_chance`, `loot_radius`, `hot_poi_chance`, `health_multiplier`, `pushes`. `BotKit` (`scripts/data/`, `data/bots/scav_kit.tres`) builds a Scav's random kit; `Inventory.scav()` uses it. `RaidController`: `spawn_wave()`, `wave_spot()`, `hot_point()`, `waves`, `next_wave`, `looters()`; `RaidConfig` scav-wave and boss / guard XP fields. Bosses: `BossTable` (`scripts/data/`, `data/config/bosses.json`: `for_map()`, `full_name()`, `summary()`, `kit()`, `add_boss_loot()`, `problems()`), `BossSpawn` (`scripts/world/`, group `boss_spawns`; its `Marker3D`s are the haunt: `spawn()`, `boss`, `guards`, `boss_loot`), `data/bots/boss.tres`, `guard.tres`, `data/loot_tables/boss_loot.tres` |
 | Insurance and Lab Zero | `Insurance` (`scripts/progression/`) reads `data/config/insurers.json`: `insurers()`, `insurer()`, `price(item, insurer)`, `insure(items, insurer)`, `taken_chance()`, `claim(lost, looters)` (-1: missing in action), `schedule()`, `pending()`, `deliver_due()`, `next_due()`, `arrival_text()`, `countdown_text()`, `gear(inventory)` (everything insurable on you, with where it is; `uninsured()` is the part not insured), `pending_text(insurer)` (the traders' INSURE tab), `now_override` (tests); `ItemInstance.insurer`, `GameState.insurer`. The main menu delivers due returns every second with any screen open (`InsuranceNotice` over it). `MapInfo.entry_item`; `RaidSetup.entry_block_reason()`, `use_entry_item()`, `map_stats()` |
-| Progression | `scripts/progression/`: `Requirement` (item, count, fir), `ItemSearch` (count / take from the stash and character, FIR-only where required), `Trading` (`data/traders/offers.json`), `QuestLog` (`data/quests/*.json`, progress in `GameState.quests`), `Hideout` (`data/hideout/stations.json`, levels in `GameState.hideout`). Screens: TRADERS tabs, `ui/hideout_screen.tscn`; shared widgets `RequirementRow`, `ItemCell`, `FirMark` |
+| Progression | `scripts/progression/`: `Requirement` (item, count, fir), `ItemSearch` (count / take from the stash and character, FIR-only where required), `Trading` (`data/traders/offers.json`: `all_offers()`, `offers()`; `trader_block_reason()` for a locked trader; `update_loyalty()` up to `TraderTable.max_loyalty()`, `update_all_loyalty()` after a level-up; `spent_value()` counts dollars at the exchange rate; each barter adds capped reputation, kept as `"barter_reputation"` in the loyalty entry), `QuestLog` (`data/quests/*.json`, progress in `GameState.quests`; `"level"` prerequisites and `lock_reason()`, `"roubles"` objectives, `"dollars"` rewards; `complete()` adds XP through `GameState.add_xp()`), `Hideout` (`data/hideout/stations.json`, levels in `GameState.hideout`). `Progression` reads `data/config/progression.json` (Section 2.2): `level_xp()`, `level_for_xp()`, `xp_for_level()`, `level_progress()`, `xp_text()`, `loyalty_needs()`, `max_loyalty()`, `dollar_rate()`, `barter_reputation()` / `barter_reputation_cap()`, `add_reputation()` (every reputation gain goes through it, kept to 0.001 so 14 barters and a 0.06 quest make 0.20, not 0.19999999999999998; `update_loyalty()` also allows 0.0001 under a threshold), `problems()`. `GameState.add_xp()` is the one place XP is added (raises `level`, emits `level_changed(old, new)`, re-checks every trader's loyalty); `RaidOutcome.level_before` / `level_after` feed the summary's "Level 11 → 12". Traders: `TraderTable` (`scripts/data/`) reads `data/traders/traders.json` (Section 10): `all()`, `ids()`, `find()`, `display_name()`, `currency_name()`, `greeting()`, `max_loyalty()`, `unlock_quest()`, `is_unlocked()` (from the unlock quest's state), `lock_text()`, `locked_greeting()`, `locked_suffix()` (" (locked)" after a locked trader named as a source: `AmmoChart.sources()`, `ItemUses.of()`), `problems()` (also checks offers, quests, insurers, gear upgrade sources and the faction bonus against the roster). Both loaders mark themselves loaded before checking, so an empty file gives a problem, not endless recursion; `path` and `reload()` let tests load a broken copy. Screens: TRADERS tabs, `ui/hideout_screen.tscn`; shared widgets `RequirementRow`, `ItemCell`, `FirMark` |
 | Item groups and uses | `ItemData.group` and `tags` (JSON `"group"`, `"tags"`); `ItemGroups` (`scripts/data/`) reads `data/config/item_groups.json` (groups, tags, value bands) and checks every barter good and valuable at load (`problems()`, warnings). `ItemUses` (`scripts/progression/`): `of(id)` lists the quests, hideout upgrades, barters, crafts and gear upgrades that take an item, `summary()` and `tooltip()` for the examine panel's Needed for line and the inventory hover text |
 | Inventory | Data (`scripts/inventory/`, no UI): `InventoryGrid` (placement, rotation, stacking, what may go inside what, weight, save), `Inventory` (equipment slots + pockets: slot rules, weight, ammo count / take, starter and Scav kits), `InventoryConfig` (`data/config/inventory.tres`: stash size, weight thresholds). UI (`scripts/ui/inventory/`): `InventoryScreen` (`ui/inventory_screen.tscn`), `InventoryGridView`, `EquipmentSlotView`, `InventoryDrag` (what a drop would do, and doing it), `InventoryDragPreview`, `ItemDraw`, `ItemExaminePanel`; `InventoryLayer` opens it in a raid. Built on Godot's GUI drag & drop (`_get_drag_data` / `_can_drop_data` / `_drop_data`). The player's weight, gun and spare rounds follow its `Inventory` (`Player.set_inventory()`) |
-| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, quests, hideout levels, stash grid; plus the raid being set up), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
-| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 8 adds explored points of interest, the insurer you pick and timed insurance returns (`{"item", "due", "insurer"}`; version 7's returns waiting for room arrive at once). Version 7 adds insured items and returns waiting for room. Version 6 adds Drip and trick-shot stats (older profiles start at 0). Version 5 saves each gun's parts (nested, each with its FIR status) and durability; older guns load with their default parts at full durability. Version 4 keeps each gun's magazine as runs of rounds with their FIR status, and adds quests and hideout levels (version 3 rounds load as not found in raid). Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
+| Globals (autoloads) | Built: `GameState` (profile: faction, level, XP, ₽/$, trader loyalty, inventory, skills, quests, hideout levels, stash grid; plus the raid being set up; `add_xp()` and the `level_changed` signal), `ItemDB` (loads every `ItemData` under `data/items/`), `SaveManager` (JSON save/load), `NoiseSystem` (sounds AI can hear), `CoverSystem` (cover points), `VisionSystem` (Section 13.6: occluders, light, weather, sight lines, the visibility trace), `Settings` (Section 17), `UiSounds` (hover/click sounds for every menu control). Planned: `TraderManager`, `QuestManager`, `HideoutManager` |
+| Saves | One JSON file, `user://savegame.json`: `{version, profile, stash}`. Version 9 renames the traders (Section 10) and adds `"barter_reputation"` to each loyalty entry: `SaveManager.upgrade()` (called by `GameState.from_dict()` on a copy) maps the old ids to the new ones (`TRADER_IDS_V8`) in `trader_loyalty` (the old Jaeger entry merges into Bulat's: the higher level and reputation, money spent added up; Mole starts fresh), `insurer`, `insurance_pending[].insurer` and every item's `"insurer"` in the inventory, stash and pending returns (nested contents and parts too). Version 9 also raised every quest's reputation and moved USEC's starting bonus from The Broker to Tinker, so each trader's reputation is counted again: the faction bonus (on today's faction trader) plus today's reward for every quest the save has completed, or the saved reputation if that's more (less the old bonus on the trader who lost it); before version 9 reputation came only from quests and that bonus, so this is exact. Whatever the version, the level is worked out again from the saved XP and never lowered, and loyalty is checked against it. Version 8 adds explored points of interest, the insurer you pick and timed insurance returns (`{"item", "due", "insurer"}`; version 7's returns waiting for room arrive at once). Version 7 adds insured items and returns waiting for room. Version 6 adds Drip and trick-shot stats (older profiles start at 0). Version 5 saves each gun's parts (nested, each with its FIR status) and durability; older guns load with their default parts at full durability. Version 4 keeps each gun's magazine as runs of rounds with their FIR status, and adds quests and hideout levels (version 3 rounds load as not found in raid). Version 3 saves the inventory and stash as item instances (cell, rotation, contents, loaded rounds, FIR). Version 2 saves (equipment, pockets, skills) are converted: the holster becomes the pistol slot and an Alpha secure container is added; version 1 saves get the starter kit equipped. Written to a temp file first, then swapped in. Bump `SAVE_VERSION` when the format changes |
 | Settings | `Settings` autoload: `SCHEMA` lists every option once (tab, default, type, choices); the settings menu is built from it. Saved to `user://settings.cfg` (ConfigFile). Scene settings (shadows, bloom, AO, view distance, DoF) are applied to every light, environment and camera as it enters the tree. Brightness, gamma and colorblind correction are one full-screen shader on top |
 | UI | Shared theme `ui/theme/menu_theme.tres` (set as the project theme). Screens opened from a menu extend `MenuScreen` (Esc / B goes back, emits `closed`). Maps are `MapInfo` resources in `data/maps/` |
 | Audio | Buses: Master, Music, Effects, Voice, UI, Ambient (`default_bus_layout.tres`). Placeholder music and UI sounds are generated by `tools/make_placeholder_audio.py` |
@@ -1503,7 +1580,7 @@ Stims are single-use 1×1 injectors (2 s to inject, then the stim's own delay of
 | `maps/` | One scene per raid map (Section 5): `factory.tscn`, plus `test_level.tscn` (the Test Yard) |
 | `ui/` | Main menu (entry scene), settings, raid setup, loading, hideout, character, inventory, traders, pause menu, HUD, raid result; `theme/` |
 | `scripts/` | All GDScript, mirroring scene folders (`ui/` with `ui/inventory/`, `hideout/`, `actors/`, `maps/`, `menu/`), plus `autoload/` (singletons), `data/` (Resource classes), `inventory/` (item instances, grids, the inventory, found-in-raid rules), `raid/` (raid controller and outcome), `progression/` (trading, quests, hideout), `camera/`, `combat/` (bullets, guns, impact effects, flashbang), `world/` (cover, vision, raid environment) and `debug/` |
-| `data/` | `.tres` Resources (and `.json` data): `items/` (one subfolder per category), `traders/` (offers), `quests/`, `hideout/` (stations), `weapons/` (gun handling), `loot_tables/` (`default.tres`, `containers/`), `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info, loot multipliers) |
+| `data/` | `.tres` Resources (and `.json` data): `items/` (one subfolder per category), `traders/` (`traders.json`: the roster; `offers.json`), `quests/`, `hideout/` (stations), `weapons/` (gun handling), `loot_tables/` (`default.tres`, `containers/`), `config/` (tuning), `bots/` (AI profiles), `maps/` (map select info, loot multipliers) |
 | `assets/` | `models/`, `textures/`, `audio/` (`music/`, `ui/`, `sfx/`), `shaders/`, `fonts/` |
 | `tools/` | Helper scripts run outside Godot (placeholder audio generator) |
 
@@ -1536,7 +1613,7 @@ WASD is screen-relative: W always moves up the screen. Every action has a key or
 | Title | Top left |
 | Buttons (left, top to bottom) | **ENTER RAID** (largest, highlighted), HIDEOUT, CHARACTER, TRADERS, gap, QUIT (asks "Are you sure?") |
 | Settings | Gear icon, bottom right |
-| Profile | Top right: faction, level, roubles, dollars |
+| Profile | Top right: faction, "LEVEL 11 · 41,000 / 46,000 XP" with a thin bar toward the next level (Section 2.2), roubles, dollars |
 | Feel | Hover/focus slides a button right and makes it glow, with a hover sound; clicks have their own sound. Hovering also takes keyboard focus, so mouse and controller never highlight two buttons |
 | Navigation | Full keyboard (arrows, Enter, Esc) and controller (D-pad / left stick, A, B). Esc / B on the main menu asks to quit |
 
@@ -1544,8 +1621,8 @@ WASD is screen-relative: W always moves up the screen. Every action has a key or
 
 | Screen | Shows |
 |---|---|
-| CHARACTER | Gear (every slot from Section 7 with the loaded ammo or how many items are inside, pockets, carried weight and value), stats (faction, level, XP, health, money, Drip, Trick Shots: 360 kills and hits), skills (Section 12.3, level and progress) and the stash grid side by side. Stash items show at their grid position in their rarity colours with the rarity letter and stack count; hover for details. **INVENTORY** (or Tab) opens the grid inventory (Section 7) with the stash beside it; closing it saves |
-| TRADERS | All traders (Section 10) with loyalty level, reputation, money spent and what the next level needs, and tabs: **BUY**, **BARTER**, **TASKS** (Section 11), **AMMO**, **UPGRADES** (Ragman) and **INSURE** (Prapor, Therapist; Section 2). Requirements show the found-in-raid checkmark when only FIR items count, and how many you have. Jaeger is locked until his quest. Selling comes later |
+| CHARACTER | Gear (every slot from Section 7 with the loaded ammo or how many items are inside, pockets, carried weight and value), stats (faction, level with a bar toward the next one, XP toward the next level ("36,250 / 39,500 XP (to level 11)"), health, money, Drip, Trick Shots: 360 kills and hits), skills (Section 12.3, level and progress) and the stash grid side by side. Stash items show at their grid position in their rarity colours with the rarity letter and stack count; hover for details. **INVENTORY** (or Tab) opens the grid inventory (Section 7) with the stash beside it; closing it saves |
+| TRADERS | All seven traders (Section 10) with their loyalty level (LOCKED for The Broker until Auntie Zoya's introduction); the one picked shows a greeting (one of three each visit), role, stock, currency, personality, loyalty level, reputation (and how much came from barters), money spent and what the next level needs, and tabs: **BUY**, **BARTER**, **TASKS** (Section 11; quests not open yet say why), **AMMO**, **UPGRADES** (Stitch) and **INSURE** (Bulat, Doc Vera; Section 2). Requirements show the found-in-raid checkmark when only FIR items count, and how many you have. A locked trader shows how to unlock him instead of tabs; Mole's BUY and BARTER tabs say selling isn't open yet. Selling comes later |
 | HIDEOUT | Every station (Section 9) with its level, the next level's requirements and UPGRADE, and its crafts (inputs → output, the output drawn with its checkmark) with CRAFT |
 
 ### 16.3 Enter Raid
@@ -1554,7 +1631,7 @@ WASD is screen-relative: W always moves up the screen. Every action has a key or
 |---|---|
 | 1. Map | Every map from Section 5 is listed, with its size, raid time, players, extracts from the extract table ("3: Gate 3 (always open), Office window (random, 40%), Cellars (Factory exit key, power on)"), its boss and odds ("Iron Matvei, the Furnace King · 35% · 2-4 Stokers"), how much of it you've explored ("Explored: 4 of 12 points of interest (33%)") and, for Lab Zero, its entry ("a Lab Zero access keycard (PMC, used up on entry)"). Maps that aren't built yet show "in development" and can't be picked. Factory and Test Yard are playable |
 | 2. PMC or Scav | **PMC:** your character and gear; die and lose what you brought. **Scav:** random gear, nothing from your stash at risk; AI Scavs leave you alone unless you shoot them (whoever you shoot turns hostile). AI PMCs are hostile either way |
-| 3. Loadout check | Every slot with its loaded ammo and what's inside rigs, backpacks and the secure container (insured gear marked), pockets and weight, plus warnings (heavy / overweight too): no armor, no helmet, no meds, no backpack, a gun that can't fire (a missing part) or is worn enough to jam, "if you die, everything you bring is lost, except your secure container and insured gear". A PMC gets **INSURE GEAR** (how many items and what it costs; "ALL GEAR INSURED" when there's nothing left; Section 2). The insurer picker (Prapor or Therapist, with their cost and return time) sets who INSURE GEAR pays. A map with an entry item (Lab Zero) says so; without the item the check says why you can't go ("You need a Lab Zero access keycard to enter Lab Zero"; Scavs never can) and READY is off; with it, the item is used up as the raid starts |
+| 3. Loadout check | Every slot with its loaded ammo and what's inside rigs, backpacks and the secure container (insured gear marked), pockets and weight, plus warnings (heavy / overweight too): no armor, no helmet, no meds, no backpack, a gun that can't fire (a missing part) or is worn enough to jam, "if you die, everything you bring is lost, except your secure container and insured gear". A PMC gets **INSURE GEAR** (how many items and what it costs; "ALL GEAR INSURED" when there's nothing left; Section 2). The insurer picker (Bulat or Doc Vera, with their cost and return time) sets who INSURE GEAR pays. A map with an entry item (Lab Zero) says so; without the item the check says why you can't go ("You need a Lab Zero access keycard to enter Lab Zero"; Scavs never can) and READY is off; with it, the item is used up as the raid starts |
 | 5. In the raid | A random spawn point for your side; your extracts on screen for a few seconds; the raid clock counts down; extract (Section 5.1) or die. Every raid ends on the raid summary (Section 2), then back to the hideout |
 | 4. Loading | Map name, side, a gameplay tip and a progress bar while the map loads in the background (shown for at least 1.5 s) |
 
@@ -1653,3 +1730,4 @@ All three work at the same time. Every action goes through Godot's InputMap: key
 | 2026-10-17 | Points of interest, raid events, keys, insurance, Scav AI and bosses (Sections 2, 4, 5.2, 6.1, 12.2; the request's starting-POI table came through empty, so the POIs in Section 5.2 were written here). **POIs** on every map (58: tier 1–3, focus tags, key / power / lever requirements, 2–3 originals per map incl. hidden ones: a stash under the floorboards, a shuttered bunker, a wrecked van in the Test Yard; the Foreman's stash, the generator bunker and a crashed supply truck in the Factory), placed in the Test Yard and the Factory (they replace the Factory's loot zones). Dynamic loot: spawn points roll whether they spawn, items roll with tier multipliers on Rare+ (×1 / ×1.5 / ×2.5), focus tags and better odds behind locked doors. First-entry label, per-map exploration with XP, POIs on the map item. **Raid events** 1–3 a raid: airdrop (plane, flare, parachute), supply truck, weapon cache (klaxon, flare), announced and heard, AI rushes them, best Epic/Legendary odds; hot POIs draw waves and roaming AI. POI page on the debug overlay with markers on every spawn point. **Keys**: 8 new keys and keycards (14), Labs renamed **Lab Zero**, entered with the Lab Zero access keycard, used up on entry (Scavs can't enter). **Insurance** per trader (Prapor 8%, 36–48 h; Therapist 15%, 24–30 h; a game day is a real minute), items taken off your body by nearby AI, returns delivered in the main menu when due. **Secure containers** Gamma (3×3, quest) and Kappa (3×4, quest); Beta from the Workbench. **Scav AI** state machine: idle / patrol (wandering its zone), investigate (hearing by movement: sprint 20 m, walk 10 m, crouch 4 m), combat with flanking, loot, flee and treat, unstuck; random cheap Scav kits (10 guns, gear 95% Common/Uncommon); Scav waves every 150–240 s. **Bosses**: one per map with original names (Krane, Iron Matvei, Varga, Old Leshy, Captain Reyes, Director Varn), 35% chance, 2–4 guards, ×1.8 HP, class 5–6 armor, squad AI that shares targets, escorts and pushes one at a time, guaranteed Epic/Legendary loot, 1,000 XP. The Factory navmesh now matches the navigation map's 0.1 m cells (narrow doorways were cut off for the AI). 491 items. Save version 8 |
 | 2026-10-17 | Vision (Section 13.6): the fog of war no longer remembers what you've seen. Everything out of view is the same dim, nearly grey dark, so the layout stays faintly visible (17% brightness; places never seen used to be near black). Hostile rounds that hit you or pass within 4 m now glow faintly through the dark, from the muzzle to where they reach you, only where you can't see their path, fading over 0.5 s (`BulletGlow`, new `vision.tres` values) |
 | 2026-10-18 | Insurance (Sections 2, 10): Prapor and Therapist have an **INSURE** tab on the TRADERS screen: their rate and return time, every insurable piece of gear on you (slot or container, price with them, or who insures it) with INSURE and INSURE ALL, what's on its way back from them, and USE PRAPOR / USE THERAPIST to pick the loadout check's insurer. Returns now arrive on time whatever menu screen is open (they used to wait until you were back on the main menu), with a notice over the screen. Secure containers unchanged (Alpha 2×2 kept on death; Beta from the Workbench, Gamma and Kappa from quests) |
+| 2026-10-18 | Player levels and the trader roster (Sections 2, 2.2, 3, 9, 10, 11, 15, 16). **Player level** 1–50 from experience (`data/config/progression.json`, read by `Progression`; the curve 33,000 × ((level − 1) / 9)^1.68 puts level 10 at 33,000 XP, 15 at 69,500, 25 at 171,000, 35 at 308,000, 50 at 569,000: about 10, 20, 50, 100 and 250 good raids with the quests). `GameState.add_xp()` is the one place XP is added (raid settle and quest turn-in): several levels at once, never lower, a `level_changed` signal, and every trader's loyalty checked again. The main menu shows "LEVEL 11 · 41,000 / 46,000 XP" with a bar, the Character screen the level, XP to the next and a bar, the raid summary "Level 11 → 12". **Traders renamed** to an original roster in `data/traders/traders.json` (`TraderTable`: role, specialty, personality, 3 greetings, currency, unlock), which replaces the hard-coded lists: Prapor → **Bulat** (weapons dealer), Therapist → **Doc Vera** (medic), Skier → **Auntie Zoya** (general goods and barter; Skier's attachments went to Tinker and his guns and rounds to Bulat, his barters stayed with her), Mechanic → **Tinker** (mechanic), Ragman → **Stitch** (gear and armor, gear upgrades), Peacekeeper → **The Broker** (high-end, dollars), new **Mole** (the fence: nothing to buy yet, LL1 only); Jaeger is gone: his guns, shells and .338 rounds went to Bulat, his chokes and stocks to Tinker and Auntie Zoya, his food to Auntie Zoya, the Leviathan .338 barters to The Broker (where Bulat or Tinker already sold the same item, Jaeger's copy was merged into theirs). Auntie Zoya also sells tools, hardware, batteries, household goods and fuel. Insurers are Bulat (cheap, slow) and Doc Vera (dearer, faster); gear upgrades are Stitch's; the faction bonus is BEAR → Bulat, USEC → Tinker. **The Broker** is locked until Auntie Zoya's new quest *A Word in His Ear* (player level 10; a pocket watch and 2 silver coins found in raid and 150,000 ₽); it then opens his quests *Due Diligence* and *Fine Print*. Until then he gives a line for strangers instead of a greeting, and the ammo chart and Needed for mark him "(locked)" as a source. Because he's locked, Bulat now also sells the everyday Western rounds for roubles (5.56x45, 9x19, .45 and 7.62x51 FMJ at LL1; 5.56 HP and M856, 9x19 Green Tracer at LL2) and Tinker the STANAG 30- and 40-round magazines, the AR 9in M-LOK handguard, the 5.56 compensator and the mini reflex sight; the armor-piercing Western rounds stay The Broker's. Quests can need a player level (`"level"`, shown as LOCKED with the reason), ask for roubles (`"type": "roubles"`) and pay dollars. Stitch gets *Patchwork* and *Hard Plates*. **The reputation for loyalty 2–4 is reachable** with every trader but Mole: the loyalty table moved to `progression.json`, quest reputation went up (every trader's quests give 0.25 or more), each barter adds 0.01 reputation with that trader (at most 0.30; reputation is kept to 0.001 so float sums don't fall just short of a threshold), and dollars count 140 ₽ each toward money spent. The money-spent part only becomes reachable once selling and currency exchange exist (the thresholds are unchanged). Save version 9: old trader ids are mapped to the new ones in loyalty (Jaeger's merges into Bulat's), the insurer, insurance returns and every item's insurer; each trader's reputation is counted again from today's quest rewards for the quests the save completed plus the faction bonus on today's faction trader (USEC's moves from The Broker to Tinker), keeping a higher saved value; the level is worked out again from XP on load |

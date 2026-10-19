@@ -17,7 +17,20 @@ const SAVE_PATH := "user://savegame.json"
 ## neither).
 ## Version 8 adds explored points of interest, the insurer you pick and timed insurance returns
 ## ({"item", "due", "insurer"}; version 7 returns waiting for room arrive at once).
-const SAVE_VERSION := 8
+## Version 9 renames the traders (DESIGN.md §10) and adds the reputation barters earned with each
+## ("barter_reputation", 0 for older saves). Older saves get the new ids everywhere a trader id is
+## saved (TRADER_IDS_V8): loyalty (Jaeger's merges into Bulat's: the higher level and reputation, the
+## money spent added up; Mole starts fresh), the insurer you pick, insurance returns on their way and
+## the insurer on every item (nested contents and parts too). Version 9 also raised every quest's
+## reputation and moved USEC's starting bonus from The Broker to Tinker, so older saves get their
+## reputation counted again (_recount_reputation()). The level is worked out again from the experience
+## whatever the version (GameState.from_dict()).
+const SAVE_VERSION := 9
+## Trader ids before version 9 -> the trader who took over (upgrade()).
+const TRADER_IDS_V8 := {"prapor": "bulat", "therapist": "vera", "skier": "zoya", "peacekeeper": "broker",
+	"mechanic": "tinker", "ragman": "stitch", "jaeger": "bulat"}
+## The trader each faction's starting reputation went to before version 9 (old ids).
+const FACTION_TRADER_V8 := {"BEAR": "prapor", "USEC": "peacekeeper"}
 
 
 func has_save() -> bool:
@@ -63,3 +76,77 @@ func load_game() -> bool:
 func delete_save() -> void:
 	if has_save():
 		DirAccess.remove_absolute(SAVE_PATH)
+
+
+## Save `data` brought up to SAVE_VERSION (a copy; GameState.from_dict() reads it). Version 8 and
+## older: the version 9 trader ids and reputation (see the version notes). Data with no version is
+## taken as current.
+func upgrade(data: Dictionary) -> Dictionary:
+	var version := int(data.get("version", SAVE_VERSION))
+	if version >= 9:
+		return data
+	var result := data.duplicate(true)
+	var profile: Dictionary = result.get("profile", {})
+	var loyalty: Dictionary = profile.get("trader_loyalty", {})
+	var renamed := {}
+	for old_id: String in loyalty:
+		var id: String = TRADER_IDS_V8.get(old_id, old_id)
+		var entry: Dictionary = loyalty[old_id]
+		if not renamed.has(id):
+			renamed[id] = entry.duplicate()
+			continue
+		var kept: Dictionary = renamed[id]  # Two old traders became one (Jaeger into Bulat).
+		kept.level = maxi(int(kept.get("level", 1)), int(entry.get("level", 1)))
+		kept.reputation = maxf(float(kept.get("reputation", 0.0)), float(entry.get("reputation", 0.0)))
+		kept.spent = int(kept.get("spent", 0)) + int(entry.get("spent", 0))
+	_recount_reputation(renamed, str(profile.get("faction", "NONE")), profile.get("quests", {}))
+	if profile.has("trader_loyalty") or not renamed.is_empty():
+		profile.trader_loyalty = renamed
+	if profile.has("insurer"):
+		profile.insurer = TRADER_IDS_V8.get(str(profile.insurer), str(profile.insurer))
+	_rename_insurers(profile.get("inventory", {}))
+	_rename_insurers(profile.get("insurance_pending", []))
+	_rename_insurers(result.get("stash", []))
+	result.version = SAVE_VERSION
+	return result
+
+
+## Before version 9 a trader's reputation came only from their quests and the faction bonus. Each
+## trader in `loyalty` (version 9 ids) gets the faction bonus (GameState.FACTION_TRADER) plus today's
+## reputation for every quest `quests` marks completed, or what the save had if that's more (less the
+## old faction bonus where it moved to another trader: USEC's, from The Broker to Tinker).
+func _recount_reputation(loyalty: Dictionary, faction: String, quests: Dictionary) -> void:
+	var earned := {}
+	var bonus_trader: String = GameState.FACTION_TRADER.get(GameState.Faction.get(faction, GameState.Faction.NONE), "")
+	if bonus_trader != "":
+		earned[bonus_trader] = GameState.FACTION_REP_BONUS
+	for quest_id: String in quests:
+		var quest := QuestLog.find(quest_id)
+		if quest.is_empty() or str(quests[quest_id].get("state", "")) != "completed":
+			continue
+		var trader := str(quest.get("trader", ""))
+		earned[trader] = float(earned.get(trader, 0.0)) + float(quest.get("rewards", {}).get("reputation", 0.0))
+	var old_bonus_trader: String = TRADER_IDS_V8.get(FACTION_TRADER_V8.get(faction, ""), "")
+	for id: String in earned:
+		if not loyalty.has(id):
+			loyalty[id] = {"level": 1, "reputation": 0.0, "spent": 0}
+	for id: String in loyalty:
+		var entry: Dictionary = loyalty[id]
+		var saved := float(entry.get("reputation", 0.0))
+		if id == old_bonus_trader and id != bonus_trader:
+			saved = maxf(saved - GameState.FACTION_REP_BONUS, 0.0)
+		entry.reputation = snappedf(maxf(saved, float(earned.get(id, 0.0))), Progression.REPUTATION_STEP)
+
+
+## Renames every "insurer" in `value` (item dicts, lists of them, and whatever they hold) to its
+## version 9 id.
+func _rename_insurers(value: Variant) -> void:
+	if value is Dictionary:
+		if value.get("insurer") is String:
+			value.insurer = TRADER_IDS_V8.get(value.insurer, value.insurer)
+		for key: Variant in value:
+			if value[key] is Dictionary or value[key] is Array:
+				_rename_insurers(value[key])
+	elif value is Array:
+		for entry: Variant in value:
+			_rename_insurers(entry)

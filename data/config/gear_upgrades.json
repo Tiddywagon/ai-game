@@ -39,6 +39,6 @@
   },
   "sources": {
     "workbench": {"name": "Workbench", "money": 0.4, "extra_items": [{"item": "duct_tape", "count": 1}], "max_level_by_station_level": [0, 2, 4, 5]},
-    "ragman": {"name": "Ragman", "money": 1.0, "extra_items": [], "max_level_by_loyalty": [0, 2, 3, 4, 5]}
+    "stitch": {"name": "Stitch", "money": 1.0, "extra_items": [], "max_level_by_loyalty": [0, 2, 3, 4, 5]}
   }
 }

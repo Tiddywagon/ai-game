@@ -1,6 +1,7 @@
 extends MenuScreen
-## CHARACTER screen (DESIGN.md §16.2): gear, stats, skills and the stash side by side. INVENTORY (or Tab)
-## opens the grid inventory with the stash beside it, to move gear between them; closing it saves.
+## CHARACTER screen (DESIGN.md §16.2): gear, stats (level with the XP toward the next one), skills and
+## the stash side by side. INVENTORY (or Tab) opens the grid inventory with the stash beside it, to move
+## gear between them; closing it saves.
 
 const DIM := Color(1, 1, 1, 0.35)
 const INVENTORY_SCENE := preload("res://ui/inventory_screen.tscn")
@@ -76,8 +77,20 @@ func _fill_gear() -> void:
 func _fill_stats() -> void:
 	var grid: GridContainer = %StatsGrid
 	_row(grid, "Faction", GameState.Faction.find_key(GameState.faction), MenuEntryButton.ACCENT)
-	_row(grid, "Level", str(GameState.level), Color.WHITE)
-	_row(grid, "Experience", UiFormat.thousands(GameState.xp), Color.WHITE)
+	_row(grid, "Level", "%d of %d" % [GameState.level, Progression.max_level()], Color.WHITE)
+	var bar := ProgressBar.new()  # Toward the next level, beside the level.
+	bar.name = "XpBar"
+	bar.custom_minimum_size = Vector2(220, 8)
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.show_percentage = false
+	bar.value = Progression.level_progress(GameState.xp, GameState.level) * 100.0
+	var level_line := HBoxContainer.new()
+	level_line.add_theme_constant_override("separation", 18)
+	grid.get_child(grid.get_child_count() - 1).reparent(level_line)
+	level_line.add_child(bar)
+	grid.add_child(level_line)
+	_row(grid, "Experience", Progression.xp_text(GameState.xp, GameState.level) + ("  (to level %d)" % (GameState.level + 1)
+		if GameState.level < Progression.max_level() else ""), Color.WHITE)
 	var health: HealthConfig = load("res://data/config/health.tres")
 	_row(grid, "Health", "%d HP over 7 body parts" % health.max_total(), Color.WHITE)
 	Consumables.recover_profile()

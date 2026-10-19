@@ -1,29 +1,27 @@
 extends MenuScreen
-## TRADERS screen (DESIGN.md §10, §11, §16.2): every trader with your loyalty level, reputation and
-## what the next level needs, and tabs to BUY (roubles or dollars), BARTER (items for an item), do
-## their TASKS (accept, hand over, turn in), compare AMMO (every round of the gun in hand, or of any
-## caliber: AmmoChart), at Ragman, UPGRADE gear (GearUpgradeRow) and, at the insurers (Prapor and
-## Therapist: Insurance), INSURE the gear you'd take into a raid. Offers above your loyalty level with a trader show the level they need.
-## Everything you get goes to the stash and is never found in raid. Requirements marked with the
-## found-in-raid checkmark only take items that have it (Trading, QuestLog). Each deal saves the game.
-## Right-click an item (long-press on touch: TouchGestures) to examine it.
-
-const TRADERS := [
-	{"id": "prapor", "name": "Prapor", "specialty": "Eastern weapons and ammo", "currency": "Roubles", "unique": "Insurance: cheap, slow"},
-	{"id": "therapist", "name": "Therapist", "specialty": "Meds, food and valuables", "currency": "Roubles", "unique": "Insurance: dearer, faster · pays the most for valuables"},
-	{"id": "skier", "name": "Skier", "specialty": "Black market and attachments", "currency": "Roubles and dollars", "unique": "Cheap barters"},
-	{"id": "peacekeeper", "name": "Peacekeeper", "specialty": "Western weapons", "currency": "Dollars", "unique": "Pays well for weapons"},
-	{"id": "mechanic", "name": "Mechanic", "specialty": "Attachments and weapon parts", "currency": "Roubles", "unique": "Gunsmith quests"},
-	{"id": "ragman", "name": "Ragman", "specialty": "Clothing, rigs, backpacks and armor", "currency": "Roubles", "unique": "Cosmetics"},
-	{"id": "jaeger", "name": "Jaeger", "specialty": "Survival gear and hunting rifles", "currency": "Roubles", "unique": "Unlocked by a quest", "locked": true},
-]
+## TRADERS screen (DESIGN.md §10, §11, §16.2): every trader (TraderTable) with your loyalty level, and
+## for the one picked their role, personality, a greeting (one of three, picked each visit), loyalty,
+## reputation, money spent and what the next level needs, and tabs to BUY (roubles or dollars), BARTER
+## (items for an item), do their TASKS (accept, hand over, turn in), compare AMMO (every round of the
+## gun in hand, or of any caliber: AmmoChart), at Stitch, UPGRADE gear (GearUpgradeRow) and, at the
+## insurers (Bulat and Doc Vera: Insurance), INSURE the gear you'd take into a raid. A trader who isn't
+## unlocked yet (The Broker, after Auntie Zoya's introduction) gives his locked line instead of a
+## greeting, says how to unlock him and shows no tabs;
+## Mole's BUY and BARTER tabs say selling isn't open yet. Offers above your loyalty level with a trader
+## show the level they need. Everything you get goes to the stash and is never found in raid.
+## Requirements marked with the found-in-raid checkmark only take items that have it (Trading,
+## QuestLog). Each deal saves the game. Right-click an item (long-press on touch: TouchGestures) to
+## examine it.
 
 ## Item cells in offer rows: pixels per grid cell, and the most room one may take.
 const OFFER_CELL := 30.0
 const OFFER_MAX := Vector2(150, 64)
 
 var _buttons: Array[Button] = []
+var _traders: Array[Dictionary] = []
 var _trader: Dictionary = {}
+## The greeting each trader gave this visit, by id.
+var _greetings := {}
 ## The caliber the AMMO tab compares ("" = the gun in hand's).
 var _ammo_caliber := ""
 var _examine: ItemExaminePanel
@@ -31,16 +29,17 @@ var _examine: ItemExaminePanel
 
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
+	_traders = TraderTable.all()
 	var group := ButtonGroup.new()
-	for trader: Dictionary in TRADERS:
+	for trader: Dictionary in _traders:
 		var button := Button.new()
 		button.toggle_mode = true
 		button.button_group = group
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size.y = 56
+		button.name = "Trader_" + str(trader.id)
 		Trading.update_loyalty(trader.id)
-		var loyalty: Dictionary = GameState.trader_loyalty[trader.id]
-		button.text = "%s   ·   %s" % [trader.name, "LOCKED" if trader.get("locked", false) else "LL%d" % loyalty.level]
+		button.text = _button_text(trader)
 		button.pressed.connect(_show.bind(trader))
 		button.focus_entered.connect(_show.bind(trader))
 		%TraderList.add_child(button)
@@ -53,7 +52,7 @@ func _ready() -> void:
 	var gestures := TouchGestures.new()
 	gestures.name = "TouchGestures"
 	add_child(gestures)
-	_show(TRADERS[0])
+	_show(_traders[0])
 
 
 func _on_cancel() -> void:
@@ -67,11 +66,19 @@ func _show(trader: Dictionary) -> void:
 	if trader == _trader:
 		return
 	_trader = trader
-	_buttons[TRADERS.find(trader)].set_pressed_no_signal(true)
+	for button_index in _buttons.size():  # Focus moving (keys, a pad) picks a trader too, not just a click.
+		_buttons[button_index].set_pressed_no_signal(button_index == _traders.find(trader))
 	_refresh()
 
 
-## Redraws the selected trader: info, loyalty, money and the three tabs (keeps the open tab).
+## "Bulat   ·   LL2", or "The Broker   ·   LOCKED".
+func _button_text(trader: Dictionary) -> String:
+	if not TraderTable.is_unlocked(trader.id):
+		return "%s   ·   LOCKED" % trader.name
+	return "%s   ·   LL%d" % [trader.name, int(GameState.trader_loyalty[trader.id].level)]
+
+
+## Redraws the selected trader: info, greeting, loyalty, money and the tabs (keeps the open tab).
 func _refresh() -> void:
 	var trader := _trader
 	%Money.text = "%s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")]
@@ -81,14 +88,24 @@ func _refresh() -> void:
 		child.queue_free()
 	var loyalty: Dictionary = GameState.trader_loyalty[trader.id]
 	%TraderName.text = trader.name.to_upper()
-	%TraderInfo.text = "%s\nCurrency: %s\n%s" % [trader.specialty, trader.currency, trader.unique]
-	if trader.get("locked", false):
-		%Loyalty.text = "Locked. Complete his introduction quest to trade with Jaeger."
+	if not TraderTable.is_unlocked(trader.id):
+		var line := TraderTable.locked_greeting(trader.id)  # Not a greeting: he doesn't know you yet.
+		%Greeting.text = "“%s”" % line if line != "" else ""
+	else:
+		if not _greetings.has(trader.id):
+			_greetings[trader.id] = TraderTable.greeting(trader.id)
+		%Greeting.text = "“%s”" % _greetings[trader.id]
+	%TraderInfo.text = "%s: %s\nCurrency: %s  ·  %s\n%s" % [trader.role, trader.specialty, TraderTable.currency_name(trader.id),
+		trader.unique, trader.personality]
+	for button_index in _buttons.size():
+		_buttons[button_index].text = _button_text(_traders[button_index])
+	if not TraderTable.is_unlocked(trader.id):
+		%Loyalty.text = "Locked. " + TraderTable.lock_text(trader.id)
 		%Tabs.hide()
 		return
 	%Tabs.show()
 	Trading.update_loyalty(trader.id)
-	_buttons[TRADERS.find(trader)].text = "%s   ·   LL%d" % [trader.name, loyalty.level]
+	_buttons[_traders.find(trader)].text = _button_text(trader)
 	_build_buy(trader)
 	_build_barters(trader)
 	_build_tasks(trader)
@@ -98,19 +115,34 @@ func _refresh() -> void:
 	if Insurance.insurers().any(func(each: Dictionary) -> bool: return each.id == trader.id):
 		_build_insurance(trader)
 	%Tabs.current_tab = clampi(tab, 0, %Tabs.get_tab_count() - 1)
-	var lines := ["Loyalty level %d  ·  reputation %.2f  ·  spent %s" % [loyalty.level, loyalty.reputation, UiFormat.money(loyalty.spent)]]
+	%Loyalty.text = "\n".join(_loyalty_lines(trader))
+
+
+## "Loyalty level 2  ·  reputation 0.27 (0.05 from barters)  ·  spent ₽ 812,000", then what the next
+## level needs.
+func _loyalty_lines(trader: Dictionary) -> Array[String]:
+	var loyalty: Dictionary = GameState.trader_loyalty[trader.id]
+	var bartered := Trading.barter_reputation(trader.id)
+	var lines: Array[String] = ["Loyalty level %d  ·  reputation %.2f%s  ·  spent %s" % [loyalty.level, loyalty.reputation,
+		" (%.2f from barters)" % bartered if bartered > 0.0 else "", UiFormat.money(loyalty.spent)]]
 	var next: int = loyalty.level + 1
-	if Trading.LOYALTY.has(next):
-		var need: Array = Trading.LOYALTY[next]
-		lines.append("Next level (LL%d) needs: player level %d, reputation %.2f, %s spent with %s." % [
-			next, need[0], need[1], UiFormat.money(need[2]), trader.name])
-	else:
+	var need := Progression.loyalty_needs(next)
+	if TraderTable.max_loyalty(trader.id) <= 1:
+		lines.append("%s's loyalty stays at level 1 for now." % trader.name)
+	elif next > TraderTable.max_loyalty(trader.id) or need.is_empty():
 		lines.append("Highest loyalty level reached.")
-	%Loyalty.text = "\n".join(lines)
+	else:
+		lines.append("Next level (LL%d) needs: player level %d, reputation %.2f, %s spent with %s%s. Barters add %.2f reputation each, up to %.2f." % [
+			next, need.player_level, need.reputation, UiFormat.money(need.spent), trader.name,
+			" (a dollar counts as %s)" % UiFormat.money(roundi(Progression.dollar_rate())) if trader.currency == "USD" else "",
+			Progression.barter_reputation(), Progression.barter_reputation_cap()])
+	return lines
 
 
 func _build_buy(trader: Dictionary) -> void:
 	var rows := _add_tab("BUY")
+	if trader.has("notice"):
+		rows.add_child(_note(str(trader.notice)))
 	for offer: Dictionary in Trading.offers(trader.id).get("buy", []):
 		var item := ItemInstance.create(str(offer.item), int(offer.get("count", 1)))
 		if item == null:
@@ -130,12 +162,14 @@ func _build_buy(trader: Dictionary) -> void:
 		row.add_child(_action_button("BUY", Trading.buy_block_reason(offer, trader.id), func() -> String: return Trading.buy(trader.id, offer)))
 		rows.add_child(row)
 		rows.add_child(HSeparator.new())
-	if rows.get_child_count() == 0:
+	if Trading.offers(trader.id).get("buy", []).is_empty() and not trader.has("notice"):
 		rows.add_child(_note("Nothing for sale."))
 
 
 func _build_barters(trader: Dictionary) -> void:
 	var rows := _add_tab("BARTER")
+	if trader.has("notice"):
+		rows.add_child(_note(str(trader.notice)))
 	for offer: Dictionary in Trading.offers(trader.id).get("barters", []):
 		var reward := Trading.barter_reward(offer)
 		var item := ItemInstance.create(str(reward.item), int(reward.get("count", 1)))
@@ -164,7 +198,7 @@ func _build_barters(trader: Dictionary) -> void:
 		row.add_child(_action_button("TRADE", Trading.barter_block_reason(offer, trader.id), func() -> String: return Trading.barter(offer, trader.id)))
 		rows.add_child(row)
 		rows.add_child(HSeparator.new())
-	if rows.get_child_count() == 0:
+	if Trading.offers(trader.id).get("barters", []).is_empty() and not trader.has("notice"):
 		rows.add_child(_note("No barters."))
 
 
@@ -180,8 +214,7 @@ func _build_tasks(trader: Dictionary) -> void:
 			"ready": "READY TO TURN IN", "completed": "COMPLETED"}[state]]
 		box.add_child(title)
 		if state == "locked":
-			box.add_child(_note("Finish %s first." % ", ".join(quest.get("requires", []).map(func(id: String) -> String:
-				return QuestLog.find(id).get("name", id)))))
+			box.add_child(_note(QuestLog.lock_reason(quest) + "."))
 			rows.add_child(box)
 			rows.add_child(HSeparator.new())
 			continue
@@ -189,6 +222,9 @@ func _build_tasks(trader: Dictionary) -> void:
 		for i in quest.objectives.size():
 			if QuestLog.objective_type(quest, i) == "trick_kill":
 				box.add_child(_trick_objective(quest, i, state))
+				continue
+			if QuestLog.objective_type(quest, i) == "roubles":
+				box.add_child(_money_objective(quest, i, state))
 				continue
 			var wanted := QuestLog.objective(quest, i)
 			var line := HBoxContainer.new()
@@ -209,6 +245,8 @@ func _build_tasks(trader: Dictionary) -> void:
 			var needs := ", ".join(ExtractTable.condition_texts(rules))
 			box.add_child(_note("Unlocks the %s extract on %s%s" % [unlock.entry.name, map.display_name if map else unlock.map,
 				" (%s)" % needs if needs != "" else ""]))
+		for unlocked: Dictionary in _traders.filter(func(each: Dictionary) -> bool: return TraderTable.unlock_quest(each.id) == quest.id):
+			box.add_child(_note("Unlocks %s: %s" % [unlocked.name, str(unlocked.specialty).to_lower()]))
 		match state:
 			"available":
 				box.add_child(_action_button("ACCEPT", "", func() -> String: return "" if QuestLog.accept(quest) else "Can't accept"))
@@ -357,6 +395,24 @@ func _held_gun() -> ItemInstance:
 	return gun if gun and gun.is_gun() else null
 
 
+## A roubles objective: how much, how much is handed over so far, and HAND OVER (pays what you can).
+func _money_objective(quest: Dictionary, index: int, state: String) -> Control:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 12)
+	var label := Label.new()
+	var count := QuestLog.objective_count(quest, index)
+	var paid := QuestLog.progress(quest, index)
+	label.text = "Roubles   %s" % (UiFormat.money(count) if state == "available" else "%s / %s" % [UiFormat.money(paid), UiFormat.money(count)])
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if state != "available":
+		label.add_theme_color_override("font_color", RequirementRow.MET_COLOR if paid >= count else RequirementRow.MISSING_COLOR)
+	line.add_child(label)
+	if state == "active" and paid < count:
+		line.add_child(_action_button("HAND OVER", "No roubles" if GameState.roubles <= 0 else "", func() -> String:
+			return "" if QuestLog.hand_in(quest, index) > 0 else "Nothing to hand over"))
+	return line
+
+
 ## A trick-kill objective: what it asks for and how many so far.
 func _trick_objective(quest: Dictionary, index: int, state: String) -> Control:
 	var line := HBoxContainer.new()
@@ -385,6 +441,8 @@ func _rewards_text(rewards: Dictionary) -> String:
 	var parts: Array[String] = []
 	if int(rewards.get("roubles", 0)) > 0:
 		parts.append(UiFormat.money(int(rewards.roubles)))
+	if int(rewards.get("dollars", 0)) > 0:
+		parts.append(UiFormat.money(int(rewards.dollars), "USD"))
 	if int(rewards.get("xp", 0)) > 0:
 		parts.append("%s XP" % UiFormat.thousands(int(rewards.xp)))
 	if float(rewards.get("reputation", 0.0)) > 0.0:

@@ -3,7 +3,7 @@
   "game_hours_per_real_minute": 24.0,
   "taken": {"base": 0.05, "per_looter": 0.12, "max": 0.6, "radius": 40.0},
   "insurers": [
-    {"id": "prapor", "name": "Prapor", "rate": 0.08, "return_hours": [36, 48], "note": "Cheap, slow"},
-    {"id": "therapist", "name": "Therapist", "rate": 0.15, "return_hours": [24, 30], "note": "Dearer, faster"}
+    {"id": "bulat", "name": "Bulat", "rate": 0.08, "return_hours": [36, 48], "note": "Cheap, slow"},
+    {"id": "vera", "name": "Doc Vera", "rate": 0.15, "return_hours": [24, 30], "note": "Dearer, faster"}
   ]
 }

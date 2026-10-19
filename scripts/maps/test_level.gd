@@ -2,7 +2,7 @@ extends RaidLevel
 ## Test level for movement, cover and combat (DESIGN.md §13): the raid map script (RaidLevel) plus
 ## debug keys. Search the containers and bodies (F), pick up loose loot, and extract (the Test Yard row
 ## of data/config/extracts.json): the north-east gate is always open; the smuggler's car takes roubles
-## and no backpack; the signal point, once Prapor's Flare Path quest is done, needs a signal flare fired
+## and no backpack; the signal point, once Bulat's Flare Path quest is done, needs a signal flare fired
 ## in it (RaidController, ExtractZone). F12 shows the debug overlay.
 ## Debug keys: F1 left leg fracture, F2 overweight, F3 next round type for the gun's caliber (adds a stack if you have none), F4 AI on/off, F5 heal (and fill energy and hydration),
 ## F6 cycle the gun's sight, F7 time of day, F8 weather, F9 flashbang at the reticle, F10 fog of war off.

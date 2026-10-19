@@ -1,7 +1,7 @@
 class_name GearUpgradePanel
 extends PanelContainer
 ## The upgrade dialog for one piece of gear (DESIGN.md §12.2), opened with UPGRADE in the examine panel
-## out of raid: its level, and a row per place that can upgrade it (the Workbench, Ragman) with what the
+## out of raid: its level, and a row per place that can upgrade it (the Workbench, Stitch) with what the
 ## next level changes, the cost and UPGRADE. Esc or CLOSE hides it.
 
 signal closed
@@ -54,7 +54,7 @@ func _build() -> void:
 	var note := Label.new()
 	note.theme_type_variation = &"DimLabel"
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	note.text = "Level +%d of +%d: %s gear goes up to +%d. Each level costs roubles and barter items; the Workbench charges less money, Ragman needs no hideout. How far each can go depends on the Workbench's level or your loyalty with Ragman." % [
+	note.text = "Level +%d of +%d: %s gear goes up to +%d. Each level costs roubles and barter items; the Workbench charges less money, Stitch needs no hideout. How far each can go depends on the Workbench's level or your loyalty with Stitch." % [
 		item.upgrade_level, max_level, Palette.RARITY_NAMES[item.data.rarity], max_level]
 	_rows.add_child(note)
 	_rows.add_child(HSeparator.new())

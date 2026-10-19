@@ -3,7 +3,7 @@ extends HBoxContainer
 ## One gear upgrade on offer (DESIGN.md §12.2): the item, its level and what the next one changes, what
 ## `source` (a trader or the Workbench) charges in roubles and barter items, and UPGRADE (disabled, with
 ## the reason as its tooltip, when it can't be done). Used by the upgrade dialog from the examine panel,
-## Ragman's UPGRADES tab and the Workbench in the hideout.
+## Stitch's UPGRADES tab and the Workbench in the hideout.
 
 ## Emitted after an upgrade (the game has been saved).
 signal upgraded(item: ItemInstance)

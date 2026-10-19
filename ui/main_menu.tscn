@@ -118,6 +118,14 @@ theme_override_colors/font_color = Color(0.85, 0.84, 0.78, 0.85)
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 2
 
+[node name="XpBar" type="ProgressBar" parent="UI/Menu/Profile"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 6)
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_filter = 2
+show_percentage = false
+
 [node name="MoneyLabel" type="Label" parent="UI/Menu/Profile"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -269,7 +277,7 @@ theme_override_font_sizes/font_size = 20
 text = "BEAR
 Russian-backed PMC
 AK platform, Eastern armor
-Starts with +0.05 reputation with Prapor"
+Starts with +0.05 reputation with Bulat"
 
 [node name="UsecButton" type="Button" parent="UI/FactionPicker/Center/Panel/Rows/Choices"]
 unique_name_in_owner = true
@@ -279,7 +287,7 @@ theme_override_font_sizes/font_size = 20
 text = "USEC
 Western private military contractor
 AR platform, Western armor
-Starts with +0.05 reputation with Peacekeeper"
+Starts with +0.05 reputation with Tinker"
 
 [node name="QuitDialog" type="ConfirmationDialog" parent="UI"]
 unique_name_in_owner = true

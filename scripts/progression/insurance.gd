@@ -1,7 +1,7 @@
 class_name Insurance
 extends RefCounted
 ## Insurance (DESIGN.md §2): before a raid, pay a trader (an insurer in data/config/insurers.json:
-## Prapor is cheap and slow, Therapist dearer and faster; GameState.insurer is the one you pick) to
+## Bulat is cheap and slow, Doc Vera dearer and faster; GameState.insurer is the one you pick) to
 ## insure your gear for a share of its value (at least RaidConfig.insurance_min_price each). If you die
 ## or go missing and nobody takes them (claim(): when you're killed, hostile AI near your body may),
 ## insured items you lost come back to the stash after the insurer's return time: 24-48 game hours, a
@@ -60,7 +60,7 @@ static func real_seconds(game_hours: float) -> float:
 	return game_hours / float(config().get("game_hours_per_real_minute", 24.0)) * 60.0
 
 
-## "Prapor · 8% · back in 36-48 h (1:30-2:00)".
+## "Bulat · 8% · back in 36-48 h (1:30-2:00)".
 static func insurer_text(id := "") -> String:
 	var each := insurer(id)
 	if each.is_empty():
@@ -253,7 +253,7 @@ static func deliver_due() -> Array[ItemInstance]:
 	return arrived
 
 
-## "Prapor returned 3 insured items" for what deliver_due() brought ("" for nothing).
+## "Bulat returned 3 insured items" for what deliver_due() brought ("" for nothing).
 static func arrival_text(items: Array[ItemInstance]) -> String:
 	if items.is_empty():
 		return ""

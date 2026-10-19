@@ -5,12 +5,15 @@ extends RefCounted
 ## with the checkmark. You can hand over part of an objective and come back with the rest. Rewards go
 ## to the stash and are never found in raid.
 ##
-## A quest is {"id", "name", "trader", "description", "requires": [quest ids], "objectives": [...],
-## "rewards": {"roubles", "xp", "reputation", "drip", "items": [{"item", "count"}]}}.
-## Objectives: {"type": "hand_in", "item", "count", "fir"}, or {"type": "trick_kill", "count",
-## "target": "pmc" / "scav" (leave out for anyone), "weapon_class": "bolt_action" / "dmr" (leave out
-## for either)}: kills with a 360 trick shot (DESIGN.md §13.4), counted at the end of each raid while
-## the quest is active, whether you survive or not.
+## A quest is {"id", "name", "trader", "description", "requires": [quest ids], "level": the player
+## level it needs (leave out for none), "objectives": [...], "rewards": {"roubles", "dollars", "xp",
+## "reputation", "drip", "items": [{"item", "count"}]}}. Turning one in adds its experience through
+## GameState.add_xp() and its reputation with the trader (loyalty is checked again).
+## Objectives: {"type": "hand_in", "item", "count", "fir"}; {"type": "roubles", "count"}: money handed
+## over, all at once or bit by bit; or {"type": "trick_kill", "count", "target": "pmc" / "scav" (leave
+## out for anyone), "weapon_class": "bolt_action" / "dmr" (leave out for either)}: kills with a 360
+## trick shot (DESIGN.md §13.4), counted at the end of each raid while the quest is active, whether you
+## survive or not.
 
 ## What a trick-kill objective's filters are called.
 const TARGET_NAMES := {"pmc": "PMCs", "scav": "Scavs"}
@@ -46,8 +49,8 @@ static func for_trader(trader_id: String) -> Array[Dictionary]:
 	return all().filter(func(quest: Dictionary) -> bool: return quest.get("trader", "") == trader_id)
 
 
-## "locked" (an earlier quest isn't done), "available", "active", "ready" (everything handed over)
-## or "completed".
+## "locked" (an earlier quest isn't done, or your level is too low: lock_reason()), "available",
+## "active", "ready" (everything handed over) or "completed".
 static func state(quest: Dictionary) -> String:
 	var saved: Dictionary = GameState.quests.get(quest.id, {})
 	if saved.get("state", "") == "completed":
@@ -57,10 +60,21 @@ static func state(quest: Dictionary) -> String:
 			if progress(quest, i) < objective_count(quest, i):
 				return "active"
 		return "ready"
-	for before: String in quest.get("requires", []):
-		if GameState.quests.get(before, {}).get("state", "") != "completed":
-			return "locked"
-	return "available"
+	return "locked" if lock_reason(quest) != "" else "available"
+
+
+## Why `quest` can't be accepted yet: "Needs player level 10 · finish Scrap Run first", or "".
+static func lock_reason(quest: Dictionary) -> String:
+	var reasons: Array[String] = []
+	var level := int(quest.get("level", 1))
+	if GameState.level < level:
+		reasons.append("Needs player level %d" % level)
+	var missing: Array = quest.get("requires", []).filter(func(before: String) -> bool:
+		return GameState.quests.get(before, {}).get("state", "") != "completed")
+	if not missing.is_empty():
+		var names := ", ".join(missing.map(func(id: String) -> String: return str(find(id).get("name", id))))
+		reasons.append(("finish %s first" if not reasons.is_empty() else "Finish %s first") % names)
+	return "  ·  ".join(reasons)
 
 
 ## Objective `index` of `quest` as an item requirement (hand-in objectives).
@@ -68,7 +82,7 @@ static func objective(quest: Dictionary, index: int) -> Requirement:
 	return Requirement.from_dict(quest.objectives[index])
 
 
-## "hand_in" or "trick_kill".
+## "hand_in", "roubles" or "trick_kill".
 static func objective_type(quest: Dictionary, index: int) -> String:
 	return str(quest.objectives[index].get("type", "hand_in"))
 
@@ -121,10 +135,19 @@ static func accept(quest: Dictionary) -> bool:
 	return true
 
 
-## Hands over as many items as you have (up to what's still needed) for objective `index`. Returns how
-## many were handed over.
+## Hands over as many items as you have (up to what's still needed) for objective `index`, or for a
+## roubles objective as much money as you have. Returns how many (items or roubles) were handed over.
 static func hand_in(quest: Dictionary, index: int) -> int:
-	if state(quest) != "active" or objective_type(quest, index) != "hand_in":
+	if state(quest) != "active":
+		return 0
+	if objective_type(quest, index) == "roubles":
+		var paid := mini(GameState.roubles, objective_count(quest, index) - progress(quest, index))
+		if paid <= 0:
+			return 0
+		GameState.roubles -= paid
+		GameState.quests[quest.id].progress[index] = progress(quest, index) + paid
+		return paid
+	if objective_type(quest, index) != "hand_in":
 		return 0
 	var wanted := objective(quest, index)
 	var handed := ItemSearch.take(wanted.item_id, wanted.count - progress(quest, index), wanted.fir)
@@ -143,20 +166,24 @@ static func complete_block_reason(quest: Dictionary) -> String:
 	return ""
 
 
-## Turns `quest` in: money, experience, reputation with its trader, and reward items in the stash.
-## Returns "" on success, else why not.
+## Turns `quest` in: money, reputation with its trader, reward items in the stash, then the experience
+## (GameState.add_xp(): the level may go up) and the trader's loyalty checked again. Returns "" on
+## success, else why not.
 static func complete(quest: Dictionary) -> String:
 	var reason := complete_block_reason(quest)
 	if reason != "":
 		return reason
 	var rewards: Dictionary = quest.get("rewards", {})
 	GameState.roubles += int(rewards.get("roubles", 0))
-	GameState.xp += int(rewards.get("xp", 0))
+	GameState.dollars += int(rewards.get("dollars", 0))
 	GameState.drip += int(rewards.get("drip", 0))
 	var trader: String = quest.get("trader", "")
 	if GameState.trader_loyalty.has(trader):
-		GameState.trader_loyalty[trader].reputation += float(rewards.get("reputation", 0.0))
+		GameState.trader_loyalty[trader].reputation = Progression.add_reputation(float(GameState.trader_loyalty[trader].reputation),
+			float(rewards.get("reputation", 0.0)))
 	for reward in rewards.get("items", []):
 		GameState.stash.add(FoundInRaid.make(str(reward.item), int(reward.get("count", 1)), FoundInRaid.Source.QUEST_REWARD))
 	GameState.quests[quest.id].state = "completed"
+	GameState.add_xp(int(rewards.get("xp", 0)))
+	Trading.update_loyalty(trader)
 	return ""

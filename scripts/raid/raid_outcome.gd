@@ -10,8 +10,9 @@ extends RefCounted
 ##   AI near your body; missing in action, nobody does).
 ## - Scav: surviving moves everything the Scav carries into the stash (what doesn't fit is left
 ##   behind). Dying costs nothing.
-## - Raid experience (none for a Run Through), Drip and 360 trick-shot stats are added to the profile
-##   either way (and trick-shot kills count toward quests), then the game is saved.
+## - Raid experience (none for a Run Through; GameState.add_xp(), which may raise the level), Drip and
+##   360 trick-shot stats are added to the profile either way (and trick-shot kills count toward
+##   quests), then the game is saved.
 
 enum Status { SURVIVED, RUN_THROUGH, KILLED, MIA }
 
@@ -21,6 +22,9 @@ var status := Status.SURVIVED
 var side := "pmc"
 var seconds := 0.0
 var xp := 0
+## The player's level before and after this raid's experience (the summary says "Level 11 → 12").
+var level_before := 0
+var level_after := 0
 ## Where the experience came from: {"kills", "looting", "trick_shots", "exploration", "survived"}.
 var xp_parts := {}
 var kills := 0
@@ -156,7 +160,9 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 		outcome.insurance_returned = claim.returning
 		outcome.insurance_taken = claim.taken
 		outcome.insurance_seconds = maxf(Insurance.next_due(), 0.0)
-	GameState.xp += outcome.xp
+	outcome.level_before = GameState.level
+	GameState.add_xp(outcome.xp)
+	outcome.level_after = GameState.level
 	GameState.drip += outcome.drip
 	GameState.trick_shots.hits += outcome.trick_hits
 	GameState.trick_shots.kills += outcome.trick_kills

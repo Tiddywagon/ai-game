@@ -2,74 +2,74 @@
   {
     "id": "scrap_run",
     "name": "Scrap Run",
-    "trader": "prapor",
+    "trader": "bulat",
     "description": "My boys need hardware for the checkpoint. Not that shop junk, bring what you find out there.",
     "objectives": [
       {"type": "hand_in", "item": "bolts", "count": 3, "fir": true},
       {"type": "hand_in", "item": "screws", "count": 2, "fir": true}
     ],
-    "rewards": {"roubles": 25000, "xp": 1500, "reputation": 0.02, "items": [{"item": "ammo_545_bs", "count": 60}]}
+    "rewards": {"roubles": 25000, "xp": 1500, "reputation": 0.05, "items": [{"item": "ammo_545_bs", "count": 60}]}
   },
   {
     "id": "shortage",
     "name": "Shortage",
-    "trader": "therapist",
+    "trader": "vera",
     "description": "The clinic is out of dressings. Bring me some from the field, sealed and clean.",
     "objectives": [
       {"type": "hand_in", "item": "bandage", "count": 2, "fir": true},
       {"type": "hand_in", "item": "tourniquet", "count": 1, "fir": true}
     ],
-    "rewards": {"roubles": 30000, "xp": 1800, "reputation": 0.02, "items": [{"item": "ai2_medkit", "count": 2}]}
+    "rewards": {"roubles": 30000, "xp": 1800, "reputation": 0.06, "items": [{"item": "ai2_medkit", "count": 2}]}
   },
   {
     "id": "sanitary_standards",
     "name": "Sanitary Standards",
-    "trader": "therapist",
+    "trader": "vera",
     "requires": ["shortage"],
-    "description": "Proper surgical kits, found on site, not bought from Skier's friends.",
+    "description": "Proper surgical kits, found on site, not bought from Auntie Zoya's cousins.",
     "objectives": [
       {"type": "hand_in", "item": "surgical_kit", "count": 1, "fir": true}
     ],
-    "rewards": {"roubles": 60000, "xp": 3500, "reputation": 0.03, "items": [{"item": "propital", "count": 1}]}
+    "rewards": {"roubles": 60000, "xp": 3500, "reputation": 0.09, "items": [{"item": "propital", "count": 1}]}
   },
   {
     "id": "textile",
     "name": "Textile",
-    "trader": "ragman",
+    "trader": "stitch",
     "description": "Tape and toilet paper. Don't laugh: the workshop runs on them. Any will do.",
     "objectives": [
       {"type": "hand_in", "item": "duct_tape", "count": 2, "fir": false},
       {"type": "hand_in", "item": "toilet_paper", "count": 1, "fir": true}
     ],
-    "rewards": {"roubles": 15000, "xp": 900, "reputation": 0.02, "items": [{"item": "sling_bag", "count": 1}]}
+    "rewards": {"roubles": 15000, "xp": 900, "reputation": 0.05, "items": [{"item": "sling_bag", "count": 1}]}
   },
   {
     "id": "gunsmith_0",
     "name": "Gunsmith, Part 0",
-    "trader": "mechanic",
+    "trader": "tinker",
     "description": "Parts I can trust: off a real rifle, from a real raid. Wires I don't care where from.",
     "objectives": [
       {"type": "hand_in", "item": "weapon_parts", "count": 1, "fir": true},
       {"type": "hand_in", "item": "wires", "count": 2, "fir": false}
     ],
-    "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.03, "items": [{"item": "foregrip", "count": 1}]}
+    "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.07, "items": [{"item": "foregrip", "count": 1}]}
   },
   {
     "id": "clinic_supplies",
     "name": "Clinic Supplies",
-    "trader": "therapist",
+    "trader": "vera",
     "requires": ["shortage"],
     "description": "The field clinic runs on whatever you bring. IV sets and a working eye scope, found out there, sealed.",
     "objectives": [
       {"type": "hand_in", "item": "blood_set", "count": 2, "fir": true},
       {"type": "hand_in", "item": "ophthalmoscope", "count": 1, "fir": true}
     ],
-    "rewards": {"roubles": 90000, "xp": 4200, "reputation": 0.03, "items": [{"item": "salewa", "count": 1}]}
+    "rewards": {"roubles": 90000, "xp": 4200, "reputation": 0.10, "items": [{"item": "salewa", "count": 1}]}
   },
   {
     "id": "server_room",
     "name": "Server Room",
-    "trader": "mechanic",
+    "trader": "tinker",
     "requires": ["gunsmith_0"],
     "description": "I'm building a rig and the shops are empty. Memory, power cords and a drill to get into the racks.",
     "objectives": [
@@ -77,14 +77,14 @@
       {"type": "hand_in", "item": "power_cord", "count": 2, "fir": false},
       {"type": "hand_in", "item": "cordless_drill", "count": 1, "fir": true}
     ],
-    "rewards": {"roubles": 120000, "xp": 5000, "reputation": 0.03, "items": [{"item": "scope_2_4", "count": 1}]}
+    "rewards": {"roubles": 120000, "xp": 5000, "reputation": 0.10, "items": [{"item": "scope_2_4", "count": 1}]}
   },
-  {"id": "flare_path", "name": "Flare Path", "trader": "prapor", "description": "My people pick up from a signal point at the back of the Test Yard, but only for those who know how to call them. Bring me a signal flare you found out there and I'll show you the way.", "objectives": [{"type": "hand_in", "item": "signal_flare", "count": 1, "fir": true}], "rewards": {"roubles": 20000, "xp": 1200, "reputation": 0.02, "items": [{"item": "signal_flare", "count": 2}]}},
-  {"id": "safe_harbour", "name": "Safe Harbour", "trader": "skier", "description": "The pier boat on the Shoreline runs for people I trust. Two gold chains and a lighter, found out there, and you're on the list.", "objectives": [{"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}, {"type": "hand_in", "item": "lighter", "count": 1, "fir": true}], "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.02}},
+  {"id": "flare_path", "name": "Flare Path", "trader": "bulat", "description": "My people pick up from a signal point at the back of the Test Yard, but only for those who know how to call them. Bring me a signal flare you found out there and I'll show you the way.", "objectives": [{"type": "hand_in", "item": "signal_flare", "count": 1, "fir": true}], "rewards": {"roubles": 20000, "xp": 1200, "reputation": 0.05, "items": [{"item": "signal_flare", "count": 2}]}},
+  {"id": "safe_harbour", "name": "Safe Harbour", "trader": "zoya", "description": "The pier boat on the Shoreline runs for people I trust. Two gold chains and a lighter, found out there, and you're on the list.", "objectives": [{"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}, {"type": "hand_in", "item": "lighter", "count": 1, "fir": true}], "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.06}},
   {
     "id": "safekeeping",
     "name": "Safekeeping",
-    "trader": "prapor",
+    "trader": "bulat",
     "description": "You keep losing things out there. Bring me proof you can hold on to what matters, and I'll give you something that never leaves your side.",
     "requires": ["scrap_run"],
     "objectives": [
@@ -92,12 +92,12 @@
       {"type": "hand_in", "item": "military_hdd", "count": 1, "fir": true},
       {"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}
     ],
-    "rewards": {"roubles": 60000, "xp": 6000, "reputation": 0.04, "items": [{"item": "secure_gamma", "count": 1}]}
+    "rewards": {"roubles": 60000, "xp": 6000, "reputation": 0.10, "items": [{"item": "secure_gamma", "count": 1}]}
   },
   {
     "id": "collectors_case",
     "name": "The Collector's Case",
-    "trader": "skier",
+    "trader": "zoya",
     "description": "A client of mine collects pretty things, and pays in kind. Find them yourself, out there, and the case is yours.",
     "requires": ["safe_harbour"],
     "objectives": [
@@ -106,6 +106,71 @@
       {"type": "hand_in", "item": "coin_collection", "count": 1, "fir": true},
       {"type": "hand_in", "item": "diamond_necklace", "count": 1, "fir": true}
     ],
-    "rewards": {"roubles": 150000, "xp": 15000, "reputation": 0.06, "items": [{"item": "secure_kappa", "count": 1}]}
+    "rewards": {"roubles": 150000, "xp": 15000, "reputation": 0.10, "items": [{"item": "secure_kappa", "count": 1}]}
+  },
+  {
+    "id": "zoya_introduction",
+    "name": "A Word in His Ear",
+    "trader": "zoya",
+    "level": 10,
+    "description": "There's a man in a hotel suite who sells what my stall never sees. He won't open the door to just anybody: he wants to hear your name from someone he trusts. Bring me something pretty you found out there yourself, and a little for my trouble, and I'll put in a word.",
+    "objectives": [
+      {"type": "hand_in", "item": "pocket_watch", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "silver_coin", "count": 2, "fir": true},
+      {"type": "roubles", "count": 150000}
+    ],
+    "rewards": {"xp": 6000, "reputation": 0.05}
+  },
+  {
+    "id": "due_diligence",
+    "name": "Due Diligence",
+    "trader": "broker",
+    "requires": ["zoya_introduction"],
+    "description": "Before we discuss terms, I need to know you can find what others can't. An encrypted military drive and a secure flash drive, recovered in the field. Copies won't do.",
+    "objectives": [
+      {"type": "hand_in", "item": "military_hdd", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "flash_drive", "count": 1, "fir": true}
+    ],
+    "rewards": {"dollars": 600, "xp": 8000, "reputation": 0.10}
+  },
+  {
+    "id": "fine_print",
+    "name": "Fine Print",
+    "trader": "broker",
+    "requires": ["due_diligence"],
+    "level": 20,
+    "description": "A client of mine collects military electronics and pays well above market. A thermal imaging module and an encrypted satellite phone, untouched, found out there. Read the fine print: found, not bought.",
+    "objectives": [
+      {"type": "hand_in", "item": "thermal_module", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "sat_phone", "count": 1, "fir": true}
+    ],
+    "rewards": {"dollars": 1500, "xp": 12000, "reputation": 0.15}
+  },
+  {
+    "id": "patchwork",
+    "name": "Patchwork",
+    "trader": "stitch",
+    "requires": ["textile"],
+    "description": "A carrier is only as good as its seams. Sewing kits and paracord you found yourself; shop thread frays. Ripstop from anywhere.",
+    "objectives": [
+      {"type": "hand_in", "item": "sewing_kit", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "paracord", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "ripstop_fabric", "count": 2, "fir": false}
+    ],
+    "rewards": {"roubles": 45000, "xp": 3000, "reputation": 0.08, "items": [{"item": "rig_patrol", "count": 1}]}
+  },
+  {
+    "id": "hard_plates",
+    "name": "Hard Plates",
+    "trader": "stitch",
+    "requires": ["patchwork"],
+    "level": 15,
+    "description": "Aramid and ceramic are the bones of real armor, and resin holds them together. Bring them found in raid. I'll know if they're not.",
+    "objectives": [
+      {"type": "hand_in", "item": "aramid_fabric", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "epoxy_resin", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "ceramic_shards", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 120000, "xp": 7000, "reputation": 0.12, "items": [{"item": "armor_korund", "count": 1}]}
   }
 ]

@@ -16,7 +16,7 @@ var _loadout: Inventory
 var _map_buttons: Array[Button] = []
 var _insure: Button
 var _insure_note: Label
-## Who insures your gear (Insurance.insurers(): Prapor cheap and slow, Therapist dearer and faster).
+## Who insures your gear (Insurance.insurers(): Bulat cheap and slow, Doc Vera dearer and faster).
 var _insurer: OptionButton
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]

@@ -1,14 +1,17 @@
 extends Node
 ## Autoload "GameState": the current player profile, inventory (equipment, pockets and what's in
-## them), skills and stash, plus the raid being set up. Data only, no gameplay rules. SaveManager writes
-## it to disk and reads it back.
+## them), skills and stash, plus the raid being set up. Data only, apart from add_xp(), the one place
+## experience is added (it raises the level). SaveManager writes it to disk and reads it back.
+
+## The player's level went up (add_xp()): several levels at once give one signal.
+signal level_changed(old_level: int, new_level: int)
 
 enum Faction { NONE, BEAR, USEC }
 
-## Trader ids (DESIGN.md §10). Each trader gets a loyalty entry.
-const TRADERS: Array[String] = ["prapor", "therapist", "skier", "peacekeeper", "mechanic", "ragman", "jaeger"]
-## Starting reputation bonus by faction (DESIGN.md §3).
-const FACTION_TRADER: Dictionary[Faction, String] = {Faction.BEAR: "prapor", Faction.USEC: "peacekeeper"}
+## Starting reputation bonus by faction (DESIGN.md §3): a trader id from TraderTable.
+const FACTION_TRADER: Dictionary[Faction, String] = {Faction.BEAR: "bulat", Faction.USEC: "tinker"}
+## The insurer a new profile uses (an id in data/config/insurers.json).
+const DEFAULT_INSURER := "bulat"
 const FACTION_REP_BONUS := 0.05
 ## Starting money for a new character (DESIGN.md §14).
 const START_ROUBLES := 500_000
@@ -45,7 +48,9 @@ var dollars: int = START_DOLLARS
 var drip: int = 0
 ## 360 trick shots over the whole profile: rounds that hit, and kills.
 var trick_shots := {"hits": 0, "kills": 0}
-## Trader id -> {"level": loyalty level 1-4, "reputation": float, "spent": roubles spent} (DESIGN.md §10).
+## Trader id (TraderTable) -> {"level": loyalty level 1-4, "reputation": float, "spent": money spent in
+## roubles (dollars at Progression.dollar_rate()), "barter_reputation": the part of the reputation barters
+## earned (capped)} (DESIGN.md §10).
 var trader_loyalty: Dictionary = {}
 ## The stash grid (DESIGN.md §8).
 var stash: InventoryGrid
@@ -67,7 +72,7 @@ var metabolism_time := 0.0
 ## unix time, "insurer"}, delivered to the stash once due and there's room (Insurance.deliver_due()).
 var insurance_pending: Array = []
 ## The trader you insure with (an id in data/config/insurers.json).
-var insurer := "prapor"
+var insurer := DEFAULT_INSURER
 ## Hotkeys 1-5: the item id each one uses (the first one you carry), "" for none.
 var hotkeys: Array = DEFAULT_HOTKEYS.duplicate()
 ## Points of interest you've been in, by map (DESIGN.md §5.2): {map id: [POI ids]}.
@@ -119,6 +124,22 @@ func hotkey_of(id: String) -> int:
 	return hotkeys.find(id) if id != "" else -1
 
 
+## Adds `amount` experience: raid settle (RaidOutcome) and quest turn-in (QuestLog) come through here.
+## The level rises as experience crosses Progression's thresholds, several levels at once if need be,
+## and never falls; a level-up emits level_changed and checks every trader's loyalty again
+## (Trading.update_all_loyalty()). Returns how many levels were gained.
+func add_xp(amount: int) -> int:
+	if amount > 0:
+		xp += amount
+	var old_level := level
+	level = maxi(level, Progression.level_for_xp(xp))
+	if level == old_level:
+		return 0
+	level_changed.emit(old_level, level)
+	Trading.update_all_loyalty()
+	return level - old_level
+
+
 ## Marks POI `poi_id` on `map_id` explored. False if it already was.
 func explore(map_id: String, poi_id: String) -> bool:
 	var list: Array = explored.get(map_id, [])
@@ -155,15 +176,15 @@ func _reset(new_faction: Faction) -> void:
 	var config: InventoryConfig = load("res://data/config/inventory.tres")
 	stash = InventoryGrid.new(config.stash_size, &"stash")
 	trader_loyalty = {}
-	for trader in TRADERS:
-		trader_loyalty[trader] = {"level": 1, "reputation": 0.0, "spent": 0}
+	for trader in TraderTable.ids():
+		trader_loyalty[trader] = {"level": 1, "reputation": 0.0, "spent": 0, "barter_reputation": 0.0}
 	if FACTION_TRADER.has(faction):
 		trader_loyalty[FACTION_TRADER[faction]]["reputation"] += FACTION_REP_BONUS
 	inventory = Inventory.new()
 	quests = {}
 	hideout = {}
 	insurance_pending = []
-	insurer = "prapor"
+	insurer = DEFAULT_INSURER
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
 	explored = {}
 	skills = {}
@@ -202,13 +223,16 @@ func to_dict() -> Dictionary:
 	}
 
 
-## Restores the profile and stash from to_dict() data. Missing fields keep new-profile defaults.
-## JSON turns every number into a float, so whole numbers are converted back with int().
+## Restores the profile and stash from to_dict() data (older save versions are brought up to date
+## first: SaveManager.upgrade()). Missing fields keep new-profile defaults. JSON turns every number into a
+## float, so whole numbers are converted back with int(). The level is worked out again from the
+## experience (never lower than the saved level), and loyalty levels are checked against it.
 func from_dict(data: Dictionary) -> void:
+	data = SaveManager.upgrade(data)
 	var profile: Dictionary = data.get("profile", {})
 	_reset(Faction.get(profile.get("faction", "NONE"), Faction.NONE))
-	level = int(profile.get("level", level))
 	xp = int(profile.get("xp", xp))
+	level = maxi(int(profile.get("level", level)), Progression.level_for_xp(xp))
 	roubles = int(profile.get("roubles", roubles))
 	dollars = int(profile.get("dollars", dollars))
 	drip = int(profile.get("drip", 0))
@@ -225,9 +249,10 @@ func from_dict(data: Dictionary) -> void:
 			continue  # A trader that no longer exists.
 		var entry: Dictionary = saved_loyalty[trader]
 		trader_loyalty[trader] = {
-			"level": int(entry.get("level", 1)),
+			"level": clampi(int(entry.get("level", 1)), 1, TraderTable.max_loyalty(trader)),
 			"reputation": float(entry.get("reputation", 0.0)),
 			"spent": int(entry.get("spent", 0)),
+			"barter_reputation": float(entry.get("barter_reputation", 0.0)),
 		}
 
 	if profile.has("inventory"):
@@ -245,7 +270,7 @@ func from_dict(data: Dictionary) -> void:
 		quests[quest] = {"state": str(entry.get("state", "active")),
 			"progress": entry.get("progress", []).map(func(n: Variant) -> int: return int(n))}
 	insurance_pending = profile.get("insurance_pending", []).duplicate(true)
-	insurer = str(profile.get("insurer", "prapor"))
+	insurer = str(profile.get("insurer", DEFAULT_INSURER))
 	var saved_hotkeys: Array = profile.get("hotkeys", DEFAULT_HOTKEYS)
 	for i in HOTKEY_COUNT:
 		hotkeys[i] = str(saved_hotkeys[i]) if i < saved_hotkeys.size() else ""
@@ -262,3 +287,4 @@ func from_dict(data: Dictionary) -> void:
 			skills[skill] = {"level": int(entry.get("level", 0)), "progress": float(entry.get("progress", 0.0))}
 
 	stash.load_array(data.get("stash", []))
+	Trading.update_all_loyalty()

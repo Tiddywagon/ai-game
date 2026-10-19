@@ -459,7 +459,7 @@ func _build_parts() -> void:
 		note.theme_type_variation = &"DimLabel"
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		note.custom_minimum_size.x = 500
-		note.text = "No parts you own fit %s. Mechanic and Skier sell them; weapon boxes and duffle bags hold them, and guns you find carry theirs." \
+		note.text = "No parts you own fit %s. Tinker sells them; weapon boxes and duffle bags hold them, and guns you find carry theirs." \
 			% ("this slot" if _selected_path != "" else "this gun")
 		_parts.add_child(note)
 
