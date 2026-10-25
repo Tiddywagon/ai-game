@@ -20,15 +20,6 @@ const SKILLS := [
 	["bolt_action_rifles", "Bolt-action rifles"], ["marksman_rifles", "Marksman rifles"], ["smgs", "SMGs"],
 	["shotguns", "Shotguns"], ["lmgs", "Machine guns"], ["stim_resistance", "Stim resistance"],
 ]
-## What a new character has in the stash (DESIGN.md §16.4). The worn kit is Inventory.starter().
-const STARTER_STASH := [
-	{"id": "ak_74n", "x": 0, "y": 0}, {"id": "ammo_545_ps", "x": 5, "y": 0, "count": 60},
-	{"id": "ammo_545_ps", "x": 6, "y": 0, "count": 60}, {"id": "bandage", "x": 7, "y": 0},
-	{"id": "bandage", "x": 8, "y": 0}, {"id": "bandage", "x": 9, "y": 0}, {"id": "bolts", "x": 5, "y": 1},
-	{"id": "bolts", "x": 6, "y": 1}, {"id": "tourniquet", "x": 7, "y": 1}, {"id": "splint", "x": 8, "y": 1},
-	{"id": "ai2_medkit", "x": 9, "y": 1}, {"id": "water_bottle", "x": 0, "y": 2}, {"id": "crackers", "x": 1, "y": 2},
-	{"id": "crackers", "x": 2, "y": 2}, {"id": "frag_grenade", "x": 3, "y": 2}, {"id": "flashbang_grenade", "x": 4, "y": 2},
-]
 ## What a new character's hotkeys 1-5 use (item ids; DESIGN.md §17.1).
 const DEFAULT_HOTKEYS := ["bandage", "painkillers", "ai2_medkit", "frag_grenade", "flashbang_grenade"]
 const HOTKEY_COUNT := 5
@@ -84,7 +75,8 @@ func _ready() -> void:
 	_reset(Faction.NONE)
 
 
-## A fresh level-1 character of the given faction, with the starter kit equipped and in the stash.
+## A fresh level-1 character of the given faction, with the faction's starter kit equipped and its
+## starter stash (DESIGN.md §16.4, data/config/factions.json).
 func new_profile(new_faction: Faction) -> void:
 	_reset(new_faction)
 	_give_starter_kit()
@@ -172,8 +164,8 @@ func _reset(new_faction: Faction) -> void:
 
 
 func _give_starter_kit() -> void:
-	inventory = Inventory.starter()
-	stash.load_array(STARTER_STASH)
+	inventory = Inventory.starter(Factions.of_profile(faction))
+	stash.load_array(Factions.starter_stash(Factions.of_profile(faction)))
 
 
 ## Converts the profile and stash to plain data for saving as JSON.
@@ -237,8 +229,8 @@ func from_dict(data: Dictionary) -> void:
 		inventory = Inventory.from_v2(profile.equipment, str(profile.get("weapon_ammo", "")), profile.get("pockets", []))
 		inventory.equip("secure", ItemInstance.create("secure_alpha"))
 	elif has_profile():
-		# Version 1, from before equipment existed: start with the starter kit worn.
-		inventory = Inventory.starter()
+		# Version 1, from before equipment existed: start with the faction's starter kit worn.
+		inventory = Inventory.starter(Factions.of_profile(faction))
 	var saved_quests: Dictionary = profile.get("quests", {})
 	for quest: String in saved_quests:
 		var entry: Dictionary = saved_quests[quest]

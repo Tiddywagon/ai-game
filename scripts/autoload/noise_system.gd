@@ -3,7 +3,8 @@ extends Node
 ## emit_noise(); bots listen to noise_emitted and react if they're inside the radius. The player's
 ## vision shows sounds it can't see as direction markers at the screen edge (DESIGN.md §13.6).
 
-## `kind` says what made it: &"footstep", &"roll", &"gunshot", &"flashbang" or &"other".
+## `kind` says what made it: &"footstep", &"roll", &"gunshot", &"flashbang", &"voice" (a voice line,
+## DESIGN.md §3) or &"other".
 signal noise_emitted(position: Vector3, radius: float, source: Node, kind: StringName)
 
 

@@ -250,15 +250,12 @@ func duplicate_deep() -> Inventory:
 	return from_dict(to_dict())
 
 
-## A new character's kit (DESIGN.md §16.4): an AK-74N loaded with PS, the Alpha secure container,
-## 60 spare PS rounds and a bandage in the pockets.
-static func starter() -> Inventory:
-	var inventory := Inventory.new()
-	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_ps"))
-	inventory.equip("secure", ItemInstance.create("secure_alpha"))
-	inventory.pockets.place(ItemInstance.create("ammo_545_ps", 60), Vector2i(0, 0), false)
-	inventory.pockets.place(ItemInstance.create("bandage"), Vector2i(1, 0), false)
-	return inventory
+## A new character's kit for `faction` (DESIGN.md §16.4, data/config/factions.json: Factions.starter_kit();
+## &"" gives the first faction's, BEAR): BEAR an AK-74N loaded with 5.45 PS and Module-3M armor, USEC a
+## Kestrel AR loaded with 5.56 FMJ and PACA armor; both the Alpha secure container, 60 spare rounds and
+## a bandage in the pockets.
+static func starter(faction: StringName = &"") -> Inventory:
+	return Factions.starter_kit(faction)
 
 
 ## A random Scav kit (DESIGN.md §4, §16.3), rolled from data/bots/scav_kit.tres (BotKit): a cheap gun
@@ -294,35 +291,14 @@ static func loaded_gun(id: String, ammo: String, durability := 100.0) -> ItemIns
 	return gun
 
 
-## An AI PMC's kit (DESIGN.md §4): an AK-74N with BS, sometimes a PM pistol, armor, a helmet, a
-## tactical rig with 90 spare BS rounds and a bandage, a pack with a few finds (meds, food, valuables)
-## and meds in the pockets. What you can take off the body.
-static func pmc_bot(rng: RandomNumberGenerator = null) -> Inventory:
+## An AI PMC's kit (DESIGN.md §4, §4.4): rolled from its faction's BotKit (Factions.ai_kit(): BEAR
+## Eastern gear, USEC Western; &"" the first faction's), Uncommon to Epic: a gun loaded with a good
+## round and three magazines of spares, armor, mostly a helmet and a pack of finds, a rig, sometimes a
+## sidearm and a stim, meds. `tier`: rarity multipliers for the gear rolls (BotKit.build()). What you
+## can take off the body. Without a kit (a broken factions.json) it gets a Scav's, so it's still armed.
+static func pmc_bot(rng: RandomNumberGenerator = null, faction: StringName = &"", tier := PackedFloat32Array()) -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
-	var inventory := Inventory.new()
-	inventory.equip("primary", loaded_gun("ak_74n", "ammo_545_bs", rng.randf_range(75.0, 95.0)))
-	inventory.equip("armor", ItemInstance.create("armor_6b23" if rng.randf() < 0.5 else "paca_armor"))
-	inventory.equip("helmet", ItemInstance.create("zsh_helmet" if rng.randf() < 0.3 else "ssh68_helmet"))
-	if rng.randf() < 0.4:
-		inventory.equip("pistol", loaded_gun("pm_pistol", "ammo_9x18_pst", rng.randf_range(75.0, 95.0)))
-	var rig := ItemInstance.create("tactical_rig")
-	rig.contents.add(ItemInstance.create("ammo_545_bs", 60))
-	rig.contents.add(ItemInstance.create("ammo_545_bs", 30))
-	rig.contents.add(ItemInstance.create("bandage"))
-	inventory.equip("rig", rig)
-	inventory.pockets.add(ItemInstance.create("painkillers"))
-	if rng.randf() < 0.5:
-		inventory.pockets.add(ItemInstance.create("tourniquet"))
-	var pack := ItemInstance.create("tourist_pack")
-	for id in ["ai2_medkit", "canned_beef", "water_bottle", "gold_chain", "electric_motor", "weapon_parts"]:
-		if rng.randf() < 0.5:
-			pack.contents.add(ItemInstance.create(id))
-	for id in ["car_medkit", "salewa", "morphine", "wrist_watch", "hard_drive", "ssd_drive", "condensed_milk", "cigarettes"]:
-		if rng.randf() < 0.2:
-			pack.contents.add(ItemInstance.create(id))
-	if rng.randf() < 0.3:
-		var stims := ["adrenaline", "caffeine_injector", "glucose_shot", "coagulant_pen", "propital"]
-		rig.contents.add(ItemInstance.create(stims[rng.randi() % stims.size()]))
-	inventory.equip("backpack", pack)
-	return inventory
+		rng.randomize()
+	var kit := Factions.ai_kit(faction)
+	return kit.build(rng, tier) if kit else scav(rng)

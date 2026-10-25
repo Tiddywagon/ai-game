@@ -1,8 +1,9 @@
 class_name DebugOverlay
 extends CanvasLayer
 ## In-raid debug overlay (F12, `debug_overlay`): the raid (map, side, seed, clock, power), the
-## player's position and extract countdown, the AI (alive, heading for an extract, already left; the
-## boss and its guards; Scav waves; what each bot is doing: its state), and
+## player's position and extract countdown, the AI (alive: Scavs, and PMCs by faction in how many
+## squads; heading for an extract, already left; the boss and its guards; Scav waves; what each bot is
+## doing: its state), and
 ## every extract on the map with its id, type, what it takes and its state this raid: open or closed,
 ## known or unknown, locked behind a quest, paid, flare fired, and the mark the player sees. Pressed again
 ## it shows the points of interest (DESIGN.md §5.2): each one's tier, focus, loot multiplier, how many of
@@ -97,7 +98,7 @@ func text() -> String:
 				"%.1f / %.1f s" % [raid.extract_time, raid.config.extract_seconds] if raid.extract_remaining() >= 0.0 else raid.extract_block()]
 		lines.append("Player: (%.1f, %.1f, %.1f)%s" % [at.x, at.y, at.z, extracting])
 	var scavs := 0
-	var pmcs := 0
+	var pmcs := {}
 	var leaving := PackedStringArray()
 	for bot: Bot in get_tree().get_nodes_in_group("bots"):
 		if bot.is_dead:
@@ -105,10 +106,13 @@ func text() -> String:
 		if bot.side == Actor.Side.SCAV:
 			scavs += 1
 		else:
-			pmcs += 1
+			var faction := Factions.display_name(bot.faction) if bot.faction != &"" else "PMC"
+			pmcs[faction] = pmcs.get(faction, 0) + 1
 		if bot.extract_goal() != "":
 			leaving.append("%s → %s (%d%%)" % [bot.name, bot.extract_goal(), roundi(bot.extract_progress() * 100.0)])
-	lines.append("AI: %d Scavs, %d PMCs alive  ·  heading out: %s  ·  left: %s" % [scavs, pmcs,
+	var pmc_text := ", ".join(pmcs.keys().map(func(faction: String) -> String: return "%d %s" % [pmcs[faction], faction])) if not pmcs.is_empty() else "0 PMCs"
+	var squads := raid.ai_squads.filter(func(squad: Squad) -> bool: return not squad.alive().is_empty()).size()
+	lines.append("AI: %d Scavs, %s alive (%d PMC squads)  ·  heading out: %s  ·  left: %s" % [scavs, pmc_text, squads,
 		", ".join(leaving) if not leaving.is_empty() else "none",
 		", ".join(raid.ai_extracts.map(func(entry: Dictionary) -> String: return "%s (%s)" % [entry.name, entry.extract])) if not raid.ai_extracts.is_empty() else "none"])
 	lines.append("Boss: %s  ·  Scav waves: %d so far, %s (%d of %d Scavs alive, the boss squad not counted)" % [boss_text(), raid.waves,

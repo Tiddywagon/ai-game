@@ -3,6 +3,9 @@ extends Camera3D
 ## Top-down camera that smoothly follows a target from a fixed angle (DESIGN.md §1, §15).
 ## It never turns, so "up" on the screen is always the same direction in the world. Looking through a
 ## scope pulls it out and leads it toward the aim point (focus_offset, zoom; DESIGN.md §13.6).
+## It carries the ears (an AudioListener3D, `ears`) down at the target: positional sounds (voices, raid
+## events, a flare) are as loud as they are far from the player, not from the camera up in the air,
+## and pan the way the screen faces.
 
 ## The node to follow, usually the player.
 @export var target: Node3D
@@ -22,6 +25,10 @@ var focus_offset := Vector3.ZERO
 ## Distance multiplier, e.g. pulled out while looking through a scope.
 var zoom := 1.0
 
+## Where positional sounds are heard from: at the target, facing the way the screen does (null without
+## a target).
+var ears: AudioListener3D
+
 var _follow_position := Vector3.ZERO
 var _offset_now := Vector3.ZERO
 var _zoom_now := 1.0
@@ -38,6 +45,13 @@ func _ready() -> void:
 	if target:
 		_follow_position = _goal_position()
 		global_position = _follow_position
+		ears = AudioListener3D.new()
+		ears.name = "Ears"
+		ears.top_level = true  # Its own place and facing, not the camera's.
+		ears.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		add_child(ears)
+		ears.global_transform = Transform3D(Basis.IDENTITY, _ears_position())
+		ears.make_current()
 
 
 ## Shakes the camera. `amount` is 0-1 and adds up; Settings scales it (or turns it off).
@@ -68,6 +82,13 @@ func _process(delta: float) -> void:
 		offset = (global_basis.x * sin(_time * 53.0) + global_basis.y * cos(_time * 47.0)) * strength
 		_shake = maxf(_shake - delta * 1.8, 0.0)
 	global_position = _follow_position + offset
+	if ears:
+		ears.global_position = _ears_position()
+
+
+## The target's head, where it hears from.
+func _ears_position() -> Vector3:
+	return target.get_global_transform_interpolated().origin + Vector3.UP * focus_height if target else global_position
 
 
 func _goal_position() -> Vector3:

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/loot_table.gd" id="1_table"]
+
+[resource]
+script = ExtResource("1_table")
+display_name = "USEC gun"
+rarity_weights = PackedFloat32Array(0, 30, 30, 25, 10, 0)
+rarity_multipliers = PackedFloat32Array(1, 1, 1, 1, 1, 1)
+categories = Array[int]([])
+items = PackedStringArray("kestrel_ar", "warden_870", "hornet_smg", "brigand_45", "sentinel_ar", "wasp_pdw", "huntsman_700", "halcyon_b5", "longbow_dmr", "bulwark_249")
+item_weights = {
+"brigand_45": 6.0,
+"bulwark_249": 2.0,
+"halcyon_b5": 8.0,
+"hornet_smg": 12.0,
+"huntsman_700": 3.0,
+"kestrel_ar": 30.0,
+"longbow_dmr": 3.0,
+"sentinel_ar": 20.0,
+"warden_870": 6.0,
+"wasp_pdw": 6.0
+}
+item_count = Vector2i(1, 1)

@@ -230,7 +230,7 @@ func _update_raid_info() -> void:
 		_raid = get_tree().get_first_node_in_group("raid_controller") as RaidController
 	var map := _raid.map if _raid else MapInfo.find(raid.get("map", ""))
 	_raid_line = "%s  ·  %s  ·  %s  ·  %s" % [map.display_name.to_upper() if map else "TEST YARD",
-		"SCAV" if raid.get("side") == "scav" else "PMC", VisionSystem.time_name(VisionSystem.time_of_day).to_upper(),
+		Factions.side_name(str(raid.get("side", "pmc"))).to_upper(), VisionSystem.time_name(VisionSystem.time_of_day).to_upper(),
 		VisionSystem.weather_name(VisionSystem.weather).to_upper()]
 	if map and map.climate != "Temperate":
 		_raid_line += "  ·  %s" % map.climate.to_upper()

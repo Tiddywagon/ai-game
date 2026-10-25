@@ -185,7 +185,7 @@ const SCHEMA := {
 			"options": [["none", "Off"], ["protanopia", "Protanopia"], ["deuteranopia", "Deuteranopia"], ["tritanopia", "Tritanopia"]],
 			"note": "Adjusts the whole picture and switches rarity colors to a palette that stays distinct."},
 		{"key": "subtitles", "label": "Subtitles", "type": "toggle", "default": true,
-			"note": "For voice lines once the game has them."},
+			"note": "Voice lines you hear from PMCs you can see, and your own."},
 		{"key": "subtitle_size", "label": "Subtitle size", "type": "choice", "default": "medium",
 			"options": [["small", "Small"], ["medium", "Medium"], ["large", "Large"]]},
 	],
@@ -703,15 +703,23 @@ func _build_overlay() -> void:
 	_fps_label.add_theme_constant_override("outline_size", 4)
 	_overlay.add_child(_fps_label)
 	_subtitle_label = Label.new()
-	_subtitle_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_subtitle_label.name = "Subtitle"
 	_subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_subtitle_label.position.y -= 140
+	_subtitle_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_subtitle_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 140)
+	_subtitle_label.grow_horizontal = Control.GROW_DIRECTION_BOTH  # Centred whatever its length.
+	_subtitle_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_subtitle_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_subtitle_label.add_theme_constant_override("outline_size", 6)
 	_overlay.add_child(_subtitle_label)
 
 
-## Shows a subtitle line for `seconds` if subtitles are on (for voice lines, once there are any).
+## The subtitle on screen now ("" for none).
+func subtitle_text() -> String:
+	return _subtitle_label.text if _subtitle_label else ""
+
+
+## Shows a subtitle line for `seconds` if subtitles are on (voice lines: Voice, DESIGN.md §3).
 func show_subtitle(text: String, seconds := 3.0) -> void:
 	if not values.interface.subtitles:
 		return

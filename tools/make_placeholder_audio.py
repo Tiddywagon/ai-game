@@ -1,14 +1,96 @@
 """Generates the placeholder audio in assets/audio: a seamless dark ambient menu loop, two UI sounds, the
-360 trick-shot sting, the extraction sound, the signal flare, and the raid event sounds (a plane
-overhead for an airdrop, a truck's horn and engine, a weapon cache's klaxon).
+360 trick-shot sting, the extraction sound, the signal flare, the raid event sounds (a plane
+overhead for an airdrop, a truck's horn and engine, a weapon cache's klaxon), and the factions' radio
+voice barks (assets/audio/voice/<voice id>_<event>.wav, one per faction and voice event in
+data/config/factions.json: a squelch click, a buzzy "voice" in a radio band with a syllable rhythm per
+event, and a noise tail; BEAR lower and harsher, USEC higher and cleaner).
 
 Usage: python3 tools/make_placeholder_audio.py assets/audio   (needs numpy and ffmpeg with libvorbis)
+       python3 tools/make_placeholder_audio.py assets/audio voice   (only the voice barks)
 """
 import os, sys, wave, subprocess
 import numpy as np
 
 out_dir = sys.argv[1]
+only = sys.argv[2] if len(sys.argv) > 2 else ""
 rng = np.random.default_rng(20261011)
+
+
+def write_wav(path, samples, sr=44100):
+    data = (np.clip(samples, -1, 1) * 32767).astype("<i2").tobytes()
+    with wave.open(path, "wb") as f:
+        f.setnchannels(1); f.setsampwidth(2); f.setframerate(sr); f.writeframes(data)
+
+
+# ---- Voice barks (DESIGN.md §3): one short radio "voice" per faction and event --------------------
+# Placeholder speech: a buzzy glottal tone shaped into syllables (each event its own rhythm and pitch
+# contour), through two formant band-passes and a radio band, between a squelch click and a hiss tail.
+def voice_barks():
+    import json
+    here = os.path.dirname(os.path.abspath(__file__))
+    factions = json.load(open(os.path.join(here, "..", "data", "config", "factions.json")))["factions"]
+    sr = 22050
+    vrng = np.random.default_rng(20261018)
+    # Syllables per event: (length s, pitch at start, pitch at end) as multiples of the base pitch.
+    rhythms = {
+        "contact": [(0.12, 1.0, 1.1), (0.2, 1.25, 1.05)],
+        "hit": [(0.16, 1.4, 1.0)],
+        "reload": [(0.1, 1.05, 1.0), (0.1, 1.0, 0.95), (0.16, 0.95, 0.85)],
+        "grenade": [(0.09, 1.3, 1.35), (0.15, 1.4, 1.2)],
+        "enemy_down": [(0.14, 1.15, 1.05), (0.2, 1.0, 0.8)],
+        "mate_down": [(0.18, 0.95, 0.9), (0.12, 0.9, 0.85), (0.24, 0.85, 0.7)],
+        "move": [(0.1, 1.0, 1.05), (0.18, 1.1, 1.3)],
+        "heal": [(0.16, 0.95, 0.95), (0.2, 0.9, 0.85)],
+        "extract": [(0.12, 1.0, 1.0), (0.12, 1.05, 1.0), (0.2, 1.0, 0.9)],
+    }
+    # Timbre per voice id: base pitch (Hz), how square the buzz is (0 sine-like, 1 square), formants
+    # (Hz), noise in the voice, radio band (Hz).
+    timbres = {
+        "bear": {"base": 108.0, "square": 0.75, "formants": (560.0, 1350.0), "noise": 0.22, "band": (350.0, 2600.0)},
+        "usec": {"base": 142.0, "square": 0.3, "formants": (700.0, 1750.0), "noise": 0.1, "band": (420.0, 3400.0)},
+    }
+
+    def bandpass(x, low, high, taps=255):
+        n = np.arange(taps) - (taps - 1) / 2
+        def sinc_low(cut):
+            return 2 * cut / sr * np.sinc(2 * cut / sr * n)
+        kernel = (sinc_low(high) - sinc_low(low)) * np.hamming(taps)
+        return np.convolve(x, kernel, mode="same")
+
+    os.makedirs(f"{out_dir}/voice", exist_ok=True)
+    for key, faction in factions.items():
+        voice = faction.get("voice", {})
+        vid = voice.get("id", key)
+        timbre = timbres.get(vid, timbres["usec"])
+        for event in voice.get("lines", {}):
+            parts = []
+            # Squelch: a short click and a burst of hiss as the radio keys up.
+            click = int(0.03 * sr)
+            tt = np.arange(click) / sr
+            parts.append(np.sin(2 * np.pi * 1900 * tt) * np.exp(-tt / 0.006) * 0.5 + vrng.standard_normal(click) * 0.15 * np.exp(-tt / 0.01))
+            for length, start, end in rhythms.get(event, [(0.2, 1.0, 1.0)]):
+                count = int(length * sr)
+                tt = np.arange(count) / sr
+                pitch = timbre["base"] * np.linspace(start, end, count) * (1 + 0.02 * np.sin(2 * np.pi * 5.5 * tt))
+                phase = 2 * np.pi * np.cumsum(pitch) / sr
+                buzz = (1 - timbre["square"]) * (2 * (phase / (2 * np.pi) % 1.0) - 1) + timbre["square"] * np.sign(np.sin(phase))
+                buzz = buzz + vrng.standard_normal(count) * timbre["noise"]
+                env = np.minimum(1.0, tt / 0.015) * np.minimum(1.0, (length - tt) / 0.03)
+                formed = sum(bandpass(buzz, f * 0.75, f * 1.3) * g for f, g in zip(timbre["formants"], (1.0, 0.6)))
+                parts.append(formed * env)
+                parts.append(vrng.standard_normal(int(0.035 * sr)) * 0.02)  # Gap between syllables.
+            tail = int(0.12 * sr)
+            tt = np.arange(tail) / sr
+            parts.append(vrng.standard_normal(tail) * 0.25 * np.exp(-tt / 0.04))  # Release hiss.
+            bark = bandpass(np.concatenate(parts), *timbre["band"])
+            bark = np.tanh(bark / np.max(np.abs(bark)) * 1.8)  # A little radio overdrive.
+            write_wav(f"{out_dir}/voice/{vid}_{event}.wav", bark / np.max(np.abs(bark)) * 0.75, sr)
+    print("voice done")
+
+
+if only == "voice":
+    voice_barks()
+    sys.exit(0)
 
 # ---- Menu ambience: 48 s seamless loop, 32 kHz stereo -------------------------------------
 SR, LOOP = 32000, 48.0
@@ -71,11 +153,6 @@ subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "s16le", "-ar", str(
                 "-c:a", "libvorbis", "-q:a", "3", f"{out_dir}/music/menu_ambient.ogg"], input=pcm, check=True)
 
 # ---- UI sounds: 44.1 kHz mono WAV ------------------------------------------------------------
-def write_wav(path, samples, sr=44100):
-    data = (np.clip(samples, -1, 1) * 32767).astype("<i2").tobytes()
-    with wave.open(path, "wb") as f:
-        f.setnchannels(1); f.setsampwidth(2); f.setframerate(sr); f.writeframes(data)
-
 sr = 44100
 tt = np.arange(int(0.045 * sr)) / sr
 glide = 2600 - 900 * tt / tt[-1]
@@ -149,3 +226,5 @@ klaxon = np.sign(np.sin(2 * np.pi * np.cumsum(two_tone) / sr)) * np.exp(-np.maxi
 klaxon = np.convolve(klaxon, np.ones(12) / 12, mode="same")
 write_wav(f"{out_dir}/sfx/klaxon.wav", klaxon / np.max(np.abs(klaxon)) * 0.7)
 print("events done")
+
+voice_barks()

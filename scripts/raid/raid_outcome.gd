@@ -19,12 +19,14 @@ const TITLES := ["SURVIVED", "RUN THROUGH", "KILLED IN ACTION", "MISSING IN ACTI
 
 var status := Status.SURVIVED
 var side := "pmc"
+## The player's faction in a PMC raid ("bear" / "usec"; "" as a Scav).
+var faction := ""
 var seconds := 0.0
 var xp := 0
 ## Where the experience came from: {"kills", "looting", "trick_shots", "exploration", "survived"}.
 var xp_parts := {}
 var kills := 0
-## Who you killed: [{"name", "side": "pmc" or "scav"}].
+## Who you killed: [{"name", "side": "pmc" or "scav", "faction" (a PMC's), "role" (a boss's or guard's)}].
 var kill_list: Array = []
 ## The extract you left through ("" if you didn't).
 var extract_name := ""
@@ -78,13 +80,26 @@ func found_value() -> int:
 	return total
 
 
-## Kills by side: "3 (2 Scavs, 1 PMC)", or "0".
+## The side you played: "BEAR" or "USEC" for a PMC of that faction, "Scav", or "PMC" without a
+## faction.
+func side_text() -> String:
+	if side == "scav":
+		return "Scav"
+	return Factions.display_name(StringName(faction)) if Factions.has(StringName(faction)) else "PMC"
+
+
+## Kills by side: "4 (2 Scavs, 1 BEAR, 1 USEC)" (PMCs by faction), or "0".
 func kills_text() -> String:
 	if kills == 0:
 		return "0"
 	var scavs := kill_list.filter(func(kill: Dictionary) -> bool: return kill.get("side", "") == "scav" and not kill.has("role")).size()
-	var pmcs := kill_list.filter(func(kill: Dictionary) -> bool: return kill.get("side", "") == "pmc").size()
 	var guards := kill_list.filter(func(kill: Dictionary) -> bool: return kill.get("role", "") == "guard").size()
+	var pmcs := {}
+	for kill: Dictionary in kill_list:
+		if kill.get("side", "") == "pmc":
+			var faction_id := StringName(str(kill.get("faction", "")))
+			var label := Factions.display_name(faction_id) if Factions.has(faction_id) else "PMC"
+			pmcs[label] = pmcs.get(label, 0) + 1
 	var parts: Array[String] = []
 	for kill: Dictionary in kill_list:
 		if kill.get("role", "") == "boss":
@@ -93,8 +108,8 @@ func kills_text() -> String:
 		parts.append("%d guard%s" % [guards, "s" if guards > 1 else ""])
 	if scavs > 0:
 		parts.append("%d Scav%s" % [scavs, "s" if scavs > 1 else ""])
-	if pmcs > 0:
-		parts.append("%d PMC%s" % [pmcs, "s" if pmcs > 1 else ""])
+	for label: String in pmcs:
+		parts.append("%d %s%s" % [pmcs[label], label, "s" if label == "PMC" and pmcs[label] > 1 else ""])
 	return "%d (%s)" % [kills, ", ".join(parts)] if not parts.is_empty() else str(kills)
 
 
@@ -109,8 +124,8 @@ func insurance_value() -> int:
 ## Settles the raid (see the class notes) with `inventory`, what the player has at the end. With
 ## `to_profile` false (the test level run on its own) only the found-in-raid marks change.
 ## `tricks`: {"hits", "kills": [{"side", "weapon_class"}], "drip"} from the RaidController.
-## `details`: {"xp_parts", "kill_list", "extract", "looters" (hostile AI alive near the body)} from the
-## RaidController, for the summary and insurance.
+## `details`: {"xp_parts", "kill_list", "extract", "looters" (hostile AI alive near the body), "faction"
+## (the player's)} from the RaidController, for the summary and insurance.
 static func settle(end: Status, raid_side: String, inventory: Inventory, raid_seconds: float, raid_xp: int,
 		raid_kills: int, to_profile: bool, tricks: Dictionary = {}, details: Dictionary = {}) -> RaidOutcome:
 	var outcome := RaidOutcome.new()
@@ -122,6 +137,7 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	outcome.kills = raid_kills
 	outcome.kill_list = details.get("kill_list", [])
 	outcome.extract_name = str(details.get("extract", ""))
+	outcome.faction = str(details.get("faction", "")) if raid_side != "scav" else ""
 	var secured: Array[ItemInstance] = []
 	if inventory.equipment.secure:
 		secured = inventory.equipment.secure.all_items()

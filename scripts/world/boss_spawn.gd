@@ -3,9 +3,11 @@ extends Node3D
 ## Where a map's boss (DESIGN.md §4.3, data/config/bosses.json: BossTable) may turn up. At raid start
 ## it rolls the boss's chance (35%; seeded by the raid; GameState.raid "boss": true or false forces it)
 ## and if it comes up, the boss stands here with 2-4 guards at its Marker3D children (its haunt, which
-## the boss then wanders, the guards staying with it). Boss and guards are a squad: they share targets
-## and push as a group (Bot), and raid events don't pull them away from here, nor a fight they hear
-## farther than their profile's haunt_radius from here (Bot.near_haunt()). The boss is tougher
+## the boss then wanders, the guards staying with it). Boss and guards are a squad (Squad, the guards in
+## a ring around the boss): they share targets and push as a group (Bot), and raid events don't pull
+## them away from here, nor a fight they hear farther than their profile's haunt_radius from here
+## (Bot.near_haunt()). Their roles (Bot.role "boss" and "guard") make them worth 1,000 and 250 XP and
+## keep them in the raid; if the boss falls a guard leads the rest. The boss is tougher
 ## (data/bots/boss.tres; guards: guard.tres), wears class 5-6 armor (guards 4-5) and always carries its
 ## unique and Epic or Legendary loot (BossTable.add_boss_loot()). Place it before the RaidController,
 ## so the player's spawn keeps away from the squad.
@@ -54,6 +56,7 @@ func boss_map() -> String:
 func spawn(rng: RandomNumberGenerator) -> Array[Bot]:
 	var squad: Array[Bot] = []
 	boss = _make(BOSS_PROFILE, str(entry.name), BossTable.kit(entry.boss, rng), Vector3.ZERO)
+	boss.role = &"boss"
 	boss_loot = BossTable.add_boss_loot(boss.inventory, entry, rng)
 	boss.wander_points = haunt()
 	squad.append(boss)
@@ -64,11 +67,14 @@ func spawn(rng: RandomNumberGenerator) -> Array[Bot]:
 		at += Vector3(rng.randf_range(-0.4, 0.4), 0.0, rng.randf_range(-0.4, 0.4))
 		var guard := _make(GUARD_PROFILE, str(entry.guard_name), BossTable.kit(entry.guard, rng), at)
 		guard.name = "Guard%d" % (i + 1)
-		guard.leader = boss
+		guard.role = &"guard"
 		guards.append(guard)
 		squad.append(guard)
-	for bot in squad:
-		bot.squad = squad
+	var group := Squad.new(squad)
+	group.formation = Squad.Formation.RING
+	group.spacing = Bot.BOSS_SPACING
+	group.tolerance = Bot.ESCORT_DISTANCE
+	group.catch_up = Bot.BOSS_CATCH_UP
 	return squad
 
 

@@ -34,7 +34,8 @@ func show_death(player: Player, raid_seconds: float, outcome: RaidOutcome = null
 	%Statuses.text = "\n".join(statuses) if not statuses.is_empty() else "No status effects"
 	var map := MapInfo.find(GameState.raid.get("map", ""))
 	_stat("Map", map.display_name if map else "Test Yard")
-	_stat("Side", "Scav" if GameState.raid.get("side") == "scav" else "PMC")
+	var side := "Scav" if player.side == Actor.Side.SCAV else Factions.display_name(player.faction) if player.faction != &"" else "PMC"
+	_stat("Side", outcome.side_text() if outcome else side)
 	_stat("Time in raid", "%d:%02d" % [int(raid_seconds) / 60, int(raid_seconds) % 60])
 	_stat("Kills", outcome.kills_text() if outcome else str(player.kills))
 	_has_summary = outcome != null

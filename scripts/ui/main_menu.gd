@@ -2,7 +2,8 @@ extends Node
 ## Main menu (DESIGN.md §16): a slowly panning dusk scene with ambient music, the title top-left,
 ## the main buttons stacked on the left, the profile top-right and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
-## On first launch the player picks a faction, which creates the profile. After a raid's summary it
+## On first launch the player picks a faction, which creates the profile (each button says what the
+## faction is and starts with, from data/config/factions.json: Factions). After a raid's summary it
 ## opens straight on the hideout (GameState.menu_return). Insured items on their way back (Insurance)
 ## show a countdown under the profile and arrive in the stash when due, whatever screen is open (the
 ## stash views redraw; a notice over the screen says what came back).
@@ -49,6 +50,8 @@ func _ready() -> void:
 	_quit_dialog.confirmed.connect(get_tree().quit)
 	%BearButton.pressed.connect(_choose_faction.bind(GameState.Faction.BEAR))
 	%UsecButton.pressed.connect(_choose_faction.bind(GameState.Faction.USEC))
+	%BearButton.text = faction_text(GameState.Faction.BEAR)
+	%UsecButton.text = faction_text(GameState.Faction.USEC)
 	_insurance_label = Label.new()
 	_insurance_label.name = "InsuranceLabel"
 	_insurance_label.theme_type_variation = &"DimLabel"
@@ -90,6 +93,16 @@ func _load_profile() -> void:
 		_open(HIDEOUT_SCENE, %HideoutButton)
 	else:
 		(%EnterRaidButton if has_profile else %UsecButton).grab_focus.call_deferred()
+
+
+## A faction button's text: its name, background, starting gun and armor, and its trader reputation
+## bonus ("USEC\nWestern private military contractor\nStarting kit: Kestrel AR, PACA soft armor\n...").
+static func faction_text(faction: int) -> String:
+	var id := Factions.of_profile(faction)
+	var lines: Array[String] = [Factions.display_name(id), Factions.background(id), "Starting kit: %s" % Factions.kit_summary(id)]
+	if GameState.FACTION_TRADER.has(faction):
+		lines.append("Starts with %+.2f reputation with %s" % [GameState.FACTION_REP_BONUS, str(GameState.FACTION_TRADER[faction]).capitalize()])
+	return "\n".join(lines)
 
 
 func _choose_faction(faction: int) -> void:

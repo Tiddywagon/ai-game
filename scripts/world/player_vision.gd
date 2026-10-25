@@ -193,10 +193,13 @@ func _to_mask(point: Vector2) -> Vector2:
 	return (point - _bounds.position) / _bounds.size * _resolution
 
 
+## A noise the player hears (within its radius × their hearing; a voice line within the voice hearing
+## radius, farther than the noise AI hear from it: Voice) from something they can't see: sound_heard.
 func _on_noise(position: Vector3, radius: float, source: Node, kind: StringName) -> void:
 	if player == null or not is_instance_valid(player) or player.is_dead or source == player or not enabled:
 		return
-	if player.global_position.distance_to(position) > radius * player.hearing_multiplier():
+	var reach := Voice.hearing_radius() if kind == &"voice" else radius
+	if player.global_position.distance_to(position) > reach * player.hearing_multiplier():
 		return  # Too far to hear (a headset hears further, a helmet muffles).
 	if source is Actor:
 		if sees(source):

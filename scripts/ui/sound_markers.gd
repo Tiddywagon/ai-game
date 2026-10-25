@@ -2,13 +2,15 @@ extends Control
 ## Direction markers at the screen edge for sounds the player hears but can't see (DESIGN.md §13.6):
 ## each points from the player toward the sound and fades out after a moment. Shape and colour say what
 ## it was: a double red chevron for gunshots, a white ring for a flashbang, a single amber chevron for a
-## roll, a small pale chevron for footsteps. One marker per source, refreshed by each new sound.
+## roll, a small pale chevron for footsteps, a light blue chevron with a dot for a voice (someone talking:
+## DESIGN.md §3). One marker per source, refreshed by each new sound.
 
 const STYLES := {
 	&"gunshot": {"color": Color(0.95, 0.35, 0.25), "size": 1.3, "double": true},
 	&"flashbang": {"color": Color(1.0, 1.0, 1.0), "size": 1.3, "ring": true},
 	&"roll": {"color": Color(0.95, 0.7, 0.3), "size": 1.0},
 	&"footstep": {"color": Color(0.85, 0.85, 0.75), "size": 0.75},
+	&"voice": {"color": Color(0.55, 0.85, 1.0), "size": 0.95, "dot": true},
 	&"other": {"color": Color(0.85, 0.85, 0.75), "size": 0.9},
 }
 ## Distance of the markers from the screen edge, in pixels.
@@ -69,6 +71,10 @@ func _draw() -> void:
 			draw_arc(point, 13.0 * scale_by, 0.0, TAU, 32, Color(0, 0, 0, color.a * 0.6), 5.0)
 			draw_arc(point, 13.0 * scale_by, 0.0, TAU, 32, color, 2.5)
 		_draw_chevron(point, direction, scale_by, color)
+		if style.get("dot", false):
+			var dot := point - direction * 12.0 * scale_by
+			draw_circle(dot, 5.5 * scale_by, Color(0, 0, 0, color.a * 0.6))
+			draw_circle(dot, 3.5 * scale_by, color)
 		if style.get("double", false):
 			_draw_chevron(point - direction * 11.0 * scale_by, direction, scale_by, color)
 

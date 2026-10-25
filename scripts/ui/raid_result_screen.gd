@@ -72,7 +72,7 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 	var lines := []
 	var map := raid.map if raid else MapInfo.find(GameState.raid.get("map", ""))
 	lines.append(["Map", map.display_name if map else "Test Yard"])
-	lines.append(["Side", "Scav" if outcome.side == "scav" else "PMC"])
+	lines.append(["Side", outcome.side_text()])
 	lines.append(["Time in raid", "%d:%02d" % [int(outcome.seconds) / 60, int(outcome.seconds) % 60]])
 	lines.append(["Kills", outcome.kills_text()])
 	var loot := "%s  ·  %d item%s" % [UiFormat.money(outcome.loot_value), outcome.loot_count, "" if outcome.loot_count == 1 else "s"]

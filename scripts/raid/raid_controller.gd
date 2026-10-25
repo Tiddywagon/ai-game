@@ -6,8 +6,9 @@ extends Node
 ## extracting) and how the raid ends. Standing in an ExtractZone you can use for
 ## `RaidConfig.extract_seconds` extracts (SURVIVED, or a Run Through if it was quick and you earned
 ## little); walking out or getting hit starts the count again. A random extract turns from "Unknown" to
-## open or closed once you've been close enough to see it. AI Scavs and PMCs leave through the same
-## extracts (Bot). Dying is KILLED; the clock running out or leaving from the pause menu is MIA. The
+## open or closed once you've been close enough to see it. AI PMCs join the raid as squads of 1-3 of one
+## faction (BEAR or USEC) at PMC spawn points you didn't get (_spawn_ai_pmcs()). AI Scavs and PMCs leave
+## through the same extracts (Bot). Dying is KILLED; the clock running out or leaving from the pause menu is MIA. The
 ## ending is settled by RaidOutcome (found-in-raid status, what you keep, insurance) and shown by the
 ## level.
 
@@ -23,7 +24,9 @@ signal poi_entered(poi: PointOfInterest, first_time: bool)
 @export var config: RaidConfig = preload("res://data/config/raid.tres")
 ## The map this scene is (data/maps/), when it's played without ENTER RAID (GameState.raid "map").
 @export var map_id := "test_yard"
-## AI PMCs that join the raid, each at a PMC spawn point the player didn't get (DESIGN.md §4, §5).
+## AI PMCs that join the raid (DESIGN.md §4.4, §5): this many in all, in squads of 1-3 (sizes rolled
+## by Factions.squad_config(), each of one faction), one squad at each PMC spawn point the player didn't
+## get.
 @export_range(0, 8) var ai_pmcs := 0
 @export var ai_pmc_profile: BotProfile = preload("res://data/bots/pmc.tres")
 ## Scav waves during the raid (RaidConfig), and the Scavs they bring.
@@ -39,7 +42,8 @@ var time_left := 0.0
 ## "survived"}.
 var xp := 0
 var xp_parts := {"kills": 0, "looting": 0, "trick_shots": 0, "exploration": 0, "survived": 0}
-## Who the player killed: [{"name", "side": "pmc" or "scav"}].
+## Who the player killed: [{"name", "side": "pmc" or "scav", "faction" (a PMC's: "bear" / "usec"),
+## "role" (a boss's or guard's)}].
 var kill_list: Array[Dictionary] = []
 ## Drip earned this raid (360 trick-shot kills), and the trick-shot kills: [{"side": "pmc" or "scav",
 ## "weapon_class"}] (for quests).
@@ -53,8 +57,10 @@ var extract_time := 0.0
 var extracted_at := ""
 ## Where the raid started (null: the player's place in the scene).
 var spawn_point: SpawnPoint
-## AI that left through an extract: [{"name", "side": "pmc" or "scav", "extract"}].
+## AI that left through an extract: [{"name", "side": "pmc" or "scav", "faction", "extract"}].
 var ai_extracts: Array[Dictionary] = []
+## The AI PMC squads that joined the raid (Squad), in spawn order.
+var ai_squads: Array[Squad] = []
 ## Rolls this raid: spawn point and random extracts. Seeded from GameState.raid "seed" if set.
 var rng := RandomNumberGenerator.new()
 ## The point of interest the player is in (null: none), the ones they've been in this raid, and the
@@ -192,7 +198,7 @@ func leave_extract(zone: ExtractZone) -> void:
 ## An AI Scav or PMC left through `zone`: it's gone from the raid (with its gear).
 func bot_extracted(bot: Bot, zone: ExtractZone) -> void:
 	ai_extracts.append({"name": bot.display_name(), "side": "scav" if bot.side == Actor.Side.SCAV else "pmc",
-		"extract": zone.extract_name})
+		"faction": String(bot.faction), "extract": zone.extract_name})
 	bot.leave_raid()
 
 
@@ -273,7 +279,8 @@ func switch_power_on() -> bool:
 
 # --- Start ---------------------------------------------------------------------------------------
 
-## Puts the player on a random spawn point for their side, away from hostile AI if one is.
+## Puts the player on a random spawn point for their side, away from hostile AI if one is: a PMC keeps
+## away from every bot (Scavs, and PMCs of either faction: all hostile to it), a Scav from PMCs only.
 func _place_player() -> void:
 	var threats: Array[Vector3] = []
 	for bot in get_tree().get_nodes_in_group("bots"):
@@ -324,7 +331,7 @@ func spawn_wave() -> Array[Bot]:
 ## its guards (side Scav too) aren't counted, so a boss raid still gets its waves.
 func scavs_alive() -> int:
 	return get_tree().get_nodes_in_group("bots").filter(func(bot: Bot) -> bool:
-		return not bot.is_dead and bot.side == Actor.Side.SCAV and bot.squad.is_empty()).size()
+		return not bot.is_dead and bot.side == Actor.Side.SCAV and not bot.is_boss() and not bot.is_guard()).size()
 
 
 ## Where a Scav wave can spawn now: a Scav zone point (weight 1) or a point of interest (its heat:
@@ -401,22 +408,82 @@ func _on_navmesh(point: Vector3) -> Vector3:
 	return NavigationServer3D.map_get_closest_point(map, point)
 
 
-## AI PMCs at PMC spawn points the player isn't at, farthest from the player first, each roaming the
-## Scav zones and points of interest (hot ones draw them: BotProfile.hot_poi_chance).
-func _spawn_ai_pmcs() -> void:
+## AI PMCs (ai_pmcs in all) as squads of 1-3 (Factions.roll_squad_size(), never more than are left
+## to place), each squad of one faction (BEAR or USEC at random; none if factions.json is broken), at
+## the PMC spawn points the player isn't at, farthest from the player first, one squad a point. Squad
+## mates stand close together at their point (spawn_spots()), the first of them leading; they roam the
+## Scav zones and points of interest (hot ones draw them: BotProfile.hot_poi_chance) together. Seeded
+## raids roll the same squads. Returns the squads.
+func _spawn_ai_pmcs() -> Array[Squad]:
 	var free_points: Array = get_tree().get_nodes_in_group("spawn_points").filter(func(point: SpawnPoint) -> bool:
 		return point != spawn_point and point.side != "Scav")
 	free_points.sort_custom(func(a: SpawnPoint, b: SpawnPoint) -> bool:
 		return a.global_position.distance_to(player.global_position) > b.global_position.distance_to(player.global_position))
 	var stops := _roam_points()
-	for i in mini(ai_pmcs, free_points.size()):
-		var point: SpawnPoint = free_points[i]
-		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
-		bot.name = "AIPMC%d" % (i + 1)
-		bot.profile = ai_pmc_profile
-		bot.wander_points = stops
-		bot.position = point.global_position
-		get_parent().add_child(bot)
+	var factions := Factions.ids()
+	var squad_rng := RandomNumberGenerator.new()  # Its own, so the raid's other rolls stay as they were.
+	if GameState.raid.has("seed"):
+		squad_rng.seed = hash([int(GameState.raid.seed), "ai_pmcs"])
+	else:
+		squad_rng.randomize()
+	var left := ai_pmcs
+	var count := 0
+	for point: SpawnPoint in free_points:
+		if left <= 0:
+			break
+		var size := mini(Factions.roll_squad_size(squad_rng), left)
+		left -= size
+		var faction: StringName = factions[squad_rng.randi_range(0, factions.size() - 1)] if not factions.is_empty() else &""
+		var spots := spawn_spots(point.global_position, size)
+		var members: Array[Bot] = []
+		for i in size:
+			count += 1
+			var bot: Bot = ScavZone.BOT_SCENE.instantiate()
+			bot.name = "AIPMC%d" % count
+			bot.profile = ai_pmc_profile
+			bot.faction = faction
+			bot.wander_points = stops
+			bot.position = spots[i]
+			bot.rotation.y = point.global_rotation.y
+			get_parent().add_child(bot)
+			members.append(bot)
+		ai_squads.append(Squad.new(members, faction))
+	return ai_squads
+
+
+## Where `count` squad mates stand at a spawn point `at`: the point itself, then spots around it
+## `spawn_spacing` apart (and farther out if those are taken) that a body fits in, with nothing solid
+## between them and the point, on the navmesh once it's ready.
+func spawn_spots(at: Vector3, count: int) -> Array[Vector3]:
+	var spacing := float(Factions.squad_config().get("spawn_spacing", 1.3))
+	var spots: Array[Vector3] = [at]
+	var space := (get_parent() as Node3D).get_world_3d().direct_space_state if get_parent() is Node3D else null
+	var body := CapsuleShape3D.new()
+	body.radius = Actor.BODY_RADIUS
+	body.height = 1.6
+	for ring: float in [1.0, 2.0, 3.0]:
+		for step in 8:
+			if spots.size() >= count:
+				return spots
+			var angle := TAU * step / 8.0 + ring * 0.4
+			var spot := _on_navmesh(at + Vector3(cos(angle), 0.0, sin(angle)) * spacing * ring)
+			spot.y = at.y
+			if spots.any(func(other: Vector3) -> bool: return other.distance_to(spot) < spacing * 0.8):
+				continue
+			if space:
+				var ray := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 0.9, spot + Vector3.UP * 0.9, Actor.WORLD_MASK)
+				if not space.intersect_ray(ray).is_empty():
+					continue  # A wall between it and the point.
+				var query := PhysicsShapeQueryParameters3D.new()
+				query.shape = body
+				query.transform = Transform3D(Basis.IDENTITY, spot + Vector3.UP * 1.0)
+				query.collision_mask = Actor.WORLD_MASK | Actor.ACTOR_MASK
+				if not space.intersect_shape(query, 1).is_empty():
+					continue  # Something solid (or someone) already there.
+			spots.append(spot)
+	while spots.size() < count:
+		spots.append(at + Vector3(0.0, 0.0, spacing * spots.size()))  # Nowhere better: in a line.
+	return spots
 
 
 # --- Ending --------------------------------------------------------------------------------------
@@ -437,7 +504,8 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 		RaidOutcome.keep_metabolism(player.health, status == RaidOutcome.Status.KILLED or status == RaidOutcome.Status.MIA)
 	outcome = RaidOutcome.settle(status, side(), player.inventory, elapsed, xp,
 		player.kills, is_real_raid(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
-		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters()})
+		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
+			"faction": String(player.faction)})
 	raid_ended.emit(outcome)
 	return outcome
 
@@ -452,6 +520,8 @@ func looters() -> int:
 		return not bot.is_dead and bot.is_hostile(player) and bot.global_position.distance_to(player.global_position) <= radius).size()
 
 
+## A kill by the player: experience by what it was (a PMC of either faction 300, a Scav 100, a boss
+## 1,000, a guard 250: RaidConfig) and an entry in the kill list.
 func _on_kill(target: Actor) -> void:
 	var pmc := target.side == Actor.Side.PMC
 	var gained := config.xp_pmc_kill if pmc else config.xp_scav_kill
@@ -465,6 +535,8 @@ func _on_kill(target: Actor) -> void:
 	xp += gained
 	xp_parts.kills += gained
 	var entry := {"name": target.display_name(), "side": "pmc" if pmc else "scav"}
+	if target.faction != &"":
+		entry.faction = String(target.faction)
 	if role != "":
 		entry.role = role
 	kill_list.append(entry)
