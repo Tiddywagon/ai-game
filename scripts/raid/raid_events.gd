@@ -211,11 +211,12 @@ func _announce(event: Dictionary) -> void:
 
 
 ## AI within earshot that isn't fighting may head for it (Scavs less keen than PMCs). A boss and its
-## guards stay on their haunt.
+## guards stay on their haunt; a squad goes if its leader does (its followers go with it).
 func _call_ai(event: Dictionary) -> void:
 	for node in get_tree().get_nodes_in_group("bots"):
 		var bot := node as Bot
-		if bot == null or bot.is_dead or not bot.ai_enabled or bot.state == Bot.State.COMBAT or not bot.squad.is_empty():
+		if bot == null or bot.is_dead or not bot.ai_enabled or bot.state == Bot.State.COMBAT or bot.is_boss() or bot.is_guard() \
+				or bot.is_follower():
 			continue
 		if bot.global_position.distance_to(event.at) > config.event_noise_radius:
 			continue

@@ -1,0 +1,97 @@
+{
+  "_comment": "The two PMC factions (DESIGN.md §3), loaded by Factions (checked on load: Factions.problems()). Per faction: name and member (what one of them is called: 'Shot in the head by a USEC operator'), background, look (body and accent colours, [r, g, b] 0-1: the body capsule and its head band), voice (id: the WAVs in assets/audio/voice/<id>_<event>.wav; pitch: playback pitch; lines: 2-3 per event, text plus an English subtitle when the text isn't English), starter (a new character's kit: equipment slot -> {id, ammo}, pockets, stash cells as InventoryGrid entries), ai_kit (the BotKit AI PMCs of the faction carry: its loot tables are the real Eastern / Western bias) and gear_bias (display text only: what that kit leans on, in words). squads: how AI PMC squads are formed and keep together. same_faction: how PMCs of one faction hold back from each other. voice: when lines are heard and how often a speaker may talk.",
+  "factions": {
+    "bear": {
+      "name": "BEAR",
+      "member": "BEAR operator",
+      "background": "Russian-backed PMC",
+      "look": {"body": [0.24, 0.35, 0.2], "accent": [0.92, 0.2, 0.16]},
+      "voice": {
+        "id": "bear",
+        "pitch": 0.94,
+        "lines": {
+          "contact": [{"text": "Kontakt!", "subtitle": "Contact!"}, {"text": "Vizhu protivnika!", "subtitle": "Enemy spotted!"}, {"text": "Vrag vperedi!", "subtitle": "Enemy ahead!"}],
+          "hit": [{"text": "Ranen!", "subtitle": "I'm hit!"}, {"text": "Po nam rabotayut!", "subtitle": "Taking fire!"}, {"text": "Zadeli!", "subtitle": "They got me!"}],
+          "reload": [{"text": "Perezaryazhayus'!", "subtitle": "Reloading!"}, {"text": "Pustoy!", "subtitle": "I'm empty!"}, {"text": "Menyayu magazin!", "subtitle": "Changing mags!"}],
+          "grenade": [{"text": "Granata!", "subtitle": "Grenade out!"}, {"text": "Lovi!", "subtitle": "Catch!"}],
+          "enemy_down": [{"text": "Gotov!", "subtitle": "He's done!"}, {"text": "Minus odin!", "subtitle": "One down!"}, {"text": "Ubit!", "subtitle": "Enemy down!"}],
+          "mate_down": [{"text": "Brata ubili!", "subtitle": "They killed our brother!"}, {"text": "U nas poteri!", "subtitle": "Man down!"}],
+          "move": [{"text": "Za mnoy!", "subtitle": "Follow me!"}, {"text": "Vpered!", "subtitle": "Move up!"}, {"text": "Dvigaemsya!", "subtitle": "Moving!"}],
+          "heal": [{"text": "Prikroy, perevyazyvayus'!", "subtitle": "Cover me, patching up!"}, {"text": "Lechus'!", "subtitle": "Healing!"}],
+          "extract": [{"text": "Ukhodim!", "subtitle": "We're leaving!"}, {"text": "Na vykhod!", "subtitle": "To the exit!"}, {"text": "Otkhodim k tochke!", "subtitle": "Falling back to the extract!"}]
+        }
+      },
+      "starter": {
+        "equipment": {"primary": {"id": "ak_74n", "ammo": "ammo_545_ps"}, "armor": {"id": "armor_module3m"}, "secure": {"id": "secure_alpha"}},
+        "pockets": [{"id": "ammo_545_ps", "count": 60}, {"id": "bandage"}],
+        "stash": [
+          {"id": "ak_74n", "x": 0, "y": 0}, {"id": "ammo_545_ps", "x": 5, "y": 0, "count": 60}, {"id": "ammo_545_ps", "x": 6, "y": 0, "count": 60},
+          {"id": "bandage", "x": 7, "y": 0}, {"id": "bandage", "x": 8, "y": 0}, {"id": "bandage", "x": 9, "y": 0}, {"id": "bolts", "x": 5, "y": 1},
+          {"id": "bolts", "x": 6, "y": 1}, {"id": "tourniquet", "x": 7, "y": 1}, {"id": "splint", "x": 8, "y": 1}, {"id": "ai2_medkit", "x": 9, "y": 1},
+          {"id": "water_bottle", "x": 0, "y": 2}, {"id": "crackers", "x": 1, "y": 2}, {"id": "crackers", "x": 2, "y": 2},
+          {"id": "frag_grenade", "x": 3, "y": 2}, {"id": "flashbang_grenade", "x": 4, "y": 2}
+        ]
+      },
+      "ai_kit": "res://data/bots/bear_kit.tres",
+      "gear_bias": "Eastern: Kalashnikov-pattern rifles and machine guns, Russian armor and helmets"
+    },
+    "usec": {
+      "name": "USEC",
+      "member": "USEC operator",
+      "background": "Western private military contractor",
+      "look": {"body": [0.22, 0.29, 0.43], "accent": [1.0, 0.76, 0.14]},
+      "voice": {
+        "id": "usec",
+        "pitch": 1.06,
+        "lines": {
+          "contact": [{"text": "Contact front!"}, {"text": "Eyes on hostile!"}, {"text": "Tango spotted!"}],
+          "hit": [{"text": "I'm hit!"}, {"text": "Taking fire!"}, {"text": "Took one!"}],
+          "reload": [{"text": "Reloading!"}, {"text": "Changing mags!"}, {"text": "I'm dry!"}],
+          "grenade": [{"text": "Frag out!"}, {"text": "Grenade out!"}],
+          "enemy_down": [{"text": "Tango down!"}, {"text": "Enemy down!"}, {"text": "Got him!"}],
+          "mate_down": [{"text": "Man down!"}, {"text": "We lost one!"}],
+          "move": [{"text": "On me!"}, {"text": "Moving up!"}, {"text": "Follow me!"}],
+          "heal": [{"text": "Patching up, cover me!"}, {"text": "Applying aid!"}],
+          "extract": [{"text": "Heading to exfil!"}, {"text": "Let's get out of here!"}, {"text": "Moving to extract!"}]
+        }
+      },
+      "starter": {
+        "equipment": {"primary": {"id": "kestrel_ar", "ammo": "ammo_556_fmj"}, "armor": {"id": "paca_armor"}, "secure": {"id": "secure_alpha"}},
+        "pockets": [{"id": "ammo_556_fmj", "count": 60}, {"id": "bandage"}],
+        "stash": [
+          {"id": "kestrel_ar", "x": 0, "y": 0}, {"id": "ammo_556_fmj", "x": 5, "y": 0, "count": 60}, {"id": "ammo_556_fmj", "x": 6, "y": 0, "count": 60},
+          {"id": "bandage", "x": 7, "y": 0}, {"id": "bandage", "x": 8, "y": 0}, {"id": "bandage", "x": 9, "y": 0}, {"id": "bolts", "x": 5, "y": 1},
+          {"id": "bolts", "x": 6, "y": 1}, {"id": "tourniquet", "x": 7, "y": 1}, {"id": "splint", "x": 8, "y": 1}, {"id": "ai2_medkit", "x": 9, "y": 1},
+          {"id": "water_bottle", "x": 0, "y": 2}, {"id": "crackers", "x": 1, "y": 2}, {"id": "crackers", "x": 2, "y": 2},
+          {"id": "frag_grenade", "x": 3, "y": 2}, {"id": "flashbang_grenade", "x": 4, "y": 2}
+        ]
+      },
+      "ai_kit": "res://data/bots/usec_kit.tres",
+      "gear_bias": "Western: AR-pattern rifles, SMGs and marksman rifles, Western plate carriers and high-cut helmets"
+    }
+  },
+  "squads": {
+    "_comment": "AI PMC squads (DESIGN.md §4.4): size_weights by squad size (1-3), spacing: metres between a follower's spot and the leader (followers fan out behind it, wedge_degrees apart), tolerance: how far from its spot a follower may drift before it walks back, catch_up: farther than this behind it sprints, spawn_spacing: metres between squad mates at their spawn point.",
+    "size_weights": {"1": 35, "2": 40, "3": 25},
+    "spacing": 2.5,
+    "wedge_degrees": 40,
+    "tolerance": 2.0,
+    "catch_up": 5.0,
+    "spawn_spacing": 1.3
+  },
+  "same_faction": {
+    "_comment": "PMCs of the same faction outside one squad (the player included) are hostile but hold back: an AI PMC takes reaction_multiplier times its reaction time to open fire on one, and farther than hold_fire_beyond metres it doesn't start a fight with one at all, unless that PMC has shot at it (or hit it) or is aiming at it (its aim within aimed_at_degrees of it).",
+    "reaction_multiplier": 2.5,
+    "hold_fire_beyond": 15.0,
+    "aimed_at_degrees": 8.0
+  },
+  "voice": {
+    "_comment": "Voice lines (DESIGN.md §3): heard (audio and subtitle) within hearing_radius metres, a noise AI hears within noise_radius (× its hearing), a speaker says nothing within speaker_cooldown seconds of its last line, nor the same event within its event_cooldowns seconds. pitch_jitter: random pitch change per line, subtitle_seconds: how long a subtitle stays up.",
+    "hearing_radius": 30.0,
+    "noise_radius": 8.0,
+    "speaker_cooldown": 2.5,
+    "event_cooldowns": {"contact": 10.0, "hit": 5.0, "reload": 8.0, "grenade": 4.0, "enemy_down": 6.0, "mate_down": 8.0, "move": 15.0, "heal": 12.0, "extract": 30.0},
+    "pitch_jitter": 0.05,
+    "subtitle_seconds": 2.5
+  }
+}

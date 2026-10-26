@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="BotKit" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/bot_kit.gd" id="1_kit"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/bear_gun.tres" id="2_gun"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/bear_armor.tres" id="3_armor"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/bear_helmet.tres" id="4_helmet"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/bear_rig.tres" id="5_rig"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/backpack.tres" id="6_backpack"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/bear_pistol.tres" id="7_pistol"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/loot.tres" id="8_loot"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/food.tres" id="9_food"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/medkit.tres" id="10_medkit"]
+[ext_resource type="Resource" path="res://data/loot_tables/pmc_kit/stim.tres" id="11_stim"]
+
+[resource]
+script = ExtResource("1_kit")
+gun_table = ExtResource("2_gun")
+spare_magazines = 3
+min_spare_rounds = 60
+gun_durability = Vector2(75, 95)
+ammo_rarity = Vector2i(2, 4)
+armor_chance = 1.0
+armor_table = ExtResource("3_armor")
+helmet_chance = 0.9
+helmet_table = ExtResource("4_helmet")
+rig_chance = 1.0
+rig_table = ExtResource("5_rig")
+backpack_chance = 0.85
+backpack_table = ExtResource("6_backpack")
+pistol_chance = 0.4
+pistol_table = ExtResource("7_pistol")
+pistol_magazines = 2
+melee_id = "hatchet"
+melee_chance = 0.0
+loot_table = ExtResource("8_loot")
+food_table = ExtResource("9_food")
+bandage_chance = 1.0
+medkit_chance = 1.0
+medkit_table = ExtResource("10_medkit")
+pocket_items = PackedStringArray("painkillers", "tourniquet")
+stim_chance = 0.3
+stim_table = ExtResource("11_stim")

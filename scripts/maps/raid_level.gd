@@ -58,15 +58,18 @@ func _ready() -> void:
 
 
 ## Plays as the side picked in ENTER RAID, carrying that loadout (an Inventory). Run on its own, the
-## player gets the starter kit. A PMC brings the profile's energy and hydration (DESIGN.md §13.7); a
-## Scav starts full. The map's climate sets how fast they drain.
+## player gets the starter kit. A PMC is of the profile's faction (its look and voice, DESIGN.md §3); a
+## Scav has none and looks like a Scav. A PMC brings the profile's energy and hydration (DESIGN.md
+## §13.7); a Scav starts full. The map's climate sets how fast they drain.
 func _apply_raid() -> void:
 	var raid := GameState.raid
 	var tuning := Consumables.CONFIG
 	if raid.get("side") == "scav":
 		_player.side = Actor.Side.SCAV
+		_player.set_faction(&"")
 		_player.health.start_metabolism(tuning, tuning.max_energy, tuning.max_hydration)
 	else:
+		_player.set_faction(Factions.of_profile(GameState.faction))
 		Consumables.recover_profile()
 		_player.health.start_metabolism(tuning, GameState.energy, GameState.hydration)
 	_player.health.metabolism_skill = Consumables.skill_multiplier()
@@ -75,7 +78,7 @@ func _apply_raid() -> void:
 		_player.health.energy_climate = map.energy_drain_multiplier
 		_player.health.hydration_climate = map.hydration_drain_multiplier
 	var loadout: Variant = raid.get("loadout")
-	_player.set_inventory(loadout if loadout is Inventory else Inventory.starter())
+	_player.set_inventory(loadout if loadout is Inventory else Inventory.starter(_player.faction))
 
 
 ## A moment after dying, the death screen says what killed you (DESIGN.md §16.5).

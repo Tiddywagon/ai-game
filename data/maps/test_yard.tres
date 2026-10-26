@@ -10,5 +10,5 @@ description = "A walled practice yard with concrete, wood and metal cover, two S
 order = 0
 size = "Small"
 raid_minutes = 15
-players = "1 PMC · 2 Scavs"
+players = "2 PMCs (you and a USEC) · 2 Scavs"
 scene_path = "res://maps/test_level.tscn"

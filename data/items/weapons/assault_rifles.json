@@ -1,5 +1,6 @@
 [
   {"id": "sentinel_ar", "name": "Sentinel AR", "description": "Direct-impingement 5.56x45 carbine. Endlessly modular: every part of it can be swapped.", "category": "weapon", "rarity": "ultra_rare", "size": [5, 2], "weight": 1.26, "value": 59200, "weapon": "res://data/weapons/sentinel_ar.tres"},
+  {"id": "kestrel_ar", "name": "Kestrel AR", "description": "Budget 5.56x45 carbine on a commercial lower: a plain flat-top, a pencil barrel and a gritty trigger. Every AR part fits, so it grows with you.", "category": "weapon", "rarity": "uncommon", "size": [5, 2], "weight": 1.4, "value": 8000, "weapon": "res://data/weapons/kestrel_ar.tres"},
   {"id": "tundra_47", "name": "Tundra 47", "description": "Stamped-receiver 7.62x39 rifle. Hits harder than a 5.45 and kicks like it. Shares grips, handguards and dust covers with the AK-74.", "category": "weapon", "rarity": "rare", "size": [5, 2], "weight": 1.84, "value": 22000, "weapon": "res://data/weapons/tundra_47.tres"},
   {"id": "halcyon_b5", "name": "Halcyon B5", "description": "5.56x45 bullpup: a full-length barrel in a short gun. No stock to swap; takes STANAG magazines.", "category": "weapon", "rarity": "epic", "size": [4, 2], "weight": 2.77, "value": 87500, "weapon": "res://data/weapons/halcyon_b5.tres"}
 ]

@@ -195,7 +195,7 @@ func _show_loadout() -> void:
 		checks.append("If you die, everything you bring is lost, except your secure container and insured gear.")
 	%Checks.text = "\n".join(checks.map(func(line: String) -> String: return "•  " + line))
 	%Checks.add_theme_color_override("font_color", WARNING_COLOR if _side == "pmc" else MenuEntryButton.TEXT)
-	%RaidSummary.text = "%s  ·  %d min  ·  %s" % [_map.display_name, _map.raid_minutes, "PMC" if _side == "pmc" else "Scav"]
+	%RaidSummary.text = "%s  ·  %d min  ·  %s" % [_map.display_name, _map.raid_minutes, Factions.side_name(_side)]
 	_update_insurance()
 
 

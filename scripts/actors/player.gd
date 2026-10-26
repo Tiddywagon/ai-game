@@ -31,6 +31,8 @@ extends Actor
 ## (GameState.hotkeys): meds, stims and food are used, grenades thrown at the reticle (ThrownGrenade),
 ## a signal flare fired in an extract that needs one. Melee (V / RB / touch): a tap swings the melee
 ## weapon (or a fist), holding it raises the parry stance (Actor.melee_strike(), can_parry()).
+## As a BEAR or USEC PMC it looks and sounds like its faction (Actor.set_faction(), set by RaidLevel)
+## and barks too (Voice): reloading, a grenade out, being hit, a kill.
 
 ## Emitted when one of the player's bullets hits someone (hit markers, damage numbers).
 signal hit_landed(target: Actor, damage: float, position: Vector3)
@@ -475,6 +477,8 @@ func throw_item(item: ItemInstance) -> bool:
 		inventory.remove_item(item)
 	ThrownGrenade.throw(self, data, aim_point if has_aim else global_position + Vector3(vision_facing().x, 0.0, vision_facing().y) * 8.0)
 	action_blocked.emit("Threw a %s" % data.display_name)
+	if voice:
+		voice.say(&"grenade")
 	return true
 
 
@@ -812,6 +816,8 @@ func on_hit_landed(target: Actor, damage: float, hit_position: Vector3, outcome:
 	if target.is_dead:
 		kills += 1  # Corpses can't be hit, so this hit was the kill.
 		killed.emit(target)
+		if voice:
+			voice.say(&"enemy_down")
 	hit_landed.emit(target, damage, hit_position)
 	if Settings.get_value("gameplay", "damage_numbers"):
 		# Pellets from one shell that hit the same target add up into one number.

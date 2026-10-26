@@ -8,6 +8,10 @@ extends CharacterBody3D
 ## max stamina, stamina recovery, speed, carry weight, sway, recoil, reload speed, noise and vision here.
 ## Vision (DESIGN.md §13.6): subclasses say which cones they see with (vision_cones()); VisionSystem
 ## applies light and weather and traces the sight lines.
+## Sides and factions (DESIGN.md §3): `side` is PMC or Scav; a PMC also has a `faction` (BEAR or USEC,
+## Factions), which gives it that faction's look and voice (set_faction(), Voice). Scavs are friendly
+## to Scavs and hostile to PMCs; PMCs are hostile to every PMC outside their squad, but hold back from
+## their own faction (holds_back_from()); squad mates never fight (is_squad_mate()).
 
 signal died
 ## A roll just ended. `direction` is the way it went.
@@ -50,6 +54,9 @@ const PARRY_STAGGER := 1.2
 const PARRY_SPEED := 0.5
 
 @export var side := Side.PMC
+## The PMC faction (DESIGN.md §3): &"bear" or &"usec"; &"" for none (a Scav, a boss or guard, the player
+## as a Scav). Separate from `side`. set_faction() also changes the look and the voice.
+@export var faction: StringName = &""
 ## Roll, cover and bullet tuning shared by everyone.
 @export var config: CombatConfig = preload("res://data/config/combat.tres")
 ## Body-part HP and status effect tuning.
@@ -128,6 +135,8 @@ var is_peeking := false
 var enemies: Array[Actor] = []
 ## Start a reload when the trigger is pulled on an empty magazine.
 var auto_reload := true
+## Its faction's voice (DESIGN.md §3), or null without a faction.
+var voice: Voice
 
 var _roll_direction := Vector3.ZERO
 var _roll_time := 0.0
@@ -161,6 +170,29 @@ func _ready() -> void:
 	equip_weapon(weapon_id, ammo_id, spare_rounds)
 	_set_height(stand_height)
 	_update_hitbox()
+	set_faction(faction)
+
+
+## Joins faction `id` (&"" for none): its colours on the body and an accent band (Factions.apply_look();
+## no faction: the plain look, _plain_color()), and its voice (none without a faction).
+func set_faction(id: StringName) -> void:
+	faction = id if Factions.has(id) else &""
+	Factions.apply_look(_body, faction, _plain_color())
+	if faction == &"":
+		if voice:
+			voice.queue_free()
+			voice = null
+		return
+	if voice == null:
+		voice = Voice.new()
+		add_child(voice)
+	voice.faction = faction
+
+
+## The body colour without a faction: a Scav's (from data/bots/scav.tres) for the Scav side; null keeps
+## the scene's. Bot uses its profile's.
+func _plain_color() -> Variant:
+	return (load("res://data/bots/scav.tres") as BotProfile).body_color if side == Side.SCAV else null
 
 
 func _exit_tree() -> void:
@@ -395,8 +427,7 @@ func aim_blend() -> float:
 func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
 	if is_dead:
 		return {}
-	if from and from != self and not is_hostile(from):
-		enemies.append(from)  # Provoked: whoever shot us is an enemy from now on.
+	provoke(from)  # Whoever shot us is an enemy from now on.
 	var part := body_part_at(hit_position, from.global_position if from else hit_position)
 	if part < 0:
 		return {}
@@ -430,8 +461,7 @@ func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionar
 func take_blow(damage: float, from: Actor, kind: String, weapon_name: String, at: Vector3) -> Dictionary:
 	if is_dead or damage <= 0.0:
 		return {}
-	if from and from != self and not is_hostile(from):
-		enemies.append(from)
+	provoke(from)
 	var part := body_part_at(at, from.global_position if from else at)
 	if part < 0:
 		part = BodyHealth.Part.THORAX
@@ -552,8 +582,10 @@ func body_part_at(point: Vector3, shot_from: Vector3) -> int:
 	return BodyHealth.Part.THORAX if height >= health_config.thorax_from else BodyHealth.Part.STOMACH
 
 
-## Name used in death messages, e.g. "Scav".
+## Name used in death messages, e.g. "Scav" or "USEC operator" (a PMC of a faction).
 func display_name() -> String:
+	if faction != &"":
+		return Factions.member_name(faction)
 	return "Scav" if side == Side.SCAV else "PMC"
 
 
@@ -597,10 +629,47 @@ func die() -> void:
 	died.emit()
 
 
+## Whether this actor fights `other` (DESIGN.md §3): never a squad mate; anyone who attacked it; else
+## everyone but Scav to Scav (Scavs and PMCs fight, and PMCs fight every other PMC, their own faction
+## too: holds_back_from()).
 func is_hostile(other: Actor) -> bool:
-	if other == self:
+	if other == null or other == self or is_squad_mate(other) or other.is_squad_mate(self):
 		return false
 	return other in enemies or not (side == Side.SCAV and other.side == Side.SCAV)
+
+
+## True if `other` is in this actor's squad (Bot.squad). The player has none.
+func is_squad_mate(_other: Actor) -> bool:
+	return false
+
+
+## True if this actor holds back from `other` (DESIGN.md §3, factions.json "same_faction"): both are
+## PMCs of the same faction, not squad mates, and `other` hasn't attacked it. Still hostile; AI acts on
+## it (Bot): slower to open fire, and no fight started far off unless `other` aims at it.
+func holds_back_from(other: Actor) -> bool:
+	return other != null and other != self and faction != &"" and other.faction == faction and side == Side.PMC \
+		and other.side == Side.PMC and not is_squad_mate(other) and not other in enemies
+
+
+## True if this actor is aiming at `other`: its aim points within the same-faction rule's
+## aimed_at_degrees of it. Bot: only at its target in a fight.
+func aims_at(other: Actor) -> bool:
+	if not has_aim or other == null or other == self or is_dead:
+		return false
+	var to_other := Vector2(other.global_position.x - global_position.x, other.global_position.z - global_position.z)
+	var to_aim := Vector2(aim_point.x - global_position.x, aim_point.z - global_position.z)
+	if to_other.length() < 0.1 or to_aim.length() < 0.1:
+		return false
+	return absf(rad_to_deg(to_aim.angle_to(to_other))) <= float(Factions.same_faction().get("aimed_at_degrees", 8.0))
+
+
+## `by` attacked this actor (shot at it, hit it): an enemy from now on, even if it would be friendly (a
+## player Scav who shoots an AI Scav) or held back from (a PMC of its own faction). Not a squad mate.
+func provoke(by: Actor) -> void:
+	if by == null or by == self or by in enemies or is_squad_mate(by):
+		return
+	if not is_hostile(by) or holds_back_from(by):
+		enemies.append(by)
 
 
 # --- Vision ---------------------------------------------------------------------------------

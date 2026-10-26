@@ -14,9 +14,16 @@ extends Actor
 ## LOOT (out of a fight, walks to loose loot or a ready event crate nearby and takes it); FLEE (low HP:
 ## runs for cover away from the threat and treats itself with what it carries, then fights on);
 ## EXTRACT. Pathfinding is the map's NavigationRegion3D (NavigationAgent3D).
-## A boss and its guards are a squad (BossSpawn): they share targets, guards stay with the boss, and in
-## a fight they push as a group (BotProfile.pushes). They never leave the raid, and raid events don't
-## pull them off their haunt, nor a fight they hear farther off (BotProfile.haunt_radius).
+## Squads (Squad): a boss and its guards (BossSpawn), or an AI PMC squad of 1-3 of one faction
+## (RaidController; DESIGN.md §4.4). Squad mates never fight each other, share targets and what they
+## see, and join each other's fights; out of a fight the followers keep to their spots near the leader
+## and go where it goes (a noise, an extract), and when the leader falls the next one leads. A boss
+## squad pushes as a group in a fight (BotProfile.pushes). What a bot is worth and whether it loots,
+## rushes raid events or ever leaves is its `role`'s: a boss and its guards never leave the raid, and
+## raid events don't pull them off their haunt, nor a fight they hear farther off
+## (BotProfile.haunt_radius). An AI PMC has a faction (Actor.faction: its look, voice and kit); it
+## holds back from PMCs of its own faction (DESIGN.md §3: slower to open fire, no fight started far
+## off unless they aim at it or shoot) and calls out what happens (Voice).
 ## Late in the raid it heads for an extract it can use (DESIGN.md §5: the same extracts as the player,
 ## RaidConfig says when) and leaves the raid after standing in it for the extract time; a fight or a hit
 ## interrupts it. Up close (its profile's melee_range) a bot carrying a melee weapon swings it instead of
@@ -61,8 +68,13 @@ const CORNERED_DISTANCE := 6.0
 ## Treatments in one go at most, and the longest one treatment takes it (seconds).
 const MAX_TREATMENTS := 3
 const MAX_TREAT_SECONDS := 6.0
-## A guard out of a fight stays this close to its boss.
+## A boss's guards stand this far from it, and walk back once this far from their spot; they sprint
+## when farther than BOSS_CATCH_UP behind.
+const BOSS_SPACING := 2.0
 const ESCORT_DISTANCE := 3.5
+const BOSS_CATCH_UP := 9.0
+## Squad mates stand this far apart in an extract.
+const EXTRACT_SPREAD := 0.8
 ## Walking somewhere without getting STUCK_PROGRESS metres closer for this long, it gives up on the
 ## spot (a corner the navmesh cuts too fine, another body in a doorway) as the closest it can get.
 const STUCK_SECONDS := 2.0
@@ -80,9 +92,10 @@ const STUCK_PROGRESS := 0.5
 ## Untick to freeze the bot in place (it still takes damage).
 @export var ai_enabled := true
 
-## What the bot carries (DESIGN.md §4): a random Scav kit (data/bots/scav_kit.tres), a PMC kit or,
-## set before it enters the tree, a boss's. Its gun is the one in hand; its spare rounds are the ones in
-## its rig and pockets, used up as it reloads. Lootable once it's dead, with all its gear.
+## What the bot carries (DESIGN.md §4): a random Scav kit (data/bots/scav_kit.tres), its faction's
+## AI PMC kit (Factions.ai_kit()) or, set before it enters the tree, a boss's. Its gun is the one in
+## hand; its spare rounds are the ones in its rig and pockets, used up as it reloads. Lootable once
+## it's dead, with all its gear.
 var inventory: Inventory
 ## Searching the body's pockets, rig and backpack (its equipment is in plain sight).
 var search: LootSearch
@@ -93,11 +106,17 @@ var target: Actor
 ## Seconds into the raid when it heads for an extract (-1: never), and whether it has left the raid.
 var extract_at := -1.0
 var extracted := false
-## A boss's squad: the boss and its guards (the same array for all of them; empty for other bots), and
-## a guard's boss. Set by BossSpawn; `title` is a boss's or guard's name ("" for a plain Scav or PMC).
-## `boss_spawn` is the squad's haunt (near_haunt()).
-var squad: Array[Bot] = []
-var leader: Bot
+## The squad it's in (Squad: a boss's, an AI PMC squad), or null on its own.
+var squad: Squad
+## Who leads its squad when that isn't this bot (null: it leads, or has no squad).
+var leader: Bot:
+	get:
+		return squad.leader if squad and squad.leader != self and is_instance_valid(squad.leader) else null
+## What it is, which decides what it's worth and some of what it does: &"boss", &"guard" (BossSpawn), or
+## &"" for an ordinary Scav or PMC (a squad member or not).
+var role: StringName = &""
+## A boss's or guard's haunt (near_haunt()), set by BossSpawn; `title` is a boss's or guard's name (""
+## for a plain Scav or PMC).
 var boss_spawn: BossSpawn
 var title := ""
 ## What it has picked up (item names), how often it flanked and what it treated itself with.
@@ -128,9 +147,11 @@ var _burst_clock := 0.0
 var _outline: ShaderMaterial
 ## What the bot sees this perception tick.
 var _view: VisionView
-## The extract it's heading for, and how long it has stood in it.
+## The extract it's heading for, how long it has stood in it, and whether it has got to its spot in it
+## (or as close as it gets, inside the extract: _do_extract()).
 var _extract_zone: ExtractZone
 var _extract_time := 0.0
+var _extract_settled := false
 ## Patrol: the point it's walking to (wandering).
 var _patrol_goal := Vector3.ZERO
 var _has_patrol_goal := false
@@ -159,8 +180,17 @@ var _stuck := false
 
 
 func _ready() -> void:
+	var rng := RandomNumberGenerator.new()
+	if GameState.raid.has("seed"):
+		rng.seed = hash([int(GameState.raid.seed), str(get_path())])  # Repeatable kits in a seeded raid.
+	else:
+		rng.randomize()
 	if profile:
 		side = profile.side
+	var factions := Factions.ids()
+	if side == Side.PMC and not Factions.has(faction) and not factions.is_empty():
+		faction = factions[rng.randi_range(0, factions.size() - 1)]  # An AI PMC is always BEAR or USEC.
+	if profile:
 		ammo_id = profile.ammo_id
 		walk_speed = profile.walk_speed
 		sprint_speed = profile.sprint_speed
@@ -172,16 +202,8 @@ func _ready() -> void:
 	if profile:
 		weapon.optic = profile.optic
 		weapon.recoil_control = profile.recoil_control
-		var material := StandardMaterial3D.new()
-		material.albedo_color = profile.body_color
-		($Body/Capsule as MeshInstance3D).material_override = material
-	var rng := RandomNumberGenerator.new()
-	if GameState.raid.has("seed"):
-		rng.seed = hash([int(GameState.raid.seed), str(get_path())])  # Repeatable kits in a seeded raid.
-	else:
-		rng.randomize()
 	if inventory == null:
-		inventory = Inventory.pmc_bot(rng) if side == Side.PMC else Inventory.scav(rng)
+		inventory = Inventory.pmc_bot(rng, faction) if side == Side.PMC else Inventory.scav(rng)
 		if profile and profile.extra_loot:
 			inventory.add_loot(profile.extra_loot, rng)
 	_equip_kit_gun()
@@ -192,6 +214,11 @@ func _ready() -> void:
 	Settings.applied.connect(_update_outline)
 	_update_outline.call_deferred()  # After the player is in the tree.
 	_plan_extract.call_deferred()  # Once the raid has started.
+
+
+## Without a faction it wears its profile's colour (a Scav's, a boss's).
+func _plain_color() -> Variant:
+	return profile.body_color if profile else super()
 
 
 func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
@@ -216,17 +243,23 @@ func leave_raid() -> void:
 		remove_from_group(group)
 	hide()
 	set_deferred("process_mode", Node.PROCESS_MODE_DISABLED)  # After this physics step (it leaves the physics space).
+	if squad:
+		squad.member_left(self)
 
 
 ## When this bot will head for an extract: AI PMCs some time in RaidConfig.ai_pmc_extract_window of the
-## raid, some Scavs (ai_scav_extract_chance) in ai_scav_extract_window.
+## raid (a squad once, for all of it: its leader takes it out), some Scavs (ai_scav_extract_chance) in
+## ai_scav_extract_window. A boss and its guards never leave.
 func _plan_extract() -> void:
 	var raid := _raid_controller()
-	if raid == null or not squad.is_empty():
+	if raid == null or is_boss() or is_guard():
 		return  # A boss and its guards hold their ground.
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	var window := raid.config.ai_pmc_extract_window
+	if squad and side == Side.PMC:
+		extract_at = squad.plan_extract(raid, window, rng)
+		return
 	if side == Side.SCAV:
 		if rng.randf() >= raid.config.ai_scav_extract_chance:
 			return
@@ -271,19 +304,47 @@ func worn_gear() -> Inventory:
 	return inventory
 
 
+## Its name in kill lists and death messages: a boss's or guard's title, an AI PMC's faction ("USEC
+## operator"), else its profile's ("Scav").
 func display_name() -> String:
 	if title != "":
 		return title
+	if faction != &"":
+		return Factions.member_name(faction)
 	return profile.display_name if profile else super()
 
 
-## True for a boss (the leader of its squad), and for one of its guards.
+## True for a boss, and for one of its guards (role, set by BossSpawn: not for being in a squad).
 func is_boss() -> bool:
-	return not squad.is_empty() and leader == null
+	return role == &"boss"
 
 
 func is_guard() -> bool:
-	return leader != null
+	return role == &"guard"
+
+
+## True if it's in a squad led by another bot that's still alive.
+func is_follower() -> bool:
+	return leader != null and not leader.is_dead
+
+
+func is_squad_mate(other: Actor) -> bool:
+	return squad != null and other != self and squad.has(other)
+
+
+## Bots aim only at their target in a fight.
+func aims_at(other: Actor) -> bool:
+	return state == State.COMBAT and target == other and _sees_target and super(other)
+
+
+## Whoever attacks one of a squad has the squad to deal with: its squad mates take `by` for an enemy
+## too (no more holding back from a PMC of their faction that shot at one of them, DESIGN.md §3).
+func provoke(by: Actor) -> void:
+	var known := enemies.size()
+	super(by)
+	if enemies.size() > known and squad:
+		for mate in squad.mates_of(self):
+			mate.provoke(by)
 
 
 func die() -> void:
@@ -344,10 +405,15 @@ func _think(delta: float) -> void:
 		_perceive_timer = Settings.ai_perceive_interval()  # Longer on the Mobile graphics preset.
 		_perceive()
 	_flee_cooldown -= delta
-	if (state == State.IDLE or state == State.PATROL) and extract_at >= 0.0 and not is_guard():
-		var raid := _raid_controller()
-		if raid and not raid.is_over() and raid.elapsed >= extract_at:
-			state = State.EXTRACT
+	if (state == State.IDLE or state == State.PATROL) and not is_boss() and not is_guard():
+		if is_follower():
+			if leader.state == State.EXTRACT:
+				state = State.EXTRACT  # The leader takes the squad out.
+		elif extract_at >= 0.0:
+			var raid := _raid_controller()
+			if raid and not raid.is_over() and raid.elapsed >= extract_at:
+				state = State.EXTRACT
+				_say(&"extract")
 	match state:
 		State.IDLE:
 			_do_idle(delta)
@@ -370,8 +436,13 @@ func _think(delta: float) -> void:
 
 ## Bullets flying past put the bot in combat with the shooter and make it duck or dodge.
 func on_bullet_near(shooter: Actor) -> void:
-	if is_dead or not ai_enabled or shooter == null or shooter.is_dead or not is_hostile(shooter):
+	if is_dead or shooter == null or shooter.is_dead:
 		return
+	if holds_back_from(shooter):
+		provoke(shooter)  # Shot at by its own faction: no more holding back.
+	if not ai_enabled or not is_hostile(shooter):
+		return
+	_say(&"hit")
 	if state == State.FLEE:
 		_last_known = shooter.global_position
 		return  # Keeps running.
@@ -387,9 +458,12 @@ func on_bullet_near(shooter: Actor) -> void:
 
 
 ## Heads for a raid event at `point` (RaidEvents): it goes there and looks around. A boss and its
-## guards stay on their haunt.
+## guards stay on their haunt; a squad follower leaves it to its leader (the squad goes together).
 func rush_to(point: Vector3) -> void:
-	if is_dead or not ai_enabled or state == State.COMBAT or state == State.FLEE or not squad.is_empty():
+	if is_dead or not ai_enabled or state == State.COMBAT or state == State.FLEE or is_boss() or is_guard():
+		return
+	if is_follower():
+		leader.rush_to(point)
 		return
 	_point_of_interest = point
 	_look_timer = 0.0
@@ -408,7 +482,7 @@ func _perceive() -> void:
 		var nearest := INF
 		for node in get_tree().get_nodes_in_group("actors"):
 			var other := node as Actor
-			if other.is_dead or not is_hostile(other):
+			if other.is_dead or not is_hostile(other) or not will_engage(other):
 				continue
 			var distance := global_position.distance_to(other.global_position)
 			if distance < nearest and _can_see(other):
@@ -421,13 +495,38 @@ func _perceive() -> void:
 		_sees_target = true
 		_last_known = seen.global_position
 		_lost_time = 0.0
-		for mate in squad:
-			if mate != self and is_instance_valid(mate) and mate.target == seen and not mate._sees_target:
-				mate._last_known = _last_known  # The squad shares what it sees.
+		if squad:
+			for mate in squad.mates_of(self):
+				if mate.target == seen and not mate._sees_target:
+					mate._last_known = _last_known  # The squad shares what it sees.
 		if state != State.COMBAT and state != State.FLEE:
 			_enter_combat()
+			_say(&"contact")
 	else:
 		_sees_target = false
+
+
+## Whether it starts a fight with `other` it can see: always, unless it holds back from it (a PMC of its
+## own faction, DESIGN.md §3) and `other` is farther than the hold-fire distance without aiming at it.
+func will_engage(other: Actor) -> bool:
+	if not hesitates_at(other):
+		return true
+	return global_position.distance_to(other.global_position) <= float(Factions.same_faction().get("hold_fire_beyond", 15.0))
+
+
+## True if it holds back from `other` right now: a PMC of its own faction (holds_back_from()) that isn't
+## aiming at it.
+func hesitates_at(other: Actor) -> bool:
+	return holds_back_from(other) and not other.aims_at(self)
+
+
+## Seconds between first seeing its target and opening fire: its profile's reaction time, × the
+## same-faction reaction_multiplier while it hesitates at the target.
+func reaction_time() -> float:
+	var seconds := profile.reaction_time if profile else 0.5
+	if target and hesitates_at(target):
+		seconds *= float(Factions.same_faction().get("reaction_multiplier", 1.0))
+	return seconds
 
 
 ## Seen by the shared vision rules. In combat the bot keeps turning toward its target, so only the first
@@ -471,7 +570,10 @@ func _on_noise(noise_position: Vector3, radius: float, source: Node, kind: Strin
 	var alarming := kind in ALARMING_NOISES
 	if state == State.INVESTIGATE and _urgent and not alarming:
 		return  # Already running to a gunshot: a footstep doesn't change that.
-	investigate(noise_position, alarming)
+	if squad:
+		squad.investigate(noise_position, alarming)  # The squad goes together.
+	else:
+		investigate(noise_position, alarming)
 	if alarming:
 		_alert_zone(noise_position)
 
@@ -494,7 +596,7 @@ func investigate(point: Vector3, urgent := false) -> void:
 
 ## True if `other` is a Scav of its zone (the same ScavZone, or the same wave).
 func same_zone(other: Bot) -> bool:
-	if other == self or other.side != side or not other.squad.is_empty():
+	if other == self or other.side != side or other.squad != null:
 		return false
 	return (zone != null and other.zone == zone) or (zone == null and wave > 0 and other.wave == wave)
 
@@ -502,7 +604,7 @@ func same_zone(other: Bot) -> bool:
 ## A gunshot it heard: the Scavs of its zone within its profile's alert_radius that aren't fighting run
 ## there too.
 func _alert_zone(point: Vector3) -> void:
-	if profile == null or profile.alert_radius <= 0.0 or not squad.is_empty():
+	if profile == null or profile.alert_radius <= 0.0 or squad != null:
 		return
 	for node in get_tree().get_nodes_in_group("bots"):
 		var mate := node as Bot
@@ -517,24 +619,32 @@ func _alert_zone(point: Vector3) -> void:
 # --- States ---------------------------------------------------------------------------------
 
 ## Stands looking around (for PATROL_PAUSE at a patrol stop), then patrols on if it has somewhere to
-## go. A guard stays with its boss instead. Picks up loot it notices nearby.
+## go. A squad follower keeps to its spot by the leader instead. Picks up loot it notices nearby.
 func _do_idle(delta: float) -> void:
-	if _escort() or _notice_loot(delta):
+	if _follow_leader() or _notice_loot(delta):
 		return
 	if _look_timer > 0.0:
 		_look_around(delta)
 		return
+	if is_follower():
+		return  # Where the leader goes, it goes.
 	if not wander_points.is_empty() or not patrol_points.is_empty():
 		state = State.PATROL
 
 
-## Walks to its next patrol point, then stands and looks around there (IDLE).
+## Walks to its next patrol point, then stands and looks around there (IDLE). A squad leader with
+## followers calls the move.
 func _do_patrol(delta: float) -> void:
-	if _escort() or _notice_loot(delta):
+	if is_follower():
+		state = State.IDLE
+		return
+	if _notice_loot(delta):
 		return
 	if not _has_patrol_goal:
 		_patrol_goal = _next_patrol_point()
 		_has_patrol_goal = true
+		if squad and not squad.followers().is_empty():
+			_say(&"move")
 	if _move_to(_patrol_goal, false):
 		_has_patrol_goal = false
 		_look_timer = randf_range(PATROL_PAUSE.x, PATROL_PAUSE.y)
@@ -562,17 +672,16 @@ func _next_patrol_point() -> Vector3:
 	return point
 
 
-## A guard out of a fight keeps near its boss (a spot of its own around it). True while it's walking
-## there; false once it's close (it then looks around like its boss) or if it has no boss left.
-func _escort() -> bool:
-	if leader == null or leader.is_dead or not is_instance_valid(leader):
+## A squad follower out of a fight keeps to its spot by the leader (Squad.formation_spot(): a guard
+## around its boss, a PMC behind its leader), sprinting when it has fallen far behind. True while it's
+## walking there; false once it's close (it then looks around) or if it has no leader left.
+func _follow_leader() -> bool:
+	if not is_follower():
 		return false
-	var index := maxi(squad.find(self), 1)
-	var angle := TAU * float(index) / float(maxi(squad.size(), 2)) + leader.rotation.y
-	var spot := leader.global_position + Vector3(sin(angle), 0.0, cos(angle)) * 2.0
-	if Vector2(spot.x - global_position.x, spot.z - global_position.z).length() <= ESCORT_DISTANCE:
+	var spot := squad.formation_spot(self)
+	if Vector2(spot.x - global_position.x, spot.z - global_position.z).length() <= squad.tolerance:
 		return false
-	_move_to(spot, global_position.distance_to(spot) > SPRINT_DISTANCE * 3.0)
+	_move_to(spot, global_position.distance_to(spot) > squad.catch_up)
 	return true
 
 
@@ -580,7 +689,7 @@ func _escort() -> bool:
 
 ## Every LOOT_SCAN_TIME, looks for loot within its profile's loot_radius: loose items on the ground,
 ## and ready raid event crates it hasn't looted (DESIGN.md §5.2). Goes for the nearest (LOOT). True if
-## it found some. Guards don't wander off to loot.
+## it found some. Guards don't wander off to loot; a squad follower only takes loot near its leader.
 func _notice_loot(delta: float) -> bool:
 	if profile == null or profile.loot_radius <= 0.0 or is_guard():
 		return false
@@ -619,6 +728,8 @@ func find_loot() -> Node3D:
 			continue
 		if _fetched_by_other(node) or not VisionSystem.line_clear(get_world_3d().direct_space_state, global_position, node.global_position, true):
 			continue
+		if is_follower() and node.global_position.distance_to(leader.global_position) > squad.catch_up:
+			continue  # Too far from the leader: the squad stays together.
 		best = node
 		best_distance = distance
 	return best
@@ -700,16 +811,26 @@ func _do_extract(delta: float) -> void:
 		state = State.IDLE
 		return
 	if _extract_zone == null or not _extract_zone.usable_by(self):
-		_extract_zone = _nearest_extract()
+		_extract_zone = squad.pick_extract() if squad else null  # The leader's pick.
+		if _extract_zone == null or not _extract_zone.usable_by(self):
+			_extract_zone = _nearest_extract()
 		_extract_time = 0.0
+		_extract_settled = false
 		if _extract_zone == null:
 			extract_at = raid.elapsed + EXTRACT_RETRY_TIME
+			if squad and not is_follower():
+				squad.extract_at = extract_at
 			state = State.IDLE
 			return
 	var centre := _extract_zone.global_position
-	if Vector2(centre.x - global_position.x, centre.z - global_position.z).length() > _extract_zone.radius * 0.5:
+	var off_centre := Vector2(centre.x - global_position.x, centre.z - global_position.z).length()
+	if off_centre > _extract_zone.radius:
+		_extract_settled = false  # Not in the extract (yet, or any more).
+	if off_centre > _extract_zone.radius * 0.5 and not _extract_settled:
 		_extract_time = 0.0
-		_move_to(centre, false)
+		# It counts once it's well inside, or at its own spot (or as close to it as it gets) anywhere
+		# inside: in a small extract a squad mate's spot can be nearer the edge than the middle.
+		_extract_settled = _move_to(centre + _extract_offset(), false) and off_centre <= _extract_zone.radius
 		return
 	_extract_time += delta
 	var angle := _extract_time * 0.9
@@ -732,20 +853,35 @@ func extract_goal() -> String:
 	return _extract_zone.extract_name if state == State.EXTRACT and _extract_zone else ""
 
 
-func _nearest_extract() -> ExtractZone:
+## Where in the extract it stands: squad mates spread out around the middle (EXTRACT_SPREAD, less in a
+## small extract), not on top of each other.
+func _extract_offset() -> Vector3:
+	if squad == null or squad.size() < 2:
+		return Vector3.ZERO
+	var angle := TAU * float(squad.members.find(self)) / float(squad.size())
+	return Vector3(sin(angle), 0.0, cos(angle)) * minf(EXTRACT_SPREAD, _extract_zone.radius * 0.35)
+
+
+## The nearest extract it can use, and so can every one of `users` (its squad mates: Squad.pick_extract()).
+## Null if there's none.
+func _nearest_extract(users: Array[Bot] = []) -> ExtractZone:
 	var best: ExtractZone = null
 	var best_distance := INF
 	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
 		var distance := zone.global_position.distance_to(global_position)
-		if distance < best_distance and zone.usable_by(self):
+		if distance < best_distance and zone.usable_by(self) and users.all(func(user: Bot) -> bool: return zone.usable_by(user)):
 			best = zone
 			best_distance = distance
 	return best
 
 
 ## Walks to the point of interest (a noise, or where the target was last seen) and looks around. It
-## runs to something alarming (a gunshot) while it's more than SPRINT_DISTANCE away.
+## runs to something alarming (a gunshot) while it's more than SPRINT_DISTANCE away. A squad follower
+## whose leader has stopped looking (and isn't fighting) goes back to its spot by the leader.
 func _do_investigate(delta: float) -> void:
+	if is_follower() and _look_timer <= 0.0 and not leader.state in [State.INVESTIGATE, State.SEARCH, State.COMBAT]:
+		state = State.IDLE  # The leader is done looking: back to its spot.
+		return
 	if _look_timer > 0.0:
 		_look_around(delta)
 		if _look_timer <= 0.0:
@@ -759,6 +895,8 @@ func _do_investigate(delta: float) -> void:
 
 func _do_combat(delta: float) -> void:
 	if target == null or target.is_dead:
+		if target and is_instance_valid(target) and not (target is Bot and (target as Bot).extracted):
+			_say(&"enemy_down")
 		target = null
 		_leave_combat(State.IDLE)
 		return
@@ -845,7 +983,7 @@ func _fight_from_cover(delta: float, threat: Vector3) -> void:
 
 
 func _shoot_when_ready(delta: float) -> void:
-	if not _sees_target or _seen_time < profile.reaction_time:
+	if not _sees_target or _seen_time < reaction_time():
 		_burst_clock = 0.0
 		return
 	if cover and speed_ratio() > PEEK_SETTLE_SPEED:
@@ -954,6 +1092,8 @@ func _next_treatment() -> void:
 	_treat_timer = minf(Consumables.use_time(item.data), MAX_TREAT_SECONDS) if item else 1.5
 	if item == null:
 		_treatments = MAX_TREATMENTS  # Nothing more to do after this.
+	else:
+		_say(&"heal")
 
 
 ## What it treats itself with now: what quick treatment would use (Consumables.quick_pick()), else
@@ -985,16 +1125,16 @@ func _end_flee() -> void:
 
 # --- Helpers --------------------------------------------------------------------------------
 
-## Starts fighting its target; `alert`: its squad joins in (DESIGN.md §4: a boss's guards share
+## Starts fighting its target; `alert`: its squad joins in (DESIGN.md §4: squad mates share
 ## targets).
 func _enter_combat(alert := true) -> void:
 	state = State.COMBAT
 	_look_timer = 0.0
 	_cover_retry = 0.0
 	_loot_target = null
-	if alert and target:
-		for mate in squad:
-			if mate != self and is_instance_valid(mate) and not mate.is_dead and mate.ai_enabled and mate.state != State.COMBAT and mate.state != State.FLEE:
+	if alert and target and squad:
+		for mate in squad.mates_of(self):
+			if mate.ai_enabled and mate.state != State.COMBAT and mate.state != State.FLEE:
 				mate.target = target
 				mate._last_known = _last_known if _last_known != Vector3.ZERO else target.global_position
 				mate._lost_time = 0.0
@@ -1021,7 +1161,7 @@ func _duck() -> void:
 ## others stay in their cover (as long as it still hides them) and keep peeking to pin the threat down.
 func _reposition(threat: Vector3) -> void:
 	var old := cover
-	var pushes := profile.pushes and not squad.is_empty()
+	var pushes := profile.pushes and squad != null
 	if pushes and old and CoverSystem.protects(old, threat) and _squad_mate_moving():
 		_peeks_left = 1
 		_duck()
@@ -1099,9 +1239,10 @@ func _best_cover(threat: Vector3, avoid: CoverPoint, accept: Callable) -> CoverP
 
 ## True if a living squad mate is moving to new cover in this fight.
 func _squad_mate_moving() -> bool:
-	for mate in squad:
-		if mate != self and is_instance_valid(mate) and not mate.is_dead and mate.state == State.COMBAT \
-				and mate.cover == null and mate._goal_cover != null:
+	if squad == null:
+		return false
+	for mate in squad.mates_of(self):
+		if mate.state == State.COMBAT and mate.cover == null and mate._goal_cover != null:
 			return true
 	return false
 
@@ -1148,6 +1289,16 @@ func _move_to(goal: Vector3, sprint: bool) -> bool:
 	move_input = direction.normalized()
 	sprint_input = sprint
 	return false
+
+
+## Says a line for `event` if it has a voice (an AI PMC; Voice keeps it from repeating itself) and no
+## squad mate has just called the same thing (Squad.claim_call(): no chorus of "Tango down!").
+func _say(event: StringName) -> void:
+	if voice == null or not voice.can_say(event):
+		return
+	if squad and not squad.claim_call(event, float(Factions.voice_config().get("speaker_cooldown", 2.5))):
+		return
+	voice.say(event)
 
 
 func _look_around(delta: float) -> void:
