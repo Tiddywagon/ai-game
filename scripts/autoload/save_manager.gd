@@ -25,7 +25,12 @@ const SAVE_PATH := "user://savegame.json"
 ## reputation and moved USEC's starting bonus from The Broker to Tinker, so older saves get their
 ## reputation counted again (_recount_reputation()). The level is worked out again from the experience
 ## whatever the version (GameState.from_dict()).
-const SAVE_VERSION := 9
+## Version 10 adds trader stock (DESIGN.md §10, TraderStock): per trader the next restock time, the
+## restock number, how many of each limited offer was bought since the last restock (by offer id; the
+## fence's worn gear too) and how many of each Wanted item was sold. The Wanted lists and the fence's
+## stock are rolled again from the trader and the restock number, so they aren't saved. Older saves
+## start with full stock and a restock one period from loading.
+const SAVE_VERSION := 10
 ## Trader ids before version 9 -> the trader who took over (upgrade()).
 const TRADER_IDS_V8 := {"prapor": "bulat", "therapist": "vera", "skier": "zoya", "peacekeeper": "broker",
 	"mechanic": "tinker", "ragman": "stitch", "jaeger": "bulat"}
@@ -79,13 +84,22 @@ func delete_save() -> void:
 
 
 ## Save `data` brought up to SAVE_VERSION (a copy; GameState.from_dict() reads it). Version 8 and
-## older: the version 9 trader ids and reputation (see the version notes). Data with no version is
-## taken as current.
+## older: the version 9 trader ids and reputation (see the version notes). Version 9: nothing to change
+## (no trader stock yet: GameState.from_dict() gives full stock and a restock from now). Data with no
+## version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
-	if version >= 9:
+	if version >= SAVE_VERSION:
 		return data
 	var result := data.duplicate(true)
+	if version < 9:
+		_upgrade_to_v9(result)
+	result.version = SAVE_VERSION
+	return result
+
+
+## Version 8 and older to version 9 (in place): the new trader ids and reputation.
+func _upgrade_to_v9(result: Dictionary) -> void:
 	var profile: Dictionary = result.get("profile", {})
 	var loyalty: Dictionary = profile.get("trader_loyalty", {})
 	var renamed := {}
@@ -107,8 +121,6 @@ func upgrade(data: Dictionary) -> Dictionary:
 	_rename_insurers(profile.get("inventory", {}))
 	_rename_insurers(profile.get("insurance_pending", []))
 	_rename_insurers(result.get("stash", []))
-	result.version = SAVE_VERSION
-	return result
 
 
 ## Before version 9 a trader's reputation came only from their quests and the faction bonus. Each

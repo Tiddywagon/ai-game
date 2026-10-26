@@ -52,6 +52,10 @@ var trick_shots := {"hits": 0, "kills": 0}
 ## roubles (dollars at Progression.dollar_rate()), "barter_reputation": the part of the reputation barters
 ## earned (capped)} (DESIGN.md §10).
 var trader_loyalty: Dictionary = {}
+## Trader id -> {"restock": unix time of the next restock, "number": restocks so far (1: the first
+## stock), "bought": {offer id: how many bought since the last restock}, "wanted": {item id: how many of
+## that Wanted item sold to them since}} (DESIGN.md §10, TraderStock).
+var trader_stock: Dictionary = {}
 ## The stash grid (DESIGN.md §8).
 var stash: InventoryGrid
 ## Equipment, pockets and everything in them.
@@ -180,6 +184,8 @@ func _reset(new_faction: Faction) -> void:
 		trader_loyalty[trader] = {"level": 1, "reputation": 0.0, "spent": 0, "barter_reputation": 0.0}
 	if FACTION_TRADER.has(faction):
 		trader_loyalty[FACTION_TRADER[faction]]["reputation"] += FACTION_REP_BONUS
+	trader_stock = {}
+	TraderStock.refresh_all()  # Full stock, restocks a period from now.
 	inventory = Inventory.new()
 	quests = {}
 	hideout = {}
@@ -209,6 +215,7 @@ func to_dict() -> Dictionary:
 			"drip": drip,
 			"trick_shots": trick_shots.duplicate(),
 			"trader_loyalty": trader_loyalty.duplicate(true),
+			"trader_stock": trader_stock.duplicate(true),
 			"inventory": inventory.to_dict(),
 			"skills": skills.duplicate(true),
 			"quests": quests.duplicate(true),
@@ -221,6 +228,15 @@ func to_dict() -> Dictionary:
 		},
 		"stash": stash.to_array(),
 	}
+
+
+## {key: whole number} from saved {key: number} data (JSON reads every number as a float).
+static func _counts(saved: Variant) -> Dictionary:
+	var result := {}
+	if saved is Dictionary:
+		for key: Variant in saved:
+			result[str(key)] = int(saved[key])
+	return result
 
 
 ## Restores the profile and stash from to_dict() data (older save versions are brought up to date
@@ -254,6 +270,14 @@ func from_dict(data: Dictionary) -> void:
 			"spent": int(entry.get("spent", 0)),
 			"barter_reputation": float(entry.get("barter_reputation", 0.0)),
 		}
+
+	var saved_stock: Dictionary = profile.get("trader_stock", {})
+	for trader: String in saved_stock:
+		var entry: Dictionary = saved_stock[trader]
+		if trader_stock.has(trader) and entry.has("restock"):  # Older saves have none: full stock from now.
+			trader_stock[trader] = {"restock": float(entry.restock), "number": maxi(int(entry.get("number", 1)), 1),
+				"bought": _counts(entry.get("bought", {})), "wanted": _counts(entry.get("wanted", {}))}
+	TraderStock.refresh_all()  # Restocks that came due while the game was closed.
 
 	if profile.has("inventory"):
 		inventory = Inventory.from_dict(profile.inventory)

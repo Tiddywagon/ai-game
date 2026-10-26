@@ -165,7 +165,7 @@ const SCHEMA := {
 		{"key": "auto_equip", "label": "Auto-equip on pickup", "type": "toggle", "default": true,
 			"note": "Takes effect once looting is in the game."},
 		{"key": "confirm_sell_valuables", "label": "Confirm before selling valuables", "type": "toggle", "default": true,
-			"note": "Takes effect once trading is in the game."},
+			"note": "Asks before selling Epic and Legendary items, valuables and insured gear to a trader."},
 		{"key": "language", "label": "Language", "type": "choice", "default": "en", "options": [["en", "English"]],
 			"note": "More languages once the text is translated."},
 		{"key": "units", "label": "Units", "type": "choice", "default": "metric",

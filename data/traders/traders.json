@@ -1,5 +1,5 @@
 {
-  "_comment": "The traders (DESIGN.md §10), read by TraderTable, in the order the TRADERS screen lists them. Each: id (offers.json, quests, insurers and saves use it), name, role, specialty (what they stock), personality (flavour), greetings (one is picked each visit to the TRADERS screen), currency (RUB or USD: what their prices are in), unique (what sets them apart), unlock (null: open from the start; {\"quest\": id}: trades once that quest is done), locked_greeting (with an unlock: what they say until then, instead of a greeting), max_loyalty (leave out for the top loyalty level in progression.json) and notice (optional: shown at the top of the BUY and BARTER tabs). Selling prices and restocks get their own fields when selling is built.",
+  "_comment": "The traders (DESIGN.md §10), read by TraderTable, in the order the TRADERS screen lists them. Each: id (offers.json, quests, insurers and saves use it), name, role, specialty (what they stock), personality (flavour), greetings (one is picked each visit to the TRADERS screen), currency (RUB or USD: what their prices are in, and what they pay when you sell), unique (what sets them apart), unlock (null: open from the start; {\"quest\": id}: trades once that quest is done), locked_greeting (with an unlock: what they say until then, instead of a greeting), restock_minutes (real minutes between restocks; left out: restock_minutes in data/config/trading.json), sell (what they buy and pay, read by Selling: rate is the share of an item's worth they pay at loyalty level 1, per_level what each level above 1 adds, buys the entries they take: an item matches an entry if it is of one of its categories, groups (barter goods and valuables), tags or weapon part kinds (\"kinds\": muzzle, sight, headset...), or always with \"any\": true; the best matching entry's multiplier, default 1, applies), max_loyalty (leave out for the top loyalty level in progression.json) and notice (optional: shown at the top of the BUY and BARTER tabs).",
   "traders": [
     {
       "id": "bulat",
@@ -14,7 +14,9 @@
       ],
       "currency": "RUB",
       "unique": "Insurance: cheap, slow",
-      "unlock": null
+      "unlock": null,
+      "restock_minutes": 60,
+      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"categories": ["weapon", "ammo", "throwable", "melee"]}, {"kinds": ["muzzle", "barrel", "handguard", "foregrip", "stock", "pistol_grip", "receiver", "sight", "tactical", "magazine"], "multiplier": 0.8}, {"groups": ["Military"]}]}
     },
     {
       "id": "vera",
@@ -29,7 +31,9 @@
       ],
       "currency": "RUB",
       "unique": "Insurance: dearer, faster",
-      "unlock": null
+      "unlock": null,
+      "restock_minutes": 60,
+      "sell": {"rate": 0.55, "per_level": 0.03, "buys": [{"categories": ["meds", "food"]}, {"groups": ["Medical supply"], "multiplier": 1.2}]}
     },
     {
       "id": "zoya",
@@ -44,7 +48,9 @@
       ],
       "currency": "RUB",
       "unique": "Cheap barters · can introduce you to The Broker",
-      "unlock": null
+      "unlock": null,
+      "restock_minutes": 60,
+      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"groups": ["Tools", "Household", "Fuel", "Electronics", "Hardware"]}, {"categories": ["junk"], "multiplier": 0.9}, {"categories": ["food", "key", "container"], "multiplier": 0.8}]}
     },
     {
       "id": "stitch",
@@ -59,7 +65,9 @@
       ],
       "currency": "RUB",
       "unique": "Upgrades gear",
-      "unlock": null
+      "unlock": null,
+      "restock_minutes": 60,
+      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"categories": ["armor", "helmet", "rig", "backpack"]}, {"kinds": ["face_shield", "headset"]}, {"groups": ["Materials"], "tags": ["cloth"]}]}
     },
     {
       "id": "tinker",
@@ -74,13 +82,15 @@
       ],
       "currency": "RUB",
       "unique": "Gunsmith quests",
-      "unlock": null
+      "unlock": null,
+      "restock_minutes": 60,
+      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"kinds": ["muzzle", "barrel", "handguard", "foregrip", "stock", "pistol_grip", "receiver", "sight", "tactical", "magazine"]}, {"tags": ["weapon"]}, {"categories": ["weapon"], "multiplier": 0.9}, {"groups": ["Electronics", "Tech"], "multiplier": 0.9}]}
     },
     {
       "id": "mole",
       "name": "Mole",
       "role": "Fence",
-      "specialty": "Buys anything, at a low price; later sells used gear",
+      "specialty": "Buys anything, at a low price; sells worn gear off Scavs",
       "personality": "A shifty dealer who works from a sewer junction under the yard, behind a curtain of dripping pipes. He asks no questions and takes anything, just never for much. He remembers who shoots Scavs and who leaves them be.",
       "greetings": [
         "No names. Show me what you've got.",
@@ -88,10 +98,12 @@
         "Mind the water. And mind who followed you."
       ],
       "currency": "RUB",
-      "unique": "Buys anything (selling isn't open yet)",
+      "unique": "Takes what nobody else will · one loyalty level for now",
       "unlock": null,
+      "restock_minutes": 60,
+      "sell": {"rate": 0.3, "per_level": 0.0, "buys": [{"any": true}]},
       "max_loyalty": 1,
-      "notice": "Selling isn't open yet. Once it is, Mole buys anything you bring him, at a low price; later he sells used gear too. Nothing to buy or barter here for now."
+      "notice": "Mole buys anything you bring him, even what nobody else will take, at a low price (SELL). What he sells is used gear off Scavs: a different handful every restock, worn, cheap, one of each."
     },
     {
       "id": "broker",
@@ -107,6 +119,8 @@
       "currency": "USD",
       "unique": "Dollars only · unlocked by Auntie Zoya's introduction",
       "unlock": {"quest": "zoya_introduction"},
+      "restock_minutes": 60,
+      "sell": {"rate": 0.65, "per_level": 0.03, "buys": [{"categories": ["weapon", "valuable"]}, {"tags": ["valuable"]}]},
       "locked_greeting": "I don't believe we've been introduced. Come back when someone I trust has said your name."
     }
   ]

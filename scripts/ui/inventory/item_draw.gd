@@ -86,7 +86,8 @@ static func draw_unknown(canvas: CanvasItem, rect: Rect2, progress := -1.0) -> v
 
 ## Hover text for an item. Food, drinks and stims that change energy or hydration preview it, e.g.
 ## "Energy 62 → 77 (+15)  ·  Hydration 40 → 35 (−5)" (Consumables.preview_text()); anything quests,
-## the hideout, barters or gear upgrades take says so ("Needed for: 1 quest, 2 barters", ItemUses).
+## the hideout, barters or gear upgrades take says so ("Needed for: 1 quest, 2 barters", ItemUses), and
+## an item a trader wants this restock too ("Wanted by Doc Vera: +50% until restock", TraderStock).
 static func tooltip(item: ItemInstance) -> String:
 	var lines := [item.title() + (" ×%d" % item.count if item.count > 1 else ""),
 		"%s  ·  %s  ·  %s" % [Palette.RARITY_NAMES[item.data.rarity], Settings.format_weight(item.weight()), UiFormat.money(item.value())]]
@@ -108,6 +109,9 @@ static func tooltip(item: ItemInstance) -> String:
 	var needed := ItemUses.summary(item.data.id)
 	if needed != "":
 		lines.append("Needed for: " + needed)
+	var wanted := TraderStock.wanted_text(item.data.id)
+	if wanted != "":
+		lines.append(wanted)
 	if item.insured:
 		lines.append("Insured")
 	if has_fir_mark(item):

@@ -16,7 +16,10 @@ extends PanelContainer
 ## upgrade, barter, craft or gear upgrade takes shows "Needed for" with a summary; hover it for the
 ## full list (ItemUses).
 ## Gear that can be insured (Insurance) says whether it is; out of raid INSURE insures it for its
-## price. A map item has VIEW MAP (MapOverlay).
+## price. A map item has VIEW MAP (MapOverlay). Out of raid in the inventory, SELL · <trader> · <price>
+## sells it to the trader who pays most among those who deal with you (Selling.best_trader(); asking
+## first for valuables and insured gear if the setting says so); disabled, it says why (worn, in the
+## secure container, a container with something in it). An item a trader wants this restock says so (TraderStock).
 ## Meds, stims, food and drink, grenades and the signal flare have a hotkey picker (DESIGN.md §17.1):
 ## put the item on hotkey 1-5 (it comes off any other), or none.
 ## Right-click any item in the inventory to open it (long-press on touch, View on a controller); Esc or
@@ -33,6 +36,8 @@ signal upgrade_requested(item: ItemInstance)
 signal part_removal_requested(item: ItemInstance, path: String)
 ## USE pressed for a med, stim, food or drink.
 signal use_requested(item: ItemInstance)
+## Quick-sold to `trader_id` for `price` (in their currency): the panel has closed.
+signal sold(item: ItemInstance, trader_id: String, price: int)
 
 const TREATMENTS := {"light_bleed": "light bleed", "heavy_bleed": "heavy bleed", "fracture": "fracture",
 	"pain": "pain", "blacked": "blacked limb"}
@@ -44,6 +49,8 @@ var can_modify := false
 var use_check: Callable
 ## Shows the hotkey picker (the inventory; not trader offers).
 var can_set_hotkey := true
+## Shows SELL to the best trader (the inventory out of raid).
+var can_sell := false
 
 var _icon: TextureRect
 var _name: Label
@@ -56,6 +63,9 @@ var _modify: Button
 var _upgrade: Button
 var _insure: Button
 var _map: Button
+var _sell: Button
+var _sell_to := ""
+var _sell_confirm: ConfirmationDialog
 var _use: Button
 var _hotkey: OptionButton
 var _close: Button
@@ -161,6 +171,19 @@ func _ready() -> void:
 	_insure.custom_minimum_size = Vector2(120, 36)
 	_insure.pressed.connect(_on_insure)
 	buttons.add_child(_insure)
+	_sell = Button.new()
+	_sell.name = "QuickSellButton"
+	_sell.custom_minimum_size = Vector2(120, 36)
+	_sell.pressed.connect(_on_sell)
+	buttons.add_child(_sell)
+	_sell_confirm = ConfirmationDialog.new()
+	_sell_confirm.name = "QuickSellConfirm"
+	_sell_confirm.title = "Sell this?"
+	_sell_confirm.ok_button_text = "SELL"
+	_sell_confirm.dialog_autowrap = true
+	_sell_confirm.min_size = Vector2i(520, 0)
+	_sell_confirm.confirmed.connect(_sell_now)
+	add_child(_sell_confirm)
 	_map = Button.new()
 	_map.name = "ViewMapButton"
 	_map.text = "VIEW MAP"
@@ -219,6 +242,13 @@ func show_item(examined: ItemInstance) -> void:
 		_insure.text = "INSURE  %s" % UiFormat.money(cost)
 		_insure.disabled = GameState.roubles < cost
 		_insure.tooltip_text = ("Insured with %s. If you die or go missing with it and nobody takes it, it comes back to your stash" % Insurance.insurer_text()) if not _insure.disabled else "Not enough roubles"
+	_sell_to = Selling.best_trader(item) if can_sell else ""
+	_sell.visible = _sell_to != "" and not Selling.locate(item).is_empty()
+	if _sell.visible:
+		_sell.text = "SELL  ·  %s  ·  %s" % [TraderTable.display_name(_sell_to), UiFormat.money(Selling.price(_sell_to, item), Selling.currency(_sell_to))]
+		var reason := Selling.sell_block_reason(_sell_to, item)
+		_sell.disabled = reason != ""
+		_sell.tooltip_text = reason if reason != "" else "The best price among the traders who deal with you"
 	_use.visible = use_check.is_valid() and Consumables.is_consumable(data)
 	if _use.visible:
 		var reason: String = use_check.call(item)
@@ -266,6 +296,30 @@ func _on_view_map() -> void:
 		overlay.show_level(level, raid.map, raid.player)
 	elif not overlay.show_map(map_id):
 		overlay.queue_free()
+
+
+## SELL: asks first for valuables and insured gear (the confirm_sell_valuables setting), then sells.
+func _on_sell() -> void:
+	if Selling.needs_confirm([item]):
+		_sell_confirm.dialog_text = Selling.confirm_text(_sell_to, [item])
+		_sell_confirm.popup_centered()
+	else:
+		_sell_now()
+
+
+## Sells the examined item to the best trader, saves and closes.
+func _sell_now() -> void:
+	var sold_item := item
+	var trader_id := _sell_to
+	if sold_item == null or trader_id == "":
+		return
+	var price := Selling.price(trader_id, sold_item)
+	if Selling.sell(trader_id, [sold_item]) != "":
+		show_item(sold_item)
+		return
+	SaveManager.save_game()
+	close()
+	sold.emit(sold_item, trader_id, price)
 
 
 func _on_insure() -> void:
@@ -554,6 +608,9 @@ static func stat_lines(examined: ItemInstance) -> Array:
 		lines.append(["Inside", "nothing" if inside.items.is_empty() else "%d items, %s" % [inside.items.size(), Settings.format_weight(inside.weight())]])
 		if stats.get("secure", false):
 			lines.append(["Secure", "Kept when you die. No rigs, backpacks or other containers"])
+	var wanted := TraderStock.wanted_text(data.id)
+	if wanted != "":
+		lines.append(["Wanted", wanted.trim_prefix("Wanted ")])
 	if Insurance.is_insurable(examined):
 		lines.append(["Insurance", ("Insured with %s: comes back to your stash if you lose it" % Insurance.insurer_name(examined.insurer)) if examined.insured else "Not insured (%s with %s)" % [UiFormat.money(Insurance.price(examined)), Insurance.insurer_name()]])
 	var needed := ItemUses.summary(data.id)

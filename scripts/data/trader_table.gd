@@ -4,12 +4,15 @@ extends RefCounted
 ## three greetings (one picked each visit), currency, what sets them apart, how they unlock (null: from
 ## the start; {"quest": id}: once that quest is done, so "unlocked" follows the quest's state and needs
 ## no saved flag), what a locked trader says instead of a greeting, and the highest loyalty level they
-## go to (Mole, the fence: 1). Everything that lists traders or shows a trader's name asks here; where a
-## trader is named as a source of something, a locked one says so (locked_suffix()). Checked when it loads: problems() (also against
-## offers.json, the quests, the insurers, the gear upgrade sources and the faction bonus).
+## go to (Mole, the fence: 1), how often they restock (TraderStock) and what they buy when you sell
+## (their "sell" block: Selling). Everything that lists traders or shows a trader's name asks here; where
+## a trader is named as a source of something, a locked one says so (locked_suffix()). Checked when it
+## loads: problems() (also against offers.json, the quests, the insurers, the gear upgrade sources, the
+## faction bonus and the sell blocks; the offers' items and rarity rule are checked by
+## Trading.problems() once the items are loaded).
 
 const PATH := "res://data/traders/traders.json"
-const FIELDS := ["id", "name", "role", "specialty", "personality", "greetings", "currency", "unique", "unlock"]
+const FIELDS := ["id", "name", "role", "specialty", "personality", "greetings", "currency", "unique", "unlock", "sell"]
 const CURRENCIES := {"RUB": "Roubles", "USD": "Dollars"}
 const GREETINGS := 3
 
@@ -89,6 +92,11 @@ static func max_loyalty(id: String) -> int:
 	return clampi(int(find(id).get("max_loyalty", Progression.max_loyalty())), 1, Progression.max_loyalty())
 
 
+## Real minutes between `id`'s restocks (their "restock_minutes", else data/config/trading.json's).
+static func restock_minutes(id: String) -> float:
+	return float(find(id).get("restock_minutes", Trading.config().get("restock_minutes", 60.0)))
+
+
 ## The quest that unlocks `id` ("" if they trade from the start).
 static func unlock_quest(id: String) -> String:
 	var unlock: Variant = find(id).get("unlock")
@@ -157,6 +165,8 @@ static func problems() -> Array[String]:
 			found.append("%s: unlock %s isn't null or a quest that exists" % [where, unlock])
 		if unlock != null and str(entry.get("locked_greeting", "")).strip_edges() == "":
 			found.append("%s: needs a locked_greeting (it has an unlock)" % where)
+		if entry.has("restock_minutes") and float(entry.restock_minutes) <= 0.0:
+			found.append("%s: restock_minutes must be above 0" % where)
 		var top := int(entry.get("max_loyalty", Progression.max_loyalty()))
 		if top < 1 or top > Progression.max_loyalty():
 			found.append("%s: max_loyalty %d isn't 1-%d" % [where, top, Progression.max_loyalty()])
@@ -178,4 +188,5 @@ static func problems() -> Array[String]:
 	for faction: int in GameState.FACTION_TRADER:
 		if not GameState.FACTION_TRADER[faction] in seen:
 			found.append("faction trader %s isn't a trader" % GameState.FACTION_TRADER[faction])
+	found.append_array(Selling.problems())
 	return found

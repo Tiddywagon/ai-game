@@ -105,6 +105,12 @@ layout_mode = 2
 theme_type_variation = &"AccentLabel"
 autowrap_mode = 3
 
+[node name="Restock" type="Label" parent="Margin/Layout/Columns/Details/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+autowrap_mode = 3
+
 [node name="Tabs" type="TabContainer" parent="Margin/Layout/Columns/Details/Rows"]
 unique_name_in_owner = true
 layout_mode = 2

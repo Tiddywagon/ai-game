@@ -1,0 +1,23 @@
+{
+  "_comment": "Trading rules shared by every trader (DESIGN.md §10), read by Trading, Selling and TraderStock. Each trader's own selling rates are its \"sell\" block in data/traders/traders.json, its restock time \"restock_minutes\" there. restock_minutes: how often a trader restocks when it doesn't say (real minutes; the clock runs while the game is closed). min_loyalty: the lowest loyalty level a buy offer may need, by its item's rarity (0: never sold for money, only bartered); checked when offers.json loads. sell_value: what a sold item is worth before the trader's rate: a gun or armor at durability_floor of its value when worn out, up to all of it when new, and upgraded gear upgrade_bonus more per level. confirm: with the confirm_sell_valuables setting on, selling an item of this rarity or better, or with one of these tags, asks first. wanted: each restock every trader wants count (from-to) valuables or barter goods (categories, loot items up to max_rarity) among what it buys and no trader sells for money, paying multiplier times the price for up to per_item of each. exchange: the trader who changes money, and the roubles a dollar costs (buy) and fetches (sell). used_stock: the fence's worn gear each restock: count (from-to) items rolled from the Scav kit tables (path: weight), guns and armor at durability (from-to share of new), priced at price times their worn value, one of each; only what his loyalty level could buy from a trader (min_loyalty, and nothing traders sell only from a higher level) and nothing a trader could want, re-rolled otherwise.",
+  "restock_minutes": 60,
+  "min_loyalty": {"common": 1, "uncommon": 1, "rare": 2, "ultra_rare": 3, "epic": 4, "legendary": 0},
+  "sell_value": {"durability_floor": 0.2, "upgrade_bonus": 0.08},
+  "confirm": {"rarity": "epic", "tags": ["valuable"]},
+  "wanted": {"count": [2, 3], "multiplier": 1.5, "per_item": 3, "categories": ["valuable", "junk"], "max_rarity": "epic"},
+  "exchange": {"trader": "broker", "buy": 145, "sell": 125},
+  "used_stock": {
+    "trader": "mole",
+    "count": [8, 12],
+    "durability": [0.4, 0.8],
+    "price": 0.8,
+    "tables": {
+      "res://data/loot_tables/scav_kit/gun.tres": 3,
+      "res://data/loot_tables/scav_kit/armor.tres": 2,
+      "res://data/loot_tables/scav_kit/helmet.tres": 1,
+      "res://data/loot_tables/scav_kit/rig.tres": 1,
+      "res://data/loot_tables/scav_kit/backpack.tres": 1,
+      "res://data/loot_tables/scav_kit/loot.tres": 3
+    }
+  }
+}

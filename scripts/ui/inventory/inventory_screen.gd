@@ -3,7 +3,8 @@ extends MenuScreen
 ## The inventory (DESIGN.md §7). Equipment slots on the left, what's on you in the middle (pockets and
 ## the grids of the equipped rig, backpack and secure container), and the stash on the right when out of
 ## raid. Drag to move; R turns the item while dragging; Shift-drag splits a stack (the mouse wheel
-## changes how many); right-click examines; double-click opens a container in its own window. The header
+## changes how many); right-click examines; double-click opens a container in its own window (closed
+## once the container is no longer here, e.g. sold, so nothing is dropped into a lost grid). The header
 ## shows the weight you carry and what it does to you. Tab, Esc or CLOSE closes it. In a raid the game
 ## keeps running while it's open, and searching a container or body shows it on the right instead of
 ## the stash: its items turn up one by one while it's open (LootSearch), and the title counts them. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
@@ -76,6 +77,8 @@ func _ready() -> void:
 	_examine.use_requested.connect(use_item)
 	_examine.use_check = _use_reason
 	_examine.can_modify = stash != null
+	_examine.can_sell = stash != null and inventory == GameState.inventory
+	_examine.sold.connect(_on_sold)
 	InventoryDrag.mods_allowed = stash != null
 	%Overlay.add_child(_examine)
 	_build_equipment()
@@ -97,6 +100,9 @@ func _ready() -> void:
 	elif stash:
 		%StashTitle.text = "STASH  ·  %d × %d" % [stash.size.x, stash.size.y]
 		%StashView.grid = stash
+		stash.changed.connect(_prune_windows, CONNECT_DEFERRED)  # After a move has landed.
+	if loot is InventoryGrid:
+		(loot as InventoryGrid).changed.connect(_prune_windows, CONNECT_DEFERRED)
 	inventory.changed.connect(_on_inventory_changed)
 	_build_body_status()
 	Consumables.preview_health = user.health if user else null
@@ -281,6 +287,7 @@ func _on_inventory_changed() -> void:
 	_update_header()
 	if inventory.grids() != _shown_grids:
 		_build_containers()
+	_prune_windows.call_deferred()
 
 
 func _update_header() -> void:
@@ -398,9 +405,18 @@ func _build_loot_body() -> void:
 			_add_section("%s  ·  %s" % [entry[1], item.data.display_name], item.contents, %LootBody, body, "LootGrid_")
 
 
+## Quick-sold from the examine panel: says so in the header and closes the item's window if it was a
+## container with one open (the grids redraw on their own).
+func _on_sold(item: ItemInstance, trader_id: String, price: int) -> void:
+	_close_window(item)
+	_show_use_message("Sold %s to %s for %s" % [item.title(), TraderTable.display_name(trader_id), UiFormat.money(price, Selling.currency(trader_id))])
+	_update_header()
+
+
 func _on_loot_changed() -> void:
 	if (loot as Inventory).grids() != _loot_grids:
 		_build_loot_body()
+	_prune_windows.call_deferred()
 
 
 ## Empties the magazine of `gun`: the rounds go to your pockets, rig or backpack (or the stash), each
@@ -640,6 +656,28 @@ func _close_window(item: ItemInstance) -> void:
 	if _windows.has(item):
 		_windows[item].queue_free()
 		_windows.erase(item)
+
+
+## Closes the window of every container that's no longer on the character, in the stash or in what's
+## being searched (sold, say), so nothing can be dropped into a grid that's gone. Called deferred after
+## the grids change, once a move has put the item where it's going.
+func _prune_windows() -> void:
+	for item: ItemInstance in _windows.keys():
+		if not _holds(item):
+			_close_window(item)
+
+
+## True if `item` is on the character, in the stash or in what's being searched, at any depth.
+func _holds(item: ItemInstance) -> bool:
+	if inventory.slot_of(item) != "" or inventory.holder_of(item):
+		return true
+	if stash and stash.find_holder(item):
+		return true
+	if loot is InventoryGrid:
+		return (loot as InventoryGrid).find_holder(item) != null
+	if loot is Inventory:
+		return (loot as Inventory).slot_of(item) != "" or (loot as Inventory).holder_of(item) != null
+	return false
 
 
 func _slot_name(slot: String) -> String:
