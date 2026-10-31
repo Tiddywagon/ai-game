@@ -195,6 +195,49 @@ func has_room_for(item: ItemInstance) -> bool:
 	return room >= item.count or not find_space(item).is_empty()
 
 
+## True if all of `new_items` would fit together, the way add() would put them one after another: on
+## top of matching stacks (theirs and each other's) first, then in free space, row by row, unturned
+## first (a barter's several rewards). Items in `freed` count as gone (what the barter takes).
+func has_room_for_all(new_items: Array[ItemInstance], freed: Array[ItemInstance] = []) -> bool:
+	var taken: Array[Rect2i] = []
+	var stacks: Array = []  # [ItemInstance like it, room left]
+	for item in items:
+		if not item in freed:
+			taken.append(Rect2i(item.cell, item.footprint()))
+			stacks.append([item, item.data.max_stack - item.count])
+	for item in new_items:
+		if not accepts(item):
+			return false
+		var left := item.count
+		for stack: Array in stacks:
+			if left > 0 and (stack[0] as ItemInstance).can_stack_with(item):
+				var moved := mini(left, int(stack[1]))
+				stack[1] = int(stack[1]) - moved
+				left -= moved
+		if left == 0:
+			continue
+		var spot := Rect2i()
+		for turned in ([false, true] if item.data.size.x != item.data.size.y else [false]):
+			spot = _free_area(taken, item.footprint_if(turned))
+			if spot.size != Vector2i.ZERO:
+				break
+		if spot.size == Vector2i.ZERO:
+			return false
+		taken.append(spot)
+		stacks.append([item, item.data.max_stack - left])
+	return true
+
+
+## The first area of `footprint` that overlaps none of `taken`, row by row (zero-sized if none).
+func _free_area(taken: Array[Rect2i], footprint: Vector2i) -> Rect2i:
+	for y in size.y - footprint.y + 1:
+		for x in size.x - footprint.x + 1:
+			var area := Rect2i(Vector2i(x, y), footprint)
+			if not taken.any(func(other: Rect2i) -> bool: return other.intersects(area)):
+				return area
+	return Rect2i()
+
+
 ## Everything in the grid, including what's inside containers and loaded in guns, at any depth.
 func all_items() -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []

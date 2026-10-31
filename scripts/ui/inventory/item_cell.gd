@@ -2,8 +2,9 @@ class_name ItemCell
 extends Control
 ## One item drawn on its own, as in the grid (rarity colours, count, found-in-raid checkmark), for lists
 ## outside the inventory: trader offers, quest and hideout requirements, crafts, the raid result.
-## Sized to the item's footprint at `cell_size` per cell, or to `box` when set. Right-click (a long
-## press on a touch screen) asks for it to be examined.
+## Sized to the item's footprint at `cell_size` per cell, or to `box` when set; `count` shows another
+## count than the item's (a barter giving two medkits). Right-click (a long press on a touch screen)
+## asks for it to be examined.
 
 signal examine_requested(item: ItemInstance)
 
@@ -20,6 +21,11 @@ var box := Vector2.ZERO:
 	set(value):
 		box = value
 		_resize()
+## The count drawn in the corner instead of the item's own (-1: the item's).
+var count := -1:
+	set(value):
+		count = value
+		queue_redraw()
 
 
 func _init() -> void:
@@ -36,7 +42,7 @@ func _resize() -> void:
 
 func _draw() -> void:
 	if item:
-		ItemDraw.draw(self, item, Rect2(Vector2.ZERO, size).grow(-1.0), false)
+		ItemDraw.draw(self, item, Rect2(Vector2.ZERO, size).grow(-1.0), false, 1.0, count)
 
 
 func _gui_input(event: InputEvent) -> void:

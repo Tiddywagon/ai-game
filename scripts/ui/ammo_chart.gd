@@ -146,9 +146,9 @@ static func sources(id: String) -> Array[String]:
 		for offer: Dictionary in offers.get("buy", []):
 			if str(offer.item) == id:
 				levels.append(Trading.offer_level(offer))
-		for offer: Dictionary in offers.get("barters", []):
-			if str(Trading.barter_reward(offer).item) == id:
-				levels.append(Trading.offer_level(offer))
+		for barter in BarterTable.for_trader(trader):
+			if BarterTable.rewards(barter).any(func(entry: Dictionary) -> bool: return str(entry.get("item", "")) == id):
+				levels.append(BarterTable.level(barter))
 		if not levels.is_empty():
 			result.append("%s LL%d%s" % [TraderTable.display_name(trader), levels.min(), TraderTable.locked_suffix(trader)])
 	for station in Hideout.stations():

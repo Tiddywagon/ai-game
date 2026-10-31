@@ -1,0 +1,16 @@
+{
+  "_comment": "Mole's barters (DESIGN.md §10), read by BarterTable (scripts/data/barter_table.gd, which lists the fields and checks the rules when the items load). A barter: id (stable and unique among every trader's offers and barters: saves count limited stock under it), trader, ll (the loyalty level it needs), requires [{item, count, fir}] (fir true: only found-in-raid items count), rewards [{item, count, durability}] (durability: worn gear, that share of new), reward_rarity (the rarest reward's rarity), stock (how many trades each restock; left out: no limit) and quest (a quest that must be completed first).",
+  "barters": [
+    {"id": "mole_barter_armor_trooper", "trader": "mole", "ll": 1, "requires": [{"item": "factory_map", "count": 1}, {"item": "test_yard_map", "count": 1}], "rewards": [{"item": "armor_trooper", "count": 1, "durability": 0.6}, {"item": "bump_cap", "count": 1, "durability": 0.6}], "reward_rarity": "common"},
+    {"id": "mole_barter_scav_vest", "trader": "mole", "ll": 1, "requires": [{"item": "cigarettes", "count": 1}], "rewards": [{"item": "scav_vest", "count": 1}], "reward_rarity": "common"},
+    {"id": "mole_barter_kolkhoz_sawnoff", "trader": "mole", "ll": 1, "requires": [{"item": "vodka", "count": 1}], "rewards": [{"item": "kolkhoz_sawnoff", "count": 1, "durability": 0.6}, {"item": "ammo_12ga_buck", "count": 40}], "reward_rarity": "common"},
+    {"id": "mole_barter_pack_mbss", "trader": "mole", "ll": 1, "requires": [{"item": "kettle", "count": 1}], "rewards": [{"item": "pack_mbss", "count": 1}], "reward_rarity": "uncommon"},
+    {"id": "mole_barter_drover_revolver", "trader": "mole", "ll": 1, "requires": [{"item": "banknotes", "count": 1}], "rewards": [{"item": "drover_revolver", "count": 1, "durability": 0.6}, {"item": "ammo_45_fmj", "count": 40}], "reward_rarity": "common"},
+    {"id": "mole_barter_kolpak_helmet", "trader": "mole", "ll": 1, "requires": [{"item": "light_bulb", "count": 1}, {"item": "bleach", "count": 1}], "rewards": [{"item": "kolpak_helmet", "count": 1, "durability": 0.6}, {"item": "rig_belt", "count": 1}], "reward_rarity": "common"},
+    {"id": "mole_barter_armor_zhuk3", "trader": "mole", "ll": 1, "requires": [{"item": "car_battery", "count": 1}], "rewards": [{"item": "armor_zhuk3", "count": 1, "durability": 0.6}, {"item": "kiver_helmet", "count": 1, "durability": 0.6}], "reward_rarity": "uncommon"},
+    {"id": "mole_barter_rig_6b5", "trader": "mole", "ll": 1, "requires": [{"item": "fuel_can", "count": 1}], "rewards": [{"item": "rig_6b5", "count": 1, "durability": 0.6}], "reward_rarity": "uncommon"},
+    {"id": "mole_barter_paca_armor", "trader": "mole", "ll": 1, "requires": [{"item": "hose", "count": 1}, {"item": "nails", "count": 1}], "rewards": [{"item": "paca_armor", "count": 1, "durability": 0.7}], "reward_rarity": "uncommon"},
+    {"id": "mole_barter_mosin_rifle", "trader": "mole", "ll": 1, "requires": [{"item": "silver_ring", "count": 1}], "rewards": [{"item": "mosin_rifle", "count": 1, "durability": 0.6}, {"item": "ammo_762x54r_lps", "count": 20}], "reward_rarity": "uncommon"},
+    {"id": "mole_barter_tactical_rig", "trader": "mole", "ll": 1, "requires": [{"item": "pressure_gauge", "count": 1}], "rewards": [{"item": "tactical_rig", "count": 1}, {"item": "sling_bag", "count": 1}], "reward_rarity": "uncommon"}
+  ]
+}

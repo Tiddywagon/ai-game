@@ -8,8 +8,12 @@ extends MenuScreen
 ## Broker an EXCHANGE to buy and sell dollars; at Mole his worn gear), SELL (Selling: what this trader
 ## buys of your stash, pockets, rig and backpack, each with its price and SELL, checkboxes and SELL
 ## SELECTED, a name filter, the WANTED strip of the items they pay extra for this restock; insured gear
-## says so; selling valuables or insured gear asks first if the setting says so), BARTER (items for an
-## item), do their TASKS (accept, hand over, turn in), compare AMMO (every round of the gun in hand, or
+## says so; selling valuables or insured gear asks first if the setting says so), BARTER (items for
+## items: what each barter asks for counted from the stash with a check or a cross, its rewards, how many
+## trades are left this restock, the quest a locked one waits for, FIND to see the stash with those
+## items lit up in a panel that takes the trader list's place, and TRADE; only what your loyalty level
+## reaches, with a line on what the levels above add), do their TASKS (accept, hand over, turn in),
+## compare AMMO (every round of the gun in hand, or
 ## of any caliber: AmmoChart), at Stitch, UPGRADE gear (GearUpgradeRow) and, at the insurers (Bulat and
 ## Doc Vera: Insurance), INSURE the gear you'd take into a raid. A trader who isn't unlocked yet (The
 ## Broker, after Auntie Zoya's introduction) gives his locked line instead of a greeting, says how to
@@ -23,6 +27,9 @@ extends MenuScreen
 ## Item cells in offer rows: pixels per grid cell, and the most room one may take.
 const OFFER_CELL := 30.0
 const OFFER_MAX := Vector2(150, 64)
+## Barter reward cells: pixels per grid cell, and the most room one may take.
+const REWARD_CELL := 44.0
+const REWARD_MAX := Vector2(132, 44)
 
 var _buttons: Array[Button] = []
 var _traders: Array[Dictionary] = []
@@ -52,6 +59,12 @@ var _examine: ItemExaminePanel
 ## say yes.
 var _confirm: ConfirmationDialog
 var _on_confirm := Callable()
+## The FIND panel (quick find): the stash with what one barter asks for lit up and the rest dimmed, in
+## the trader list's place while it's open; the barter it shows, and the lit item NEXT goes to.
+var _find_panel: PanelContainer
+var _find_grid: StashGrid
+var _find_barter: Dictionary = {}
+var _find_index := 0
 
 
 func _ready() -> void:
@@ -94,13 +107,24 @@ func _ready() -> void:
 	clock.timeout.connect(_tick)
 	clock.autostart = true
 	add_child(clock)
-	%Tabs.tab_changed.connect(func(_tab: int) -> void: _draw_stale())
+	%Tabs.tab_changed.connect(_on_tab_changed)
+	_build_find_panel()
 	_show(_traders[0])
+
+
+## Another tab: draws it if it's stale (_draw_stale()) and closes FIND, which belongs to BARTER.
+func _on_tab_changed(_tab: int) -> void:
+	_draw_stale()
+	var shown := %Tabs.get_current_tab_control() as Control
+	if not _refreshing and _find_panel.visible and (shown == null or String(shown.name) != "BARTER"):
+		_close_find()
 
 
 func _on_cancel() -> void:
 	if _examine.visible:
 		_examine.close()
+	elif _find_panel.visible:
+		_close_find()
 	else:
 		close()
 
@@ -110,6 +134,8 @@ func _show(trader: Dictionary) -> void:
 		return
 	_trader = trader
 	_sell_picked.clear()  # Prices differ from trader to trader.
+	if _find_panel.visible:
+		_close_find()
 	for button_index in _buttons.size():  # Focus moving (keys, a pad) picks a trader too, not just a click.
 		_buttons[button_index].set_pressed_no_signal(button_index == _traders.find(trader))
 	_refresh()
@@ -174,6 +200,8 @@ func _refresh() -> void:
 	_draw_stale()
 	_update_countdowns()
 	_restore_focus(trail)
+	if _find_panel.visible:
+		_fill_find()
 
 
 ## The money, every trader's button (their loyalty level) and the picked trader's loyalty lines.
@@ -599,54 +627,254 @@ func _sell(trader: Dictionary, items: Array) -> void:
 		go.call()
 
 
-## After a sale: the money, loyalty and SELL tab brought up to date in place (_update_sell()); the other
-## tabs are drawn again when next shown (what you can afford now, a new loyalty level's offers).
+## After a sale: the money, loyalty and SELL tab brought up to date in place (_update_sell()), and the
+## FIND panel if it's open (what it counts and lights may be gone); the other tabs are drawn again when
+## next shown (what you can afford now, a new loyalty level's offers).
 func _after_sale(trader: Dictionary) -> void:
 	if trader != _trader or not TraderTable.is_unlocked(trader.id):
 		return
 	_update_header()
 	if not "SELL" in _stale:
 		_update_sell(trader)
+	if _find_panel.visible:
+		_fill_find()
 	for index in %Tabs.get_tab_count():
 		var title := String(%Tabs.get_tab_control(index).name)
 		if title != "SELL" and not title in _stale:
 			_stale.append(title)
 
 
+## The BARTER tab: the barters your loyalty level reaches (Trading.shown_barters()), each a row from
+## _barter_row(), then a line on what the levels above add.
 func _build_barters(trader: Dictionary) -> void:
 	var rows := _add_tab("BARTER")
 	if trader.has("notice"):
 		rows.add_child(_note(str(trader.notice)))
-	for offer: Dictionary in Trading.offers(trader.id).get("barters", []):
-		var reward := Trading.barter_reward(offer)
-		var item := ItemInstance.create(str(reward.item), int(reward.get("count", 1)))
-		if item == null:
-			continue
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 18)
-		var give := VBoxContainer.new()
-		give.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		for wanted in Trading.barter_requirements(offer):
-			give.add_child(RequirementRow.create(wanted))
-		row.add_child(give)
-		var arrow := Label.new()
-		arrow.text = "→"
-		arrow.add_theme_font_size_override("font_size", 28)
-		arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(arrow)
-		var reward_box := VBoxContainer.new()
-		reward_box.custom_minimum_size.x = 170
-		reward_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		reward_box.add_child(_cell(item))
-		var name := Label.new()
-		name.text = item.data.display_name + ("  ×%d" % item.count if item.count > 1 else "")
-		reward_box.add_child(name)
-		row.add_child(reward_box)
-		row.add_child(_action_button("TRADE", Trading.barter_block_reason(offer, trader.id), func() -> String: return Trading.barter(offer, trader.id)))
-		rows.add_child(row)
+	var shown := Trading.shown_barters(trader.id)
+	for barter in shown:
+		rows.add_child(_barter_row(trader, barter))
 		rows.add_child(HSeparator.new())
-	if Trading.offers(trader.id).get("barters", []).is_empty() and not trader.has("notice"):
+	var hidden := Trading.hidden_barter_text(trader.id)
+	if hidden != "":
+		var more := _note(hidden + " (raise your loyalty level to see them)")
+		more.name = "HiddenBarters"
+		rows.add_child(more)
+	elif shown.is_empty() and not trader.has("notice"):
 		rows.add_child(_note("No barters."))
+
+
+## One barter: what it asks for (RequirementRow: counted from the stash, a check or a cross each), an
+## arrow, what it gives (a cell each with its count and rarity colour, its name and rarity), then its
+## loyalty level, how many trades are left this restock (SOLD OUT with the restock countdown at 0) or
+## "Unlocks after <quest>", FIND (_open_find()) and TRADE (disabled with the reason as its tooltip).
+func _barter_row(trader: Dictionary, barter: Dictionary) -> Control:
+	var row := HBoxContainer.new()
+	row.name = "Barter_" + str(barter.get("id", ""))
+	row.add_theme_constant_override("separation", 18)
+	var give := VBoxContainer.new()
+	give.name = "Requires"
+	give.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	give.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	for wanted in BarterTable.requirements(barter):
+		give.add_child(RequirementRow.create(wanted, -1, true))
+	row.add_child(give)
+	var arrow := Label.new()
+	arrow.text = "→"
+	arrow.add_theme_font_size_override("font_size", 28)
+	arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(arrow)
+	var gets := VBoxContainer.new()
+	gets.name = "Rewards"
+	gets.custom_minimum_size.x = 300
+	gets.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	gets.add_theme_constant_override("separation", 6)
+	for entry in BarterTable.rewards(barter):
+		var sample := BarterTable.reward_sample(entry)
+		if sample == null:
+			continue
+		var line := HBoxContainer.new()
+		line.name = "Reward_" + sample.data.id
+		line.add_theme_constant_override("separation", 10)
+		var cell := _cell(sample, REWARD_MAX, REWARD_CELL)
+		cell.count = int(entry.get("count", 1))
+		line.add_child(cell)
+		var text := VBoxContainer.new()
+		text.add_theme_constant_override("separation", 0)
+		text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var name := Label.new()
+		name.name = "RewardName"
+		name.text = "%s%s%s" % ["Worn " if float(entry.get("durability", 1.0)) < 1.0 else "", sample.data.display_name,
+			"  ×%d" % int(entry.get("count", 1)) if int(entry.get("count", 1)) > 1 else ""]
+		text.add_child(name)
+		var rarity := Label.new()
+		rarity.name = "RewardRarity"
+		rarity.text = Palette.RARITY_NAMES[sample.data.rarity]
+		rarity.add_theme_color_override("font_color", Palette.rarity_color(sample.data.rarity).lightened(0.15))
+		rarity.add_theme_font_size_override("font_size", 14)
+		text.add_child(rarity)
+		line.add_child(text)
+		gets.add_child(line)
+	row.add_child(gets)
+	var side := VBoxContainer.new()
+	side.name = "Side"
+	side.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	side.add_theme_constant_override("separation", 6)
+	var info := Label.new()
+	info.name = "BarterInfo"
+	info.theme_type_variation = &"DimLabel"
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size.x = 150
+	var details: Array[String] = []
+	if BarterTable.level(barter) > 1:
+		details.append("LL%d" % BarterTable.level(barter))
+	var waits := BarterTable.quest_block_reason(barter)
+	var left := TraderStock.left(trader.id, barter)
+	if waits != "":
+		details.append(waits)
+		info.theme_type_variation = &"AccentLabel"
+	elif left > 0:
+		details.append("%d left this restock" % left)
+	info.text = "\n".join(details)
+	if waits == "" and left == 0:
+		details.append("SOLD OUT  ·  restock in {clock}")
+		_countdowns.append([info, "\n".join(details)])
+	info.visible = not details.is_empty()
+	side.add_child(info)
+	var find := Button.new()
+	find.name = "Find"
+	find.text = "FIND"
+	find.tooltip_text = "Show your stash with what this barter asks for lit up"
+	find.custom_minimum_size = Vector2(150, 44)
+	find.pressed.connect(_open_find.bind(barter))
+	side.add_child(find)
+	var trade := _action_button("TRADE", Trading.barter_block_reason(barter, trader.id), func() -> String: return Trading.barter(barter, trader.id),
+		"Traded with %s: %s, in your stash." % [trader.name, BarterTable.reward_text(barter)])
+	trade.name = "Trade"
+	side.add_child(trade)
+	row.add_child(side)
+	return row
+
+
+## Builds the FIND panel, hidden, next to the trader list: a title with NEXT (the next lit item) and
+## CLOSE, the barter's requirements (counted from the stash), a note, and the stash (StashGrid) in a
+## scroll container.
+func _build_find_panel() -> void:
+	_find_panel = PanelContainer.new()
+	_find_panel.name = "FindPanel"
+	_find_panel.visible = false
+	_find_panel.custom_minimum_size.x = GameState.stash.size.x * StashGrid.CELL + 48.0
+	var rows := VBoxContainer.new()
+	rows.name = "Rows"
+	rows.add_theme_constant_override("separation", 10)
+	_find_panel.add_child(rows)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	var title := Label.new()
+	title.name = "FindTitle"
+	title.theme_type_variation = &"AccentLabel"
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(title)
+	var next := Button.new()
+	next.name = "FindNext"
+	next.text = "NEXT"
+	next.tooltip_text = "Scroll to the next item lit up"
+	next.custom_minimum_size = Vector2(110, 44)
+	next.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	next.pressed.connect(func() -> void: _scroll_to_match(_find_index + 1))
+	top.add_child(next)
+	var close_button := Button.new()
+	close_button.name = "FindClose"
+	close_button.text = "CLOSE"
+	close_button.custom_minimum_size = Vector2(120, 44)
+	close_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	close_button.pressed.connect(_close_find)
+	top.add_child(close_button)
+	rows.add_child(top)
+	var needs := VBoxContainer.new()
+	needs.name = "FindNeeds"
+	rows.add_child(needs)
+	var note := _note("")
+	note.name = "FindNote"
+	rows.add_child(note)
+	var scroll := ScrollContainer.new()
+	scroll.name = "FindScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_find_grid = StashGrid.new()
+	_find_grid.name = "FindStash"
+	_find_grid.drag_scroll = true  # A finger (or the mouse) drags the stash up and down.
+	scroll.add_child(_find_grid)
+	rows.add_child(scroll)
+	var columns := %TraderList.get_parent()
+	columns.add_child(_find_panel)
+	columns.move_child(_find_panel, %TraderList.get_index() + 1)
+
+
+## FIND for `barter`: the panel takes the trader list's place, lights up what the barter asks for in the
+## stash (dimming the rest), scrolls to the first of it and gives the focus to CLOSE (B or Esc closes it
+## too, and so do another tab and another trader).
+func _open_find(barter: Dictionary) -> void:
+	_find_barter = barter
+	_find_index = 0
+	%TraderList.hide()
+	_find_panel.show()
+	_fill_find()
+	(_find_panel.find_child("FindClose", true, false) as Button).grab_focus()
+	await get_tree().process_frame  # The scroll container takes the stash's size first.
+	_scroll_to_match(0)
+
+
+## Fills the FIND panel for its barter (again after a trade, a sale or a restock): the title, the
+## requirements, the lit items and the note.
+func _fill_find() -> void:
+	var requirements := BarterTable.requirements(_find_barter)
+	var highlight := {}
+	for wanted in requirements:
+		highlight[wanted.item_id] = wanted.fir
+	_find_grid.highlight = highlight
+	(_find_panel.find_child("FindTitle", true, false) as Label).text = "FIND  ·  %s → %s" % [TraderTable.display_name(str(_find_barter.get("trader", ""))),
+		BarterTable.reward_text(_find_barter)]
+	var needs := _find_panel.find_child("FindNeeds", true, false)
+	for child in needs.get_children():
+		needs.remove_child(child)
+		child.queue_free()
+	for wanted in requirements:
+		needs.add_child(RequirementRow.create(wanted, -1, true))
+	var lit := _find_grid.lit_items()
+	(_find_panel.find_child("FindNote", true, false) as Label).text = ("Lit up in your stash: what this barter asks for (a container with some inside lights up too); everything else is dimmed." if not lit.is_empty()
+		else "None of it is in your stash: everything else is dimmed. Items on you count once they're in the stash.")
+	(_find_panel.find_child("FindNext", true, false) as Button).disabled = lit.size() < 2
+	_find_index = clampi(_find_index, 0, maxi(lit.size() - 1, 0))
+
+
+## Scrolls the FIND stash to its lit item number `index` (wrapping round), with a cell of room above.
+func _scroll_to_match(index: int) -> void:
+	var lit := _find_grid.lit_items()
+	if lit.is_empty() or not _find_panel.visible:
+		return
+	_find_index = posmod(index, lit.size())
+	var scroll := _find_grid.get_parent() as ScrollContainer
+	scroll.scroll_vertical = maxi(int(_find_grid.item_rect(lit[_find_index]).position.y - StashGrid.CELL), 0)
+
+
+## Closes the FIND panel: the trader list is back, and the focus goes to the FIND button it came from.
+func _close_find() -> void:
+	if not _find_panel.visible:
+		return
+	var id := str(_find_barter.get("id", ""))
+	_find_panel.hide()
+	_find_barter = {}
+	_find_grid.highlight = {}
+	%TraderList.show()
+	var row := %Tabs.get_node_or_null("BARTER/Rows/Barter_" + id)
+	var button := row.find_child("Find", true, false) as Button if row else null
+	if button and button.is_visible_in_tree():
+		button.grab_focus()
+	else:
+		(%Tabs as TabContainer).get_tab_bar().grab_focus()
 
 
 func _build_tasks(trader: Dictionary) -> void:
@@ -744,7 +972,7 @@ func _build_ammo() -> void:
 	picker.item_selected.connect(func(index: int) -> void:
 		_ammo_caliber = calibers[index]
 		show.call(_ammo_caliber))
-	rows.add_child(_note("Velocity is out of the gun in hand (its barrel and parts) when it takes this caliber. Frag: chance to fragment in flesh (more damage, a bleed). Bleed: chance of a light / heavy bleed per hit. AP rounds go through armor but hurt less; soft rounds hurt the unarmored most. LL: the loyalty level a trader needs; the best AP rounds are only found in raid or made at the Workbench."))
+	rows.add_child(_note("Velocity is out of the gun in hand (its barrel and parts) when it takes this caliber. Frag: chance to fragment in flesh (more damage, a bleed). Bleed: chance of a light / heavy bleed per hit. AP rounds go through armor but hurt less; soft rounds hurt the unarmored most. LL: the loyalty level a trader needs; the best AP rounds are only found in raid, made at the Workbench or bartered for Legendary valuables at LL4."))
 
 
 ## The UPGRADES tab (traders that upgrade gear): every piece of upgradable gear you own, with what the
@@ -925,18 +1153,19 @@ func _add_tab(title: String) -> VBoxContainer:
 	return rows
 
 
-func _cell(item: ItemInstance) -> ItemCell:
+## An item cell for an offer row: the item's footprint at `per_cell` pixels a cell, shrunk to fit `most`.
+func _cell(item: ItemInstance, most := OFFER_MAX, per_cell := OFFER_CELL) -> ItemCell:
 	var cell := ItemCell.new()
-	var fit := Vector2(item.data.size) * OFFER_CELL
-	cell.box = fit * minf(1.0, minf(OFFER_MAX.x / fit.x, OFFER_MAX.y / fit.y))
+	var fit := Vector2(item.data.size) * per_cell
+	cell.box = fit * minf(1.0, minf(most.x / fit.x, most.y / fit.y))
 	cell.item = item
 	cell.examine_requested.connect(_examine.show_item)
 	return cell
 
 
-## A button that runs `action` (returns "" or why it failed), saves and refreshes. Disabled with the
-## reason as its tooltip when `blocked` isn't "".
-func _action_button(text: String, blocked: String, action: Callable) -> Button:
+## A button that runs `action` (returns "" or why it failed), saves, says `done` and refreshes. Disabled
+## with the reason as its tooltip when `blocked` isn't "".
+func _action_button(text: String, blocked: String, action: Callable, done := "Done.") -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(150, 44)
@@ -948,7 +1177,7 @@ func _action_button(text: String, blocked: String, action: Callable) -> Button:
 		var result: String = action.call()
 		if result == "":
 			SaveManager.save_game()
-		%Status.text = result if result != "" else "Done."
+		%Status.text = result if result != "" else done
 		_refresh.call_deferred())
 	return button
 

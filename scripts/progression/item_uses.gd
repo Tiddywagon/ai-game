@@ -1,10 +1,12 @@
 class_name ItemUses
 extends RefCounted
-## What an item is needed for (DESIGN.md §6.5): the quests, hideout upgrades, trader barters, hideout
-## crafts and gear upgrades that take it. Examining an item shows a "Needed for" line with the full list
-## as its tooltip, and the hover text in the inventory sums it up. Quests already completed and hideout
-## levels already built drop out; barters, crafts and gear upgrades can be done again, so they stay (a
-## barter with a trader who doesn't trade with you yet says "(locked)").
+## What an item is needed for (DESIGN.md §6.5): the quests, hideout upgrades, trader barters
+## (BarterTable: each named with everything it gives), hideout crafts and gear upgrades that take it.
+## Examining an item shows a "Needed for" line with the full list as its tooltip, and the hover text in
+## the inventory sums it up. Quests already completed and hideout levels already built drop out;
+## barters, crafts and gear upgrades can be done again, so they stay. A barter you can't see or make yet
+## says why: the loyalty level it needs while yours is lower ("Bulat LL4 → ..."), the quest it waits for
+## ("(after Safekeeping)") and a trader who doesn't trade with you yet ("(locked)").
 
 ## Kinds of use, in the order they're listed, with their names (one, many).
 const KINDS := {
@@ -35,12 +37,10 @@ static func of(id: String) -> Array[Dictionary]:
 			for requirement: Dictionary in entry.get("requires", []):
 				if requirement.get("item", "") == id:
 					result.append(_use("upgrade", "%s level %d" % [station.name, int(entry.level)], requirement))
-	for trader: String in TraderTable.ids():
-		for barter: Dictionary in Trading.offers(trader).get("barters", []):
-			for give: Dictionary in barter.get("give", []):
-				if give.get("item", "") == id:
-					result.append(_use("barter", "%s → %s%s" % [TraderTable.display_name(trader), _output_text(barter.get("get", {})),
-						TraderTable.locked_suffix(trader)], give))
+	for barter in BarterTable.all():
+		for give: Variant in barter.get("requires", []):
+			if give is Dictionary and give.get("item", "") == id:
+				result.append(_use("barter", barter_text(barter), give))
 	for station in Hideout.stations():
 		for entry: Dictionary in station.levels:
 			for recipe: Dictionary in entry.get("crafts", []):
@@ -64,6 +64,18 @@ static func of(id: String) -> Array[Dictionary]:
 			if cost.get("item", "") == id:
 				result.append(_use("gear", "Every upgrade at the %s" % GearUpgrades.source_name(source), cost))
 	return result
+
+
+## "Bulat LL4 → Anvil PK, 7.62x54R SNB ×40 (after Safekeeping)": the trader, the loyalty level while
+## yours is below it, everything `barter` gives, the quest it waits for and "(locked)" for a trader who
+## doesn't trade with you yet.
+static func barter_text(barter: Dictionary) -> String:
+	var trader := str(barter.get("trader", ""))
+	var level := BarterTable.level(barter)
+	var short := Trading.loyalty_block_reason(trader, barter) != ""
+	var waits := "" if BarterTable.quest_done(barter) else " (after %s)" % str(QuestLog.find(BarterTable.quest(barter)).get("name", BarterTable.quest(barter)))
+	return "%s%s → %s%s%s" % [TraderTable.display_name(trader), " LL%d" % level if short else "", BarterTable.reward_text(barter), waits,
+		TraderTable.locked_suffix(trader)]
 
 
 ## "2 quests, 3 barters, 1 hideout upgrade", or "" if nothing needs it.

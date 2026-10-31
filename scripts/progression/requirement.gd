@@ -41,5 +41,11 @@ func have() -> int:
 	return ItemSearch.count(item_id, fir)
 
 
+## How many the stash holds that count for it in a barter (barters take only from the stash, and only
+## whole food, drink and meds: ItemSearch).
+func have_in_stash() -> int:
+	return ItemSearch.count(item_id, fir, true)
+
+
 func is_met() -> bool:
 	return have() >= count

@@ -1,16 +1,20 @@
 class_name Trading
 extends RefCounted
 ## Buying, bartering and changing money with traders (DESIGN.md §10). The traders are in TraderTable;
-## their offers live in data/traders/offers.json, by trader id: "buy" [{id, item, count, price, currency,
-## ll, stock}] and "barters" [{give: [requirements], get: {item, count}, ll}]. An offer with "ll" needs
+## what they sell lives in data/traders/offers.json, by trader id: "buy" [{id, item, count, price,
+## currency, ll, stock}]; their barters in data/traders/barters/ (BarterTable). An offer with "ll" needs
 ## that loyalty level with the trader (cheap rounds at LL1, AP rounds at LL3-4), at least the level its
 ## item's rarity needs (min_loyalty in data/config/trading.json: Rare LL2, Ultra Rare LL3, Epic LL4,
 ## Legendary never for money; problems() checks it); the BUY tab shows only what your level reaches and
 ## counts the rest ("4 more items at LL2"). An offer with "stock" sells that many each restock
 ## (TraderStock, by the offer's "id"). The fence's worn gear is rolled each restock (buy_list()); an
 ## offer of it from before his last restock can't be bought. A trader who isn't unlocked yet (The
-## Broker) doesn't trade at all. What you get goes to the stash and is never found in raid; barters that
-## ask for found-in-raid items only take items with the checkmark.
+## Broker) doesn't trade at all. What you get goes to the stash and is never found in raid.
+## Barters follow the same loyalty rule (BarterTable checks their rarity rules): the BARTER tab shows
+## the ones your level reaches and counts the rest ("3 more barters at LL2"). A barter takes what it asks
+## for from the stash only (and its containers: what the BARTER tab counts and FIND shows), found-in-raid
+## items only where it says so; one with "stock" trades that many times each restock, and one with a
+## "quest" waits until that quest is completed ("Unlocks after Safekeeping"). It gives every reward.
 ## Loyalty levels go up on their own once you meet the next level's player level, reputation and money
 ## spent (Progression.loyalty_needs()), up to the trader's highest. Money spent counts roubles, and
 ## dollars at Progression.dollar_rate(); selling to a trader counts too (Selling). Changing money at the
@@ -28,7 +32,7 @@ static var _config := {}
 static var _sold_at := {}
 
 
-## offers.json: {trader id: {"buy": [...], "barters": [...]}}.
+## offers.json: {trader id: {"buy": [...]}}.
 static func all_offers() -> Dictionary:
 	if _offers.is_empty():
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(OFFERS_PATH))
@@ -38,9 +42,9 @@ static func all_offers() -> Dictionary:
 	return _offers
 
 
-## {"buy": [...], "barters": [...]} for `trader_id`.
+## {"buy": [...]} for `trader_id` (their barters: BarterTable.for_trader()).
 static func offers(trader_id: String) -> Dictionary:
-	return all_offers().get(trader_id, {"buy": [], "barters": []})
+	return all_offers().get(trader_id, {"buy": []})
 
 
 ## data/config/trading.json: restocks, the rarity rule, sell values, Wanted items, the exchange and the
@@ -86,24 +90,49 @@ static func shown_offers(trader_id: String) -> Array[Dictionary]:
 
 ## How many of `trader_id`'s buy offers wait for each loyalty level above yours: {2: 4, 3: 3}.
 static func hidden_offers(trader_id: String) -> Dictionary:
-	var result := {}
-	for offer in buy_list(trader_id):
-		if loyalty_block_reason(trader_id, offer) != "":
-			result[offer_level(offer)] = int(result.get(offer_level(offer), 0)) + 1
-	return result
+	return _hidden_levels(trader_id, buy_list(trader_id))
 
 
 ## The line under the BUY list about what's still to come: "4 more items at LL2  ·  3 at LL3" ("" when
 ## your level shows everything).
 static func hidden_text(trader_id: String) -> String:
-	var counts := hidden_offers(trader_id)
+	return _more_text(hidden_offers(trader_id), "item")
+
+
+## What the BARTER tab shows: the part of `trader_id`'s barters your loyalty level reaches (those waiting
+## for a quest too, locked).
+static func shown_barters(trader_id: String) -> Array[Dictionary]:
+	return BarterTable.for_trader(trader_id).filter(func(barter: Dictionary) -> bool: return loyalty_block_reason(trader_id, barter) == "")
+
+
+## How many of `trader_id`'s barters wait for each loyalty level above yours: {2: 5, 4: 3}.
+static func hidden_barters(trader_id: String) -> Dictionary:
+	return _hidden_levels(trader_id, BarterTable.for_trader(trader_id))
+
+
+## The line under the BARTER list: "5 more barters at LL2  ·  3 at LL4" ("" when your level shows them all).
+static func hidden_barter_text(trader_id: String) -> String:
+	return _more_text(hidden_barters(trader_id), "barter")
+
+
+## How many of `entries` (offers or barters) wait for each loyalty level above yours with `trader_id`.
+static func _hidden_levels(trader_id: String, entries: Array[Dictionary]) -> Dictionary:
+	var result := {}
+	for entry in entries:
+		if loyalty_block_reason(trader_id, entry) != "":
+			result[offer_level(entry)] = int(result.get(offer_level(entry), 0)) + 1
+	return result
+
+
+## "4 more items at LL2  ·  3 at LL3" for {2: 4, 3: 3} and "item" ("" for none).
+static func _more_text(counts: Dictionary, noun: String) -> String:
 	var levels := counts.keys()
 	levels.sort()
 	var parts: Array[String] = []
 	for level: int in levels:
 		var count := int(counts[level])
 		if parts.is_empty():
-			parts.append("%d more item%s at LL%d" % [count, "" if count == 1 else "s", level])
+			parts.append("%d more %s%s at LL%d" % [count, noun, "" if count == 1 else "s", level])
 		else:
 			parts.append("%d at LL%d" % [count, level])
 	return "  ·  ".join(parts)
@@ -231,44 +260,62 @@ static func buy(trader_id: String, offer: Dictionary) -> String:
 	return ""
 
 
-static func barter_requirements(offer: Dictionary) -> Array[Requirement]:
-	return Requirement.list(offer.get("give", []))
-
-
-## The item a barter gives, as {"item", "count"}.
-static func barter_reward(offer: Dictionary) -> Dictionary:
-	return offer["get"]
-
-
-## Why barter `offer` can't be made with `trader_id` right now, or "" if it can.
+## Why barter `offer` can't be made right now, or "" if it can: the trader (`trader_id`, else the barter's
+## own) doesn't trade with you yet, your loyalty level is too low, its quest isn't done, it's sold out
+## until the restock, the stash lacks something it asks for ("Missing from the stash: Bolts ×2 found in
+## raid") or has no room for the rewards (counting the room what it takes frees).
 static func barter_block_reason(offer: Dictionary, trader_id := "") -> String:
-	var locked := trader_block_reason(trader_id)
+	var trader := trader_id if trader_id != "" else str(offer.get("trader", ""))
+	var locked := trader_block_reason(trader)
 	if locked != "":
 		return locked
-	var loyalty := loyalty_block_reason(trader_id, offer)
+	var loyalty := loyalty_block_reason(trader, offer)
 	if loyalty != "":
 		return loyalty
-	if not ItemSearch.can_afford(barter_requirements(offer)):
-		return "Missing items"
-	var reward := ItemInstance.create(str(barter_reward(offer).item), int(barter_reward(offer).get("count", 1)))
-	if reward == null:
+	var quest := BarterTable.quest_block_reason(offer)
+	if quest != "":
+		return quest
+	if TraderTable.has(trader) and TraderStock.left(trader, offer) == 0:
+		return "Sold out until the restock (in %s)" % TraderStock.countdown_text(trader)
+	var requirements := BarterTable.requirements(offer)
+	if not ItemSearch.can_afford(requirements, true):
+		var missing := _missing(requirements)
+		return "Missing from the stash: " + ", ".join(missing) if not missing.is_empty() else "Missing items"
+	var rewards := BarterTable.reward_items(offer)
+	if rewards.is_empty():
 		return "Unknown item"
-	if not GameState.stash.has_room_for(reward):
+	if not GameState.stash.has_room_for_all(rewards, ItemSearch.used_up(requirements, true)):
 		return "No room in the stash"
 	return ""
 
 
-## Trades the items barter `offer` asks for for its reward, into the stash, and adds a barter's
-## reputation with `trader_id`. "" on success, else why not.
+## "Bolts ×2 found in raid" for each of `requirements` the stash doesn't have enough of (×: how many
+## more).
+static func _missing(requirements: Array[Requirement]) -> Array[String]:
+	var result: Array[String] = []
+	for requirement in requirements:
+		var short := requirement.count - requirement.have_in_stash()
+		if short > 0:
+			var data := requirement.item_data()
+			result.append("%s ×%d%s" % [data.display_name if data else requirement.item_id, short, " found in raid" if requirement.fir else ""])
+	return result
+
+
+## Trades what barter `offer` asks for (from the stash) for all its rewards, into the stash, takes one off
+## its stock if it has a limit (TraderStock) and adds a barter's reputation with the trader
+## (`trader_id`, else the barter's own). "" on success, else why not.
 static func barter(offer: Dictionary, trader_id := "") -> String:
-	var reason := barter_block_reason(offer, trader_id)
+	var trader := trader_id if trader_id != "" else str(offer.get("trader", ""))
+	var reason := barter_block_reason(offer, trader)
 	if reason != "":
 		return reason
-	ItemSearch.pay(barter_requirements(offer))
-	var reward := barter_reward(offer)
-	GameState.stash.add(FoundInRaid.make(str(reward.item), int(reward.get("count", 1)), FoundInRaid.Source.BARTER))
-	_add_barter_reputation(trader_id)
-	update_loyalty(trader_id)
+	ItemSearch.pay(BarterTable.requirements(offer), true)
+	for item in BarterTable.reward_items(offer):
+		GameState.stash.add(item)
+	if TraderTable.has(trader):
+		TraderStock.take(trader, offer)
+	_add_barter_reputation(trader)
+	update_loyalty(trader)
 	return ""
 
 
@@ -328,8 +375,9 @@ static func sell_dollars(dollars: int) -> String:
 
 # --- Checks -------------------------------------------------------------------------------------
 
-## What's wrong with offers.json (against the items and the rarity rule) and trading.json (empty if
-## nothing). Needs the items loaded: ItemDB runs it once it has them.
+## What's wrong with offers.json (against the items and the rarity rule), trading.json and the barter
+## files (BarterTable.problems()); empty if nothing. Needs the items loaded: ItemDB runs it once it has
+## them.
 static func problems() -> Array[String]:
 	var found: Array[String] = []
 	var ids := {}
@@ -358,15 +406,8 @@ static func problems() -> Array[String]:
 					Palette.RARITY_NAMES[data.rarity], level, lowest])
 			if offer.has("stock") and (not (offer.stock is float or offer.stock is int) or int(offer.stock) < 1 or float(offer.stock) != floorf(float(offer.stock))):
 				found.append("%s: offer %s: stock must be a whole number, 1 or more" % [where, id])
-		for barter: Dictionary in offers(trader_id).get("barters", []):
-			var id := str(barter.get("id", ""))
-			if barter.has("stock") and id == "":
-				found.append("%s: a barter with stock needs an id" % where)
-			if id != "":
-				if ids.has(id):
-					found.append("%s: barter id %s is already taken" % [where, id])
-				ids[id] = true
 	found.append_array(_config_problems())
+	found.append_array(BarterTable.problems())
 	return found
 
 

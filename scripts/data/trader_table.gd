@@ -8,8 +8,8 @@ extends RefCounted
 ## (their "sell" block: Selling). Everything that lists traders or shows a trader's name asks here; where
 ## a trader is named as a source of something, a locked one says so (locked_suffix()). Checked when it
 ## loads: problems() (also against offers.json, the quests, the insurers, the gear upgrade sources, the
-## faction bonus and the sell blocks; the offers' items and rarity rule are checked by
-## Trading.problems() once the items are loaded).
+## faction bonus and the sell blocks; the offers' items and rarity rule, and the barters
+## (BarterTable), are checked by Trading.problems() once the items are loaded).
 
 const PATH := "res://data/traders/traders.json"
 const FIELDS := ["id", "name", "role", "specialty", "personality", "greetings", "currency", "unique", "unlock", "sell"]
@@ -171,8 +171,8 @@ static func problems() -> Array[String]:
 		if top < 1 or top > Progression.max_loyalty():
 			found.append("%s: max_loyalty %d isn't 1-%d" % [where, top, Progression.max_loyalty()])
 		var offers: Dictionary = Trading.all_offers().get(id, {})
-		if not (offers.get("buy") is Array and offers.get("barters") is Array):
-			found.append("%s: no \"buy\" and \"barters\" lists in %s" % [where, Trading.OFFERS_PATH])
+		if not offers.get("buy") is Array:
+			found.append("%s: no \"buy\" list in %s" % [where, Trading.OFFERS_PATH])
 	for key: String in Trading.all_offers():
 		if not key.begins_with("_") and not key in seen:
 			found.append("%s: %s isn't a trader" % [Trading.OFFERS_PATH, key])
