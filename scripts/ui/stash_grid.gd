@@ -3,7 +3,8 @@ extends Control
 ## Read-only view of the stash grid on the Character screen and in the TRADERS screen's FIND panel
 ## (DESIGN.md §8, §10): every item at its cell with its rarity-coloured background and border, icon,
 ## short name, rarity letter, stack count and found-in-raid checkmark. Hover an item for details. With
-## `fir_only`, items that aren't found in raid are dimmed. With `highlight` (FIND), the items a barter
+## a `filter` (the Character screen's StashFilterBar), the items it doesn't match are dimmed. With
+## `highlight` (FIND), the items a barter
 ## asks for are outlined and everything else is dimmed (part-used food, drink and meds too: barters take
 ## only whole ones); a container holding one lights up too. With `drag_scroll`, dragging (a finger, or the
 ## mouse) scrolls the ScrollContainer it sits in. Moving items happens in the inventory (INVENTORY or Tab).
@@ -14,10 +15,11 @@ const LINE_COLOR := Color(1, 1, 1, 0.07)
 const DIM_ALPHA := 0.18
 const HIGHLIGHT_COLOR := Color(1.0, 0.84, 0.3)
 
-## Dims everything that isn't found in raid.
-var fir_only := false:
+## Says which items match (func(item: ItemInstance) -> bool; StashFilterBar.matches): the rest are
+## dimmed. None (an empty Callable): nothing is.
+var filter: Callable:
 	set(value):
-		fir_only = value
+		filter = value
 		queue_redraw()
 ## Item id -> true if only found-in-raid ones count: outlines those and dims everything else (empty:
 ## no highlight).
@@ -28,6 +30,8 @@ var highlight := {}:
 ## Dragging scrolls the parent ScrollContainer (FIND). Touches arrive as the mouse, so it works by touch
 ## without a touch screen being detected.
 var drag_scroll := false
+## The stash it redraws for (GameState.stash when it entered the tree).
+var _watched: InventoryGrid
 var _dragging := false
 ## The part of a pixel dragged but not scrolled yet (fingers move in fractions of a pixel).
 var _drag_rest := 0.0
@@ -37,6 +41,24 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	if GameState.stash:
 		custom_minimum_size = Vector2(GameState.stash.size) * CELL  # Before the first draw: a scroll container sizes to it.
+	queue_redraw()
+
+
+## Redraws when the stash changes while it's shown: items arriving, a sort, the stash growing.
+func _enter_tree() -> void:
+	_watched = GameState.stash
+	if _watched:
+		_watched.changed.connect(_on_stash_changed)
+
+
+func _exit_tree() -> void:
+	if _watched and _watched.changed.is_connected(_on_stash_changed):
+		_watched.changed.disconnect(_on_stash_changed)
+	_watched = null
+
+
+func _on_stash_changed() -> void:
+	custom_minimum_size = Vector2(GameState.stash.size) * CELL
 	queue_redraw()
 
 
@@ -56,9 +78,9 @@ func _draw() -> void:
 			draw_rect(_rect_of(item).grow(-1.0), HIGHLIGHT_COLOR, false, 2.5)
 
 
-## True if `item` is drawn faded: not found in raid with `fir_only`, or not lit while `highlight` is on.
+## True if `item` is drawn faded: the filter doesn't match it, or it isn't lit while `highlight` is on.
 func is_dimmed(item: ItemInstance) -> bool:
-	return (fir_only and not item.fir) or (not highlight.is_empty() and not is_lit(item))
+	return (filter.is_valid() and not filter.call(item)) or (not highlight.is_empty() and not is_lit(item))
 
 
 ## True if `item` is one `highlight` names (found in raid where that's asked for, and whole: a barter

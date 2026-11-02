@@ -7,9 +7,18 @@ extends RefCounted
 ## What may go in, besides fitting: the stash takes anything; a secure container takes nothing that
 ## has its own grid; any other container takes containers only when they're empty; nothing goes inside
 ## itself.
+##
+## Stacks stay within their max stack: add(), load_array() and sort() split a bigger one (rounds out of a
+## magazine) into full stacks, so no round is ever cut off.
+##
+## The stash grows (resize(): only bigger, every item stays put) and repacks itself in an order (sort()).
 
-## Something was added, moved, removed or restacked.
+## Something was added, moved, removed, restacked or the grid grew.
 signal changed
+
+## Orders sort() repacks in (DESIGN.md §8), with their names.
+enum SortMode { TYPE, RARITY, VALUE, NAME, SIZE }
+const SORT_NAMES: Array[String] = ["Type", "Rarity", "Value", "Name", "Size"]
 
 var size: Vector2i
 ## &"stash", &"pockets", &"rig", &"backpack", &"secure" or &"case".
@@ -119,8 +128,9 @@ func find_space(item: ItemInstance) -> Dictionary:
 	return {}
 
 
-## Adds `item` wherever it fits, topping up existing stacks of the same item first. Returns true if it
-## all went in; otherwise `item.count` is what's left over.
+## Adds `item` wherever it fits, topping up existing stacks of the same item first. A stack over its max
+## stack goes in as full stacks (no stack in a grid is ever over). Returns true if it all went in;
+## otherwise `item.count` is what's left over.
 func add(item: ItemInstance) -> bool:
 	if not accepts(item):
 		return false
@@ -134,6 +144,14 @@ func add(item: ItemInstance) -> bool:
 			if item.count == 0:
 				changed.emit()
 				return true
+	while item.data.max_stack > 1 and item.count > item.data.max_stack:
+		var free := find_space(item)
+		if free.is_empty():
+			break
+		var full := item.copy_stack(item.data.max_stack)
+		item.count -= full.count
+		place(full, free.cell, free.rotated)
+		merged = true
 	var spot := find_space(item)
 	if spot.is_empty():
 		if merged:
@@ -238,6 +256,161 @@ func _free_area(taken: Array[Rect2i], footprint: Vector2i) -> Rect2i:
 	return Rect2i()
 
 
+## Grows the grid to `new_size` (the stash, when the hideout's Stash station goes up a level). Only
+## grows: every item stays where it is. False (nothing changes) if `new_size` is smaller either way.
+func resize(new_size: Vector2i) -> bool:
+	if new_size.x < size.x or new_size.y < size.y:
+		return false
+	if new_size != size:
+		size = new_size
+		changed.emit()
+	return true
+
+
+## Repacks the grid in `mode` order (SortMode): Type (category in ItemData.CATEGORY_ORDER, then rarity,
+## rarest first, then name), Rarity (rarest first), Value (ItemInstance.value(), dearest first), Name,
+## or Size (biggest first). Stacks of the same item with the same found-in-raid status merge first into
+## full stacks (_restack(): never fewer rounds than before); then each item goes in the first free spot,
+## row by row, turned if that puts it sooner. It's worked out on a copy of the layout and only applied
+## when everything fits: false, and nothing changed, if it doesn't. Items keep what's inside them.
+func sort(mode: int) -> bool:
+	var restack := _restack()
+	var counts: Dictionary = restack.counts
+	var pieces: Array[ItemInstance] = []
+	for item in items:
+		if int(counts.get(item, item.count)) > 0:
+			pieces.append(item)
+	pieces.append_array(restack.extra)
+	var keys := {}
+	for i in pieces.size():
+		keys[pieces[i]] = _sort_key(pieces[i], mode, int(counts.get(pieces[i], pieces[i].count))) + [i]
+	pieces.sort_custom(func(a: ItemInstance, b: ItemInstance) -> bool: return _key_less(keys[a], keys[b]))
+	var spots := _pack(pieces)
+	if spots.size() != pieces.size():
+		return false
+	for item: ItemInstance in counts:
+		item.count = int(counts[item])
+	for i in pieces.size():
+		pieces[i].cell = spots[i][0]
+		pieces[i].rotated = spots[i][1]
+	items.assign(pieces)
+	changed.emit()
+	return true
+
+
+## How sort() restacks: {"counts": {item: new count}, "extra": [new stacks, not in the grid yet]}. Each
+## group of stacks that can go together (same item, same status and uses left) fills up to full stacks,
+## fullest first (0 for one that's emptied). A group holding more than its stacks can carry (one over its
+## max stack: rounds out of a magazine, or a save from an older build) gets new full stacks for the rest,
+## so its total never changes.
+func _restack() -> Dictionary:
+	var groups := {}
+	for item in items:
+		if item.data.max_stack > 1 and not item.hidden:
+			var key := "%s|%s|%s|%s|%.3f" % [item.data.id, item.fir, item.fir_pending, item.brought_in, item.charges]
+			if not groups.has(key):
+				groups[key] = []
+			groups[key].append(item)
+	var counts := {}
+	var extra: Array[ItemInstance] = []
+	for group: Array in groups.values():
+		var full: int = (group[0] as ItemInstance).data.max_stack
+		var left := 0
+		for item: ItemInstance in group:
+			left += item.count
+		if group.size() < 2 and left <= full:
+			continue
+		group.sort_custom(func(a: ItemInstance, b: ItemInstance) -> bool: return a.count > b.count)
+		for item: ItemInstance in group:
+			var kept := mini(left, full)
+			counts[item] = kept
+			left -= kept
+		while left > 0:
+			var piece := (group[0] as ItemInstance).copy_stack(mini(left, full))
+			extra.append(piece)
+			left -= piece.count
+	return {"counts": counts, "extra": extra}
+
+
+## What sort() orders `item` by in `mode` (smallest first), with `count` the stack after merging.
+static func _sort_key(item: ItemInstance, mode: int, count: int) -> Array:
+	var data := item.data
+	var type := ItemData.CATEGORY_ORDER.find(data.category)
+	var name := data.display_name.to_lower()
+	match mode:
+		SortMode.RARITY:
+			return [-data.rarity, type, name, -count]
+		SortMode.VALUE:
+			var value := roundi(float(item.value()) / maxi(item.count, 1) * count) if count != item.count else item.value()
+			return [-value, type, name, -count]
+		SortMode.NAME:
+			return [name, -data.rarity, -count]
+		SortMode.SIZE:
+			return [-data.size.x * data.size.y, -maxi(data.size.x, data.size.y), type, name, -count]
+	return [type, -data.rarity, name, -count]
+
+
+static func _key_less(a: Array, b: Array) -> bool:
+	for i in mini(a.size(), b.size()):
+		if a[i] != b[i]:
+			return a[i] < b[i]
+	return a.size() < b.size()
+
+
+## Where `pieces` go, in order, packed into an empty grid this size: [[cell, turned], ...], each in the
+## first free spot row by row, turned when that spot comes sooner. Stops short if one doesn't fit.
+func _pack(pieces: Array[ItemInstance]) -> Array:
+	var taken := PackedByteArray()
+	taken.resize(size.x * size.y)
+	var first_free := 0
+	var spots := []
+	for item in pieces:
+		var best := -1
+		var best_turned := false
+		for turned in ([false, true] if item.data.size.x != item.data.size.y else [false]):
+			var at := _first_fit(taken, first_free, item.footprint_if(turned), best)
+			if at >= 0 and (best < 0 or at < best):
+				best = at
+				best_turned = turned
+		if best < 0:
+			return spots
+		var footprint := item.footprint_if(best_turned)
+		var cell := Vector2i(best % size.x, floori(float(best) / size.x))
+		for y in footprint.y:
+			for x in footprint.x:
+				taken[(cell.y + y) * size.x + cell.x + x] = 1
+		spots.append([cell, best_turned])
+		while first_free < taken.size() and taken[first_free]:
+			first_free += 1
+	return spots
+
+
+## The first cell index from `start` where `footprint` fits in `taken` (before `before`, if that's 0 or
+## more), or -1.
+func _first_fit(taken: PackedByteArray, start: int, footprint: Vector2i, before: int) -> int:
+	var end := taken.size() if before < 0 else before
+	for index in range(start, end):
+		if taken[index]:
+			continue
+		var x := index % size.x
+		var y := floori(float(index) / size.x)
+		if y + footprint.y > size.y:
+			return -1
+		if x + footprint.x > size.x:
+			continue
+		var free := true
+		for dy in footprint.y:
+			for dx in footprint.x:
+				if taken[(y + dy) * size.x + x + dx]:
+					free = false
+					break
+			if not free:
+				break
+		if free:
+			return index
+	return -1
+
+
 ## Everything in the grid, including what's inside containers and loaded in guns, at any depth.
 func all_items() -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []
@@ -264,13 +437,28 @@ func to_array() -> Array:
 	return items.map(func(item: ItemInstance) -> Dictionary: return item.to_dict())
 
 
-## Fills the grid from to_array() data. Items whose saved spot is taken go wherever they fit.
+## Fills the grid from to_array() data. Items whose saved spot is taken go wherever they fit. A stack
+## saved over its max stack (rounds an older build unloaded as one stack) comes back as full stacks: a
+## full one in its saved spot, the rest wherever they fit once everything else is back; what still has
+## no room stays on the saved stack (over its max, but never lost).
 func load_array(entries: Array) -> void:
+	var rests := []  # [the saved stack, a stack split off it]
 	for entry in entries:
 		if not entry is Dictionary:
 			continue
 		var item := ItemInstance.from_dict(entry)
 		if item == null:
 			continue
+		for rest in item.split_excess():
+			rests.append([item, rest])
 		if not place(item, item.cell, item.rotated) and not add(item):
 			push_warning("InventoryGrid: no room for %s, dropped" % item.data.id)
+	for pair: Array in rests:
+		var saved: ItemInstance = pair[0]
+		var rest: ItemInstance = pair[1]
+		if add(rest):
+			continue
+		if saved in items:
+			saved.count += rest.count
+		else:
+			push_warning("InventoryGrid: no room for %s, dropped" % rest.data.id)

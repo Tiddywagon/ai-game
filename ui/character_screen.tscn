@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/character_screen.gd" id="1_character"]
 [ext_resource type="Script" path="res://scripts/ui/stash_grid.gd" id="2_stash"]
+[ext_resource type="Script" path="res://scripts/ui/stash_filter_bar.gd" id="3_filter"]
 
 [node name="CharacterScreen" type="Control"]
 layout_mode = 3
@@ -163,11 +164,10 @@ size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_type_variation = &"AccentLabel"
 
-[node name="FirFilter" type="CheckButton" parent="Margin/Layout/Columns/Stash/Rows/StashHeader"]
+[node name="FilterBar" type="VBoxContainer" parent="Margin/Layout/Columns/Stash/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Show only items found in raid; the rest are dimmed"
-text = "FIR only"
+script = ExtResource("3_filter")
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/Stash/Rows"]
 layout_mode = 2

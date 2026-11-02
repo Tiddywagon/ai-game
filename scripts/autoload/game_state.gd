@@ -47,7 +47,7 @@ var trader_loyalty: Dictionary = {}
 ## stock), "bought": {offer id: how many bought since the last restock}, "wanted": {item id: how many of
 ## that Wanted item sold to them since}} (DESIGN.md §10, TraderStock).
 var trader_stock: Dictionary = {}
-## The stash grid (DESIGN.md §8).
+## The stash grid (DESIGN.md §8). Its size comes from the hideout's Stash station (Hideout.stash_size()).
 var stash: InventoryGrid
 ## Equipment, pockets and everything in them.
 var inventory := Inventory.new()
@@ -56,7 +56,8 @@ var skills: Dictionary = {}
 ## Quest id -> {"state": "active" or "completed", "progress": [handed over so far, per objective]}.
 ## Quests not in here haven't been accepted (DESIGN.md §11, QuestLog).
 var quests: Dictionary = {}
-## Hideout station id -> level built (DESIGN.md §9, Hideout). Missing: not built.
+## Hideout station id -> level built (DESIGN.md §9, Hideout). Missing: not built. The Stash starts at
+## level 1 (Hideout.starting_levels()).
 var hideout: Dictionary = {}
 ## The PMC's energy and hydration (DESIGN.md §13.7): carried from raid to raid, recovering over real
 ## time out of raid (Consumables.recover_profile()), from `metabolism_time` (Unix seconds, 0: not yet).
@@ -169,8 +170,8 @@ func _reset(new_faction: Faction) -> void:
 	energy = START_ENERGY
 	hydration = START_HYDRATION
 	metabolism_time = 0.0
-	var config: InventoryConfig = load("res://data/config/inventory.tres")
-	stash = InventoryGrid.new(config.stash_size, &"stash")
+	hideout = Hideout.starting_levels()
+	stash = InventoryGrid.new(Hideout.stash_size(), &"stash")
 	trader_loyalty = {}
 	for trader in TraderTable.ids():
 		trader_loyalty[trader] = {"level": 1, "reputation": 0.0, "spent": 0, "barter_reputation": 0.0}
@@ -180,7 +181,6 @@ func _reset(new_faction: Faction) -> void:
 	TraderStock.refresh_all()  # Full stock, restocks a period from now.
 	inventory = Inventory.new()
 	quests = {}
-	hideout = {}
 	insurance_pending = []
 	insurer = DEFAULT_INSURER
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
@@ -234,7 +234,9 @@ static func _counts(saved: Variant) -> Dictionary:
 ## Restores the profile and stash from to_dict() data (older save versions are brought up to date
 ## first: SaveManager.upgrade()). Missing fields keep new-profile defaults. JSON turns every number into a
 ## float, so whole numbers are converted back with int(). The level is worked out again from the
-## experience (never lower than the saved level), and loyalty levels are checked against it.
+## experience (never lower than the saved level), and loyalty levels are checked against it. Stations
+## built from the start (the Stash) are never below their start level, and the stash takes its size
+## from the Stash's level before its items load (items in the added rows keep their places).
 func from_dict(data: Dictionary) -> void:
 	data = SaveManager.upgrade(data)
 	var profile: Dictionary = data.get("profile", {})
@@ -295,12 +297,13 @@ func from_dict(data: Dictionary) -> void:
 		explored[map_id] = saved_explored[map_id].map(func(id: Variant) -> String: return str(id))
 	var saved_hideout: Dictionary = profile.get("hideout", {})
 	for station: String in saved_hideout:
-		hideout[station] = int(saved_hideout[station])
+		hideout[station] = maxi(int(saved_hideout[station]), int(hideout.get(station, 0)))
 	var saved_skills: Dictionary = profile.get("skills", {})
 	for skill: String in saved_skills:
 		if skills.has(skill):
 			var entry: Dictionary = saved_skills[skill]
 			skills[skill] = {"level": int(entry.get("level", 0)), "progress": float(entry.get("progress", 0.0))}
 
+	stash.resize(Hideout.stash_size())
 	stash.load_array(data.get("stash", []))
 	Trading.update_all_loyalty()

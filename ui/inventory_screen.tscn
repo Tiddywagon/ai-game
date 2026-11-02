@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/inventory/inventory_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/ui/inventory/inventory_grid_view.gd" id="2_grid"]
+[ext_resource type="Script" path="res://scripts/ui/stash_filter_bar.gd" id="3_filter"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
 bg_color = Color(1, 1, 1, 0.12)
@@ -164,11 +165,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="FirFilter" type="CheckButton" parent="Margin/Layout/Columns/StashPanel/Rows/StashHeader"]
+[node name="FilterBar" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Show only items found in raid; the rest are dimmed"
-text = "FIR only"
+script = ExtResource("3_filter")
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
 layout_mode = 2

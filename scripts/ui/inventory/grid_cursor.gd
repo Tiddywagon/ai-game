@@ -5,9 +5,12 @@ extends Control
 ## next grid or slot in that direction). It works the mouse for you, so drag and drop, stacking and
 ## equipping all behave as with a mouse: `inv_select` (A) picks up the item under it and puts it down
 ## again, `inv_quick_move` (X) quick-moves it to the stash (or back to you) or, while holding one, turns
-## it, `inv_examine` (View) examines it. A legend along the bottom shows the buttons. Only on while you
-## play with a controller. Its mouse events are marked as emulated, so they don't count as using the
-## mouse (InputHub).
+## it, `inv_examine` (View) examines it. It also lands on the stash filter bar's controls (above the
+## stash): A works the one under it (StashFilterBar.activate(): the search box takes typing, a picker
+## opens its list, a button presses), and the bar has the buttons until B or a pick gives them back. A
+## cell scrolled out of sight scrolls into view. A legend along the bottom shows the buttons. Only on
+## while you play with a controller. Its mouse events are marked as emulated, so they don't count as
+## using the mouse (InputHub).
 
 const REPEAT_DELAY := 0.35
 const REPEAT_RATE := 0.09
@@ -46,8 +49,8 @@ func _refresh_active() -> void:
 			_set_target(all[0])
 
 
-## Everything the cursor can land on: each cell of every visible grid, and each equipment slot, as
-## {"rect" (global), "pos" (its centre), "control", "local"}.
+## Everything the cursor can land on: each cell of every visible grid, each equipment slot and each
+## control of a visible stash filter bar, as {"rect" (global), "pos" (its centre), "control", "local"}.
 func targets() -> Array:
 	var list := []
 	for node in screen.find_children("*", "InventoryGridView", true, false):
@@ -65,6 +68,12 @@ func targets() -> Array:
 		if slot.is_visible_in_tree():
 			var rect := slot.get_global_rect()
 			list.append({"rect": rect, "pos": rect.get_center(), "control": slot, "local": Rect2(Vector2.ZERO, slot.size)})
+	for node in screen.find_children("*", "StashFilterBar", true, false):
+		var bar := node as StashFilterBar
+		if bar.is_visible_in_tree():
+			for control in bar.focus_targets():
+				var rect := control.get_global_rect()
+				list.append({"rect": rect, "pos": rect.get_center(), "control": control, "local": Rect2(Vector2.ZERO, control.size)})
 	return list
 
 
@@ -142,16 +151,54 @@ func _follow_target() -> void:
 func _set_target(next: Dictionary) -> void:
 	var from := at
 	target = next
+	_scroll_into_view(next)
 	at = next.pos
 	_mouse_motion(at, at - from)
 	queue_redraw()
 
 
-## A: picks up the item under the cursor, or puts the carried one down here.
+## Scrolls the scroll container holding `next`'s control (the stash) so the target shows, with a little
+## room, and moves `next` with it.
+func _scroll_into_view(next: Dictionary) -> void:
+	var node: Node = (next.control as Control).get_parent()
+	while node and not node is ScrollContainer:
+		node = node.get_parent()
+	var scroll := node as ScrollContainer
+	if scroll == null:
+		return
+	var view := scroll.get_global_rect()
+	var rect: Rect2 = next.rect
+	var shift := 0.0
+	if rect.position.y < view.position.y:
+		shift = rect.position.y - view.position.y - 8.0
+	elif rect.end.y > view.end.y:
+		shift = rect.end.y - view.end.y + 8.0
+	var before := scroll.scroll_vertical
+	scroll.scroll_vertical = maxi(before + roundi(shift), 0)
+	var moved := float(scroll.scroll_vertical - before)
+	next.rect = Rect2(rect.position - Vector2(0, moved), rect.size)
+	next.pos = next.rect.get_center()
+
+
+## The stash filter bar `control` is part of, or null.
+static func _filter_bar_of(control: Control) -> StashFilterBar:
+	var node: Node = control
+	while node and not node is StashFilterBar:
+		node = node.get_parent()
+	return node as StashFilterBar
+
+
+## A: picks up the item under the cursor, or puts the carried one down here; on a filter bar control,
+## works it.
 func select() -> void:
 	if holding:
 		_mouse_button(false)
 		holding = false
+		return
+	var control: Control = target.get("control")
+	var bar := _filter_bar_of(control) if is_instance_valid(control) else null
+	if bar:
+		bar.activate(control)
 		return
 	if item_under_cursor() == null:
 		return

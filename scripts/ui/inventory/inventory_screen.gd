@@ -7,8 +7,12 @@ extends MenuScreen
 ## once the container is no longer here, e.g. sold, so nothing is dropped into a lost grid). The header
 ## shows the weight you carry and what it does to you. Tab, Esc or CLOSE closes it. In a raid the game
 ## keeps running while it's open, and searching a container or body shows it on the right instead of
-## the stash: its items turn up one by one while it's open (LootSearch), and the title counts them. Found-in-raid items carry a checkmark (faded until you extract); "FIR only" dims the rest
-## of the stash. Guns can be unloaded from the examine panel: the rounds keep their status. Out of raid,
+## the stash: its items turn up one by one while it's open (LootSearch), and the title counts them.
+## Found-in-raid items carry a checkmark (faded until you extract). Out of raid the stash has its filter
+## bar (StashFilterBar: search, category, rarity, FIR only, sort): what doesn't match is dimmed (in the
+## windows of containers in the stash too), and while its search box (or a list) has the keys they go to
+## it, Esc leaving it first; when typing stops the keys come back. The stash's title follows its size.
+## Guns can be unloaded from the examine panel: the rounds keep their status, in full stacks. Out of raid,
 ## MODIFY there opens the modding screen (WeaponModScreen), and dropping a weapon part on a gun fits it
 ## to a free slot. Meds, stims, food and drink have USE in the examine panel (DESIGN.md §13.7): in a
 ## raid the player uses it over its use time (the header shows progress; the game goes on); out of
@@ -84,8 +88,7 @@ func _ready() -> void:
 	_build_equipment()
 	_build_containers()
 	%StashPanel.visible = stash != null or loot != null
-	%FirFilter.visible = loot == null
-	%FirFilter.toggled.connect(func(on: bool) -> void: %StashView.fir_only = on)
+	%FilterBar.visible = stash != null and loot == null
 	_hook_view(%StashView)
 	%StashView.inventory = inventory
 	if loot is InventoryGrid:
@@ -98,8 +101,13 @@ func _ready() -> void:
 		_build_loot_body()
 		(loot as Inventory).changed.connect(_on_loot_changed)
 	elif stash:
-		%StashTitle.text = "STASH  ·  %d × %d" % [stash.size.x, stash.size.y]
 		%StashView.grid = stash
+		%FilterBar.grid = stash
+		%FilterBar.attach(%StashView)
+		# Typing a search stopped: the keys go back to the screen (R, the hotkeys, the grid cursor).
+		%FilterBar.search_done.connect(func(_submitted: bool) -> void: (%FilterBar as StashFilterBar).clear_focus())
+		_update_stash_title()
+		stash.changed.connect(_update_stash_title)  # It grows with the hideout's Stash station.
 		stash.changed.connect(_prune_windows, CONNECT_DEFERRED)  # After a move has landed.
 	if loot is InventoryGrid:
 		(loot as InventoryGrid).changed.connect(_prune_windows, CONNECT_DEFERRED)
@@ -143,9 +151,15 @@ func _on_pinched(factor: float, centre: Vector2) -> void:
 		view.zoom(factor)
 
 
-## True when the controller cursor may work the screen (nothing open over the grids).
+## "STASH  ·  10 × 30".
+func _update_stash_title() -> void:
+	%StashTitle.text = "STASH  ·  %d × %d" % [stash.size.x, stash.size.y]
+
+
+## True when the controller cursor may work the screen (nothing open over the grids, and the filter bar
+## doesn't have the keys).
 func cursor_allowed() -> bool:
-	if _examine.visible or get_node_or_null("WeaponModScreen"):
+	if _examine.visible or get_node_or_null("WeaponModScreen") or (%FilterBar as StashFilterBar).has_focus_inside():
 		return false
 	var upgrade_panel := %Overlay.get_node_or_null("GearUpgradePanel") as GearUpgradePanel
 	return not (upgrade_panel and upgrade_panel.visible)
@@ -242,6 +256,13 @@ func _update_loot_title() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	var filter_bar := %FilterBar as StashFilterBar
+	if filter_bar.visible and filter_bar.has_focus_inside():
+		# Typing a search (or picking with a controller): keys are for the bar; Esc / B leaves it first.
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
+			filter_bar.clear_focus()
+			get_viewport().set_input_as_handled()
+		return
 	if get_viewport().gui_is_dragging() and InventoryDrag.current:
 		var key := event as InputEventKey
 		if key and key.pressed and not key.echo and (key.physical_keycode == KEY_R or event.is_action_pressed("reload")):
@@ -642,6 +663,7 @@ func _open_window(item: ItemInstance) -> void:
 	close_button.pressed.connect(_close_window.bind(item))
 	bar.add_child(close_button)
 	var view := InventoryGridView.new()
+	view.name = "WindowGrid"
 	_hook_view(view)
 	view.inventory = inventory
 	view.grid = item.contents
@@ -650,6 +672,19 @@ func _open_window(item: ItemInstance) -> void:
 	window.reset_size()
 	window.position = (%Overlay.size - window.size) / 2.0 + Vector2(40, 40) * _windows.size()
 	_windows[item] = window
+	_filter_window(item)
+
+
+## A container's window dims what the stash filter bar doesn't match while the container is in the stash
+## (at any depth), so a search shows which of its items matched; elsewhere (on you, or in a raid) nothing
+## in it is dimmed.
+func _filter_window(item: ItemInstance) -> void:
+	var view := (_windows[item] as Node).find_child("WindowGrid", true, false) as InventoryGridView
+	var bar := %FilterBar as StashFilterBar
+	if bar.visible and stash and stash.find_holder(item):
+		bar.attach(view)
+	else:
+		bar.detach(view)
 
 
 func _close_window(item: ItemInstance) -> void:
@@ -659,12 +694,15 @@ func _close_window(item: ItemInstance) -> void:
 
 
 ## Closes the window of every container that's no longer on the character, in the stash or in what's
-## being searched (sold, say), so nothing can be dropped into a grid that's gone. Called deferred after
+## being searched (sold, say), so nothing can be dropped into a grid that's gone; the others take the
+## stash filter or drop it as they move in or out of the stash (_filter_window()). Called deferred after
 ## the grids change, once a move has put the item where it's going.
 func _prune_windows() -> void:
 	for item: ItemInstance in _windows.keys():
 		if not _holds(item):
 			_close_window(item)
+		else:
+			_filter_window(item)
 
 
 ## True if `item` is on the character, in the stash or in what's being searched, at any depth.

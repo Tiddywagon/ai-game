@@ -13,6 +13,14 @@ enum Rarity { COMMON, UNCOMMON, RARE, ULTRA_RARE, EPIC, LEGENDARY }
 const CATEGORY_NAMES: Array[String] = ["weapon", "ammo", "attachment", "armor", "rig", "backpack", "helmet",
 	"meds", "food", "valuable", "junk", "key", "container", "melee", "throwable"]
 const RARITY_IDS: Array[String] = ["common", "uncommon", "rare", "ultra_rare", "epic", "legendary"]
+## Category names shown to the player (the stash filter, DESIGN.md §8), indexed by Category.
+const CATEGORY_TITLES: Array[String] = ["Weapons", "Ammo", "Attachments", "Armor", "Rigs", "Backpacks", "Helmets",
+	"Meds", "Food & drink", "Valuables", "Barter goods", "Keys", "Containers", "Melee", "Throwables"]
+## Categories in the order the stash lists them (the category filter and the Type sort): guns and what
+## goes with them, gear, then supplies, keys and goods.
+const CATEGORY_ORDER: Array[Category] = [Category.WEAPON, Category.MELEE, Category.THROWABLE, Category.AMMO,
+	Category.ATTACHMENT, Category.HELMET, Category.ARMOR, Category.RIG, Category.BACKPACK, Category.CONTAINER,
+	Category.MEDS, Category.FOOD, Category.KEY, Category.VALUABLE, Category.JUNK]
 ## Keys a JSON item may have.
 const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rarity", "size", "weight", "value",
 	"max_stack", "stats", "weapon", "icon", "loot_weight", "group", "tags"]

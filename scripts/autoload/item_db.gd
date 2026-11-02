@@ -4,7 +4,8 @@ extends Node
 ## - .tres files: one ItemData resource each (made in the Inspector).
 ## - .json files: one item object, or a list of them (keys in ItemData.from_dict()).
 ## Adding an item never needs code: drop a file in. Ids must be unique across both kinds. Once loaded,
-## the trader offers and barters are checked against the items (Trading.problems()).
+## the trader offers and barters (Trading.problems()) and the hideout stations (Hideout.problems()) are
+## checked against the items.
 ## Usage: ItemDB.get_item("bandage").display_name
 
 const ITEMS_DIR := "res://data/items"
@@ -26,6 +27,8 @@ func _ready() -> void:
 	# The trader offers and barters name items and follow rarity rules: checked once the items are here.
 	for problem in Trading.problems():
 		push_warning("Trading: " + problem)
+	for problem in Hideout.problems():
+		push_warning("Hideout: " + problem)
 
 
 ## Returns the definition for `id`, or null (with a warning) if no item has that id.

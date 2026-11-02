@@ -1,21 +1,61 @@
 extends MenuScreen
 ## CHARACTER screen (DESIGN.md §16.2): gear, stats (level with the XP toward the next one), skills and
-## the stash side by side. INVENTORY (or Tab) opens the grid inventory with the stash beside it, to move
-## gear between them; closing it saves.
+## the stash side by side, with the stash filter bar over it (StashFilterBar: search, category, rarity,
+## FIR only, sort). INVENTORY (or Tab) opens the grid inventory with the stash beside it, to move gear
+## between them; closing it saves. The stash's title and item count follow it (a sort, the stash
+## growing). Esc / B leaves the filter bar first (back to INVENTORY), then closes; Enter after typing a
+## search keeps the focus on the search box, so the arrows or d-pad carry on from there.
 
 const DIM := Color(1, 1, 1, 0.35)
 const INVENTORY_SCENE := preload("res://ui/inventory_screen.tscn")
 
 var _inventory_screen: InventoryScreen
+## The "Items in stash" value in the stats.
+var _stash_count: Label
 
 
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
 	%InventoryButton.pressed.connect(open_inventory)
-	%FirFilter.toggled.connect(func(on: bool) -> void: %StashGrid.fir_only = on)
+	%FilterBar.grid = GameState.stash
+	%FilterBar.attach(%StashGrid)
+	%FilterBar.search_done.connect(_on_search_done)
 	_refresh()
-	%StashTitle.text = "STASH  ·  %d × %d" % [GameState.stash.size.x, GameState.stash.size.y]
+	_update_stash_title()
+	GameState.stash.changed.connect(_on_stash_changed)  # A sort, the stash growing with the Stash station.
 	%InventoryButton.grab_focus.call_deferred()
+
+
+func _exit_tree() -> void:
+	if GameState.stash.changed.is_connected(_on_stash_changed):
+		GameState.stash.changed.disconnect(_on_stash_changed)
+
+
+## "STASH  ·  10 × 30".
+func _update_stash_title() -> void:
+	%StashTitle.text = "STASH  ·  %d × %d" % [GameState.stash.size.x, GameState.stash.size.y]
+
+
+## The stash changed: its title and the stats' item count follow (SORT merges stacks).
+func _on_stash_changed() -> void:
+	_update_stash_title()
+	if is_instance_valid(_stash_count):
+		_stash_count.text = str(GameState.stash.items.size())
+
+
+## Typing in the search box stopped: Enter keeps the focus there (the box no longer takes the arrows, so
+## they move on); Esc leaves the bar, back to INVENTORY, as B does.
+func _on_search_done(submitted: bool) -> void:
+	if not submitted:
+		%InventoryButton.grab_focus()
+
+
+## Esc / B: out of the filter bar first (back to INVENTORY), then back to the menu.
+func _on_cancel() -> void:
+	if (%FilterBar as StashFilterBar).clear_focus():
+		%InventoryButton.grab_focus()
+		return
+	close()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -107,7 +147,8 @@ func _fill_stats() -> void:
 	var tricks: Dictionary = GameState.trick_shots
 	_row(grid, "Trick Shots", "%s kill%s  ·  %s hit%s (360)" % [UiFormat.thousands(tricks.kills), "" if tricks.kills == 1 else "s",
 		UiFormat.thousands(tricks.hits), "" if tricks.hits == 1 else "s"], Player.TRICK_COLOR if tricks.kills > 0 else Color.WHITE)
-	_row(grid, "Items in stash", str(GameState.stash.items.size()), Color.WHITE)
+	_stash_count = _row(grid, "Items in stash", str(GameState.stash.items.size()), Color.WHITE)
+	_stash_count.name = "StashCount"
 
 
 func _fill_skills() -> void:
@@ -129,7 +170,8 @@ func _fill_skills() -> void:
 			grid.add_child(control)
 
 
-func _row(grid: GridContainer, name: String, value: String, color: Color) -> void:
+## Adds a name and its value to `grid`; returns the value's label.
+func _row(grid: GridContainer, name: String, value: String, color: Color) -> Label:
 	var label := Label.new()
 	label.theme_type_variation = &"DimLabel"
 	label.text = name
@@ -138,3 +180,4 @@ func _row(grid: GridContainer, name: String, value: String, color: Color) -> voi
 	value_label.add_theme_color_override("font_color", color if color == DIM else color.lerp(Color.WHITE, 0.25))
 	grid.add_child(label)
 	grid.add_child(value_label)
+	return value_label

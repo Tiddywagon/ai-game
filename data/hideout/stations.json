@@ -10,6 +10,18 @@
     ]
   },
   {
+    "id": "stash",
+    "name": "Stash",
+    "description": "Shelves and crates for everything you own. Every profile starts at level 1 (10 × 30); each level adds rows, and building it grows the stash at once.",
+    "start_level": 1,
+    "levels": [
+      {"level": 1, "roubles": 0, "stash_size": [10, 30]},
+      {"level": 2, "roubles": 500000, "traders": {"bulat": 2}, "stash_size": [10, 40], "requires": [{"item": "bolts", "count": 5}, {"item": "screws", "count": 5}, {"item": "duct_tape", "count": 2}]},
+      {"level": 3, "roubles": 1500000, "traders": {"zoya": 3}, "stash_size": [10, 50], "requires": [{"item": "nails", "count": 6, "fir": true}, {"item": "hex_nuts", "count": 6, "fir": true}, {"item": "adjustable_wrench", "count": 2, "fir": true}, {"item": "duct_tape", "count": 4, "fir": true}]},
+      {"level": 4, "roubles": 3500000, "traders": {"stitch": 4}, "stations": {"workbench": 2}, "stash_size": [10, 70], "requires": [{"item": "cordless_drill", "count": 1, "fir": true}, {"item": "electric_motor", "count": 1, "fir": true}, {"item": "military_cable", "count": 2, "fir": true}, {"item": "hex_nuts", "count": 10, "fir": true}]}
+    ]
+  },
+  {
     "id": "medstation",
     "name": "Medstation",
     "description": "Makes meds and stimulants from basic supplies.",

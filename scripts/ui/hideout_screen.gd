@@ -1,8 +1,10 @@
 extends MenuScreen
 ## HIDEOUT screen (DESIGN.md §9): every station with its level; the next level's requirements
-## (roubles, other stations, items: those with the found-in-raid checkmark only take found-in-raid
-## items) and UPGRADE; and the crafts it has unlocked, inputs → output, with CRAFT. Crafted items go to
-## the stash and are found in raid. Upgrades and crafts are instant for now. Each one saves the game.
+## (roubles, other stations, trader loyalty levels (a trader who doesn't trade with you yet says
+## "(locked)" and never counts), items: those with the found-in-raid checkmark only take found-in-raid
+## items) and UPGRADE; and the crafts it has unlocked, inputs → output, with CRAFT.
+## Crafted items go to the stash and are found in raid. The Stash station shows the stash's size and
+## what the next level grows it to. Upgrades and crafts are instant for now. Each one saves the game.
 
 ## Item cells in craft rows: pixels per grid cell, and the most room one may take.
 const CELL := 30.0
@@ -56,18 +58,30 @@ func _refresh() -> void:
 	var level := Hideout.level(station)
 	_heading("%s  ·  %s" % [station.name.to_upper(), "NOT BUILT" if level == 0 else "LEVEL %d" % level])
 	_note(station.get("description", ""))
+	if station.id == Hideout.STASH:
+		var cells := GameState.stash.size
+		_note("Your stash: %d × %d" % [cells.x, cells.y]).name = "StashSize"
 	var next := Hideout.next_level(station)
 	if next.is_empty():
 		_heading("FULLY UPGRADED", true)
 	else:
 		_heading("%s LEVEL %d" % ["BUILD" if level == 0 else "UPGRADE TO", int(next.level)], true)
+		if next.has("stash_size"):
+			var bigger := Hideout.stash_size(int(next.level))
+			_note("Grows the stash to %d × %d" % [bigger.x, bigger.y])
 		if int(next.get("roubles", 0)) > 0:
 			_note("%s  (you have %s)" % [UiFormat.money(int(next.roubles)), UiFormat.money(GameState.roubles)])
 		var needed_stations: Dictionary = next.get("stations", {})
 		for other: String in needed_stations:
-			var have := int(GameState.hideout.get(other, 0))
-			_note("%s level %d  (%s)" % [Hideout.find(other).get("name", other), int(needed_stations[other]),
-				"built" if have >= int(needed_stations[other]) else "not yet"])
+			var built := not Hideout.find(other).is_empty() and Hideout.level(Hideout.find(other)) >= int(needed_stations[other])
+			_met_note("%s level %d  (%s)" % [Hideout.find(other).get("name", other), int(needed_stations[other]),
+				"built" if built else "not yet"], built)
+		var needed_traders: Dictionary = next.get("traders", {})
+		for trader: String in needed_traders:
+			var have := Hideout.loyalty(trader)
+			var state := "locked" if not TraderTable.is_unlocked(trader) else "reached" if have >= int(needed_traders[trader]) else "you're LL%d" % have
+			_met_note("%s loyalty level %d  (%s)" % [TraderTable.display_name(trader), int(needed_traders[trader]), state],
+				have >= int(needed_traders[trader])).name = "Trader_" + trader
 		for wanted in Hideout.requirements(next):
 			%Details.add_child(RequirementRow.create(wanted))
 		%Details.add_child(_action_button("UPGRADE" if level > 0 else "BUILD", Hideout.upgrade_block_reason(station),
@@ -132,12 +146,21 @@ func _heading(text: String, small := false) -> void:
 	%Details.add_child(label)
 
 
-func _note(text: String) -> void:
+func _note(text: String) -> Label:
 	var label := Label.new()
 	label.theme_type_variation = &"DimLabel"
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	%Details.add_child(label)
+	return label
+
+
+## A requirement that isn't an item (another station's level, a trader's loyalty level): green when
+## met, red when not, like the item counts.
+func _met_note(text: String, met: bool) -> Label:
+	var label := _note(text)
+	label.add_theme_color_override("font_color", RequirementRow.MET_COLOR if met else RequirementRow.MISSING_COLOR)
+	return label
 
 
 ## A button that runs `action` (returns "" or why it failed), saves and refreshes. Disabled with the

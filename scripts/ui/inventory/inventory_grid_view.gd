@@ -4,9 +4,10 @@ extends Control
 ## rarity colours. Drag items to move them (Shift-drag splits a stack); while dragging, the cells under
 ## the item light up green where it fits, amber when it would stack or go inside a container, red when
 ## it can't go there. Right-click examines an item; double-click opens a rig, backpack or container.
-## Hovering an item's checkmark says "Found in raid". With `fir_only`, items that aren't found in raid
-## are dimmed (the stash filter). Items not searched yet (in a container or on a body) are drawn as
-## unknown and can't be moved; the one being searched shows a ring filling up (`search`).
+## Hovering an item's checkmark says "Found in raid". With a `filter` (the stash's StashFilterBar), the
+## items it doesn't match are dimmed, not hidden, so every cell stays where it is and drag and drop works
+## as ever. Items not searched yet (in a container or on a body) are drawn as unknown and can't be moved;
+## the one being searched shows a ring filling up (`search`). The view follows its grid growing.
 ## Ctrl-click quick-moves an item (to the stash, or back to you). `cell_size` zooms the grid (pinching
 ## the stash on a touch screen: zoom()).
 
@@ -22,15 +23,17 @@ const LINE_COLOR := Color(1, 1, 1, 0.07)
 const FITS_COLOR := Color(0.35, 0.85, 0.4, 0.35)
 const BLOCKED_COLOR := Color(0.95, 0.3, 0.25, 0.35)
 const COMBINE_COLOR := Color(0.95, 0.75, 0.3, 0.45)
+## How faded an item the filter doesn't match is.
+const DIM_ALPHA := 0.18
 
 ## The grid shown.
 var grid: InventoryGrid:
 	set(value):
-		if grid and grid.changed.is_connected(queue_redraw):
-			grid.changed.disconnect(queue_redraw)
+		if grid and grid.changed.is_connected(_on_grid_changed):
+			grid.changed.disconnect(_on_grid_changed)
 		grid = value
 		if grid:
-			grid.changed.connect(queue_redraw)
+			grid.changed.connect(_on_grid_changed)
 			custom_minimum_size = Vector2(grid.size) * cell_size
 		queue_redraw()
 ## Pixels per cell (CELL unless zoomed).
@@ -45,10 +48,11 @@ var cell_size := CELL:
 var inventory: Inventory
 ## The search going on in this grid, if any: its current item gets the progress ring.
 var search: LootSearch
-## Dims everything that isn't found in raid.
-var fir_only := false:
+## Says which items match (func(item: ItemInstance) -> bool; StashFilterBar.matches): the rest are
+## dimmed. None (an empty Callable): nothing is.
+var filter: Callable:
 	set(value):
-		fir_only = value
+		filter = value
 		queue_redraw()
 
 var _hover := {}
@@ -56,6 +60,18 @@ var _hover := {}
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+## True if `item` is drawn faded because the filter doesn't match it.
+func is_dimmed(item: ItemInstance) -> bool:
+	return filter.is_valid() and not filter.call(item)
+
+
+## The grid changed: redraw, and take its new size if it grew (the stash, InventoryGrid.resize()).
+func _on_grid_changed() -> void:
+	if custom_minimum_size != Vector2(grid.size) * cell_size:
+		custom_minimum_size = Vector2(grid.size) * cell_size
+	queue_redraw()
 
 
 func cell_at(at: Vector2) -> Vector2i:
@@ -155,8 +171,8 @@ func _draw() -> void:
 		var alpha := 1.0
 		if item == lifted and get_viewport().gui_is_dragging():
 			alpha = 0.3
-		elif fir_only and not item.fir:
-			alpha = 0.18
+		elif is_dimmed(item):
+			alpha = DIM_ALPHA
 		if item.hidden:
 			ItemDraw.draw_unknown(self, _rect_of(item), search.progress() if search and search.current == item else -1.0)
 		else:

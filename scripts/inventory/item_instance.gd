@@ -115,6 +115,30 @@ func split_off(amount: int) -> ItemInstance:
 	return piece
 
 
+## A new stack of `amount` like this one: its status, uses left and insurance (the caller takes the
+## count off this one).
+func copy_stack(amount: int) -> ItemInstance:
+	var piece := split_off(amount)
+	piece.charges = charges
+	piece.insured = insured
+	piece.insurer = insurer
+	return piece
+
+
+## Cuts a stack over its max stack down to a full one and returns the rest as more stacks of at most a
+## full stack each (copy_stack(); empty if it isn't over, or doesn't stack). Only rounds out of a
+## magazine (a 100-round box) or a stack saved by an older build can be over.
+func split_excess() -> Array[ItemInstance]:
+	var extra: Array[ItemInstance] = []
+	if data.max_stack <= 1:
+		return extra
+	while count > data.max_stack:
+		var piece := copy_stack(mini(count - data.max_stack, data.max_stack))
+		count -= piece.count
+		extra.append(piece)
+	return extra
+
+
 func copy_status(from: ItemInstance) -> void:
 	fir = from.fir
 	fir_pending = from.fir_pending
@@ -230,7 +254,8 @@ func fire_round() -> void:
 		magazine.pop_back()
 
 
-## Empties the magazine and returns its rounds, merged into stacks by status.
+## Empties the magazine and returns its rounds, merged into stacks by status, none over a full stack
+## (a PK's 100 rounds come out as 40 + 40 + 20).
 func unload() -> Array[ItemInstance]:
 	var stacks: Array[ItemInstance] = []
 	for rounds in magazine:
@@ -243,11 +268,11 @@ func unload() -> Array[ItemInstance]:
 		if not merged:
 			stacks.append(rounds)
 	magazine.clear()
-	return stacks
+	return _full_stacks(stacks)
 
 
 ## Takes rounds off the top until no more than `capacity` are loaded (a smaller magazine, or none).
-## Returns them, merged into stacks by status.
+## Returns them, merged into stacks by status, none over a full stack.
 func trim_magazine(capacity: int) -> Array[ItemInstance]:
 	var removed: Array[ItemInstance] = []
 	var excess := rounds_loaded() - maxi(capacity, 0)
@@ -268,7 +293,16 @@ func trim_magazine(capacity: int) -> Array[ItemInstance]:
 				break
 		if not merged:
 			removed.append(piece)
-	return removed
+	return _full_stacks(removed)
+
+
+## `stacks` with any over a full stack split into full stacks (split_excess()), each followed by its rest.
+static func _full_stacks(stacks: Array[ItemInstance]) -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	for stack in stacks:
+		result.append(stack)
+		result.append_array(stack.split_excess())
+	return result
 
 
 ## Debug: the loaded rounds become `ammo_id` rounds, keeping counts and status.
@@ -309,11 +343,15 @@ func to_dict() -> Dictionary:
 
 ## Rebuilds an instance from to_dict() data (also reads older entries: version 3 guns saved
 ## "loaded_rounds", -1 for a full magazine; guns from before version 5 get their default parts and
-## full durability). Null if the item no longer exists.
+## full durability). A stack keeps its whole count, even over its max stack (rounds an older build
+## unloaded as one stack): InventoryGrid.load_array() splits it into full stacks. Null if the item no
+## longer exists.
 static func from_dict(entry: Dictionary) -> ItemInstance:
 	var instance := create(str(entry.get("id", "")), int(entry.get("count", 1)))
 	if instance == null:
 		return null
+	if instance.data.max_stack > 1:
+		instance.count = maxi(int(entry.get("count", 1)), 1)
 	instance.cell = Vector2i(int(entry.get("x", 0)), int(entry.get("y", 0)))
 	instance.rotated = bool(entry.get("rotated", false))
 	instance.fir = bool(entry.get("fir", false))
