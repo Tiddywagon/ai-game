@@ -10,6 +10,9 @@ extends Resource
 @export var size: String
 @export var raid_minutes: int
 @export var players: String
+## How hard the map is, 1 (easy) to 5 (hardest): weights the gear tier AI PMC squads roll (PmcAi
+## tier_weights, DESIGN.md §4.4).
+@export_range(1, 5) var difficulty := 1
 ## (The extracts are in data/config/extracts.json: ExtractTable; the boss in
 ## data/config/bosses.json: BossTable; the points of interest in data/config/pois.json: PoiTable.)
 ## An item a PMC must carry to enter, used up on entry (Lab Zero's access keycard). Empty: none.

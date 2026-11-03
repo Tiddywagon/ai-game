@@ -67,6 +67,12 @@ extends Resource
 @export_range(0.0, 1.0, 0.05) var flank_chance := 0.0
 ## Out of a fight it picks up loose loot and loots ready event crates this close (0: never).
 @export_range(0.0, 50.0, 1.0, "suffix:m") var loot_radius := 0.0
+## It also searches containers and bodies within its loot radius (AI PMCs, DESIGN.md §4.4): it takes
+## the search time, then the most valuable things that fit.
+@export var searches := false
+## Once nothing has been seen or heard for a few seconds after a fight, it treats its bleeds,
+## fractures and lost HP with what it carries (AI PMCs; PmcAi heal). It always treats itself when it flees.
+@export var heals_after_fights := false
 ## Chance each patrol leg heads for a hot point of interest (a high tier, a fresh raid event) instead
 ## of its own zone (DESIGN.md §5.2).
 @export_range(0.0, 1.0, 0.05) var hot_poi_chance := 0.0

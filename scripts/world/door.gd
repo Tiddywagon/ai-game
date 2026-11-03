@@ -9,7 +9,8 @@ extends Node3D
 ## until the map's power comes on (`needs_power`: a blast door) or until a Lever is pulled (`lever_id`:
 ## a bunker's shutter); then it unlocks and swings open by itself (DESIGN.md §5.2). The node's origin is the
 ## middle of the doorway at floor level; the panel lies along local X, opening toward local -Z (or +Z
-## with `opens_back`).
+## with `opens_back`). An open panel blocks sight, bullets and you, but not the AI (let_through()): the
+## navmesh is baked with the doorway clear, so a bot walking past the hinge side would run into it.
 
 const SWING_TIME := 0.35
 ## AI within this distance of a closed, unlocked door opens it.
@@ -96,7 +97,8 @@ func _physics_process(delta: float) -> void:
 			return
 
 
-## Opens or closes the door (swinging; sight and movement follow the panel).
+## Opens or closes the door (swinging; sight and movement follow the panel). The AI walks through it
+## from the moment it starts to open until it starts to close (let_through()).
 func set_open(open: bool) -> void:
 	if open == is_open:
 		return
@@ -107,6 +109,20 @@ func set_open(open: bool) -> void:
 	var angle := (90.0 if not opens_back else -90.0) if open else 0.0
 	_tween.tween_property(_pivot, "rotation_degrees:y", angle, SWING_TIME)
 	_tween.tween_callback(VisionSystem.mark_dirty)
+	for bot in get_tree().get_nodes_in_group("bots"):
+		let_through(bot)
+
+
+## Lets `body` (a bot) walk through the panel while the door is open, or makes it block it again once
+## it's shut. Only the AI: you still bump into an open door, and it still blocks sight and bullets. Bot
+## calls it for every door when it joins the raid; the door for every bot when it opens or closes.
+func let_through(body: PhysicsBody3D) -> void:
+	if _panel == null or body == null:
+		return
+	if is_open:
+		body.add_collision_exception_with(_panel)
+	else:
+		body.remove_collision_exception_with(_panel)
 
 
 # --- Interaction ---------------------------------------------------------------------------------

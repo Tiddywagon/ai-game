@@ -42,8 +42,9 @@ func interact(player: Player) -> void:
 	player.action_blocked.emit("A stash under the floor")
 
 
-## Lifts the boards and reveals what's under them.
-func open() -> void:
+## Lifts the boards and reveals what's under them (`by`: who did, the player if not said; an AI PMC
+## whose plan knows the stash can).
+func open(by: Node = null) -> void:
 	if opened:
 		return
 	opened = true
@@ -54,7 +55,7 @@ func open() -> void:
 	for child in get_children():
 		if child is LootBox:
 			child.reveal()
-	NoiseSystem.emit_noise(global_position, 6.0, get_tree().get_first_node_in_group("player"), &"hatch")
+	NoiseSystem.emit_noise(global_position, 6.0, by if by else get_tree().get_first_node_in_group("player"), &"hatch")
 
 
 func _plank(at: Vector3, plank_size: Vector3, color: Color) -> MeshInstance3D:

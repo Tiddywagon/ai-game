@@ -9,21 +9,39 @@ extends CanvasLayer
 ## it shows the points of interest (DESIGN.md §5.2): each one's tier, focus, loot multiplier, how many of
 ## its spawn points are active this raid and what they spawned, its heat, and the raid events (when the
 ## rest are due, what happened where); in the world, a marker over every spawn point (green with what
-## spawned, grey when inactive) and each POI's name. A third press hides it. Every RaidLevel has one; it
-## starts hidden.
+## spawned, grey when inactive) and each POI's name. A third press shows the AI PMCs (DESIGN.md §4.4):
+## each one's name, faction, squad and leader, personality, what it's doing (its goal), the next POI and
+## how many are left, the planned extract and leave time, how full its bags are and its gear tier, and
+## the late arrivals; in the world, each squad's planned route as a line in the squad's colour from its
+## leader along the way it's walking, through its remaining POIs to its extract, with labels. A fourth
+## press hides it. Every RaidLevel has one; it starts hidden.
 
 const REFRESH := 0.25
 const ACTIVE_COLOR := Color(0.45, 1.0, 0.5)
-const STATE_NAMES := ["idle", "investigating", "fighting", "searching", "extracting", "patrolling", "looting", "fleeing"]
+const STATE_NAMES := ["idle", "investigating", "fighting", "searching", "extracting", "patrolling", "looting", "fleeing",
+	"travelling", "healing", "avoiding"]
+## A colour per AI PMC squad (by its number) for its route.
+const SQUAD_COLORS := [Color(1.0, 0.55, 0.15), Color(0.3, 0.8, 1.0), Color(0.95, 0.3, 0.85), Color(0.55, 1.0, 0.35),
+	Color(1.0, 0.9, 0.25), Color(0.65, 0.5, 1.0), Color(1.0, 0.4, 0.4), Color(0.3, 1.0, 0.8)]
+## The route line's width and height above the floor (metres), and its labels' size (pixels, and metres
+## a pixel: readable from the camera pulled out over a whole map).
+const ROUTE_WIDTH := 0.22
+const ROUTE_HEIGHT := 0.3
+const ROUTE_LABEL_SIZE := 72
+const ROUTE_LABEL_PIXEL := 0.008
+## Metres between the labels of squads that share a stop.
+const ROUTE_LABEL_STEP := 0.8
 const INACTIVE_COLOR := Color(0.6, 0.6, 0.6, 0.8)
 
-## 0: the raid, 1: points of interest (while visible).
+## 0: the raid, 1: points of interest, 2: AI PMCs (while visible).
 var page := 0
 
 var _label: Label
 var _timer := 0.0
 var _markers: Node3D
 var _marker_age := 0.0
+var _routes: Node3D
+var _route_age := 0.0
 
 
 func _ready() -> void:
@@ -51,13 +69,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Hidden → the raid page → the POI page → hidden.
+## Hidden → the raid page → the POI page → the AI PMC page → hidden.
 func cycle() -> void:
 	if not visible:
 		visible = true
 		page = 0
-	elif page == 0:
-		page = 1
+	elif page < 2:
+		page += 1
 	else:
 		visible = false
 	refresh()
@@ -67,6 +85,7 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	_marker_age += delta
+	_route_age += delta
 	_timer -= delta
 	if _timer <= 0.0:
 		_timer = REFRESH
@@ -74,8 +93,9 @@ func _process(delta: float) -> void:
 
 
 func refresh() -> void:
-	_label.text = (poi_text() if page == 1 else text()) if visible else ""
+	_label.text = ([text(), poi_text(), pmc_text()][page] if page >= 0 and page <= 2 else text()) if visible else ""
 	_update_markers(visible and page == 1)
+	_update_routes(visible and page == 2)
 
 
 ## The raid page's text.
@@ -215,7 +235,7 @@ func _update_markers(show: bool) -> void:
 			_marker(info.at + Vector3.UP * 1.4, text, ACTIVE_COLOR if info.active else INACTIVE_COLOR, 40)
 
 
-func _marker(at: Vector3, text: String, color: Color, size: int) -> void:
+func _marker(at: Vector3, text: String, color: Color, size: int, parent: Node3D = null) -> void:
 	var label := Label3D.new()
 	label.text = text
 	label.font_size = size
@@ -225,8 +245,170 @@ func _marker(at: Vector3, text: String, color: Color, size: int) -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.alpha_cut = Label3D.ALPHA_CUT_DISCARD
-	_markers.add_child(label)
+	(parent if parent else _markers).add_child(label)
 	label.global_position = at
+
+
+## The AI PMC page's text: how many are alive in how many squads, the late arrivals (due and come),
+## then a line per AI PMC.
+func pmc_text() -> String:
+	var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+	var lines := PackedStringArray()
+	if raid == null:
+		return "AI PMCs  (F12)  ·  no raid"
+	var alive := 0
+	var spawned := 0
+	var squads := 0
+	for squad in raid.ai_squads:
+		alive += squad.alive().size()
+		spawned += squad.size()
+		squads += 0 if squad.alive().is_empty() else 1
+	var due := PackedStringArray()
+	for entry: Dictionary in raid.pmc_schedule:
+		due.append("%s (%d %s)" % [_clock(float(entry.time)), int(entry.size), Factions.display_name(entry.faction)])
+	var came := PackedStringArray()
+	for entry: Dictionary in raid.late_arrivals:
+		came.append("gave up" if entry.get("gave_up", false) else "squad %d at %s, %s" % [int(entry.squad), _clock(float(entry.spawned_at)), entry.point])
+	lines.append("AI PMCs  (F12)  ·  %d of %d alive in %d squads (%d this raid by schedule)  ·  late arrivals due: %s  ·  came: %s" % [alive,
+		spawned, squads, raid.ai_pmcs, ", ".join(due) if not due.is_empty() else "none", ", ".join(came) if not came.is_empty() else "none"])
+	for bot: Bot in get_tree().get_nodes_in_group("bots"):
+		if not bot.is_dead and bot.side == Actor.Side.PMC:
+			lines.append("  " + pmc_line(bot))
+	return "\n".join(lines)
+
+
+## One AI PMC: "AIPMC1  ·  USEC  ·  squad 1, leader  ·  Looter  ·  loot  ·  next Signal hut  ·  2 POIs left  ·
+## exit North-east gate at 9:30  ·  bags 34%  ·  Good" (bags: how much of the room its kit left it has
+## filled with loot, Bot.loot_fill(); then any POIs it skipped).
+static func pmc_line(bot: Bot) -> String:
+	var parts := PackedStringArray([str(bot.name), Factions.display_name(bot.faction) if bot.faction != &"" else "PMC"])
+	var squad := bot.squad
+	if squad:
+		parts.append("squad %d, %s" % [squad.number, "leader" if squad.leader == bot else "led by %s" % squad.leader.name if squad.leader else "no leader"])
+	var plan := bot.plan()
+	if plan == null:
+		parts.append_array(["no plan", bot.goal_name(), "bags %d%%" % roundi(bot.loot_fill() * 100.0)])
+		return "  ·  ".join(parts)
+	if not plan.chosen:
+		parts.append_array([plan.personality_name(), bot.goal_name(), "route not planned yet", "leaves at %s" % _clock(plan.leave_at),
+			"bags %d%%" % roundi(bot.loot_fill() * 100.0), plan.tier_name()])
+		return "  ·  ".join(parts)
+	var next := plan.next_poi()
+	parts.append_array([plan.personality_name(), bot.goal_name(), "next %s" % (next.poi_name() if next else "none"),
+		"%d POI%s left" % [plan.pois_left(), "" if plan.pois_left() == 1 else "s"],
+		"exit %s at %s%s" % [plan.extract.extract_name if is_instance_valid(plan.extract) else "?", _clock(plan.leave_at),
+			" (out: %s)" % plan.reason if plan.reason != "" else ""],
+		"bags %d%%" % roundi(bot.loot_fill() * 100.0), plan.tier_name()])
+	if not plan.skipped.is_empty():
+		parts.append("skipped %s" % ", ".join(plan.skipped))  # POIs it couldn't get to.
+	return "  ·  ".join(parts)
+
+
+## "9:30" for raid seconds.
+static func _clock(seconds: float) -> String:
+	var whole := maxi(int(seconds), 0)
+	return "%d:%02d" % [whole / 60, whole % 60]
+
+
+## Each AI PMC squad's planned route in the world while the PMC page is up (redrawn every second): a line
+## in the squad's colour from its leader along the way it's walking, through its remaining POIs to its
+## extract, a label over the leader and at each stop.
+func _update_routes(show: bool) -> void:
+	if not show:
+		if _routes:
+			_routes.queue_free()
+			_routes = null
+		return
+	var level := get_parent() as Node3D
+	if level == null or (_routes and _route_age < 1.0):
+		return
+	_route_age = 0.0
+	if _routes:
+		_routes.free()
+	_routes = Node3D.new()
+	_routes.name = "PmcRoutes"
+	level.add_child(_routes)
+	var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+	if raid == null:
+		return
+	for squad in raid.ai_squads:
+		var lead := squad.leader
+		if squad.plan == null or lead == null or not is_instance_valid(lead) or lead.is_dead or not lead.is_inside_tree():
+			continue
+		var color: Color = SQUAD_COLORS[(squad.number - 1) % SQUAD_COLORS.size()]
+		var points := route_points(squad)
+		var line := _route_line(points, color)
+		line.name = "Route%d" % squad.number
+		_routes.add_child(line)
+		_route_label(lead.global_position + Vector3.UP * 2.6, "Squad %d · %s · %s" % [squad.number, squad.plan.personality_name(), lead.goal_name()], color)
+		var plan := squad.plan
+		# Squads sharing a stop list it one under the other (south is down the screen).
+		var stagger := Vector3.BACK * ROUTE_LABEL_STEP * ((squad.number - 1) % SQUAD_COLORS.size())
+		for i in range(plan.index, plan.pois.size()):
+			if is_instance_valid(plan.pois[i]):
+				_route_label(RaidPlan.poi_point(plan.pois[i]) + Vector3.UP * 1.2 + stagger, "%d. %s" % [i - plan.index + 1, plan.pois[i].poi_name()], color)
+		if is_instance_valid(plan.extract):
+			_route_label(plan.extract.global_position + Vector3.UP * 1.6 + stagger, "EXIT %s · %s" % [plan.extract.extract_name, _clock(plan.leave_at)], color)
+
+
+## A route label: big enough to read from a camera pulled out over the map, its text drawn over its
+## outline and over the route lines.
+func _route_label(at: Vector3, text: String, color: Color) -> void:
+	_marker(at, text, color, ROUTE_LABEL_SIZE, _routes)
+	var label := _routes.get_child(-1) as Label3D
+	label.pixel_size = ROUTE_LABEL_PIXEL
+	label.outline_size = 16
+	label.alpha_cut = Label3D.ALPHA_CUT_DISABLED  # Sorted by priority (cut-out text can lose to its own outline).
+	label.outline_render_priority = 20
+	label.render_priority = 21
+
+
+## The points of `squad`'s planned route: its leader, the rest of the route it's walking (to a POI or
+## its extract), its remaining POIs, its extract.
+static func route_points(squad: Squad) -> PackedVector3Array:
+	var lead := squad.leader
+	var plan := squad.plan
+	var points := PackedVector3Array([lead.global_position])
+	if lead.state in [Bot.State.TRAVEL, Bot.State.EXTRACT] and lead.route.size() >= 2:
+		points.append_array(lead.route.slice(mini(lead._route_index, lead.route.size() - 1)))
+	if lead.state != Bot.State.EXTRACT:
+		for i in range(plan.index, plan.pois.size()):
+			if is_instance_valid(plan.pois[i]):
+				points.append(RaidPlan.poi_point(plan.pois[i]))
+	if is_instance_valid(plan.extract):
+		points.append(plan.extract.global_position)
+	return points
+
+
+## A flat ribbon through `points` (ROUTE_WIDTH wide, ROUTE_HEIGHT up), drawn over everything.
+static func _route_line(points: PackedVector3Array, color: Color) -> MeshInstance3D:
+	var mesh := ImmediateMesh.new()
+	var drawn := false
+	for i in range(1, points.size()):
+		var a := points[i - 1] + Vector3.UP * ROUTE_HEIGHT
+		var b := points[i] + Vector3.UP * ROUTE_HEIGHT
+		var along := Vector3(b.x - a.x, 0.0, b.z - a.z)
+		if along.length() < 0.05:
+			continue
+		if not drawn:
+			mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+			drawn = true
+		var side := Vector3(-along.z, 0.0, along.x).normalized() * ROUTE_WIDTH * 0.5
+		for corner in [a - side, a + side, b + side, a - side, b + side, b - side]:
+			mesh.surface_add_vertex(corner)
+	if drawn:
+		mesh.surface_end()
+	var line := MeshInstance3D.new()
+	line.mesh = mesh
+	line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = color
+	material.no_depth_test = true
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.render_priority = 10
+	line.material_override = material
+	return line
 
 
 ## One extract: "Office window [office_window]  ·  Random (40%)  ·  CLOSED  ·  unknown  ·  you: Unknown".

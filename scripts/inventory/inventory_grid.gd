@@ -217,6 +217,20 @@ func value() -> int:
 	return total
 
 
+## Cells in the grid.
+func cell_count() -> int:
+	return size.x * size.y
+
+
+## Cells its items cover (what's inside a container in it doesn't count again).
+func used_cells() -> int:
+	var total := 0
+	for item in items:
+		var footprint := item.footprint()
+		total += footprint.x * footprint.y
+	return total
+
+
 func to_array() -> Array:
 	return items.map(func(item: ItemInstance) -> Dictionary: return item.to_dict())
 

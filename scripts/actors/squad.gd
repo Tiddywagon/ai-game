@@ -9,9 +9,13 @@ extends RefCounted
 ## (plan_extract(), pick_extract(): one they can all use if there is one). Whoever attacks one of them
 ## has the squad to deal with (Bot.provoke()). The first member leads; when the leader dies, leaves the
 ## raid or is removed from the scene the next living member takes over (leader_changed) and carries on
-## with the leader's patrol and plans.
+## with the leader's patrol and plans. Squad mates don't bump into each other (a collision exception
+## between each pair): one standing in a doorway doesn't block the others.
 ## Nothing here is about bosses: what a member is worth, whether it loots, rushes raid events or ever
 ## leaves the raid is its role's (Bot.role: boss, guard, or none).
+## An AI PMC squad RaidController spawns has a raid plan (`plan`: RaidPlan, DESIGN.md §4.4) its leader
+## works through; in a fight one member may be its flanker (pick_flanker()), and the others cover a
+## member treating itself (healer()).
 
 ## The leader died or left the raid and `leader` took over (null: nobody's left).
 signal leader_changed(leader: Bot)
@@ -44,6 +48,12 @@ var extract_zone: ExtractZone
 ## Which way the formation faces (a yaw, like Node3D.rotation.y): the way the leader last moved, held
 ## while it stands looking around, so the followers don't circle it.
 var heading := 0.0
+## An AI PMC squad's raid plan (null for a boss's, or a squad made without one: it patrols), and its
+## number in the raid (RaidController: 1 for the first to spawn; 0 for none).
+var plan: RaidPlan
+var number := 0
+## The member who flanks in this fight (pick_flanker(); null: none).
+var flanker: Bot
 
 ## Game seconds when a member last called out each voice event (claim_call()).
 var _calls := {}
@@ -64,6 +74,9 @@ func _init(bots: Array[Bot] = [], squad_faction: StringName = &"") -> void:
 func add(bot: Bot) -> void:
 	if bot == null or bot in members:
 		return
+	for mate: Variant in members:
+		if is_instance_valid(mate):
+			bot.add_collision_exception_with(mate)
 	members.append(bot)
 	bot.squad = self
 	if leader == null:
@@ -136,12 +149,44 @@ func formation_spot(bot: Bot) -> Vector3:
 	return spot
 
 
-## Something one of them heard: every member that isn't fighting, fleeing or leaving goes to look
-## (running if `urgent`), so the squad stays together.
+## Something one of them heard: every member that isn't fighting, fleeing, leaving or treating itself
+## goes to look (running if `urgent`), so the squad stays together.
 func investigate(point: Vector3, urgent: bool) -> void:
 	for bot in alive():
-		if bot.ai_enabled and not bot.state in [Bot.State.COMBAT, Bot.State.FLEE, Bot.State.EXTRACT]:
+		if bot.ai_enabled and not bot.state in [Bot.State.COMBAT, Bot.State.FLEE, Bot.State.EXTRACT, Bot.State.HEAL]:
 			bot.investigate(point, urgent)
+
+
+## A fight starts: unless a member already flanks in it, one follower (at random, with `chance`) is the
+## squad's flanker: it goes for cover off to the threat's side first (Bot). Returns the flanker.
+func pick_flanker(rng: RandomNumberGenerator, chance: float) -> Bot:
+	if flanker and is_instance_valid(flanker) and not flanker.is_dead and flanker.state == Bot.State.COMBAT:
+		return flanker
+	flanker = null
+	var options := followers()
+	if not options.is_empty() and rng.randf() < chance:
+		flanker = options[rng.randi_range(0, options.size() - 1)]
+	return flanker
+
+
+## The member treating itself after a fight (Bot HEAL), whom the others cover; null if none.
+func healer() -> Bot:
+	for bot in alive():
+		if bot.state == Bot.State.HEAL:
+			return bot
+	return null
+
+
+## How full the living members' bags are with loot on average (Bot.loot_fill(): what they took, of the
+## room their kits left; 0-1).
+func fill() -> float:
+	var living := alive()
+	if living.is_empty():
+		return 0.0
+	var total := 0.0
+	for bot in living:
+		total += bot.loot_fill()
+	return total / living.size()
 
 
 ## When the squad heads for an extract: rolled once for the squad in `window` (shares of the raid),

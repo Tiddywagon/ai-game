@@ -29,6 +29,8 @@ static var path := PATH
 static var load_problems: Array[String] = []
 static var _data := {}
 static var _loaded := false
+## Faction kits dressed for a gear tier, by kit file and tier (ai_kit()).
+static var _tier_kits := {}
 
 
 ## The whole file. Checked the first time it loads (each problem is an error, reported once). A file
@@ -52,6 +54,7 @@ static func data() -> Dictionary:
 static func reload() -> void:
 	_data = {}
 	_loaded = false
+	_tier_kits.clear()
 
 
 ## The factions' ids, in file order (BEAR first).
@@ -198,10 +201,18 @@ static func kit_summary(id: StringName) -> String:
 	return ", ".join(names)
 
 
-## The BotKit AI PMCs of faction `id` carry (&"": the first faction's).
-static func ai_kit(id: StringName) -> BotKit:
+## The BotKit AI PMCs of faction `id` carry (&"": the first faction's), dressed for gear tier `tier`
+## (PmcAi.tier(): cheap to well-equipped, BotKit.with_tier(); &"" or an unknown tier: the kit as it is).
+static func ai_kit(id: StringName, tier: StringName = &"") -> BotKit:
 	var file := str(entry(_or_first(id)).get("ai_kit", ""))
-	return load(file) as BotKit if ResourceLoader.exists(file) else null
+	var kit := load(file) as BotKit if ResourceLoader.exists(file) else null
+	var overrides := PmcAi.tier(tier) if tier != &"" else {}
+	if kit == null or overrides.is_empty():
+		return kit
+	var key := "%s/%s" % [file, tier]
+	if not _tier_kits.has(key):
+		_tier_kits[key] = kit.with_tier(overrides)
+	return _tier_kits[key]
 
 
 ## How AI PMC squads form and keep together: size_weights, spacing, wedge_degrees, tolerance, catch_up,

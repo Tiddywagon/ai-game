@@ -11,4 +11,5 @@ order = 1
 size = "Medium"
 raid_minutes = 35
 players = "6 PMCs · 15 Scavs"
+difficulty = 3
 scene_path = ""

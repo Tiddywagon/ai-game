@@ -113,8 +113,9 @@ func find_snap_point(actor: Actor, max_distance: float, toward := Vector3.ZERO) 
 
 
 ## Best cover for an AI actor against a threat: protected, reachable, free, and preferably one it
-## can shoot from. `avoid` skips spots near the cover the actor is leaving.
-func find_cover(actor: Actor, threat: Vector3, max_distance: float, avoid: CoverPoint = null) -> CoverPoint:
+## can shoot from. `avoid` skips spots near the cover the actor is leaving; `accept`, if given, must
+## return true for a spot (an AI PMC squad spreading out).
+func find_cover(actor: Actor, threat: Vector3, max_distance: float, avoid: CoverPoint = null, accept := Callable()) -> CoverPoint:
 	var map := actor.get_world_3d().navigation_map
 	if NavigationServer3D.map_get_iteration_id(map) == 0:
 		return null  # The navmesh baked at raid start hasn't synced yet.
@@ -128,6 +129,8 @@ func find_cover(actor: Actor, threat: Vector3, max_distance: float, avoid: Cover
 			continue
 		var score := distance + (0.0 if point.can_peek else 8.0)
 		if score >= best_score or not is_available(point, actor) or not protects(point, threat):
+			continue
+		if accept.is_valid() and not accept.call(point):
 			continue
 		# Only spots the bot can walk to. The navmesh stops a body's radius short of walls,
 		# so allow some gap; the bot walks the last bit directly.
