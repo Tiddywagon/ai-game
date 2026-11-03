@@ -427,7 +427,7 @@ for name, side, (x, z), deg in [("WestYard", "PMC", (-24, -6), 90), ("SouthWest"
     node(name, "Marker3D", "SpawnPoints", [("position", vec3(x, 0, z)), ("rotation", rot(deg)), ("script", 'ExtResource("%s")' % SPAWN), ("side", '"%s"' % side)])
 
 node("Player", None, ".", [("position", vec3(-24, 0, -6))], instance=PLAYER)
-nodes.append('[node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]\nscript = ExtResource("%s")\nplayer = NodePath("../Player")\nmap_id = "factory"\nai_pmcs = 3\n' % RAID)
+nodes.append('[node name="Raid" type="Node" parent="." node_paths=PackedStringArray("player")]\nscript = ExtResource("%s")\nplayer = NodePath("../Player")\nmap_id = "factory"\n' % RAID)
 
 # --- Extracts --------------------------------------------------------------------------------------------
 def extract(name, x, z, radius, **props):

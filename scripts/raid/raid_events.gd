@@ -9,10 +9,11 @@ extends Node
 ##   and a green flare.
 ## Each is announced on the HUD with where it is and heard across the map (a sound marker when you can't
 ## see it), and AI within PoiConfig.event_noise_radius may drop what it's doing and head there
-## (Bot.rush_to()). Event crates roll from data/loot_tables/event_*.tres: the best Epic and Legendary
-## odds there are. A POI hosts events at its EventSpot markers; the marker's name says which kind
+## (Bot.rush_to(), Bot.rush_chance()). Event crates roll from data/loot_tables/event_*.tres: the best
+## Epic and Legendary odds there are. A POI hosts events at its EventSpot markers; the marker's name says which kind
 ## (EventSpot_airdrop, EventSpot_truck, EventSpot_cache; no suffix: airdrop or truck). A POI with a fresh
-## event is hot: it draws Scav waves and roaming AI PMCs (PointOfInterest.heat()). Every RaidLevel has one.
+## event is hot: it draws Scav waves, AI PMCs without a raid plan and Chads planning their route
+## (PointOfInterest.heat()). Every RaidLevel has one.
 
 ## An event went off: {"kind", "poi", "poi_name", "at", "time", "box" (its crate), "ready" (searchable)}.
 signal event_started(event: Dictionary)
@@ -180,6 +181,7 @@ func _truck(event: Dictionary) -> void:
 	tween.tween_property(truck, "global_position", event.at, config.truck_arrive_seconds).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	tween.tween_callback(func() -> void:
 		_set_solid(truck, true)
+		Bot.walk_through(truck)  # Solid for you, not for the AI (it isn't on its navmesh).
 		var cargo := _make_box(CARGO, event.at + Vector3(-3.0, 0, 0))
 		cargo.name = "TruckCargo"
 		cargo.unseal()
@@ -210,8 +212,10 @@ func _announce(event: Dictionary) -> void:
 	NoiseSystem.emit_noise(event.at, config.event_noise_radius, null, &"event")
 
 
-## AI within earshot that isn't fighting may head for it (Scavs less keen than PMCs). A boss and its
-## guards stay on their haunt; a squad goes if its leader does (its followers go with it).
+## AI within earshot that isn't fighting may head for it: a Scav with PoiConfig.rush_chance_scav, an AI
+## PMC by its squad's personality (Bot.rush_chance(): a Looter or Chad likely, a Rat only close and
+## quiet, a Quester never). A boss and its guards stay on their haunt; a squad goes if its leader does
+## (its followers go with it).
 func _call_ai(event: Dictionary) -> void:
 	for node in get_tree().get_nodes_in_group("bots"):
 		var bot := node as Bot
@@ -220,12 +224,13 @@ func _call_ai(event: Dictionary) -> void:
 			continue
 		if bot.global_position.distance_to(event.at) > config.event_noise_radius:
 			continue
-		var chance := config.rush_chance_scav if bot.side == Actor.Side.SCAV else config.rush_chance_pmc
+		var chance := config.rush_chance_scav if bot.side == Actor.Side.SCAV else bot.rush_chance(event.at)
 		if rng.randf() < chance:
 			bot.rush_to(event.at)
 
 
-## A sealed event crate of `container` at `at` (rolled when unsealed).
+## A sealed event crate of `container` at `at` (rolled when unsealed). The AI walks through it
+## (Bot.walk_through()).
 func _make_box(container: LootContainer, at: Vector3) -> LootBox:
 	var box := LootBox.new()
 	box.container = container
@@ -233,6 +238,7 @@ func _make_box(container: LootContainer, at: Vector3) -> LootBox:
 	box.ignore_poi = true
 	_level().add_child(box)
 	box.global_position = at
+	Bot.walk_through(box)  # It isn't on the navmesh baked at raid start: the AI walks through it.
 	return box
 
 

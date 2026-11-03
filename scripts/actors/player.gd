@@ -71,6 +71,9 @@ const FLASHLIGHT_ENERGY := 8.0
 const MAX_LEAD_SCREEN_SHARE := 0.55
 ## How close a container, body or item must be to use it with F (metres, flat).
 const INTERACT_RANGE := 2.0
+## Meta set on a container or body while its loot is open beside your inventory (InventoryLayer): the AI
+## leaves it alone until you close it, so nothing is taken out from under your hands (Bot).
+const LOOTING_META := &"player_looting"
 ## The reticle has to be at least this far from the player (metres, flat) for its direction to count
 ## toward a spin: right on top of the player, tiny moves would look like huge turns.
 const SPIN_MIN_RADIUS := 0.75

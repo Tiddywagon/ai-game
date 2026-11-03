@@ -11,6 +11,7 @@ order = 2
 size = "Large"
 raid_minutes = 45
 players = "8 PMCs · 18 Scavs"
+difficulty = 3
 scene_path = ""
 climate = "Cold"
 energy_drain_multiplier = 1.15

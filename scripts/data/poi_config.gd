@@ -32,9 +32,9 @@ extends Resource
 ## Seconds an airdrop crate takes to come down, and a supply truck to pull in.
 @export_range(1.0, 60.0, 0.5, "suffix:s") var airdrop_fall_seconds := 9.0
 @export_range(1.0, 60.0, 0.5, "suffix:s") var truck_arrive_seconds := 6.0
-## Chance an AI not already fighting drops what it's doing and heads for an event: Scavs, PMCs.
+## Chance a Scav not already fighting drops what it's doing and heads for an event (AI PMCs go by
+## their squad's personality: data/config/pmc_ai.json).
 @export_range(0.0, 1.0, 0.05) var rush_chance_scav := 0.5
-@export_range(0.0, 1.0, 0.05) var rush_chance_pmc := 0.85
 ## How loud an event is (metres): AI within it may come.
 @export_range(10.0, 500.0, 5.0, "suffix:m") var event_noise_radius := 120.0
 
