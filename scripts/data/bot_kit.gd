@@ -9,7 +9,9 @@ extends Resource
 ## kind of bot in data/bots/: scav_kit.tres, and the AI PMCs' bear_kit.tres (Eastern gear) and
 ## usec_kit.tres (Western gear; Factions.ai_kit()), which add a better round (ammo_rarity), a sidearm,
 ## pocket meds and sometimes a stim, and roll Uncommon to Epic gear. build()'s `tier` scales the gear
-## rolls' rarity (a map's difficulty tier can pass one).
+## rolls' rarity. An AI PMC squad's gear tier (cheap to well-equipped, rolled by map difficulty:
+## PmcAi, DESIGN.md §4.4) is its faction's kit with_tier(): its own rarity multipliers, round, chances,
+## better meds and parts fitted to the gun (Factions.ai_kit(faction, tier)).
 
 ## The gun: one item of this table (its items list names the guns, item_weights weigh them within their
 ## rarity, rarity_weights pick the rarity).
@@ -52,6 +54,12 @@ extends Resource
 ## A stim (one item of stim_table) carried this often.
 @export_range(0.0, 1.0, 0.05) var stim_chance := 0.0
 @export var stim_table: LootTable
+## Multipliers on every gear roll on top of build()'s `tier` (a gear tier's: with_tier()); empty for none.
+@export var rarity_boost := PackedFloat32Array()
+## Multipliers on the medkit roll (a well-equipped kit carries better medkits); empty for none.
+@export var medkit_boost := PackedFloat32Array()
+## This many random parts fitted to the gun's empty slots (a modded gun; magazines left alone).
+@export_range(0, 6) var gun_mods := 0
 ## A face cover (one item of face_cover_table: a balaclava or a shemagh) worn this often. Rolled last, on
 ## a stream of its own seeded from `rng`, so the rest of the kit rolls as it did before face covers.
 @export_range(0.0, 1.0, 0.05) var face_cover_chance := 0.0
@@ -62,6 +70,7 @@ extends Resource
 ## of its own), a face cover. `tier`: rarity multipliers (LootTable boost) on every gear roll but the face
 ## cover's (gun, sidearm, armor, helmet, rig, backpack and loot); empty for none.
 func build(rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> Inventory:
+	tier = LootTable.combine_boosts(rarity_boost, tier)
 	var inventory := Inventory.new()
 	if rng.randf() < rig_chance and rig_table:
 		_equip(inventory, "rig", rig_table, rng, tier)
@@ -74,8 +83,12 @@ func build(rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> Inventor
 	if rng.randf() < melee_chance and ItemDB.has_item(melee_id):
 		inventory.equip("melee", ItemInstance.create(melee_id))
 	var gun_id := pick_weapon(rng, tier)
+	if gun_id == "" and not tier.is_empty():
+		gun_id = pick_weapon(rng)  # Nothing of those rarities in its gun table: it still carries a gun.
 	if gun_id != "":
-		_arm(inventory, gun_id, spare_magazines, min_spare_rounds, rng)
+		var gun := _arm(inventory, gun_id, spare_magazines, min_spare_rounds, rng)
+		if gun_mods > 0:
+			fit_mods(gun, gun_mods, rng)
 	if pistol_table and pistol_chance > 0.0 and rng.randf() < pistol_chance:
 		var pistol := pistol_table.roll_item(rng, null, tier)
 		if pistol and pistol.weapon and inventory.equipment.pistol == null:
@@ -87,7 +100,7 @@ func build(rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> Inventor
 	if rng.randf() < bandage_chance:
 		inventory.add(ItemInstance.create("bandage"))
 	if rng.randf() < medkit_chance and medkit_table:
-		var medkit := medkit_table.roll_item(rng)
+		var medkit := medkit_table.roll_item(rng, null, medkit_boost)
 		if medkit:
 			inventory.add(ItemInstance.create(medkit.id))
 	for id in pocket_items:
@@ -131,8 +144,8 @@ func pick_ammo(caliber: String, rng: RandomNumberGenerator) -> String:
 
 ## Puts gun `gun_id` in its slot (the pistol slot for a pistol) loaded with its round (pick_ammo()),
 ## somewhat worn (gun_durability), and `magazines` full magazines of spares (at least `min_rounds`) in
-## the pockets, rig and backpack.
-func _arm(inventory: Inventory, gun_id: String, magazines: int, min_rounds: int, rng: RandomNumberGenerator) -> void:
+## the pockets, rig and backpack. Returns the gun.
+func _arm(inventory: Inventory, gun_id: String, magazines: int, min_rounds: int, rng: RandomNumberGenerator) -> ItemInstance:
 	var data := ItemDB.get_item(gun_id)
 	var ammo := pick_ammo(data.weapon.caliber, rng) if data.weapon else ""
 	var gun := Inventory.loaded_gun(gun_id, ammo, rng.randf_range(gun_durability.x, gun_durability.y))
@@ -145,6 +158,51 @@ func _arm(inventory: Inventory, gun_id: String, magazines: int, min_rounds: int,
 			var rounds := ItemInstance.create(ammo, mini(spare, stack))
 			spare -= rounds.count
 			inventory.add(rounds)
+	return gun
+
+
+## Fits up to `count` random weapon parts (any that fit, not magazines) into empty slots of `gun`.
+## Returns how many went on.
+static func fit_mods(gun: ItemInstance, count: int, rng: RandomNumberGenerator) -> int:
+	if gun == null or gun.data.weapon == null:
+		return 0
+	var parts: Array[ItemData] = ItemDB.all_items().filter(func(data: ItemData) -> bool:
+		return WeaponMods.is_mod(data) and not WeaponMods.is_gear_mod(data) and WeaponMods.kind_of(data) != "magazine" and data.loot_weight > 0.0)
+	for i in range(parts.size() - 1, 0, -1):  # Shuffled with `rng`, so seeded kits repeat.
+		var j := rng.randi_range(0, i)
+		var swap := parts[i]
+		parts[i] = parts[j]
+		parts[j] = swap
+	var fitted := 0
+	for data in parts:
+		if fitted >= count:
+			break
+		var part := ItemInstance.create(data.id)
+		var path := WeaponMods.slot_for(gun, part, true)
+		if path != "" and WeaponMods.install(gun, path, part) == null and WeaponMods.mod_at(gun, path) == part:
+			fitted += 1
+	return fitted
+
+
+## A copy of this kit dressed for a gear tier (PmcAi.tier(): cheap to well-equipped): `overrides`'
+## rarity (multipliers on every gear roll), ammo_rarity, helmet / backpack / pistol / stim chances,
+## gun_mods, medkit_rarity and gun_durability replace the kit's; whatever it leaves out stays.
+func with_tier(overrides: Dictionary) -> BotKit:
+	var kit := duplicate() as BotKit
+	if overrides.get("rarity") is Array:
+		kit.rarity_boost = PackedFloat32Array(overrides.rarity)
+	if overrides.get("medkit_rarity") is Array:
+		kit.medkit_boost = PackedFloat32Array(overrides.medkit_rarity)
+	if overrides.get("ammo_rarity") is Array and overrides.ammo_rarity.size() == 2:
+		kit.ammo_rarity = Vector2i(int(overrides.ammo_rarity[0]), int(overrides.ammo_rarity[1]))
+	if overrides.get("gun_durability") is Array and overrides.gun_durability.size() == 2:
+		kit.gun_durability = Vector2(float(overrides.gun_durability[0]), float(overrides.gun_durability[1]))
+	for key in ["helmet_chance", "backpack_chance", "pistol_chance", "stim_chance"]:
+		if overrides.has(key):
+			kit.set(key, clampf(float(overrides[key]), 0.0, 1.0))
+	if overrides.has("gun_mods"):
+		kit.gun_mods = maxi(int(overrides.gun_mods), 0)
+	return kit
 
 
 static func _equip(inventory: Inventory, slot: String, table: LootTable, rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> void:

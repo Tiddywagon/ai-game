@@ -7,7 +7,6 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/player.tscn" id="5_player"]
 [ext_resource type="PackedScene" path="res://scenes/actors/bot.tscn" id="6_bot"]
 [ext_resource type="Resource" path="res://data/bots/scav.tres" id="7_scav"]
-[ext_resource type="Resource" path="res://data/bots/pmc.tres" id="8_pmc"]
 [ext_resource type="Script" path="res://scripts/camera/top_down_camera.gd" id="9_camera"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="10_hud"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="11_pause"]
@@ -291,11 +290,6 @@ zone = NodePath("../NorthYard")
 position = Vector3(16, 0, -12)
 profile = ExtResource("7_scav")
 zone = NodePath("../EastYard")
-
-[node name="PMC" parent="." instance=ExtResource("6_bot")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -12, 0, -12)
-faction = &"usec"
-profile = ExtResource("8_pmc")
 
 [node name="SpawnPoints" type="Node3D" parent="."]
 

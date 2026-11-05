@@ -18,7 +18,6 @@ event_window = Vector2(0.15, 0.8)
 airdrop_fall_seconds = 9.0
 truck_arrive_seconds = 6.0
 rush_chance_scav = 0.5
-rush_chance_pmc = 0.85
 event_noise_radius = 120.0
 tier_heat = PackedFloat32Array(1, 2, 4)
 event_heat = 8.0

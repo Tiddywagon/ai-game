@@ -131,8 +131,9 @@ func requirement_met(who: Actor = null) -> bool:
 	return true
 
 
-## How strongly it draws Scav waves and roaming AI PMCs at `raid_seconds` into the raid: its tier's
-## heat, plus more while a raid event here is fresh.
+## How strongly it draws Scav waves, AI PMCs without a raid plan and Chads planning their route
+## (RaidPlan.score()) at `raid_seconds` into the raid: its tier's heat, plus more while a raid event
+## here is fresh.
 func heat(raid_seconds: float) -> float:
 	var config := PoiTable.CONFIG
 	var value: float = config.tier_heat[clampi(tier(), 1, 3) - 1]

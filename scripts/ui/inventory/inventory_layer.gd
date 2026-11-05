@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## Opens the inventory in a raid (DESIGN.md §7): Tab (or Back on a controller) toggles it. Searching a
 ## container or body (F) opens it with that loot beside you; walking away closes it. The game keeps
-## running: you can still walk, but not shoot or aim, while it's open.
+## running: you can still walk, but not shoot or aim, while it's open. While the loot is open the AI
+## leaves that container or body alone (Player.LOOTING_META).
 
 const SCREEN := preload("res://ui/inventory_screen.tscn")
 ## Searching closes once you're this much farther than the reach you opened it from.
@@ -48,6 +49,8 @@ func open(loot: Variant = null, title := "", source: Node3D = null) -> void:
 	_screen.loot_title = title
 	_screen.loot_search = source.get("search") if source else null
 	_loot_source = source
+	if source:
+		source.set_meta(Player.LOOTING_META, true)
 	_screen.closed.connect(_on_closed)
 	add_child(_screen)
 	player.ui_open = true
@@ -65,6 +68,8 @@ func _on_loot_requested(title: String, loot: Variant, source: Node3D) -> void:
 
 
 func _on_closed() -> void:
+	if is_instance_valid(_loot_source):
+		_loot_source.remove_meta(Player.LOOTING_META)
 	_screen = null
 	_loot_source = null
 	player.ui_open = false

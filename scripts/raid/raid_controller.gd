@@ -7,8 +7,9 @@ extends Node
 ## `RaidConfig.extract_seconds` extracts (SURVIVED, or a Run Through if it was quick and you earned
 ## little); walking out or getting hit starts the count again. A random extract turns from "Unknown" to
 ## open or closed once you've been close enough to see it. AI PMCs join the raid as squads of 1-3 of one
-## faction (BEAR or USEC) at PMC spawn points you didn't get (_spawn_ai_pmcs()). AI Scavs and PMCs leave
-## through the same extracts (Bot). Dying is KILLED; the clock running out or leaving from the pause menu is MIA. The
+## faction (BEAR or USEC), each with a raid plan (RaidPlan): most at the start at PMC spawn points you
+## didn't get (_spawn_ai_pmcs()), a few as late arrivals mid-raid out of your sight (pmc_schedule,
+## DESIGN.md §4.4). AI Scavs and PMCs leave through the same extracts (Bot). Dying is KILLED; the clock running out or leaving from the pause menu is MIA. The
 ## ending is settled by RaidOutcome (found-in-raid status, what you keep, insurance) and shown by the
 ## level.
 
@@ -20,14 +21,14 @@ signal power_on
 ## `first_time` if they'd never explored it before (it's now explored, with its experience).
 signal poi_entered(poi: PointOfInterest, first_time: bool)
 
+## A point moved onto the navmesh further than this (metres) means the navmesh isn't there yet
+## (_on_navmesh()).
+const NAVMESH_SNAP := 8.0
+
 @export var player: Player
 @export var config: RaidConfig = preload("res://data/config/raid.tres")
 ## The map this scene is (data/maps/), when it's played without ENTER RAID (GameState.raid "map").
 @export var map_id := "test_yard"
-## AI PMCs that join the raid (DESIGN.md §4.4, §5): this many in all, in squads of 1-3 (sizes rolled
-## by Factions.squad_config(), each of one faction), one squad at each PMC spawn point the player didn't
-## get.
-@export_range(0, 8) var ai_pmcs := 0
 @export var ai_pmc_profile: BotProfile = preload("res://data/bots/pmc.tres")
 ## Scav waves during the raid (RaidConfig), and the Scavs they bring.
 @export var scav_waves := true
@@ -61,6 +62,14 @@ var spawn_point: SpawnPoint
 var ai_extracts: Array[Dictionary] = []
 ## The AI PMC squads that joined the raid (Squad), in spawn order.
 var ai_squads: Array[Squad] = []
+## AI PMCs in this raid in all (the map's budget in data/config/pmc_ai.json; GameState.raid "pmcs"
+## overrides it, for tests), and the squads still to come: [{"time": raid seconds (0 at the start),
+## "size", "faction", "late"}], soonest first (plan_pmc_schedule()).
+var ai_pmcs := 0
+var pmc_schedule: Array[Dictionary] = []
+## Late arrivals so far: their schedule entries with "spawned_at", "point" and "squad" (its number), or
+## "gave_up" when there was nowhere out of your sight to spawn in time.
+var late_arrivals: Array[Dictionary] = []
 ## Rolls this raid: spawn point and random extracts. Seeded from GameState.raid "seed" if set.
 var rng := RandomNumberGenerator.new()
 ## The point of interest the player is in (null: none), the ones they've been in this raid, and the
@@ -71,6 +80,13 @@ var discovered_pois: Array[String] = []
 ## Scav waves so far, and raid seconds until the next one.
 var waves := 0
 var next_wave := -1.0
+
+## The AI PMC schedule's rolls (seeded in a seeded raid), AI PMCs spawned so far (their names), and
+## when a late arrival with nowhere to spawn tries again.
+var _pmc_rng := RandomNumberGenerator.new()
+var _pmc_count := 0
+var _next_late_try := 0.0
+var _pmcs_started := false
 
 ## The map's power: seconds until it comes on after the switch is thrown (-1: off), and on.
 var _power_countdown := -1.0
@@ -97,7 +113,8 @@ func _ready() -> void:
 		player.died.connect(end_raid.bind(RaidOutcome.Status.KILLED))
 		if is_real_raid() and GameState.raid.get("spawn", "") != "scene":
 			_place_player()
-		if ai_pmcs > 0:
+		plan_pmc_schedule()
+		if not pmc_schedule.is_empty():
 			_spawn_ai_pmcs.call_deferred()
 	if scav_waves:
 		next_wave = rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
@@ -123,6 +140,8 @@ func _physics_process(delta: float) -> void:
 	time_left = maxf(time_left - delta, 0.0)
 	if next_wave >= 0.0 and elapsed >= next_wave:
 		spawn_wave()
+	if _pmcs_started and not pmc_schedule.is_empty() and elapsed >= float(pmc_schedule[0].time) and elapsed >= _next_late_try:
+		_late_arrival()
 	if time_left <= 0.0:
 		end_raid(RaidOutcome.Status.MIA)
 		return
@@ -398,6 +417,8 @@ func _roam_points() -> PackedVector3Array:
 	return points
 
 
+## `point` moved onto the navmesh; as it is while the navmesh isn't there yet (just baked, or synced
+## before its regions were: the "closest point" is then the world origin, far off).
 func _on_navmesh(point: Vector3) -> Vector3:
 	var level := get_parent() as Node3D
 	if level == null or not level.is_inside_tree():
@@ -405,50 +426,138 @@ func _on_navmesh(point: Vector3) -> Vector3:
 	var map := level.get_world_3d().navigation_map
 	if NavigationServer3D.map_get_iteration_id(map) == 0:
 		return point
-	return NavigationServer3D.map_get_closest_point(map, point)
+	var closest := NavigationServer3D.map_get_closest_point(map, point)
+	return closest if closest.distance_to(point) <= NAVMESH_SNAP else point
 
 
-## AI PMCs (ai_pmcs in all) as squads of 1-3 (Factions.roll_squad_size(), never more than are left
-## to place), each squad of one faction (BEAR or USEC at random; none if factions.json is broken), at
-## the PMC spawn points the player isn't at, farthest from the player first, one squad a point. Squad
-## mates stand close together at their point (spawn_spots()), the first of them leading; they roam the
-## Scav zones and points of interest (hot ones draw them: BotProfile.hot_poi_chance) together. Seeded
-## raids roll the same squads. Returns the squads.
+## Rolls this raid's AI PMCs (data/config/pmc_ai.json "schedule"; DESIGN.md §4.4): ai_pmcs in all,
+## of which late_share (at least one, when there are two or more) arrive late as late_squads squads (more
+## if it takes more to keep each to 3) at times in late_window of the raid (earlier ones likelier:
+## late_falloff), and the rest come as squads of 1-3 at the start (Factions.roll_squad_size()); each
+## squad's faction (BEAR or USEC; none if factions.json is broken) is rolled. Without a schedule
+## (pmc_ai.json missing) all of them (PmcAi.FALLBACK_BUDGET) come at the start. Its own RNG, seeded in a
+## seeded raid, so the raid's other rolls stay as they were. Returns pmc_schedule.
+func plan_pmc_schedule() -> Array[Dictionary]:
+	pmc_schedule.clear()
+	if GameState.raid.has("seed"):
+		_pmc_rng.seed = hash([int(GameState.raid.seed), "ai_pmcs"])
+	else:
+		_pmc_rng.randomize()
+	var tuning := PmcAi.schedule()
+	ai_pmcs = maxi(int(GameState.raid.get("pmcs", PmcAi.budget(map_key()))), 0)
+	var factions := Factions.ids()
+	var late := clampi(roundi(ai_pmcs * PmcAi.number(tuning, "late_share", 0.35)), 1, ai_pmcs - 1) if ai_pmcs >= 2 and not tuning.is_empty() else 0
+	var left := ai_pmcs - late
+	while left > 0:
+		var size := mini(Factions.roll_squad_size(_pmc_rng), left)
+		left -= size
+		pmc_schedule.append({"time": 0.0, "size": size, "faction": _roll_faction(factions), "late": false})
+	if late > 0:
+		var counts := PmcAi.pair(tuning.get("late_squads"), [1, 2])
+		var squads := clampi(maxi(_pmc_rng.randi_range(int(counts[0]), int(counts[1])), ceili(late / 3.0)), 1, late)
+		var window := PmcAi.pair(tuning.get("late_window"), [0.15, 0.6])
+		var falloff := PmcAi.number(tuning, "late_falloff", 2.0)
+		for i in squads:
+			var size := late / squads + (1 if i < late % squads else 0)
+			var at := raid_seconds() * lerpf(float(window[0]), float(window[1]), pow(_pmc_rng.randf(), falloff))
+			pmc_schedule.append({"time": at, "size": size, "faction": _roll_faction(factions), "late": true})
+	pmc_schedule.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.time) < float(b.time))
+	return pmc_schedule
+
+
+func _roll_faction(factions: Array[StringName]) -> StringName:
+	return factions[_pmc_rng.randi_range(0, factions.size() - 1)] if not factions.is_empty() else &""
+
+
+## The squads due at the start (pmc_schedule's time 0 entries), at the PMC spawn points the player isn't
+## at, farthest from the player first, one squad a point (spawn_pmc_squad()); any left over without a
+## point come as soon as there's a spot out of the player's sight (_late_arrival()). Returns ai_squads.
 func _spawn_ai_pmcs() -> Array[Squad]:
+	_pmcs_started = true
 	var free_points: Array = get_tree().get_nodes_in_group("spawn_points").filter(func(point: SpawnPoint) -> bool:
 		return point != spawn_point and point.side != "Scav")
 	free_points.sort_custom(func(a: SpawnPoint, b: SpawnPoint) -> bool:
 		return a.global_position.distance_to(player.global_position) > b.global_position.distance_to(player.global_position))
-	var stops := _roam_points()
-	var factions := Factions.ids()
-	var squad_rng := RandomNumberGenerator.new()  # Its own, so the raid's other rolls stay as they were.
-	if GameState.raid.has("seed"):
-		squad_rng.seed = hash([int(GameState.raid.seed), "ai_pmcs"])
-	else:
-		squad_rng.randomize()
-	var left := ai_pmcs
-	var count := 0
-	for point: SpawnPoint in free_points:
-		if left <= 0:
+	for entry: Dictionary in pmc_schedule.filter(func(each: Dictionary) -> bool: return float(each.time) <= 0.0):
+		if free_points.is_empty():
 			break
-		var size := mini(Factions.roll_squad_size(squad_rng), left)
-		left -= size
-		var faction: StringName = factions[squad_rng.randi_range(0, factions.size() - 1)] if not factions.is_empty() else &""
-		var spots := spawn_spots(point.global_position, size)
-		var members: Array[Bot] = []
-		for i in size:
-			count += 1
-			var bot: Bot = ScavZone.BOT_SCENE.instantiate()
-			bot.name = "AIPMC%d" % count
-			bot.profile = ai_pmc_profile
-			bot.faction = faction
-			bot.wander_points = stops
-			bot.position = spots[i]
-			bot.rotation.y = point.global_rotation.y
-			get_parent().add_child(bot)
-			members.append(bot)
-		ai_squads.append(Squad.new(members, faction))
+		var point: SpawnPoint = free_points.pop_front()
+		spawn_pmc_squad(int(entry.size), entry.faction, point.global_position, point.global_rotation.y)
+		pmc_schedule.erase(entry)
 	return ai_squads
+
+
+## An AI PMC squad of `size` of `faction` at `at`, facing `yaw`: standing close together (spawn_spots()),
+## the first of them leading, named AIPMC1, AIPMC2... in spawn order, with a raid plan (RaidPlan.roll():
+## its personality, gear tier for the map's difficulty, which their kits are dressed for, and leave time;
+## seeded per squad in a seeded raid). Without pmc_ai.json they have no plan and roam the Scav zones and
+## points of interest instead. Returns the squad.
+func spawn_pmc_squad(size: int, faction: StringName, at: Vector3, yaw: float) -> Squad:
+	var number := ai_squads.size() + 1
+	var plan: RaidPlan = null
+	if not PmcAi.personalities().is_empty():
+		var plan_seed := hash([int(GameState.raid.seed), "plan", number]) if GameState.raid.has("seed") else randi()
+		plan = RaidPlan.roll(plan_seed, raid_seconds(), elapsed, map.difficulty if map else 1)
+	var spots := spawn_spots(at, size)
+	var stops := _roam_points()
+	var members: Array[Bot] = []
+	for i in size:
+		_pmc_count += 1
+		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
+		bot.name = "AIPMC%d" % _pmc_count
+		bot.profile = ai_pmc_profile
+		bot.faction = faction
+		bot.gear_tier = plan.tier if plan else &""
+		bot.wander_points = stops
+		bot.position = spots[i]
+		bot.rotation.y = yaw
+		get_parent().add_child(bot)
+		members.append(bot)
+	var squad := Squad.new(members, faction)
+	squad.plan = plan
+	squad.number = number
+	if plan:
+		plan.start = spots[0]
+	ai_squads.append(squad)
+	return squad
+
+
+## The next squad due mid-raid (a late arrival): at late_spot(). With nowhere to spawn it tries again
+## late_retry seconds later, and gives up late_give_up seconds after it was due. Returns the squad (null
+## if none came).
+func _late_arrival() -> Squad:
+	var entry: Dictionary = pmc_schedule[0]
+	var tuning := PmcAi.schedule()
+	if elapsed > float(entry.time) + float(tuning.get("late_give_up", 90.0)):
+		pmc_schedule.pop_front()
+		late_arrivals.append(entry.merged({"gave_up": true}))
+		return null
+	var point := late_spot()
+	if point == null:
+		_next_late_try = elapsed + float(tuning.get("late_retry", 5.0))
+		return null
+	pmc_schedule.pop_front()
+	var squad := spawn_pmc_squad(int(entry.size), entry.faction, point.global_position, point.global_rotation.y)
+	late_arrivals.append(entry.merged({"spawned_at": elapsed, "point": str(point.name), "squad": squad.number}))
+	return squad
+
+
+## Where a late arrival can spawn now: a PMC spawn point (not the player's) at least
+## RaidConfig.scav_wave_min_distance from the player and out of their line of sight, like a Scav wave
+## (wave_spot()); a random one of them, or null if there's none.
+func late_spot() -> SpawnPoint:
+	var space := player.get_world_3d().direct_space_state if player else null
+	var options: Array[SpawnPoint] = []
+	for node in get_tree().get_nodes_in_group("spawn_points"):
+		var point := node as SpawnPoint
+		if point == null or point == spawn_point or point.side == "Scav":
+			continue
+		var at := point.global_position
+		if player and (at.distance_to(player.global_position) < config.scav_wave_min_distance
+				or VisionSystem.line_clear(space, player.global_position, at, false)):
+			continue
+		options.append(point)
+	return options[_pmc_rng.randi_range(0, options.size() - 1)] if not options.is_empty() else null
 
 
 ## Where `count` squad mates stand at a spawn point `at`: the point itself, then spots around it

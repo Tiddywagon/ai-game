@@ -126,6 +126,31 @@ func total_value() -> int:
 	return total
 
 
+## Cells there are to carry loot in: the pockets, rig and backpack (not the secure container).
+func capacity() -> int:
+	var total := 0
+	for grid in ammo_grids():
+		total += grid.cell_count()
+	return total
+
+
+## Cells the items in the pockets, rig and backpack cover.
+func used_cells() -> int:
+	var used := 0
+	for grid in ammo_grids():
+		used += grid.used_cells()
+	return used
+
+
+## How full the pockets, rig and backpack are, 0 to 1: used_cells() of capacity(). (An AI PMC's "bags
+## full" counts only what it looted: Bot.loot_fill(), DESIGN.md §4.4.)
+func fill_ratio() -> float:
+	var total := capacity()
+	if total <= 0:
+		return 1.0
+	return float(used_cells()) / total
+
+
 ## Rounds (or any item) of `id` you can reload from.
 func count_of(id: String) -> int:
 	var total := 0
@@ -299,11 +324,13 @@ static func loaded_gun(id: String, ammo: String, durability := 100.0) -> ItemIns
 ## An AI PMC's kit (DESIGN.md §4, §4.4): rolled from its faction's BotKit (Factions.ai_kit(): BEAR
 ## Eastern gear, USEC Western; &"" the first faction's), Uncommon to Epic: a gun loaded with a good
 ## round and three magazines of spares, armor, mostly a helmet and a pack of finds, a rig, sometimes a
-## sidearm and a stim, meds. `tier`: rarity multipliers for the gear rolls (BotKit.build()). What you
-## can take off the body. Without a kit (a broken factions.json) it gets a Scav's, so it's still armed.
-static func pmc_bot(rng: RandomNumberGenerator = null, faction: StringName = &"", tier := PackedFloat32Array()) -> Inventory:
+## sidearm and a stim, meds. `tier`: rarity multipliers for the gear rolls (BotKit.build()); `gear_tier`:
+## the squad's gear tier (PmcAi, cheap to well-equipped: Factions.ai_kit()). What you can take off the
+## body. Without a kit (a broken factions.json) it gets a Scav's, so it's still armed.
+static func pmc_bot(rng: RandomNumberGenerator = null, faction: StringName = &"", tier := PackedFloat32Array(),
+		gear_tier: StringName = &"") -> Inventory:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
 		rng.randomize()
-	var kit := Factions.ai_kit(faction)
+	var kit := Factions.ai_kit(faction, gear_tier)
 	return kit.build(rng, tier) if kit else scav(rng)

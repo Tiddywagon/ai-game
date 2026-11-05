@@ -1598,7 +1598,6 @@ position = Vector3(-24, 0, -6)
 script = ExtResource("26_raid_control")
 player = NodePath("../Player")
 map_id = "factory"
-ai_pmcs = 3
 
 [node name="ExtractGate3" type="Area3D" parent="."]
 position = Vector3(0, 0, 22.2)
