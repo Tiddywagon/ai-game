@@ -52,10 +52,15 @@ extends Resource
 ## A stim (one item of stim_table) carried this often.
 @export_range(0.0, 1.0, 0.05) var stim_chance := 0.0
 @export var stim_table: LootTable
+## A face cover (one item of face_cover_table: a balaclava or a shemagh) worn this often. Rolled last, on
+## a stream of its own seeded from `rng`, so the rest of the kit rolls as it did before face covers.
+@export_range(0.0, 1.0, 0.05) var face_cover_chance := 0.0
+@export var face_cover_table: LootTable
 
 
-## A full kit, rolled with `rng`. `tier`: rarity multipliers (LootTable boost) on every gear roll (gun,
-## sidearm, armor, helmet, rig, backpack and loot); empty for none.
+## A full kit, rolled with `rng`: gun, sidearm, armor, helmet, rig, backpack, loot and, last (on a stream
+## of its own), a face cover. `tier`: rarity multipliers (LootTable boost) on every gear roll but the face
+## cover's (gun, sidearm, armor, helmet, rig, backpack and loot); empty for none.
 func build(rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> Inventory:
 	var inventory := Inventory.new()
 	if rng.randf() < rig_chance and rig_table:
@@ -95,6 +100,11 @@ func build(rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> Inventor
 	if loot_table:
 		for item in loot_table.roll_items(rng, null, tier):
 			inventory.add(item)
+	if face_cover_table and face_cover_chance > 0.0:
+		var cover_rng := RandomNumberGenerator.new()
+		cover_rng.seed = hash([rng.state, "face_cover"])
+		if cover_rng.randf() < face_cover_chance:
+			_equip(inventory, "face_cover", face_cover_table, cover_rng)
 	return inventory
 
 

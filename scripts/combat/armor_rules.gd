@@ -1,8 +1,10 @@
 class_name ArmorRules
 extends RefCounted
-## What armor does to a round (DESIGN.md §6.4, §12.2, §13.5). A helmet, face shield, body armor or
-## armored rig stops rounds on the body parts it covers (its "zones"). A head hit from the front (within
-## FACE_ARC of where the target faces) is a "face" hit: only face shields cover the face. Whether a round gets through depends on its penetration
+## What armor does to a round (DESIGN.md §6.4, §12.2, §13.5). A helmet, face shield, ballistic mask,
+## body armor or armored rig stops rounds on the body parts it covers (its "zones"). A head hit from the
+## front (within FACE_ARC of where the target faces) is a "face" hit: only face shields and ballistic
+## masks cover the face; with both on, the one that stops more now (resistance(): class scaled by wear)
+## takes the round, the face shield on a tie. Whether a round gets through depends on its penetration
 ## against the armor's class, scaled down as the armor wears; a round that gets through keeps most of
 ## its damage, one that doesn't may glance off (its ricochet chance × the armor's) or push blunt damage
 ## through. Every hit wears the armor (penetration × the round's armor damage × the armor's
@@ -11,8 +13,9 @@ extends RefCounted
 ## data/items/armor/ and data/items/helmets/.
 
 const CONFIG: CombatConfig = preload("res://data/config/combat.tres")
-## Equipment slots that can stop rounds, outermost first (a helmet's face shield before the helmet).
-const SLOTS: Array[String] = ["helmet", "armor", "rig"]
+## Equipment slots that can stop rounds, outermost first (a helmet's face shield before the helmet,
+## then a ballistic mask).
+const SLOTS: Array[String] = ["helmet", "face_cover", "armor", "rig"]
 ## Head hits from within this many degrees either side of where the target faces hit the face.
 const FACE_ARC := 60.0
 
@@ -35,22 +38,26 @@ static func zone_name(part: int, frontal := false) -> String:
 
 
 ## The piece of armor `gear` wears over `part` (`frontal`: hit from the front) that isn't worn out,
-## or null. Face shields on a helmet come before the helmet.
+## or null. Where two pieces cover the same zone (a face shield and a ballistic mask over the face), the
+## one that stops more now (resistance()) wins; on a tie the outer one (SLOTS order: a face shield
+## before its helmet and before a mask).
 static func armor_for(gear: Inventory, part: int, frontal := false) -> ItemInstance:
 	if gear == null or part < 0:
 		return null
 	var zone := zone_name(part, frontal)
-	for slot in SLOTS:
-		var piece: ItemInstance = gear.equipment.get(slot)
-		if piece == null:
-			continue
-		for candidate: ItemInstance in WeaponMods.installed(piece) + [piece]:
-			if candidate.is_armor() and zone in candidate.data.stats.get("zones", []) and candidate.durability > 0.0:
-				return candidate
-	return null
+	var best: ItemInstance = null
+	var best_resist := -1.0
+	for candidate in worn_armor(gear):
+		if zone in candidate.data.stats.get("zones", []) and candidate.durability > 0.0:
+			var resist := resistance(int(candidate.data.stats.get("class", 0)), candidate.durability / maxf(candidate.max_durability, 1.0))
+			if resist > best_resist:
+				best = candidate
+				best_resist = resist
+	return best
 
 
-## Every armor piece `gear` wears (helmet, its face shield, vest, armored rig).
+## Every armor piece `gear` wears (helmet, its face shield, ballistic mask, vest, armored rig),
+## outermost first.
 static func worn_armor(gear: Inventory) -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []
 	if gear == null:

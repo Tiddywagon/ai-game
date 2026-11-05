@@ -1,11 +1,13 @@
 extends MenuScreen
 ## ENTER RAID flow (DESIGN.md §16.3): map select, then PMC or Scav, then a loadout check (with
-## INSURE GEAR for a PMC: Insurance), then the loading screen. Back (or Esc / B) steps back; from the
-## map list it returns to the main menu.
+## INSURE GEAR for a PMC: Insurance, and EDIT LOADOUT, which opens the LOADOUT screen over the check and
+## comes back to it with the loadout refreshed), then the loading screen. Back (or Esc / B) steps back;
+## from the map list it returns to the main menu.
 
 enum Step { MAP, SIDE, LOADOUT }
 
 const LOADING_SCENE := "res://ui/loading_screen.tscn"
+const LOADOUT_SCENE := preload("res://ui/loadout_screen.tscn")
 const WARNING_COLOR := Color(0.95, 0.6, 0.3)
 
 var _step := Step.MAP
@@ -18,6 +20,9 @@ var _insure: Button
 var _insure_note: Label
 ## Who insures your gear (Insurance.insurers(): Bulat cheap and slow, Doc Vera dearer and faster).
 var _insurer: OptionButton
+## EDIT LOADOUT, and the LOADOUT screen while it's open over the check.
+var _edit: Button
+var _loadout_screen: LoadoutScreen
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]
 @onready var _step_labels: Array[Label] = [%MapStepLabel, %SideStepLabel, %LoadoutStepLabel]
@@ -48,6 +53,13 @@ func _ready() -> void:
 	%ScavButton.focus_entered.connect(_choose_side.bind("scav", false))
 	%BackButton.pressed.connect(_on_cancel)
 	_next.pressed.connect(_on_next)
+	_edit = Button.new()
+	_edit.name = "EditLoadoutButton"
+	_edit.text = "EDIT LOADOUT"
+	_edit.tooltip_text = "Change your gear: the LOADOUT screen, with the stash beside you"
+	_edit.custom_minimum_size = Vector2(0, 44)
+	_edit.pressed.connect(open_loadout)
+	%GearGrid.get_parent().add_child(_edit)
 	_insurer = OptionButton.new()
 	_insurer.name = "InsurerPicker"
 	_insurer.custom_minimum_size = Vector2(0, 40)
@@ -202,6 +214,7 @@ func _show_loadout() -> void:
 ## INSURE GEAR: insures every insurable item you'd take that isn't yet (in the profile, which the
 ## loadout is a copy of), for its price; or says everything is.
 func _update_insurance() -> void:
+	_edit.visible = _side == "pmc"
 	_insure.visible = _side == "pmc"
 	_insure_note.visible = _side == "pmc"
 	_insurer.visible = _side == "pmc" and _insurer.item_count > 1
@@ -224,6 +237,27 @@ func _update_insurance() -> void:
 	_insure_note.text = "Insured gear you lose comes back to your stash %d-%d game hours later (%s-%s real time; guns with their parts, rigs and backpacks empty), unless someone takes it off your body first. %s charges %d%% of an item's value, at least %s each." % [
 		int(hours[0]), int(hours[1]), Insurance._clock(Insurance.real_seconds(float(hours[0]))), Insurance._clock(Insurance.real_seconds(float(hours[1]))),
 		chosen.get("name", ""), roundi(float(chosen.get("rate", 0.0)) * 100.0), UiFormat.money(Insurance.CONFIG.insurance_min_price)]
+
+
+## EDIT LOADOUT (a PMC's loadout check): opens the LOADOUT screen over the check. The check hides
+## meanwhile, so the keyboard and controller focus can't reach BACK, INSURE GEAR or READY under it.
+func open_loadout() -> void:
+	if _loadout_screen or _side != "pmc" or _step != Step.LOADOUT:
+		return
+	get_viewport().gui_release_focus()
+	$Margin.hide()
+	_loadout_screen = LOADOUT_SCENE.instantiate()
+	_loadout_screen.closed.connect(_on_loadout_closed)
+	add_child(_loadout_screen)
+
+
+## Back from LOADOUT (it saved as it closed): the check shows the gear you have now.
+func _on_loadout_closed() -> void:
+	_loadout_screen = null
+	$Margin.show()
+	_loadout = GameState.pmc_loadout()
+	_show_loadout()
+	_edit.grab_focus()
 
 
 ## Picks who insures your gear from now on (saved with the profile).

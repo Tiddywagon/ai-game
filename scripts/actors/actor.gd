@@ -551,17 +551,11 @@ func worn_gear() -> Inventory:
 	return null
 
 
-## How far this actor hears, × (DESIGN.md §12.2): a headset on the helmet hears further (better with
-## its upgrade level); helmets and face shields muffle. 1 without a helmet.
+## How far this actor hears, × (DESIGN.md §12.2; GearUpgrades.hearing_multiplier()): a headset hears
+## further (better with its upgrade level), with or without a helmet; helmets, face shields and
+## ballistic masks muffle. 1 with none of them.
 func hearing_multiplier() -> float:
-	var gear := worn_gear()
-	var helmet: ItemInstance = gear.equipment.get("helmet") if gear else null
-	if helmet == null:
-		return 1.0
-	var total := 1.0
-	for piece: ItemInstance in WeaponMods.installed(helmet) + [helmet]:
-		total += GearUpgrades.hearing(piece)
-	return clampf(total, 0.5, 2.0)
+	return GearUpgrades.hearing_multiplier(worn_gear())
 
 
 ## Which body part (a BodyHealth.Part) a bullet fired from `shot_from` and landing at `point` hits,

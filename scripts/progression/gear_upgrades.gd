@@ -3,12 +3,16 @@ extends RefCounted
 ## Gear upgrades (DESIGN.md §12.2): a trader (Stitch) or the hideout Workbench raises a piece of gear's
 ## level (ItemInstance.upgrade_level, +1 to +5) for roubles and barter items. The highest level depends
 ## on the item's rarity; how far a source can take it on its loyalty level or the Workbench's level.
-## Armor (vests, armored rigs, helmets, face shields) gets more durability, lets less blunt damage
-## through and (helmets, face shields) deflects more; rigs and backpacks get lighter and roomier;
-## headsets hear further. Everything is tuned in data/config/gear_upgrades.json.
+## Armor (vests, armored rigs, helmets, face shields, ballistic masks) gets more durability, lets less
+## blunt damage through and (helmets, face shields, masks) deflects more; rigs and backpacks get lighter
+## and roomier; headsets hear further. Everything is tuned in data/config/gear_upgrades.json.
 
 const CONFIG_PATH := "res://data/config/gear_upgrades.json"
 const WORKBENCH := "workbench"
+## Equipment slots whose items (and their parts) change hearing.
+const HEARING_SLOTS: Array[String] = ["helmet", "headset", "face_cover"]
+## The total hearing multiplier stays within these.
+const HEARING_LIMITS := Vector2(0.5, 2.0)
 
 static var _config := {}
 
@@ -31,7 +35,7 @@ static func group_of(data: ItemData) -> String:
 		return ""
 	var stats := data.stats
 	if stats.has("class") and data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET, ItemData.Category.RIG,
-			ItemData.Category.ATTACHMENT]:
+			ItemData.Category.ATTACHMENT, ItemData.Category.FACE_COVER]:
 		return "armor"
 	if stats.has("grid") and data.category in [ItemData.Category.RIG, ItemData.Category.BACKPACK]:
 		return "carry"
@@ -74,12 +78,27 @@ static func ricochet(piece: ItemInstance) -> float:
 
 
 ## How much `piece` changes hearing (+0.25 = sounds heard 25% further): a headset's bonus grows with
-## its level; helmets and face shields muffle.
+## its level; helmets, face shields and ballistic masks muffle.
 static func hearing(piece: ItemInstance) -> float:
 	var value := float(piece.data.stats.get("hearing", 0.0))
 	if value > 0.0:
 		value += _per_level("hearing") * piece.upgrade_level
 	return value
+
+
+## How far someone wearing `gear` hears, × (DESIGN.md §12.2): 1 plus the hearing of the helmet and its
+## face shield, the headset (in its own slot, with or without a helmet) and the face cover, within
+## HEARING_LIMITS. 1 for no gear.
+static func hearing_multiplier(gear: Inventory) -> float:
+	if gear == null:
+		return 1.0
+	var total := 1.0
+	for slot in HEARING_SLOTS:
+		var piece: ItemInstance = gear.equipment.get(slot)
+		if piece:
+			for part: ItemInstance in WeaponMods.installed(piece) + [piece]:
+				total += hearing(part)
+	return clampf(total, HEARING_LIMITS.x, HEARING_LIMITS.y)
 
 
 ## Weight multiplier of a rig or backpack at `piece`'s level (1 for anything else).

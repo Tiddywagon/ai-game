@@ -5,21 +5,22 @@ extends Resource
 ## Per-copy state (rolled bonuses, durability, Found-in-Raid) lives on the item instance, not here.
 
 ## Item categories (DESIGN.md §6.1). Saved as numbers in .tres files: only add new values at the end.
-enum Category { WEAPON, AMMO, ATTACHMENT, ARMOR, RIG, BACKPACK, HELMET, MEDS, FOOD, VALUABLE, JUNK, KEY, CONTAINER, MELEE, THROWABLE }
+enum Category { WEAPON, AMMO, ATTACHMENT, ARMOR, RIG, BACKPACK, HELMET, MEDS, FOOD, VALUABLE, JUNK, KEY, CONTAINER, MELEE, THROWABLE,
+	FACE_COVER }
 ## Rarity scale (DESIGN.md §6.2). Same rule: only add new values at the end.
 enum Rarity { COMMON, UNCOMMON, RARE, ULTRA_RARE, EPIC, LEGENDARY }
 
 ## Names used in JSON files, indexed by Category and Rarity.
 const CATEGORY_NAMES: Array[String] = ["weapon", "ammo", "attachment", "armor", "rig", "backpack", "helmet",
-	"meds", "food", "valuable", "junk", "key", "container", "melee", "throwable"]
+	"meds", "food", "valuable", "junk", "key", "container", "melee", "throwable", "face_cover"]
 const RARITY_IDS: Array[String] = ["common", "uncommon", "rare", "ultra_rare", "epic", "legendary"]
 ## Category names shown to the player (the stash filter, DESIGN.md §8), indexed by Category.
 const CATEGORY_TITLES: Array[String] = ["Weapons", "Ammo", "Attachments", "Armor", "Rigs", "Backpacks", "Helmets",
-	"Meds", "Food & drink", "Valuables", "Barter goods", "Keys", "Containers", "Melee", "Throwables"]
+	"Meds", "Food & drink", "Valuables", "Barter goods", "Keys", "Containers", "Melee", "Throwables", "Face covers"]
 ## Categories in the order the stash lists them (the category filter and the Type sort): guns and what
 ## goes with them, gear, then supplies, keys and goods.
 const CATEGORY_ORDER: Array[Category] = [Category.WEAPON, Category.MELEE, Category.THROWABLE, Category.AMMO,
-	Category.ATTACHMENT, Category.HELMET, Category.ARMOR, Category.RIG, Category.BACKPACK, Category.CONTAINER,
+	Category.ATTACHMENT, Category.HELMET, Category.FACE_COVER, Category.ARMOR, Category.RIG, Category.BACKPACK, Category.CONTAINER,
 	Category.MEDS, Category.FOOD, Category.KEY, Category.VALUABLE, Category.JUNK]
 ## Keys a JSON item may have.
 const JSON_KEYS: Array[String] = ["id", "name", "description", "category", "rarity", "size", "weight", "value",

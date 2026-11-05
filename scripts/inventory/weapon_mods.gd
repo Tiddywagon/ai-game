@@ -2,8 +2,9 @@ class_name WeaponMods
 extends RefCounted
 ## The mod tree on a gun (DESIGN.md §12.1), and on a helmet (§12.2). A gun's WeaponData lists its
 ## slots; a mod (an attachment item with a "mod" stat) can bring slots of its own, e.g. a rail handguard
-## adds a foregrip and a tactical slot. Helmets list theirs in their stats ("slots": face shield,
-## headset; "platform" is what face shields fit, "default_mods" what they come with). Installed mods
+## adds a foregrip and a tactical slot. Helmets list theirs in their stats ("slots": a face shield;
+## "platform" is what face shields fit, "default_mods" what they come with). Headsets are attachments of
+## kind "headset" too, but go in the character's own headset slot (Inventory), not on a helmet. Installed mods
 ## live in ItemInstance.mods by slot id, each with its own `mods`, so taking a handguard off takes its
 ## foregrip with it.
 ##
@@ -19,7 +20,7 @@ const KINDS: Array[String] = ["muzzle", "barrel", "handguard", "foregrip", "stoc
 const KIND_NAMES := {"muzzle": "Muzzle device", "barrel": "Barrel", "handguard": "Handguard", "foregrip": "Foregrip",
 	"stock": "Stock", "pistol_grip": "Pistol grip", "receiver": "Receiver", "sight": "Sight",
 	"tactical": "Tactical device", "magazine": "Magazine", "face_shield": "Face shield", "headset": "Headset"}
-## Kinds that go on helmets, not guns.
+## Kinds that are gear, not gun parts: face shields (on helmets) and headsets (the headset slot).
 const GEAR_KINDS: Array[String] = ["face_shield", "headset"]
 
 
@@ -59,7 +60,7 @@ static func has_slots(item: ItemInstance) -> bool:
 	return item.data.weapon != null or (not is_mod(item.data) and not item.data.stats.get("slots", []).is_empty())
 
 
-## True for parts that go on helmets (face shields, headsets).
+## True for gear parts: face shields (on helmets) and headsets (in the headset slot).
 static func is_gear_mod(data: ItemData) -> bool:
 	return kind_of(data) in GEAR_KINDS
 

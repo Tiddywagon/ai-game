@@ -1,0 +1,318 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/inventory/loadout_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://scripts/ui/inventory/inventory_grid_view.gd" id="2_grid"]
+[ext_resource type="Script" path="res://scripts/ui/stash_filter_bar.gd" id="3_filter"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar"]
+bg_color = Color(1, 1, 1, 0.12)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0, 0, 0, 0.25)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.12)
+
+[node name="LoadoutScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.022, 0.025, 0.97)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Header" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="Margin/Layout/Header"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "LOADOUT"
+
+[node name="WeightBox" type="VBoxContainer" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="WeightLabel" type="Label" parent="Margin/Layout/Header/WeightBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "WEIGHT"
+
+[node name="WeightBar" type="ProgressBar" parent="Margin/Layout/Header/WeightBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(330, 8)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar")
+show_percentage = false
+
+[node name="WeightState" type="Label" parent="Margin/Layout/Header/WeightBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+
+[node name="ValueLabel" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Hint" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+autowrap_mode = 3
+
+[node name="CloseButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 46)
+layout_mode = 2
+size_flags_vertical = 4
+text = "CLOSE  (Tab)"
+
+[node name="Columns" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="EquipmentPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/EquipmentPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Margin/Layout/Columns/EquipmentPanel/Rows"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "CHARACTER"
+
+[node name="Equipment" type="HBoxContainer" parent="Margin/Layout/Columns/EquipmentPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="StatsTitle" type="Label" parent="Margin/Layout/Columns/EquipmentPanel/Rows"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "TOTAL STATS"
+
+[node name="Stats" type="GridContainer" parent="Margin/Layout/Columns/EquipmentPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 1
+columns = 2
+
+[node name="ContainersPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/ContainersPanel"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Containers" type="VBoxContainer" parent="Margin/Layout/Columns/ContainersPanel/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SidePanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/SidePanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PresetsTitle" type="Label" parent="Margin/Layout/Columns/SidePanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "PRESETS"
+
+[node name="PresetList" type="VBoxContainer" parent="Margin/Layout/Columns/SidePanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PresetName" type="LineEdit" parent="Margin/Layout/Columns/SidePanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+placeholder_text = "Preset name"
+max_length = 24
+
+[node name="PresetButtons" type="HBoxContainer" parent="Margin/Layout/Columns/SidePanel/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SaveNewButton" type="Button" parent="Margin/Layout/Columns/SidePanel/Rows/PresetButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+text = "SAVE NEW"
+
+[node name="LoadButton" type="Button" parent="Margin/Layout/Columns/SidePanel/Rows/PresetButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+text = "LOAD"
+
+[node name="EditButtons" type="HBoxContainer" parent="Margin/Layout/Columns/SidePanel/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OverwriteButton" type="Button" parent="Margin/Layout/Columns/SidePanel/Rows/EditButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "OVERWRITE"
+
+[node name="RenameButton" type="Button" parent="Margin/Layout/Columns/SidePanel/Rows/EditButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "RENAME"
+
+[node name="DeleteButton" type="Button" parent="Margin/Layout/Columns/SidePanel/Rows/EditButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "DELETE"
+
+[node name="PresetMessage" type="Label" parent="Margin/Layout/Columns/SidePanel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(276, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+
+[node name="AutoEquip" type="VBoxContainer" parent="Margin/Layout/Columns/SidePanel/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StashPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StashHeader" type="HBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
+layout_mode = 2
+
+[node name="StashTitle" type="Label" parent="Margin/Layout/Columns/StashPanel/Rows/StashHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"AccentLabel"
+text = "STASH"
+
+[node name="Spacer" type="Control" parent="Margin/Layout/Columns/StashPanel/Rows/StashHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="FilterBar" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("3_filter")
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Layout/Columns/StashPanel/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ScrollContent" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StashView" type="Control" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll/ScrollContent"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+script = ExtResource("2_grid")
+
+[node name="LootBody" type="VBoxContainer" parent="Margin/Layout/Columns/StashPanel/Rows/Scroll/ScrollContent"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Overlay" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

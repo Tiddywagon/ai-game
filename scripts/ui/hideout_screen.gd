@@ -132,7 +132,7 @@ func _refresh() -> void:
 func _build_gear_upgrades(level: int) -> void:
 	%Details.add_child(HSeparator.new())
 	_heading("GEAR UPGRADES  (up to +%d at this level)" % GearUpgrades.source_max_level(GearUpgrades.WORKBENCH) if level > 0 else "GEAR UPGRADES  (build the Workbench first)", true)
-	_note("Raise armor, helmets, face shields, headsets, rigs and backpacks a level at a time: more durability, less blunt damage, more room, less weight, better hearing. Level 1 upgrades to +2, level 2 to +4, level 3 to +5; rarer gear goes higher.")
+	_note("Raise armor, helmets, face shields, ballistic masks, headsets, rigs and backpacks a level at a time: more durability, less blunt damage, more room, less weight, better hearing. Level 1 upgrades to +2, level 2 to +4, level 3 to +5; rarer gear goes higher.")
 	for gear in GearUpgrades.owned():
 		var row := GearUpgradeRow.create(gear, GearUpgrades.WORKBENCH)
 		row.upgraded.connect(func(_item: ItemInstance) -> void: _refresh.call_deferred())

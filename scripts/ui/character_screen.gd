@@ -1,29 +1,25 @@
 extends MenuScreen
-## CHARACTER screen (DESIGN.md §16.2): gear, stats (level with the XP toward the next one), skills and
-## the stash side by side, with the stash filter bar over it (StashFilterBar: search, category, rarity,
-## FIR only, sort). INVENTORY (or Tab) opens the grid inventory with the stash beside it, to move gear
-## between them; closing it saves. The stash's title and item count follow it (a sort, the stash
-## growing). Esc / B leaves the filter bar first (back to INVENTORY), then closes; Enter after typing a
-## search keeps the focus on the search box, so the arrows or d-pad carry on from there.
+## CHARACTER screen (DESIGN.md §16.2): stats (level with the XP toward the next one, health, energy and
+## water, money, Drip, Trick Shots, items in the stash) and skills side by side. Your gear and the stash
+## are on the LOADOUT screen (LoadoutScreen, §16.6): LOADOUT (or Tab) opens it over this one (hiding
+## this one's content meanwhile, so the focus stays on LOADOUT), and closing it saves and brings the
+## stats up to date. "Items in stash" follows the stash (a sort, a
+## delivery).
 
 const DIM := Color(1, 1, 1, 0.35)
-const INVENTORY_SCENE := preload("res://ui/inventory_screen.tscn")
+const LOADOUT_SCENE := preload("res://ui/loadout_screen.tscn")
 
-var _inventory_screen: InventoryScreen
+var _loadout_screen: LoadoutScreen
 ## The "Items in stash" value in the stats.
 var _stash_count: Label
 
 
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
-	%InventoryButton.pressed.connect(open_inventory)
-	%FilterBar.grid = GameState.stash
-	%FilterBar.attach(%StashGrid)
-	%FilterBar.search_done.connect(_on_search_done)
+	%LoadoutButton.pressed.connect(open_loadout)
 	_refresh()
-	_update_stash_title()
-	GameState.stash.changed.connect(_on_stash_changed)  # A sort, the stash growing with the Stash station.
-	%InventoryButton.grab_focus.call_deferred()
+	GameState.stash.changed.connect(_on_stash_changed)  # A sort, an insurance return.
+	%LoadoutButton.grab_focus.call_deferred()
 
 
 func _exit_tree() -> void:
@@ -31,87 +27,47 @@ func _exit_tree() -> void:
 		GameState.stash.changed.disconnect(_on_stash_changed)
 
 
-## "STASH  ·  10 × 30".
-func _update_stash_title() -> void:
-	%StashTitle.text = "STASH  ·  %d × %d" % [GameState.stash.size.x, GameState.stash.size.y]
-
-
-## The stash changed: its title and the stats' item count follow (SORT merges stacks).
+## The stash changed: the stats' item count follows (SORT merges stacks).
 func _on_stash_changed() -> void:
-	_update_stash_title()
 	if is_instance_valid(_stash_count):
 		_stash_count.text = str(GameState.stash.items.size())
 
 
-## Typing in the search box stopped: Enter keeps the focus there (the box no longer takes the arrows, so
-## they move on); Esc leaves the bar, back to INVENTORY, as B does.
-func _on_search_done(submitted: bool) -> void:
-	if not submitted:
-		%InventoryButton.grab_focus()
-
-
-## Esc / B: out of the filter bar first (back to INVENTORY), then back to the menu.
-func _on_cancel() -> void:
-	if (%FilterBar as StashFilterBar).clear_focus():
-		%InventoryButton.grab_focus()
-		return
-	close()
-
-
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_inventory") and _inventory_screen == null:
-		open_inventory()
+	if event.is_action_pressed("toggle_inventory") and _loadout_screen == null:
+		open_loadout()
 		get_viewport().set_input_as_handled()
 		return
 	super(event)
 
 
-## Opens the grid inventory over this screen, with the stash.
-func open_inventory() -> void:
-	if _inventory_screen:
+## Opens the LOADOUT screen over this one. This screen's content hides meanwhile, so the keyboard and
+## controller focus can't reach its buttons under LOADOUT.
+func open_loadout() -> void:
+	if _loadout_screen:
 		return
-	_inventory_screen = INVENTORY_SCENE.instantiate()
-	_inventory_screen.inventory = GameState.inventory
-	_inventory_screen.stash = GameState.stash
-	_inventory_screen.closed.connect(_on_inventory_closed)
-	add_child(_inventory_screen)
+	get_viewport().gui_release_focus()
+	$Margin.hide()
+	_loadout_screen = LOADOUT_SCENE.instantiate()
+	_loadout_screen.closed.connect(_on_loadout_closed)
+	add_child(_loadout_screen)
 
 
-func _on_inventory_closed() -> void:
-	_inventory_screen = null
-	SaveManager.save_game()
+## LOADOUT saved as it closed: the stats follow what you wear now.
+func _on_loadout_closed() -> void:
+	_loadout_screen = null
+	$Margin.show()
 	_refresh()
-	%InventoryButton.grab_focus()
+	%LoadoutButton.grab_focus()
 
 
 func _refresh() -> void:
-	for grid: GridContainer in [%GearGrid, %StatsGrid, %SkillsGrid]:
+	for grid: GridContainer in [%StatsGrid, %SkillsGrid]:
 		for child in grid.get_children():
 			grid.remove_child(child)
 			child.queue_free()
-	_fill_gear()
 	_fill_stats()
 	_fill_skills()
-	%StashGrid.queue_redraw()
-
-
-func _fill_gear() -> void:
-	var grid: GridContainer = %GearGrid
-	var inventory := GameState.inventory
-	for slot in Inventory.SLOTS:
-		var item: ItemInstance = inventory.equipment[slot[0]]
-		var text := "—"
-		if item:
-			text = item.data.display_name
-			if item.contents and not item.contents.items.is_empty():
-				text += "  (%d inside)" % item.contents.items.size()
-			elif item.loaded_ammo != "" and ItemDB.get_item(item.loaded_ammo):
-				text += "  ·  " + ItemDB.get_item(item.loaded_ammo).display_name
-		_row(grid, slot[1], text, Palette.rarity_color(item.data.rarity) if item else DIM)
-	var pockets: Array = inventory.pockets.items.map(func(item: ItemInstance) -> String:
-		return item.data.display_name + (" ×%d" % item.count if item.count > 1 else ""))
-	_row(grid, "Pockets", ", ".join(pockets) if not pockets.is_empty() else "—", Color.WHITE if not pockets.is_empty() else DIM)
-	%GearWeight.text = "Carried weight: %s  ·  value %s" % [Settings.format_weight(inventory.total_weight()), UiFormat.money(inventory.total_value())]
 
 
 func _fill_stats() -> void:

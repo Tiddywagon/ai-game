@@ -7,18 +7,25 @@ extends Control
 ## again, `inv_quick_move` (X) quick-moves it to the stash (or back to you) or, while holding one, turns
 ## it, `inv_examine` (View) examines it. It also lands on the stash filter bar's controls (above the
 ## stash): A works the one under it (StashFilterBar.activate(): the search box takes typing, a picker
-## opens its list, a button presses), and the bar has the buttons until B or a pick gives them back. A
-## cell scrolled out of sight scrolls into view. A legend along the bottom shows the buttons. Only on
-## while you play with a controller. Its mouse events are marked as emulated, so they don't count as
-## using the mouse (InputHub).
+## opens its list, a button presses), and the bar has the buttons until B or a pick gives them back. It
+## lands on the screen's other buttons and text boxes too when they're in the CURSOR_GROUP group (the
+## LOADOUT screen's presets): A presses a button, or starts typing in a box. A cell scrolled out of sight
+## scrolls into view. A legend along the bottom shows the buttons. Only on while you play with a
+## controller. Its mouse events are marked as emulated, so they don't count as using the mouse (InputHub).
+##
+## `screen` is any screen with cursor_allowed() (false while something covers the grids), quick_move(item)
+## and examine(item): the inventory (InventoryScreen) and the LOADOUT screen (LoadoutScreen).
 
 const REPEAT_DELAY := 0.35
 const REPEAT_RATE := 0.09
 const COLOR := Color(0.95, 0.75, 0.3)
 ## How far a synthetic drag moves before coming back (so Godot starts dragging).
 const DRAG_NUDGE := 24.0
+## Buttons and text boxes in this group (under `screen`) are cursor targets too.
+const CURSOR_GROUP := &"cursor_targets"
 
-var screen: InventoryScreen
+## The screen it works: cursor_allowed(), quick_move(item) and examine(item) (see the class notes).
+var screen: Control
 var active := false
 ## The cursor's place (global pixels) and what it's on: {"rect", "pos", "control", "local"} (`local`: the
 ## rect in the control, so the cursor follows when the grids scroll or are rebuilt).
@@ -74,11 +81,20 @@ func targets() -> Array:
 			for control in bar.focus_targets():
 				var rect := control.get_global_rect()
 				list.append({"rect": rect, "pos": rect.get_center(), "control": control, "local": Rect2(Vector2.ZERO, control.size)})
+	for node in screen.get_tree().get_nodes_in_group(CURSOR_GROUP):
+		var control := node as Control
+		if control and screen.is_ancestor_of(control) and control.is_visible_in_tree() and not (control is BaseButton and (control as BaseButton).disabled):
+			var rect := control.get_global_rect()
+			list.append({"rect": rect, "pos": rect.get_center(), "control": control, "local": Rect2(Vector2.ZERO, control.size)})
 	return list
 
 
+func _allowed() -> bool:
+	return screen != null and screen.call("cursor_allowed")
+
+
 func _input(event: InputEvent) -> void:
-	if not active or screen == null or not screen.cursor_allowed():
+	if not active or not _allowed():
 		return
 	if not (event is InputEventJoypadButton or event is InputEventJoypadMotion):
 		return  # Arrow keys and the mouse are left alone (and switch the prompts back to the keyboard).
@@ -200,6 +216,17 @@ func select() -> void:
 	if bar:
 		bar.activate(control)
 		return
+	if is_instance_valid(control) and control.is_in_group(CURSOR_GROUP):
+		if control is BaseButton and not (control as BaseButton).disabled:
+			control.grab_focus()
+			var button := control as BaseButton
+			if button.toggle_mode:
+				button.button_pressed = true if button.button_group else not button.button_pressed
+			(control as BaseButton).pressed.emit()
+		elif control is LineEdit:
+			control.grab_focus()
+			(control as LineEdit).edit()
+		return
 	if item_under_cursor() == null:
 		return
 	holding = true  # Before the motion, which carries the held button.
@@ -216,14 +243,14 @@ func quick_move() -> void:
 		return
 	var item := item_under_cursor()
 	if item:
-		screen.quick_move(item)
+		screen.call("quick_move", item)
 
 
 ## View: examines the item under the cursor.
 func examine() -> void:
 	var item := item_under_cursor()
 	if item:
-		screen.examine(item)
+		screen.call("examine", item)
 
 
 func item_under_cursor() -> ItemInstance:
@@ -310,7 +337,7 @@ func _build_legend() -> void:
 
 
 func _draw() -> void:
-	if not active or target.is_empty() or not screen.cursor_allowed():
+	if not active or target.is_empty() or not _allowed():
 		return
 	var rect: Rect2 = target.rect
 	rect.position -= global_position

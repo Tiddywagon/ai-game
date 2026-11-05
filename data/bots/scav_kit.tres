@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BotKit" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="BotKit" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/bot_kit.gd" id="1_kit"]
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/armor.tres" id="2_armor"]
@@ -9,6 +9,7 @@
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/food.tres" id="7_food"]
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/gun.tres" id="8_gun"]
 [ext_resource type="Resource" path="res://data/loot_tables/scav_kit/medkit.tres" id="9_medkit"]
+[ext_resource type="Resource" path="res://data/loot_tables/scav_kit/face_cover.tres" id="10_face_cover"]
 
 [resource]
 script = ExtResource("1_kit")
@@ -30,3 +31,5 @@ food_table = ExtResource("7_food")
 bandage_chance = 0.5
 medkit_chance = 0.7
 medkit_table = ExtResource("9_medkit")
+face_cover_chance = 0.25
+face_cover_table = ExtResource("10_face_cover")

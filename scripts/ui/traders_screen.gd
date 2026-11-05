@@ -990,7 +990,7 @@ func _build_upgrades(trader: Dictionary) -> void:
 		rows.add_child(row)
 		rows.add_child(HSeparator.new())
 	if owned.is_empty():
-		rows.add_child(_note("You have no gear to upgrade: armor, helmets, face shields, headsets, rigs and backpacks."))
+		rows.add_child(_note("You have no gear to upgrade: armor, helmets, face shields, ballistic masks, headsets, rigs and backpacks."))
 
 
 ## The INSURE tab (insurers): what this trader charges and how long returns take, what's on its way

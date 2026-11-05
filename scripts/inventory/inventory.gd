@@ -10,8 +10,8 @@ signal changed
 ## Equipment slots in display order, with their names.
 const SLOTS := [
 	["primary", "Primary weapon"], ["secondary", "Secondary weapon"], ["pistol", "Pistol"], ["melee", "Melee"],
-	["helmet", "Helmet"], ["armor", "Body armor"], ["rig", "Tactical rig"], ["backpack", "Backpack"],
-	["secure", "Secure container"],
+	["helmet", "Helmet"], ["headset", "Headset"], ["face_cover", "Face cover"], ["armor", "Body armor"],
+	["rig", "Tactical rig"], ["backpack", "Backpack"], ["secure", "Secure container"],
 ]
 ## Four 1×1 pockets.
 const POCKETS := Vector2i(4, 1)
@@ -32,7 +32,8 @@ func _init() -> void:
 
 
 ## True if `item` may go in `slot`: weapons in the weapon slots (pistols only in the pistol slot),
-## armor in armor, and so on. One item at a time. Body armor and an armored rig don't go together.
+## armor in armor, a headset (an attachment of kind "headset") in the headset slot, with or without a
+## helmet, and so on. One item at a time. Body armor and an armored rig don't go together.
 func accepts(slot: String, item: ItemInstance) -> bool:
 	if item.count != 1:
 		return false
@@ -47,6 +48,10 @@ func accepts(slot: String, item: ItemInstance) -> bool:
 			return category == ItemData.Category.MELEE
 		"helmet":
 			return category == ItemData.Category.HELMET
+		"headset":
+			return category == ItemData.Category.ATTACHMENT and WeaponMods.kind_of(item.data) == "headset"
+		"face_cover":
+			return category == ItemData.Category.FACE_COVER
 		"armor":
 			# Not over an armored rig: it already is the armor.
 			return category == ItemData.Category.ARMOR and not (equipment.get("rig") and equipment.rig.is_armor())

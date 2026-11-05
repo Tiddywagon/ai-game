@@ -1,6 +1,6 @@
 extends Node
 ## Main menu (DESIGN.md §16): a slowly panning dusk scene with ambient music, the title top-left,
-## the main buttons stacked on the left, the profile top-right (faction, "LEVEL 10 · 36,250 / 39,500
+## the main buttons stacked on the left (ENTER RAID, LOADOUT, HIDEOUT, CHARACTER, TRADERS, QUIT), the profile top-right (faction, "LEVEL 10 · 36,250 / 39,500
 ## XP" with a thin bar toward the next level, money) and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
 ## On first launch the player picks a faction, which creates the profile (each button says what the
@@ -10,6 +10,7 @@ extends Node
 ## stash views redraw; a notice over the screen says what came back).
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
+const LOADOUT_SCENE := preload("res://ui/loadout_screen.tscn")
 const CHARACTER_SCENE := preload("res://ui/character_screen.tscn")
 const HIDEOUT_SCENE := preload("res://ui/hideout_screen.tscn")
 const TRADERS_SCENE := preload("res://ui/traders_screen.tscn")
@@ -43,6 +44,7 @@ func _ready() -> void:
 	InputHub.fit_to_safe_area(_menu)  # Clear of notches on phones and tablets.
 	create_tween().tween_property(_music, "volume_db", 0.0, MUSIC_FADE_IN).set_ease(Tween.EASE_OUT)
 	%EnterRaidButton.pressed.connect(_open.bind(RAID_SETUP_SCENE, %EnterRaidButton))
+	%LoadoutButton.pressed.connect(_open.bind(LOADOUT_SCENE, %LoadoutButton))
 	%HideoutButton.pressed.connect(_open.bind(HIDEOUT_SCENE, %HideoutButton))
 	%CharacterButton.pressed.connect(_open.bind(CHARACTER_SCENE, %CharacterButton))
 	%TradersButton.pressed.connect(_open.bind(TRADERS_SCENE, %TradersButton))
@@ -127,7 +129,7 @@ func _refresh_profile() -> void:
 ## Delivers insurance returns that are due, on time whatever screen is open (grid views redraw when
 ## the stash changes, and a drag only moves its item when dropped), and updates the line under the
 ## profile: "Bulat returned 2 insured items to your stash" for a while (also over an open screen),
-## else "Insurance returns in 1:42".
+## else "Insurance returns in 1:42" (or "1 item from your old save waiting for room in the stash").
 func _check_insurance(delta: float) -> void:
 	if GameState.faction == GameState.Faction.NONE:
 		_insurance_label.text = ""
@@ -147,6 +149,9 @@ func _check_insurance(delta: float) -> void:
 		_insurance_label.text = _arrival_text
 	elif countdown != "":
 		_insurance_label.text = "Insurance returns in %s" % countdown if Insurance.next_due() > 0.0 else "Insurance returns waiting for room in the stash"
+	elif Insurance.from_save_waiting() > 0:
+		var count := Insurance.from_save_waiting()
+		_insurance_label.text = "%d item%s from your old save waiting for room in the stash" % [count, "" if count == 1 else "s"]
 	else:
 		_insurance_label.text = ""
 

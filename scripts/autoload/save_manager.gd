@@ -34,7 +34,19 @@ const SAVE_PATH := "user://savegame.json"
 ## stations, sets the stash's size (no size is saved), so the stash is sized from it before its items
 ## load. Older saves get the Stash at level 1, the 10 × 30 they had; older builds refuse a version 11
 ## save, which could hold items past row 30.
-const SAVE_VERSION := 11
+## Version 12 makes the headset a character slot and adds the face cover slot and loadout presets
+## (DESIGN.md §7, §12.2, §16.6). A headset fitted to a helmet in an older save (worn, in the stash or
+## anywhere inside a container, at any depth) comes off the helmet (helmets have no headset slot any
+## more): onto the headset slot if the helmet is worn and that slot is free, else into the stash as a
+## loose item (upgrade() lists those under LOOSE_KEY; GameState.from_dict() places them, and one with
+## no room waits in insurance_pending until there is, marked "from_save": Insurance announces it as an
+## item from your old save, not an insurance return). An insured helmet's headset stays insured, with
+## the helmet's insurer. A helmet on its way back from insurance (in either pending format) sends its
+## headset back beside it, due at the same time. Older saves have no presets.
+const SAVE_VERSION := 12
+## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
+## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
+const LOOSE_KEY := "loose_items"
 ## Trader ids before version 9 -> the trader who took over (upgrade()).
 const TRADER_IDS_V8 := {"prapor": "bulat", "therapist": "vera", "skier": "zoya", "peacekeeper": "broker",
 	"mechanic": "tinker", "ragman": "stitch", "jaeger": "bulat"}
@@ -90,7 +102,8 @@ func delete_save() -> void:
 ## Save `data` brought up to SAVE_VERSION (a copy; GameState.from_dict() reads it). Version 8 and
 ## older: the version 9 trader ids and reputation (see the version notes). Version 9: nothing to change
 ## (no trader stock yet: GameState.from_dict() gives full stock and a restock from now). Version 10 and
-## older: the Stash station at level 1. Data with no version is taken as current.
+## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
+## ones for the stash). Data with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
 	if version >= SAVE_VERSION:
@@ -100,8 +113,96 @@ func upgrade(data: Dictionary) -> Dictionary:
 		_upgrade_to_v9(result)
 	if version < 11:
 		_upgrade_to_v11(result)
+	if version < 12:
+		_upgrade_to_v12(result)
 	result.version = SAVE_VERSION
 	return result
+
+
+## Version 11 and older to version 12 (in place): every headset fitted to a helmet comes off it. The
+## worn helmet's goes on the headset slot when that's free; every other one (a helmet in the pockets, a
+## rig, the backpack, the secure container or the stash, at any depth) is listed under LOOSE_KEY for the
+## stash. A pending insurance return's headset becomes a return of its own, due with the helmet.
+func _upgrade_to_v12(result: Dictionary) -> void:
+	var loose: Array = []
+	var profile: Variant = result.get("profile")
+	if profile is Dictionary:
+		var inventory: Variant = profile.get("inventory")
+		if inventory is Dictionary and inventory.get("equipment") is Dictionary:
+			var equipment: Dictionary = inventory.equipment
+			var helmet: Variant = equipment.get("helmet")
+			if helmet is Dictionary:
+				var worn := _take_headset(helmet)
+				if not worn.is_empty() and not equipment.get("headset") is Dictionary:
+					worn.x = 0
+					worn.y = 0
+					worn.rotated = false
+					equipment.headset = worn
+				elif not worn.is_empty():
+					loose.append(worn)
+			for slot: Variant in equipment:
+				if equipment[slot] is Dictionary:
+					_take_headsets_inside(equipment[slot], loose)
+		if inventory is Dictionary and inventory.get("pockets") is Array:
+			for entry: Variant in inventory.pockets:
+				_take_headsets_from(entry, loose)
+		if profile.get("insurance_pending") is Array:
+			var returns: Array = []
+			for entry: Variant in profile.insurance_pending:
+				returns.append(entry)
+				if not entry is Dictionary:
+					continue
+				# Version 7 kept a bare item dictionary (due at once, Insurance.pending()).
+				var item: Variant = entry.get("item") if entry.has("item") else entry
+				if not item is Dictionary:
+					continue
+				var parts: Array = []
+				_take_headsets_from(item, parts)
+				for part: Dictionary in parts:
+					returns.append({"item": part, "due": entry.get("due", 0.0) if entry.has("item") else 0.0,
+						"insurer": entry.get("insurer", "") if entry.has("item") else ""})
+			profile.insurance_pending = returns
+	if result.get("stash") is Array:
+		for entry: Variant in result.stash:
+			_take_headsets_from(entry, loose)
+	for part: Dictionary in loose:
+		part.x = -1  # No saved spot: it goes wherever there's room.
+		part.y = -1
+		part.rotated = false
+	result[LOOSE_KEY] = loose
+
+
+## Takes the headset off the item dictionary `item` (its "mods" entry "headset") and returns it ({} if
+## it has none). An insured helmet's insurance covered its headset, so the headset stays insured, with
+## the same insurer.
+func _take_headset(item: Dictionary) -> Dictionary:
+	var mods: Variant = item.get("mods")
+	if not mods is Dictionary or not mods.get("headset") is Dictionary:
+		return {}
+	var headset: Dictionary = mods.headset
+	mods.erase("headset")
+	if item.get("insured", false):
+		headset.insured = true
+		if str(item.get("insurer", "")) != "":
+			headset.insurer = str(item.insurer)
+	return headset
+
+
+## `entry` (an item dictionary) and everything inside it: each headset taken off a helmet goes into `into`.
+func _take_headsets_from(entry: Variant, into: Array) -> void:
+	if not entry is Dictionary:
+		return
+	var headset := _take_headset(entry)
+	if not headset.is_empty():
+		into.append(headset)
+	_take_headsets_inside(entry, into)
+
+
+## Everything inside item dictionary `entry` (its contents, at any depth), as _take_headsets_from().
+func _take_headsets_inside(entry: Dictionary, into: Array) -> void:
+	if entry.get("contents") is Array:
+		for inside: Variant in entry.contents:
+			_take_headsets_from(inside, into)
 
 
 ## Version 10 and older to version 11 (in place): the Stash station, at level 1 (the stash they had).

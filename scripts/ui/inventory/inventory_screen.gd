@@ -27,8 +27,10 @@ extends MenuScreen
 
 ## Equipment slot layout: two columns of [slot, size in cells].
 const SLOT_COLUMNS := [
-	[["helmet", Vector2i(2, 2)], ["armor", Vector2i(2, 2)], ["rig", Vector2i(2, 2)], ["backpack", Vector2i(2, 2)], ["secure", Vector2i(2, 2)]],
-	[["primary", Vector2i(5, 2)], ["secondary", Vector2i(5, 2)], ["pistol", Vector2i(3, 2)], ["melee", Vector2i(2, 2)]],
+	[["helmet", Vector2i(2, 2)], ["headset", Vector2i(2, 1)], ["face_cover", Vector2i(2, 1)], ["armor", Vector2i(2, 2)],
+		["rig", Vector2i(2, 2)], ["backpack", Vector2i(2, 2)]],
+	[["primary", Vector2i(5, 2)], ["secondary", Vector2i(5, 2)], ["pistol", Vector2i(3, 2)], ["melee", Vector2i(2, 2)],
+		["secure", Vector2i(2, 2)]],
 ]
 ## Equipped items whose grids are shown under the pockets.
 const CONTAINER_SLOTS := [["rig", "TACTICAL RIG"], ["backpack", "BACKPACK"], ["secure", "SECURE CONTAINER"]]
@@ -69,6 +71,8 @@ var _use_message_time := 0.0
 ## The controller's cell cursor and the touch gestures.
 var cursor: GridCursor
 var gestures: TouchGestures
+## Pixels per cell of the pockets' and worn containers' grids (the LOADOUT screen draws them smaller).
+var grid_cell := InventoryGridView.CELL
 
 
 func _ready() -> void:
@@ -84,6 +88,7 @@ func _ready() -> void:
 	_examine.can_sell = stash != null and inventory == GameState.inventory
 	_examine.sold.connect(_on_sold)
 	InventoryDrag.mods_allowed = stash != null
+	InventoryDrag.swap_stash = stash
 	%Overlay.add_child(_examine)
 	_build_equipment()
 	_build_containers()
@@ -382,6 +387,8 @@ func _add_section(title: String, grid: InventoryGrid, parent: Control = null, ow
 	_hook_view(view)
 	view.inventory = owner_inventory if owner_inventory else inventory
 	view.grid = grid
+	if parent == %Containers and grid_cell != InventoryGridView.CELL:
+		view.cell_size = grid_cell
 	view.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	parent.add_child(view)
 	if owner_inventory and owner_inventory == loot:
@@ -588,7 +595,7 @@ func _on_gear_upgraded() -> void:
 	_build_containers()  # A bigger rig or backpack.
 
 
-## Takes the part in slot `path` off `item` (a helmet's face shield or headset) into the stash, else
+## Takes the part in slot `path` off `item` (a helmet's face shield) into the stash, else
 ## your pockets, rig or backpack.
 func take_off_part(item: ItemInstance, path: String) -> void:
 	var part := WeaponMods.mod_at(item, path)

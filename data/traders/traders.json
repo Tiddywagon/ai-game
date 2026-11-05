@@ -56,7 +56,7 @@
       "id": "stitch",
       "name": "Stitch",
       "role": "Gear and armor",
-      "specialty": "Armor, helmets, rigs, backpacks, headsets, cloth materials and gear upgrades",
+      "specialty": "Armor, helmets, rigs, backpacks, headsets, face covers, cloth materials and gear upgrades",
       "personality": "A quiet tailor who sews plate carriers from whatever you bring him, in a back room lit by one lamp. He measures twice, cuts once and never rushes a seam. If a strap sits crooked he will unpick the whole rig and start again.",
       "greetings": [
         "Arms up. Let me see how it sits.",
@@ -67,7 +67,7 @@
       "unique": "Upgrades gear",
       "unlock": null,
       "restock_minutes": 60,
-      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"categories": ["armor", "helmet", "rig", "backpack"]}, {"kinds": ["face_shield", "headset"]}, {"groups": ["Materials"], "tags": ["cloth"]}]}
+      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"categories": ["armor", "helmet", "rig", "backpack", "face_cover"]}, {"kinds": ["face_shield", "headset"]}, {"groups": ["Materials"], "tags": ["cloth"]}]}
     },
     {
       "id": "tinker",

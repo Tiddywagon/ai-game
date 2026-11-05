@@ -1,8 +1,9 @@
 class_name EquipmentSlotView
 extends Control
 ## One equipment slot on screen (DESIGN.md §7): the item in it, or the slot's name when empty. Drop an
-## item that belongs there to equip it (the slot lights up green, or red if it doesn't fit there); drag
-## it out to unequip. Dropping something on an equipped rig or backpack puts it inside, and (out of
+## item that belongs there to equip it (the slot lights up green, or red if it doesn't fit there), on a
+## filled slot too: the two swap (InventoryDrag.drop_swap(): the old one goes where the new one came
+## from, or to the stash); drag it out to unequip. Dropping something on an equipped rig or backpack puts it inside, and (out of
 ## raid) a weapon part on an equipped gun fits it to a free slot. Right-click examines; double-click
 ## opens a rig, backpack or container; Ctrl-click quick-moves it to the stash.
 
@@ -49,7 +50,7 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 	if not data is InventoryDrag:
 		return false
 	var drag: InventoryDrag = data
-	if drag.can_equip(inventory, slot):
+	if drag.can_equip(inventory, slot) or drag.can_swap(inventory, slot):
 		_hover = 1
 	elif item() and (drag.can_insert(item()) or drag.install_path(item()) != "" or drag.can_load(item())):
 		_hover = 2
@@ -61,7 +62,8 @@ func _can_drop_data(_at: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at: Vector2, data: Variant) -> void:
 	var drag: InventoryDrag = data
-	if not drag.drop_on_slot(inventory, slot) and item() and not drag.insert(item()) and not drag.install(item()):
+	if not drag.drop_on_slot(inventory, slot) and not drag.drop_swap(inventory, slot) and item() and not drag.insert(item()) \
+			and not drag.install(item()):
 		drag.load_into(item())
 	_hover = 0
 	queue_redraw()

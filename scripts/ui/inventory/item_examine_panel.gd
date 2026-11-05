@@ -7,7 +7,7 @@ extends PanelContainer
 ## parts fitted and their durability; weapon parts what they change and which guns they fit. Guns with
 ## rounds loaded can be unloaded from here, and out of raid MODIFY opens the modding screen. Guns and
 ## rounds also show an ammo chart beside the stats: every round of the caliber compared (AmmoChart).
-## Armor shows its class, what it covers and its durability; helmets their face shield and headset
+## Armor shows its class, what it covers and its durability; helmets their face shield
 ## (TAKE OFF out of raid); upgradable gear its level, and out of raid UPGRADE opens GearUpgradePanel.
 ## Meds, stims, food and drink (DESIGN.md §13.7) show what they treat, their HP pool or uses left, use
 ## time, energy and hydration and their effects and side effects; USE uses one (in a raid: on you,
@@ -32,7 +32,7 @@ signal unload_requested(item: ItemInstance)
 signal modify_requested(item: ItemInstance)
 ## UPGRADE pressed for upgradable gear.
 signal upgrade_requested(item: ItemInstance)
-## TAKE OFF pressed for the part in slot `path` of `item` (a helmet's face shield or headset).
+## TAKE OFF pressed for the part in slot `path` of `item` (a helmet's face shield).
 signal part_removal_requested(item: ItemInstance, path: String)
 ## USE pressed for a med, stim, food or drink.
 signal use_requested(item: ItemInstance)
@@ -328,7 +328,7 @@ func _on_insure() -> void:
 	show_item(item)
 
 
-## A helmet's face shield and headset slots: what's fitted, with TAKE OFF out of raid.
+## A helmet's face shield slot: what's fitted, with TAKE OFF out of raid.
 func _build_parts() -> void:
 	for child in _parts.get_children():
 		_parts.remove_child(child)
@@ -372,7 +372,10 @@ func close() -> void:
 
 
 ## Which guns (or helmets, for a face shield) part `data` fits: their names, or any with a slot for it.
+## A headset goes in its own character slot, with or without a helmet.
 static func fits_text(data: ItemData) -> String:
+	if WeaponMods.kind_of(data) == "headset":
+		return "The headset slot, with or without a helmet"
 	var platforms: Array = WeaponMods.info(data).get("fits", [])
 	var gear := WeaponMods.is_gear_mod(data)
 	if platforms.is_empty():
@@ -561,6 +564,8 @@ static func stat_lines(examined: ItemInstance) -> Array:
 				lines.append(["Ricochet", "×%.2f the round's chance" % GearUpgrades.ricochet(examined)])
 		else:
 			lines.append(["Type", str(stats["class"]).capitalize()])
+	if data.category == ItemData.Category.FACE_COVER and not stats.has("class"):
+		lines.append(["Protects", "Nothing (cosmetic); worn in the face cover slot"])
 	if examined.is_armor():
 		var worn := examined.durability / maxf(examined.max_durability, 1.0)
 		lines.append(["Durability", "%.1f / %.1f%s" % [examined.durability, examined.max_durability,
@@ -597,7 +602,7 @@ static func stat_lines(examined: ItemInstance) -> Array:
 			var total := hearing
 			for part in WeaponMods.installed(examined):
 				total += GearUpgrades.hearing(part)
-			text = "%+d%% on its own, %+d%% with its face shield and headset" % [roundi(hearing * 100.0), roundi(total * 100.0)]
+			text = "%+d%% on its own, %+d%% with its face shield" % [roundi(hearing * 100.0), roundi(total * 100.0)]
 		if not is_zero_approx(hearing) or not examined.mods.is_empty():
 			lines.append(["Hearing", text.replace("-", "−")])
 	if GearUpgrades.is_upgradable(data):

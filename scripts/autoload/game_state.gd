@@ -66,6 +66,7 @@ var hydration := START_HYDRATION
 var metabolism_time := 0.0
 ## Insured items on their way back (DESIGN.md §2, Insurance): {"item": ItemInstance.to_dict(), "due":
 ## unix time, "insurer"}, delivered to the stash once due and there's room (Insurance.deliver_due()).
+## An item an old save had nowhere to put waits here too, marked Insurance.FROM_SAVE (SaveManager).
 var insurance_pending: Array = []
 ## The trader you insure with (an id in data/config/insurers.json).
 var insurer := DEFAULT_INSURER
@@ -73,6 +74,10 @@ var insurer := DEFAULT_INSURER
 var hotkeys: Array = DEFAULT_HOTKEYS.duplicate()
 ## Points of interest you've been in, by map (DESIGN.md §5.2): {map id: [POI ids]}.
 var explored: Dictionary = {}
+## Saved loadouts (DESIGN.md §16.6, LoadoutPresets), at most LoadoutPresets.MAX: each {"name", "slots":
+## {slot: {"id", "parts": {slot path: part id}, "upgrade", "ammo", "rounds"}}, "pockets" / "rig" /
+## "backpack": [{"id", "count"}]}.
+var loadout_presets: Array = []
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -185,6 +190,7 @@ func _reset(new_faction: Faction) -> void:
 	insurer = DEFAULT_INSURER
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
 	explored = {}
+	loadout_presets = []
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -217,6 +223,7 @@ func to_dict() -> Dictionary:
 			"insurer": insurer,
 			"hotkeys": hotkeys.duplicate(),
 			"explored": explored.duplicate(true),
+			"loadout_presets": loadout_presets.duplicate(true),
 		},
 		"stash": stash.to_array(),
 	}
@@ -236,7 +243,10 @@ static func _counts(saved: Variant) -> Dictionary:
 ## float, so whole numbers are converted back with int(). The level is worked out again from the
 ## experience (never lower than the saved level), and loyalty levels are checked against it. Stations
 ## built from the start (the Stash) are never below their start level, and the stash takes its size
-## from the Stash's level before its items load (items in the added rows keep their places).
+## from the Stash's level before its items load (items in the added rows keep their places). Items an
+## old save had somewhere that's gone (SaveManager.LOOSE_KEY: headsets off helmets) go in the stash; one
+## with no room waits in insurance_pending (due at once, marked Insurance.FROM_SAVE, no insurer),
+## delivered when there's room.
 func from_dict(data: Dictionary) -> void:
 	data = SaveManager.upgrade(data)
 	var profile: Dictionary = data.get("profile", {})
@@ -304,6 +314,12 @@ func from_dict(data: Dictionary) -> void:
 			var entry: Dictionary = saved_skills[skill]
 			skills[skill] = {"level": int(entry.get("level", 0)), "progress": float(entry.get("progress", 0.0))}
 
+	loadout_presets = LoadoutPresets.sanitize(profile.get("loadout_presets", []))
+
 	stash.resize(Hideout.stash_size())
 	stash.load_array(data.get("stash", []))
+	for entry: Variant in data.get(SaveManager.LOOSE_KEY, []):
+		var item := ItemInstance.from_dict(entry) if entry is Dictionary else null
+		if item and not stash.add(item):
+			insurance_pending.append({"item": item.to_dict(), "due": 0.0, "insurer": "", Insurance.FROM_SAVE: true})
 	Trading.update_all_loyalty()

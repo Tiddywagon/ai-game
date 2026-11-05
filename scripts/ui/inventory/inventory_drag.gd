@@ -5,13 +5,19 @@ extends RefCounted
 ## with R. It also decides what dropping it somewhere would do, and does it. Nothing moves until the
 ## drop succeeds, so letting go anywhere else simply cancels. Stacks only merge with the same
 ## Found-in-Raid status, and a split keeps the status of its stack. Out of raid, a weapon part dropped
-## on a gun (or a face shield or headset on a helmet) is fitted to a free slot it fits (DESIGN.md §12.1); in the modding screen parts are also
-## dragged off a gun's slots. Rounds dropped on a gun of their caliber load it (DESIGN.md §6.4).
+## on a gun (or a face shield on a helmet) is fitted to a free slot it fits (DESIGN.md §12.1); in the modding screen parts are also
+## dragged off a gun's slots. Rounds dropped on a gun of their caliber load it (DESIGN.md §6.4). An
+## item dropped on a filled equipment slot it belongs in swaps with what's there: the old item goes
+## where the new one came from (that slot, or that grid, in the new one's place if it fits there, else
+## anywhere in it), else into the stash (`swap_stash`, out of raid); with nowhere to go nothing changes.
 
 ## The drag in progress, if any (for R and the mouse wheel).
 static var current: InventoryDrag
 ## Weapon parts can be fitted to guns (out of raid only: the inventory screen sets it).
 static var mods_allowed := false
+## Where a swapped-out item goes when it can't go back where the new one came from: the stash out of
+## raid, null in a raid (the inventory screen sets it).
+static var swap_stash: InventoryGrid
 
 ## Turned or the amount changed: the preview redraws.
 signal updated
@@ -222,6 +228,83 @@ func drop_on_slot(target: Inventory, slot: String) -> bool:
 	_remove_from_source()
 	item.rotated = false
 	return target.equip(slot, item)
+
+
+## True if dropping on the filled equipment `slot` of `target` would swap (swap_plan()).
+func can_swap(target: Inventory, slot: String) -> bool:
+	return not swap_plan(target, slot).is_empty()
+
+
+## What dropping on the filled `slot` of `target` would do: {"old": the item there, "to": where it goes:
+## "slot" (the slot the new one came from), "grid" (the grid it came from) or "stash"}, or {} if it
+## can't swap (an empty slot, a split, an item the slot doesn't take, nowhere for the old one).
+func swap_plan(target: Inventory, slot: String) -> Dictionary:
+	if splitting or target == null or from_gun:
+		return {}
+	var old: ItemInstance = target.equipment.get(slot)
+	if old == null or old == item or (from_slot == slot and target == inventory) or not target.accepts(slot, item):
+		return {}
+	if from_slot != "" and inventory:
+		return {"old": old, "to": "slot"} if inventory.accepts(from_slot, old) else {}
+	if from_grid and from_grid.accepts(old) and (_fits_at(from_grid, old, item.cell) or from_grid.has_room_for(old)):
+		return {"old": old, "to": "grid"}
+	if swap_stash and swap_stash != from_grid and swap_stash.has_room_for(old):
+		return {"old": old, "to": "stash"}
+	return {}
+
+
+## True if `old` fits at `cell` of `grid` (turned or not) once the dragged item has left.
+func _fits_at(grid: InventoryGrid, old: ItemInstance, cell: Vector2i) -> bool:
+	for turned in [false, true]:
+		var footprint := old.footprint_if(turned)
+		if grid.in_bounds(cell, footprint) and grid.is_free(cell, footprint, item):
+			return true
+	return false
+
+
+## Swaps the dragged item with what's in the filled `slot` of `target` (swap_plan()). True if it did.
+func drop_swap(target: Inventory, slot: String) -> bool:
+	var plan := swap_plan(target, slot)
+	if plan.is_empty():
+		return false
+	var old: ItemInstance = plan.old
+	var cell := item.cell
+	var turned := item.rotated
+	_remove_from_source()
+	target.unequip(slot)
+	item.rotated = false
+	if not target.equip(slot, item):
+		target.equip(slot, old)
+		_put_back(cell, turned)
+		return false
+	var placed := false
+	match plan.to:
+		"slot":
+			old.rotated = false
+			placed = inventory.equip(from_slot, old)
+		"grid":
+			placed = from_grid.place(old, cell, false) or from_grid.place(old, cell, true) or from_grid.add(old)
+	if not placed and swap_stash and swap_stash.accepts(old):
+		placed = swap_stash.add(old)
+	if not placed:
+		target.unequip(slot)
+		target.equip(slot, old)
+		_put_back(cell, turned)
+		return false
+	if from_grid:
+		from_grid.changed.emit()
+	if swap_stash:
+		swap_stash.changed.emit()
+	return true
+
+
+## Puts the dragged item back where it came from (a swap that couldn't finish).
+func _put_back(cell: Vector2i, turned: bool) -> void:
+	if from_grid:
+		if not from_grid.place(item, cell, turned):
+			from_grid.add(item)
+	elif inventory and from_slot != "":
+		inventory.equip(from_slot, item)
 
 
 ## True if `container` (a rig or backpack shown as an item) can take what's being dragged.

@@ -1,0 +1,12 @@
+[
+  {"id": "balaclava", "name": "Balaclava", "description": "Black knitted balaclava. Keeps the wind off and your face out of photos. Stops nothing.", "category": "face_cover", "rarity": "common", "size": [1, 1], "weight": 0.1, "value": 3000, "loot_weight": 1.0,
+   "stats": {}},
+  {"id": "shemagh", "name": "Shemagh", "description": "Cotton scarf wrapped over the nose and mouth against dust. Stops nothing.", "category": "face_cover", "rarity": "common", "size": [1, 1], "weight": 0.15, "value": 4500, "loot_weight": 1.0,
+   "stats": {}},
+  {"id": "respirator", "name": "Half-face respirator", "description": "Rubber half mask with twin filters, from a paint shop. Breathing is easier in the dust; bullets don't care.", "category": "face_cover", "rarity": "uncommon", "size": [1, 1], "weight": 0.35, "value": 12000, "loot_weight": 0.8,
+   "stats": {}},
+  {"id": "shchit_mask", "name": "Shchit ballistic mask", "description": "Aramid and polyethylene mask molded to the face. Class 3 over the face, worn with or without a helmet.", "category": "face_cover", "rarity": "rare", "size": [2, 1], "weight": 0.9, "value": 38000, "loot_weight": 0.6,
+   "stats": {"class": 3, "durability": 30, "zones": ["face"], "material": "aramid", "blunt": 0.35, "ricochet": 0.3, "destructibility": 0.5, "hearing": -0.05}},
+  {"id": "kremen_mask", "name": "Kremen-4 steel mask", "description": "Heavy steel face plate on a padded harness. Class 4 over the face; hard to hear through.", "category": "face_cover", "rarity": "epic", "size": [2, 1], "weight": 1.8, "value": 120000, "loot_weight": 0.6,
+   "stats": {"class": 4, "durability": 40, "zones": ["face"], "material": "steel", "blunt": 0.3, "ricochet": 0.5, "destructibility": 0.45, "hearing": -0.1}}
+]

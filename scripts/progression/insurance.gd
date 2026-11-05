@@ -10,14 +10,19 @@ extends RefCounted
 ## found in raid and aren't insured any more. They wait in GameState.insurance_pending ({"item", "due"
 ## (unix time), "insurer"}) until due and there's room in the stash (deliver_due()).
 ##
-## Insurable: guns, weapon parts, armor, helmets, rigs, backpacks and melee weapons. Not ammo, meds,
-## food, barter goods, valuables, keys or the secure container (always kept anyway).
+## Insurable: guns, weapon parts (headsets and face shields too), armor, helmets, face covers, rigs,
+## backpacks and melee weapons. Not ammo, meds, food, barter goods, valuables, keys or the secure
+## container (always kept anyway).
 
 const CONFIG: RaidConfig = preload("res://data/config/raid.tres")
+## Marks a GameState.insurance_pending entry that isn't an insurance return: an item an old save had
+## nowhere to put (SaveManager: a headset off a helmet, the stash full). It waits for room the same way
+## and is announced as what it is; deliver_due() sets this meta on such an item when it arrives.
+const FROM_SAVE := "from_save"
 const INSURERS_PATH := "res://data/config/insurers.json"
 const INSURABLE: Array[ItemData.Category] = [ItemData.Category.WEAPON, ItemData.Category.ATTACHMENT,
 	ItemData.Category.ARMOR, ItemData.Category.HELMET, ItemData.Category.RIG, ItemData.Category.BACKPACK,
-	ItemData.Category.MELEE]
+	ItemData.Category.MELEE, ItemData.Category.FACE_COVER]
 
 
 ## Unix time to use instead of the clock (tests); -1: the real clock.
@@ -227,23 +232,33 @@ static func pending() -> Array:
 	return result
 
 
-## Seconds until the next pending return is due (0: one is; -1: nothing pending).
+## Seconds until the next pending return is due (0: one is; -1: nothing pending). Items from an old save
+## (FROM_SAVE) aren't returns and don't count.
 static func next_due() -> float:
 	var soonest := -1.0
 	for entry: Dictionary in pending():
+		if entry.get(FROM_SAVE, false):
+			continue
 		var left := maxf(float(entry.due) - now(), 0.0)
 		soonest = left if soonest < 0.0 else minf(soonest, left)
 	return soonest
 
 
+## Items from an old save waiting for room in the stash (FROM_SAVE entries).
+static func from_save_waiting() -> int:
+	return pending().filter(func(entry: Dictionary) -> bool: return entry.get(FROM_SAVE, false)).size()
+
+
 ## Puts the pending returns that are due into the stash, as far as it has room (the rest keep
-## waiting). Returns the items that arrived.
+## waiting). Returns the items that arrived (an item from an old save carries the meta FROM_SAVE).
 static func deliver_due() -> Array[ItemInstance]:
 	var arrived: Array[ItemInstance] = []
 	var waiting := []
 	for entry: Dictionary in pending():
 		var item := ItemInstance.from_dict(entry.item) if float(entry.due) <= now() else null
-		if item and item.insurer == "":
+		if item and entry.get(FROM_SAVE, false):
+			item.set_meta(FROM_SAVE, true)
+		elif item and item.insurer == "":
 			item.insurer = str(entry.get("insurer", ""))
 		if item and GameState.stash.add(item):
 			arrived.append(item)
@@ -253,14 +268,22 @@ static func deliver_due() -> Array[ItemInstance]:
 	return arrived
 
 
-## "Bulat returned 3 insured items" for what deliver_due() brought ("" for nothing).
+## "Bulat returned 3 insured items to your stash" for what deliver_due() brought ("" for nothing); items
+## from an old save: "1 item from your old save reached your stash" (both: "...; 1 item from your old
+## save reached it too").
 static func arrival_text(items: Array[ItemInstance]) -> String:
-	if items.is_empty():
-		return ""
-	var names := {}
-	for item in items:
-		names[insurer_name(item.insurer)] = true
-	return "%s returned %d insured item%s to your stash" % [" and ".join(names.keys()), items.size(), "" if items.size() == 1 else "s"]
+	var returned := items.filter(func(item: ItemInstance) -> bool: return not item.has_meta(FROM_SAVE))
+	var old := items.size() - returned.size()
+	var parts: Array[String] = []
+	if not returned.is_empty():
+		var names := {}
+		for item: ItemInstance in returned:
+			names[insurer_name(item.insurer)] = true
+		parts.append("%s returned %d insured item%s to your stash" % [" and ".join(names.keys()), returned.size(),
+			"" if returned.size() == 1 else "s"])
+	if old > 0:
+		parts.append("%d item%s from your old save reached %s" % [old, "" if old == 1 else "s", "it too" if parts.size() > 0 else "your stash"])
+	return "; ".join(parts)
 
 
 ## "1:42" for `seconds`.
@@ -281,7 +304,7 @@ static func pending_text(id: String) -> String:
 	var count := 0
 	var soonest := -1.0
 	for entry: Dictionary in pending():
-		if str(entry.insurer) == id:
+		if str(entry.insurer) == id and not entry.get(FROM_SAVE, false):
 			count += 1
 			var left := maxf(float(entry.due) - now(), 0.0)
 			soonest = left if soonest < 0.0 else minf(soonest, left)

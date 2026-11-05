@@ -195,10 +195,11 @@ func is_gun() -> bool:
 	return data.weapon != null
 
 
-## Armor that stops rounds: a vest, a helmet, a face shield or an armored rig (it has an armor "class").
+## Armor that stops rounds: a vest, a helmet, a face shield, a ballistic mask or an armored rig (it has an
+## armor "class").
 func is_armor() -> bool:
 	return data.stats.has("class") and data.category in [ItemData.Category.ARMOR, ItemData.Category.HELMET, ItemData.Category.RIG,
-		ItemData.Category.ATTACHMENT]
+		ItemData.Category.ATTACHMENT, ItemData.Category.FACE_COVER]
 
 
 ## Guns and armor wear and keep their durability.

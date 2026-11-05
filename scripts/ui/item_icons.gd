@@ -55,6 +55,11 @@ static func _draw_icon(item: ItemData, color: Color) -> Image:
 		ItemData.Category.HELMET:
 			glyph.disc(0.5, 0.62, 0.42, true)
 			glyph.box(0.02, 0.6, 0.98, 0.72)  # Brim.
+		ItemData.Category.FACE_COVER:
+			glyph.box(0.12, 0.1, 0.88, 0.9)  # The mask.
+			glyph.clear(0.24, 0.3, 0.44, 0.44)  # Eye holes.
+			glyph.clear(0.56, 0.3, 0.76, 0.44)
+			glyph.clear(0.4, 0.66, 0.6, 0.74)  # Mouth slit.
 		ItemData.Category.RIG:
 			glyph.box(0.15, 0.2, 0.85, 0.35)
 			for x in [0.15, 0.39, 0.63]:
