@@ -12,6 +12,13 @@ extends Node
 ## DESIGN.md §4.4). AI Scavs and PMCs leave through the same extracts (Bot). Dying is KILLED; the clock running out or leaving from the pause menu is MIA. The
 ## ending is settled by RaidOutcome (found-in-raid status, what you keep, insurance) and shown by the
 ## level.
+## A Scav run joins the raid under way (GameState.raid "offset", start_offset: ScavRuns): the clock shows
+## what's left, and what the raid did before you came is done (_fast_forward(): Scav waves, AI PMC squads
+## (some gone, some dead), AI that left, picked-over loot; RaidEvents does its events); a Run Through and
+## the time in raid count from when you came (own_seconds()). As a Scav it also keeps your Scav karma
+## for the raid (karma(), karma_changes): killing friendly Scavs lowers it, killing PMCs and extracting
+## (with others) raises it, AI Scavs shoot you on sight while it's low (Player.scavs_hostile), and Scavs
+## that see you shoot a Scav turn on you (scav_witnesses()).
 
 ## The raid ended (the outcome is already settled and saved).
 signal raid_ended(outcome: RaidOutcome)
@@ -24,6 +31,10 @@ signal poi_entered(poi: PointOfInterest, first_time: bool)
 ## A point moved onto the navmesh further than this (metres) means the navmesh isn't there yet
 ## (_on_navmesh()).
 const NAVMESH_SNAP := 8.0
+## Random spots the fast-forward tries for a body that died before you joined (_lay_body()).
+const BODY_TRIES := 16
+## Places round a Scav wave's spot it can stand its Scavs on out of the player's sight (_wave_places()).
+const WAVE_RING := 8
 
 @export var player: Player
 @export var config: RaidConfig = preload("res://data/config/raid.tres")
@@ -39,6 +50,18 @@ var map: MapInfo
 ## Seconds since the raid started, and seconds left on the clock.
 var elapsed := 0.0
 var time_left := 0.0
+## Raid seconds that had passed when you joined: a Scav run's offset (GameState.raid "offset", rolled
+## by RaidSetup: ScavRuns.roll_offset()), else 0.
+var start_offset := 0.0
+## What the raid did before you joined (_fast_forward()): {"waves", "wave_times" (the raid seconds they
+## came at), "squads" (still in the raid), "fought" (squads that met one of the other faction and lie
+## dead), "left" (AI that left before you came), "dead" (AI PMCs lying dead), "bodies" [{"name", "poi"}],
+## "loot": {"share", "items", "taken", "loose", "loose_taken"}}; {} for a raid you start.
+var fast_forward := {}
+## Scav karma (ScavRuns): the profile's at the start, and this raid's changes so far ([{"reason",
+## "delta"}]; applied when the raid settles).
+var karma_start := 0.0
+var karma_changes: Array[Dictionary] = []
 ## Raid experience so far, and where it came from: {"kills", "looting", "trick_shots", "exploration",
 ## "survived"}.
 var xp := 0
@@ -58,7 +81,8 @@ var extract_time := 0.0
 var extracted_at := ""
 ## Where the raid started (null: the player's place in the scene).
 var spawn_point: SpawnPoint
-## AI that left through an extract: [{"name", "side": "pmc" or "scav", "faction", "extract"}].
+## AI that left through an extract: [{"name", "side": "pmc" or "scav", "faction", "extract", "time" (raid
+## seconds), "friendly" (not hostile to you), "before" (left before you joined)}].
 var ai_extracts: Array[Dictionary] = []
 ## The AI PMC squads that joined the raid (Squad), in spawn order.
 var ai_squads: Array[Squad] = []
@@ -88,6 +112,9 @@ var _pmc_count := 0
 var _next_late_try := 0.0
 var _pmcs_started := false
 
+## Joining mid-raid: its own rolls (where squads and bodies are), seeded in a seeded raid.
+var _join_rng := RandomNumberGenerator.new()
+
 ## The map's power: seconds until it comes on after the switch is thrown (-1: off), and on.
 var _power_countdown := -1.0
 var _power_on := false
@@ -97,11 +124,16 @@ var _confirm_timer := 0.0
 func _ready() -> void:
 	add_to_group("raid_controller")
 	map = MapInfo.find(GameState.raid.get("map", map_id))
-	time_left = raid_seconds()
+	start_offset = clampf(float(GameState.raid.get("offset", 0.0)), 0.0, maxf(raid_seconds() - 1.0, 0.0))
+	elapsed = start_offset
+	time_left = raid_seconds() - start_offset
+	karma_start = ScavRuns.karma()
 	if GameState.raid.has("seed"):
 		rng.seed = int(GameState.raid.seed)
+		_join_rng.seed = hash([int(GameState.raid.seed), "mid_raid"])
 	else:
 		rng.randomize()
+		_join_rng.randomize()
 	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
 		zone.configure_for_map(map.id if map else map_id)
 		zone.roll(rng)
@@ -111,10 +143,13 @@ func _ready() -> void:
 		player.loot_claimed.connect(_on_loot_claimed)
 		player.trick_shot_hit.connect(_on_trick_shot_hit)
 		player.died.connect(end_raid.bind(RaidOutcome.Status.KILLED))
+		_update_karma_effects()
 		if is_real_raid() and GameState.raid.get("spawn", "") != "scene":
 			_place_player()
 		plan_pmc_schedule()
-		if not pmc_schedule.is_empty():
+		if start_offset > 0.0:
+			_join_mid_raid.call_deferred()
+		elif not pmc_schedule.is_empty():
 			_spawn_ai_pmcs.call_deferred()
 	if scav_waves:
 		next_wave = rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
@@ -150,7 +185,7 @@ func _physics_process(delta: float) -> void:
 		if extract_time >= config.extract_seconds:
 			extracted_at = extract_zone.extract_name
 			extract_zone.use_up_item(player)
-			end_raid(RaidOutcome.extract_status(elapsed, xp, config))
+			end_raid(RaidOutcome.extract_status(own_seconds(), xp, config, run_through_seconds()))
 	else:
 		extract_time = 0.0
 
@@ -162,6 +197,21 @@ func is_over() -> bool:
 ## The raid's full length in seconds (the map's raid time).
 func raid_seconds() -> float:
 	return (map.raid_minutes if map else 15) * 60.0
+
+
+## Seconds since you joined the raid (since it started, unless you joined mid-raid): what a Run Through
+## and the summary's time in raid count.
+func own_seconds() -> float:
+	return maxf(elapsed - start_offset, 0.0)
+
+
+## Extracting sooner than this after you joined (with little experience) is a Run Through:
+## RaidConfig.run_through_seconds (7 minutes); on a Scav run that joined late, less
+## (ScavRuns.run_through_seconds(): half the time that was left).
+func run_through_seconds() -> float:
+	if side() == "scav" and start_offset > 0.0:
+		return ScavRuns.run_through_seconds(config.run_through_seconds, raid_seconds() - start_offset)
+	return config.run_through_seconds
 
 
 ## The extracts the player has this raid: the ones for their side, without quest extracts they haven't
@@ -217,7 +267,7 @@ func leave_extract(zone: ExtractZone) -> void:
 ## An AI Scav or PMC left through `zone`: it's gone from the raid (with its gear).
 func bot_extracted(bot: Bot, zone: ExtractZone) -> void:
 	ai_extracts.append({"name": bot.display_name(), "side": "scav" if bot.side == Actor.Side.SCAV else "pmc",
-		"faction": String(bot.faction), "extract": zone.extract_name})
+		"faction": String(bot.faction), "extract": zone.extract_name, "time": elapsed, "friendly": player != null and not bot.is_hostile(player)})
 	bot.leave_raid()
 
 
@@ -299,11 +349,12 @@ func switch_power_on() -> bool:
 # --- Start ---------------------------------------------------------------------------------------
 
 ## Puts the player on a random spawn point for their side, away from hostile AI if one is: a PMC keeps
-## away from every bot (Scavs, and PMCs of either faction: all hostile to it), a Scav from PMCs only.
+## away from every bot (Scavs, and PMCs of either faction: all hostile to it), a Scav from PMCs only
+## (and from Scavs too while its karma has them shoot it on sight).
 func _place_player() -> void:
 	var threats: Array[Vector3] = []
 	for bot in get_tree().get_nodes_in_group("bots"):
-		if bot is Bot and not bot.is_dead and (bot.side == Actor.Side.PMC or side() == "pmc"):
+		if bot is Bot and not bot.is_dead and (bot.side == Actor.Side.PMC or side() == "pmc" or player.scavs_hostile):
 			threats.append(bot.global_position)
 	var wanted := str(GameState.raid.get("spawn", ""))
 	if wanted != "":
@@ -328,22 +379,45 @@ func spawn_wave() -> Array[Bot]:
 		return spawned
 	var alive := scavs_alive()
 	var size := mini(rng.randi_range(config.scav_wave_size.x, config.scav_wave_size.y), config.scav_max_alive - alive)
-	var at: Variant = wave_spot()
+	var at: Variant = wave_spot(maxi(size, 1))
 	if size <= 0 or at == null:
 		return spawned
 	waves += 1
 	var roam := _points_near(at, 30.0)
+	var places := _wave_places(at, size)
 	for i in size:
 		var bot: Bot = ScavZone.BOT_SCENE.instantiate()
 		bot.name = "Wave%d_Scav%d" % [waves, i + 1]
 		bot.profile = scav_profile
 		bot.wave = waves
 		bot.wander_points = roam
-		var angle := TAU * i / size
-		bot.position = at + Vector3(cos(angle), 0.0, sin(angle)) * 1.2
+		bot.position = places[i]
 		get_parent().add_child(bot)
 		spawned.append(bot)
 	return spawned
+
+
+## Where a wave's `count` Scavs stand around its spot `at`: evenly round it, 1.2 m out; if one of those
+## is in the player's sight, the places on that ring that aren't (so nobody pops up in view beside a
+## hidden spot); [] if there aren't enough of them (wave_spot() doesn't pick it).
+func _wave_places(at: Vector3, count: int) -> Array[Vector3]:
+	var places: Array[Vector3] = []
+	for i in count:
+		var angle := TAU * i / count
+		places.append(at + Vector3(cos(angle), 0.0, sin(angle)) * 1.2)
+	if player == null:
+		return places
+	var space := player.get_world_3d().direct_space_state
+	var seen := func(place: Vector3) -> bool: return VisionSystem.line_clear(space, player.global_position, place, false)
+	if not places.any(seen):
+		return places
+	var hidden: Array[Vector3] = []
+	for i in WAVE_RING:
+		var angle := TAU * i / WAVE_RING
+		var place := at + Vector3(cos(angle), 0.0, sin(angle)) * 1.2
+		if not seen.call(place):
+			hidden.append(place)
+	return hidden.slice(0, count) if hidden.size() >= count else []
 
 
 ## Ordinary Scavs alive (zone, wave and scene Scavs): what RaidConfig.scav_max_alive caps. A boss and
@@ -353,10 +427,11 @@ func scavs_alive() -> int:
 		return not bot.is_dead and bot.side == Actor.Side.SCAV and not bot.is_boss() and not bot.is_guard()).size()
 
 
-## Where a Scav wave can spawn now: a Scav zone point (weight 1) or a point of interest (its heat:
-## higher tiers and fresh raid events pull harder), at least scav_wave_min_distance from the player and
-## out of their line of sight. Null if there's none.
-func wave_spot() -> Variant:
+## Where a Scav wave of `count` can spawn now: a Scav zone point (weight 1) or a point of interest (its
+## heat: higher tiers and fresh raid events pull harder), at least scav_wave_min_distance from the player
+## and out of their line of sight, with room round it for `count` Scavs out of their sight too
+## (_wave_places()). Null if there's none.
+func wave_spot(count := 1) -> Variant:
 	var spots: Array[Vector3] = []
 	var weights := PackedFloat32Array()
 	for zone in get_tree().get_nodes_in_group("scav_zones"):
@@ -371,7 +446,8 @@ func wave_spot() -> Variant:
 	var space := player.get_world_3d().direct_space_state if player else null
 	for i in spots.size():
 		if player and (spots[i].distance_to(player.global_position) < config.scav_wave_min_distance
-				or VisionSystem.line_clear(space, player.global_position, spots[i], false)):
+				or VisionSystem.line_clear(space, player.global_position, spots[i], false)
+				or (weights[i] > 0.0 and _wave_places(spots[i], count).is_empty())):
 			weights[i] = 0.0
 	var index := LootTable._pick(rng, weights)
 	return spots[index] if index >= 0 else null
@@ -491,13 +567,15 @@ func _spawn_ai_pmcs() -> Array[Squad]:
 ## the first of them leading, named AIPMC1, AIPMC2... in spawn order, with a raid plan (RaidPlan.roll():
 ## its personality, gear tier for the map's difficulty, which their kits are dressed for, and leave time;
 ## seeded per squad in a seeded raid). Without pmc_ai.json they have no plan and roam the Scav zones and
-## points of interest instead. Returns the squad.
-func spawn_pmc_squad(size: int, faction: StringName, at: Vector3, yaw: float) -> Squad:
+## points of interest instead. `joined_at`: the raid seconds it joined at, when that was before now (a
+## squad already there when you join mid-raid: _fast_forward()); its plan is rolled as it was then.
+## Returns the squad.
+func spawn_pmc_squad(size: int, faction: StringName, at: Vector3, yaw: float, joined_at := -1.0) -> Squad:
 	var number := ai_squads.size() + 1
 	var plan: RaidPlan = null
 	if not PmcAi.personalities().is_empty():
 		var plan_seed := hash([int(GameState.raid.seed), "plan", number]) if GameState.raid.has("seed") else randi()
-		plan = RaidPlan.roll(plan_seed, raid_seconds(), elapsed, map.difficulty if map else 1)
+		plan = RaidPlan.roll(plan_seed, raid_seconds(), joined_at if joined_at >= 0.0 else elapsed, map.difficulty if map else 1)
 	var spots := spawn_spots(at, size)
 	var stops := _roam_points()
 	var members: Array[Bot] = []
@@ -595,6 +673,312 @@ func spawn_spots(at: Vector3, count: int) -> Array[Vector3]:
 	return spots
 
 
+# --- Joining mid-raid (a Scav run) ---------------------------------------------------------------
+
+## A Scav run joins the raid under way: once RaidEvents has set off the events that came before
+## (_setup(), deferred like this) and the bots have planned when they leave, the raid catches up
+## (_fast_forward()).
+func _join_mid_raid() -> void:
+	_fast_forward.call_deferred()
+
+
+## Does what the raid did before you joined at start_offset (DESIGN.md §5.1, Spawns), out of your sight:
+## the AI PMC squads due by then are in the map, apart from each other (_join_squad(): a squad whose
+## leave time has passed left before you came, and each member may lie dead at a point of interest with
+## its kit); the Scav waves that were due came and the AI whose time to leave had passed left, in time
+## order (_next_to_leave()), so a Scav that left frees its place under the cap for a later wave, each
+## wave at its own time (the cap and the hot points of interest as they were then); a share of the loose
+## loot and of what's in the containers has been taken (_pick_over_loot()). Seeded in a seeded raid.
+## Returns fast_forward.
+func _fast_forward() -> Dictionary:
+	if outcome or player == null or not is_inside_tree():
+		return fast_forward
+	fast_forward = {"waves": 0, "wave_times": [], "squads": 0, "fought": 0, "left": 0, "dead": 0, "bodies": [], "loot": {}}
+	_pmcs_started = true
+	var came := {}  # Bot -> the raid second it came in (not there: from the start).
+	var starts: Array[Dictionary] = []
+	for entry: Dictionary in pmc_schedule.filter(func(each: Dictionary) -> bool: return float(each.time) <= start_offset):
+		pmc_schedule.erase(entry)
+		var squad := _join_squad(entry, starts)
+		for bot in squad.members:
+			came[bot] = float(entry.time)
+	for node in get_tree().get_nodes_in_group("bots"):
+		var bot := node as Bot
+		if bot and not bot.is_dead:
+			bot._plan_extract()
+	var first_wave := waves
+	while true:
+		var leaving := _next_to_leave(came)
+		var wave_due := next_wave >= 0.0 and next_wave < start_offset
+		if not leaving.is_empty() and (not wave_due or float(leaving.time) <= next_wave):
+			_left_before(leaving.bot, leaving.time)
+		elif wave_due:
+			elapsed = next_wave
+			var wave := spawn_wave()
+			if not wave.is_empty():
+				fast_forward.wave_times.append(elapsed)
+			for bot in wave:
+				came[bot] = elapsed
+				bot._plan_extract()
+		else:
+			break
+	elapsed = start_offset
+	fast_forward.waves = waves - first_wave
+	fast_forward.loot = _pick_over_loot()
+	return fast_forward
+
+
+## The fast-forward's next bot to leave before you joined: the one whose time to leave (its extract_at,
+## or when it came in, `came`, if that was later: it set off at once) is soonest and before start_offset.
+## Not a boss or a guard (they never leave), nor a squad with a raid plan (_join_squad() did those).
+## {"bot", "time"}, or {} if none.
+func _next_to_leave(came: Dictionary) -> Dictionary:
+	var next := {}
+	for node in get_tree().get_nodes_in_group("bots"):
+		var bot := node as Bot
+		if bot == null or bot.is_dead or bot.is_boss() or bot.is_guard() or (bot.squad and bot.squad.plan) or bot.extract_at < 0.0:
+			continue
+		var time := maxf(bot.extract_at, float(came.get(bot, 0.0)))
+		if time < start_offset and (next.is_empty() or time < float(next.time)):
+			next = {"bot": bot, "time": time}
+	return next
+
+
+## A squad from the schedule that joined before you (`entry`): spawned as it would have been (its plan
+## rolled at its own time), away from you, out of your sight and apart from the squads placed before it
+## (_join_spot(); its start and faction are added to `starts`). Each member lies dead at a point of
+## interest with ScavRuns.pmc_death_chance() for the time it has been in the raid (until its leave time,
+## if that has passed: then the rest left before you came). One that could only start closer to a squad
+## of the other faction than they can be apart (_squad_clearance()) already fought it: all of it lies
+## dead (fast_forward "fought"). Returns the squad.
+func _join_squad(entry: Dictionary, starts: Array[Dictionary]) -> Squad:
+	var spot := _join_spot(starts)
+	var fought := starts.any(func(other: Dictionary) -> bool:
+		return other.faction != entry.faction and _squad_clearance(spot.position, [other]) < ScavRuns.squad_spacing_unseen())
+	starts.append({"at": spot.position, "faction": entry.faction})
+	var joined := float(entry.time)
+	var squad := spawn_pmc_squad(int(entry.size), entry.faction, spot.position, spot.yaw, joined)
+	if entry.get("late", false):
+		late_arrivals.append(entry.merged({"spawned_at": joined, "point": "before you came", "squad": squad.number}))
+	var gone := squad.plan != null and squad.plan.leave_at < start_offset
+	if fought:
+		fast_forward.fought = int(fast_forward.get("fought", 0)) + 1
+	elif not gone:
+		fast_forward.squads += 1
+	var chance := ScavRuns.pmc_death_chance((squad.plan.leave_at if gone else start_offset) - joined, raid_seconds())
+	for bot in squad.members.duplicate():
+		if fought or _join_rng.randf() < chance:
+			_lay_body(bot)
+		elif gone:
+			_left_before(bot, squad.plan.leave_at)
+	return squad
+
+
+## Where a squad already in the raid is when you join: a PMC spawn point or a point of interest you can
+## get into (not hidden), at least RaidConfig.scav_wave_min_distance from you and out of your sight, and
+## apart from the squads placed before it (`starts`: [{"at", "faction"}]; _squad_clearance() at least
+## ScavRuns.squad_spacing_unseen()), picked at random. With none that far, the one of those out of your
+## sight with the most room from the others; with none out of your sight, or all of them taken, the one
+## with the most room from you and the others. {"position", "yaw"}.
+func _join_spot(starts: Array[Dictionary]) -> Dictionary:
+	var spots: Array[Dictionary] = []
+	for node in get_tree().get_nodes_in_group("spawn_points"):
+		var point := node as SpawnPoint
+		if point and point != spawn_point and point.side != "Scav":
+			spots.append({"position": point.global_position, "yaw": point.global_rotation.y})
+	for node in get_tree().get_nodes_in_group("pois"):
+		var poi := node as PointOfInterest
+		if poi and not poi.is_hidden() and poi.requirement_met() and not poi.entry().is_empty():
+			spots.append({"position": _on_navmesh(poi.global_position), "yaw": _join_rng.randf() * TAU})
+	if spots.is_empty():
+		return {"position": player.global_position + Vector3(0.0, 0.0, config.scav_wave_min_distance), "yaw": 0.0}
+	var space := player.get_world_3d().direct_space_state
+	var hidden := spots.filter(func(spot: Dictionary) -> bool:
+		return Vector3(spot.position).distance_to(player.global_position) >= config.scav_wave_min_distance \
+			and not VisionSystem.line_clear(space, player.global_position, spot.position, false))
+	var apart := hidden.filter(func(spot: Dictionary) -> bool: return _squad_clearance(spot.position, starts) >= ScavRuns.squad_spacing_unseen())
+	if not apart.is_empty():
+		return apart[_join_rng.randi_range(0, apart.size() - 1)]
+	var free := hidden.filter(func(spot: Dictionary) -> bool: return _squad_clearance(spot.position, starts) >= 0.0)
+	var pool := free if not free.is_empty() else spots
+	var best: Dictionary = pool[0]
+	var best_room := -INF
+	for spot: Dictionary in pool:
+		var room := _squad_clearance(spot.position, starts)
+		if free.is_empty():
+			room = minf(room, Vector3(spot.position).distance_to(player.global_position))
+		if room > best_room:
+			best = spot
+			best_room = room
+	return best
+
+
+## How much room `at` has from the squads in `starts` ([{"at", ...}]): the distance to the nearest of
+## them, less ScavRuns.squad_spacing() - squad_spacing_unseen() where there's a clear line between them,
+## so they're apart at squad_spacing_unseen() or more either way (squad_spacing() in the open); INF with
+## none.
+func _squad_clearance(at: Vector3, starts: Array) -> float:
+	var space := player.get_world_3d().direct_space_state
+	var spare := ScavRuns.squad_spacing() - ScavRuns.squad_spacing_unseen()
+	var nearest := INF
+	for other: Dictionary in starts:
+		var distance := Vector3(other.at).distance_to(at)
+		nearest = minf(nearest, distance - spare if VisionSystem.line_clear(space, other.at, at, false) else distance)
+	return nearest
+
+
+## An AI PMC that died before you came: its body lies at a point of interest you can get into (not
+## hidden), a little off its centre, with everything it carried, on a spot at least
+## RaidConfig.scav_wave_min_distance from you and out of your sight (the spot itself, not the POI's
+## centre: BODY_TRIES random tries); with none found, at the centre of the point of interest farthest
+## from you.
+func _lay_body(bot: Bot) -> void:
+	var pois: Array[PointOfInterest] = []
+	for node in get_tree().get_nodes_in_group("pois"):
+		var poi := node as PointOfInterest
+		if poi and not poi.is_hidden() and poi.requirement_met() and not poi.entry().is_empty():
+			pois.append(poi)
+	var where := bot.global_position
+	var poi_name := ""
+	if not pois.is_empty():
+		var space := player.get_world_3d().direct_space_state
+		var far := pois.filter(func(poi: PointOfInterest) -> bool:
+			return poi.global_position.distance_to(player.global_position) >= config.scav_wave_min_distance)
+		var options: Array = far if not far.is_empty() else pois
+		var picked: PointOfInterest = null
+		for attempt in BODY_TRIES:
+			var poi: PointOfInterest = options[_join_rng.randi_range(0, options.size() - 1)]
+			var angle := _join_rng.randf() * TAU
+			var spot := _on_navmesh(poi.global_position + Vector3(cos(angle), 0.0, sin(angle)) * _join_rng.randf_range(0.5, 2.0))
+			if spot.distance_to(player.global_position) >= config.scav_wave_min_distance \
+					and not VisionSystem.line_clear(space, player.global_position, spot, false):
+				picked = poi
+				where = spot
+				break
+		if picked == null:
+			for poi in pois:
+				if picked == null or poi.global_position.distance_to(player.global_position) > picked.global_position.distance_to(player.global_position):
+					picked = poi
+			where = _on_navmesh(picked.global_position)
+		poi_name = picked.poi_name()
+	bot.global_position = where
+	bot.velocity = Vector3.ZERO
+	bot.reset_physics_interpolation()
+	bot.die()
+	fast_forward.dead += 1
+	fast_forward.bodies.append({"name": str(bot.name), "poi": poi_name})
+
+
+## `bot` left the raid before you joined, at raid second `at`: gone with its gear, listed in ai_extracts
+## (through the nearest extract it could use).
+func _left_before(bot: Bot, at: float) -> void:
+	var zone := bot._nearest_extract()
+	ai_extracts.append({"name": bot.display_name(), "side": "scav" if bot.side == Actor.Side.SCAV else "pmc",
+		"faction": String(bot.faction), "extract": zone.extract_name if zone else "", "time": at,
+		"friendly": player != null and not bot.is_hostile(player), "before": true})
+	bot.leave_raid()
+	fast_forward.left = int(fast_forward.get("left", 0)) + 1
+
+
+## Someone got to the loot first: ScavRuns.loot_taken() of the loose loot and of each container's
+## contents is gone, item by item (seeded per spot in a seeded raid). Not in hidden points of interest
+## or ones nobody could get into yet (a locked room, the power off), nor raid event crates (RaidEvents
+## does those) or bodies. Returns {"share", "items" (in containers), "taken", "loose", "loose_taken"}.
+func _pick_over_loot() -> Dictionary:
+	var share := ScavRuns.loot_taken(start_offset, raid_seconds())
+	var result := {"share": share, "items": 0, "taken": 0, "loose": 0, "loose_taken": 0}
+	for node in get_tree().get_nodes_in_group("interactables"):
+		if not (node is LootBox or node is LootPickup) or node.is_queued_for_deletion():
+			continue
+		var poi := PointOfInterest.at(get_tree(), node.global_position)
+		if poi and (poi.is_hidden() or not poi.requirement_met()):
+			continue
+		var roll := RandomNumberGenerator.new()
+		if GameState.raid.has("seed"):
+			roll.seed = hash([int(GameState.raid.seed), "picked", str(node.get_path())])
+		else:
+			roll.randomize()
+		if node is LootBox:
+			var box := node as LootBox
+			if box.sealed or box.ignore_poi or box.concealed or box.grid == null:
+				continue
+			result.items += box.grid.items.size()
+			result.taken += ScavRuns.pick_over(box.grid, share, roll)
+		elif node.item != null:
+			result.loose += 1
+			if roll.randf() < share:
+				node.remove_from_group("interactables")
+				node.queue_free()
+				result.loose_taken += 1
+	return result
+
+
+# --- Scav karma ----------------------------------------------------------------------------------
+
+## Your Scav karma as it stands in this raid: the profile's at the start plus this raid's changes so far
+## (they reach the profile when the raid settles: ScavRuns.apply()).
+func karma() -> float:
+	return ScavRuns.clamp_karma(karma_start + ScavRuns.total(karma_changes))
+
+
+## Counts a karma change (ScavRuns.change_for(`reason`)) for a Scav run; its effects follow at once.
+func _add_karma(reason: String) -> void:
+	if side() != "scav":
+		return
+	karma_changes.append({"reason": reason, "delta": ScavRuns.change_for(reason)})
+	_update_karma_effects()
+
+
+## As a Scav whose karma (this raid's) is below ScavRuns' hostile line, AI Scavs shoot you on sight and
+## react sooner the lower it is (Player.scavs_hostile, karma_reaction); the bots' outlines follow. When
+## it comes back up to the line, the Scavs fighting you for your karma alone stop (Bot.calm_down()).
+func _update_karma_effects() -> void:
+	if player == null:
+		return
+	var hostile := side() == "scav" and ScavRuns.hostile(karma())
+	var changed := hostile != player.scavs_hostile
+	player.scavs_hostile = hostile
+	player.karma_reaction = ScavRuns.reaction_multiplier(karma()) if hostile else 1.0
+	if changed and is_inside_tree():
+		get_tree().call_group("bots", "_update_outline")
+		if not hostile:
+			get_tree().call_group("bots", "calm_down", player)  # Back at -1 or above: those hostile for it alone let you be.
+
+
+## True if the player Scav extracting now does it with others: a friendly AI Scav (not hostile to them)
+## within ScavRuns.with_others_radius(), or one that left through the same extract within the last
+## ScavRuns.with_others_seconds() (since you joined: not one the fast-forward had leave before).
+func extracted_with_others() -> bool:
+	if player == null:
+		return false
+	for node in get_tree().get_nodes_in_group("bots"):
+		var bot := node as Bot
+		if bot and not bot.is_dead and bot.side == Actor.Side.SCAV and not bot.is_hostile(player) \
+				and bot.global_position.distance_to(player.global_position) <= ScavRuns.with_others_radius():
+			return true
+	for entry: Dictionary in ai_extracts:
+		if entry.get("side", "") == "scav" and entry.get("friendly", false) and not entry.get("before", false) and extracted_at != "" \
+				and entry.get("extract", "") == extracted_at and elapsed - float(entry.get("time", -INF)) <= ScavRuns.with_others_seconds():
+			return true
+	return false
+
+
+## The player Scav (`shooter`) hit the AI Scav `victim` (DESIGN.md §3): every other AI Scav that sees
+## them now (VisionSystem.can_see(): its cone, range and sight line) turns on them too (a boss's squad:
+## all of it, Bot.provoke()). Returns how many turned.
+func scav_witnesses(shooter: Actor, victim: Bot) -> int:
+	var turned := 0
+	for node in get_tree().get_nodes_in_group("bots"):
+		var bot := node as Bot
+		if bot == null or bot == victim or bot.is_dead or bot.side != Actor.Side.SCAV or shooter in bot.enemies:
+			continue
+		if VisionSystem.can_see(VisionSystem.view_for(bot), shooter):
+			bot.provoke(shooter)
+			bot._update_outline()
+			turned += 1
+	return turned
+
+
 # --- Ending --------------------------------------------------------------------------------------
 
 ## Ends the raid with `status` (once): a Run Through earns no experience and extracting earns the
@@ -611,10 +995,14 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 		xp += config.xp_survived
 	if is_real_raid() and side() == "pmc":
 		RaidOutcome.keep_metabolism(player.health, status == RaidOutcome.Status.KILLED or status == RaidOutcome.Status.MIA)
-	outcome = RaidOutcome.settle(status, side(), player.inventory, elapsed, xp,
+	if side() == "scav" and (status == RaidOutcome.Status.SURVIVED or status == RaidOutcome.Status.RUN_THROUGH):
+		if extracted_with_others():
+			_add_karma("extract_with_others")
+		_add_karma("extract")
+	outcome = RaidOutcome.settle(status, side(), player.inventory, own_seconds(), xp,
 		player.kills, is_real_raid(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
 		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
-			"faction": String(player.faction)})
+			"faction": String(player.faction), "karma": karma_changes.duplicate(true)})
 	raid_ended.emit(outcome)
 	return outcome
 
@@ -630,7 +1018,8 @@ func looters() -> int:
 
 
 ## A kill by the player: experience by what it was (a PMC of either faction 300, a Scav 100, a boss
-## 1,000, a guard 250: RaidConfig) and an entry in the kill list.
+## 1,000, a guard 250: RaidConfig) and an entry in the kill list. As a Scav, karma: a Scav that was
+## friendly when you attacked it (Bot.friendly_when_attacked; a guard, a boss) lowers it, a PMC raises it.
 func _on_kill(target: Actor) -> void:
 	var pmc := target.side == Actor.Side.PMC
 	var gained := config.xp_pmc_kill if pmc else config.xp_scav_kill
@@ -649,6 +1038,26 @@ func _on_kill(target: Actor) -> void:
 	if role != "":
 		entry.role = role
 	kill_list.append(entry)
+	_karma_for_kill(target)
+
+
+## A bot the player hurt last died of its wounds (a bleed: Bot.die()), `by` its last attacker: if that
+## was the player, it's their kill for Scav karma (_karma_for_kill()); as before, a death that isn't a
+## hit's earns no kill experience and no kill list entry.
+func bot_died_of_wounds(bot: Bot, by: Actor) -> void:
+	if outcome == null and by == player and player != null:
+		_karma_for_kill(bot)
+
+
+## As a Scav, karma for killing `target`: a Scav that was friendly when you first attacked it
+## (Bot.friendly_when_attacked; a guard, a boss) lowers it, a PMC raises it.
+func _karma_for_kill(target: Actor) -> void:
+	if side() != "scav":
+		return
+	if target.side == Actor.Side.PMC:
+		_add_karma("pmc_kill")
+	elif target is Bot and target.friendly_when_attacked:
+		_add_karma("boss_kill" if target.is_boss() else "guard_kill" if target.is_guard() else "friendly_kill")
 
 
 ## A 360 trick-shot kill: bonus experience on top of the kill's, and Drip.

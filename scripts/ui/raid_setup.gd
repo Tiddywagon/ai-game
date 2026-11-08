@@ -1,7 +1,10 @@
 extends MenuScreen
 ## ENTER RAID flow (DESIGN.md §16.3): map select, then PMC or Scav, then a loadout check (with
 ## INSURE GEAR for a PMC: Insurance), then the loading screen. Back (or Esc / B) steps back; from the
-## map list it returns to the main menu.
+## map list it returns to the main menu. A Scav run (ScavRuns): SCAV is off while the cooldown runs
+## ("Scav ready in 12:30", counting down), the loadout check shows this cycle's kit (rolled once a cycle,
+## by your karma's kit tier: saved), and READY rolls when in the raid it joins, starts the cooldown and
+## saves.
 
 enum Step { MAP, SIDE, LOADOUT }
 
@@ -18,6 +21,8 @@ var _insure: Button
 var _insure_note: Label
 ## Who insures your gear (Insurance.insurers(): Bulat cheap and slow, Doc Vera dearer and faster).
 var _insurer: OptionButton
+## Counts the Scav cooldown down on the SCAV button, every second.
+var _scav_timer: Timer
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]
 @onready var _step_labels: Array[Label] = [%MapStepLabel, %SideStepLabel, %LoadoutStepLabel]
@@ -48,6 +53,13 @@ func _ready() -> void:
 	%ScavButton.focus_entered.connect(_choose_side.bind("scav", false))
 	%BackButton.pressed.connect(_on_cancel)
 	_next.pressed.connect(_on_next)
+	_scav_timer = Timer.new()
+	_scav_timer.name = "ScavTimer"
+	_scav_timer.wait_time = 1.0
+	_scav_timer.timeout.connect(_update_scav_button)
+	add_child(_scav_timer)
+	_scav_timer.start()
+	_update_scav_button()
 	_insurer = OptionButton.new()
 	_insurer.name = "InsurerPicker"
 	_insurer.custom_minimum_size = Vector2(0, 40)
@@ -100,9 +112,16 @@ func _show_step(step: Step) -> void:
 		Step.MAP:
 			_map_buttons[_maps.find(_map)].grab_focus.call_deferred()
 		Step.SIDE:
+			_update_scav_button()
 			(%PmcButton if _side == "pmc" else %ScavButton).grab_focus.call_deferred()
 		Step.LOADOUT:
-			_loadout = GameState.pmc_loadout() if _side == "pmc" else GameState.scav_loadout()
+			if _side == "scav":
+				var rolled := GameState.scav_kit == null
+				_loadout = GameState.scav_loadout()
+				if rolled:
+					SaveManager.save_game()  # This cycle's kit: backing out or quitting doesn't roll another.
+			else:
+				_loadout = GameState.pmc_loadout()
 			_show_loadout()
 			_next.grab_focus.call_deferred()
 
@@ -132,7 +151,24 @@ static func map_stats(map: MapInfo) -> Array[String]:
 	return lines
 
 
+## The SCAV button: off with "Scav ready in 12:30" while the cooldown runs (ScavRuns.side_text()); on
+## again once it's over. On cooldown with SCAV picked, PMC is picked instead.
+func _update_scav_button() -> void:
+	var button: Button = %ScavButton
+	var text := ScavRuns.side_text()
+	if button.text != text:
+		button.text = text
+	button.disabled = not ScavRuns.is_ready()
+	if button.disabled and _side == "scav":
+		_side = "pmc"
+		%PmcButton.set_pressed_no_signal(true)
+		if _step == Step.LOADOUT:
+			_show_step(Step.SIDE)
+
+
 func _choose_side(side: String, advance := true) -> void:
+	if side == "scav" and not ScavRuns.is_ready():
+		return
 	_side = side
 	(%PmcButton if side == "pmc" else %ScavButton).set_pressed_no_signal(true)
 	if advance and _step == Step.SIDE:
@@ -171,7 +207,12 @@ func _show_loadout() -> void:
 	_next.disabled = blocked != ""
 	if _side == "scav":
 		checks.append("Scav run: random gear. Nothing from your stash is at risk.")
-		checks.append("AI Scavs leave you alone unless you shoot them.")
+		var window := ScavRuns.start_window(_map.id)
+		checks.append("You join the raid already under way, with %d-%d minutes on the clock: the loot has been picked over." % [
+			roundi(maxf(_map.raid_minutes * (1.0 - window.y), ScavRuns.min_left_seconds() / 60.0)), roundi(_map.raid_minutes * (1.0 - window.x))])
+		checks.append(ScavRuns.scav_attitude_text())
+		checks.append("Karma %s: %s Scav kit. Your next Scav run is ready %s after you deploy." % [ScavRuns.number_text(ScavRuns.karma()),
+			ScavRuns.tier_name(ScavRuns.kit_tier(ScavRuns.karma())).to_lower(), TraderStock.clock(ScavRuns.cooldown_seconds())])
 	else:
 		if _loadout.equipment.armor == null:
 			checks.append("No body armor: every hit goes straight to your health.")
@@ -284,8 +325,18 @@ static func use_entry_item(map: MapInfo, loadout: Inventory) -> bool:
 	return false
 
 
+## READY: the raid is set up (GameState.raid) and the loading screen comes. A Scav run joins at a random
+## moment of the raid (ScavRuns.roll_offset()) and starts the Scav cooldown (ScavRuns.deploy(), which
+## saves). Nothing happens for a Scav run still on cooldown.
 func _start_raid() -> void:
+	if _side == "scav" and not ScavRuns.is_ready():
+		return
 	if entry_block_reason(_map, _side, _loadout) != "" or not use_entry_item(_map, _loadout):
 		return
 	GameState.raid = {"map": _map.id, "side": _side, "loadout": _loadout}
+	if _side == "scav":
+		var roll := RandomNumberGenerator.new()
+		roll.randomize()
+		GameState.raid.offset = ScavRuns.roll_offset(_map, roll)
+		ScavRuns.deploy()
 	get_tree().change_scene_to_file(LOADING_SCENE)

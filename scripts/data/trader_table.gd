@@ -4,7 +4,8 @@ extends RefCounted
 ## three greetings (one picked each visit), currency, what sets them apart, how they unlock (null: from
 ## the start; {"quest": id}: once that quest is done, so "unlocked" follows the quest's state and needs
 ## no saved flag), what a locked trader says instead of a greeting, and the highest loyalty level they
-## go to (Mole, the fence: 1), how often they restock (TraderStock) and what they buy when you sell
+## go to, for Mole the fence the karma each level from LL2 needs ("karma_levels": his loyalty is your Scav
+## karma, ScavRuns, up and down), how often they restock (TraderStock) and what they buy when you sell
 ## (their "sell" block: Selling). Everything that lists traders or shows a trader's name asks here; where
 ## a trader is named as a source of something, a locked one says so (locked_suffix()). Checked when it
 ## loads: problems() (also against offers.json, the quests, the insurers, the gear upgrade sources, the
@@ -92,6 +93,28 @@ static func max_loyalty(id: String) -> int:
 	return clampi(int(find(id).get("max_loyalty", Progression.max_loyalty())), 1, Progression.max_loyalty())
 
 
+## The Scav karma each of `id`'s loyalty levels from LL2 up needs, lowest first ([] for a trader whose
+## loyalty comes from player level, reputation and money spent: everyone but Mole).
+static func karma_levels(id: String) -> Array:
+	var levels: Variant = find(id).get("karma_levels")
+	return levels if levels is Array else []
+
+
+## True if `id`'s loyalty level is your Scav karma's band (Mole), not the usual needs.
+static func follows_karma(id: String) -> bool:
+	return not karma_levels(id).is_empty()
+
+
+## The loyalty level `at_karma` gives with `id` (a karma trader): 1, plus one for each karma_levels()
+## threshold it reaches, up to max_loyalty().
+static func karma_level(id: String, at_karma: float) -> int:
+	var level := 1
+	for needed: Variant in karma_levels(id):
+		if at_karma >= float(needed) - 0.0001:
+			level += 1
+	return mini(level, max_loyalty(id))
+
+
 ## Real minutes between `id`'s restocks (their "restock_minutes", else data/config/trading.json's).
 static func restock_minutes(id: String) -> float:
 	return float(find(id).get("restock_minutes", Trading.config().get("restock_minutes", 60.0)))
@@ -170,6 +193,16 @@ static func problems() -> Array[String]:
 		var top := int(entry.get("max_loyalty", Progression.max_loyalty()))
 		if top < 1 or top > Progression.max_loyalty():
 			found.append("%s: max_loyalty %d isn't 1-%d" % [where, top, Progression.max_loyalty()])
+		if entry.has("karma_levels"):
+			var levels: Variant = entry.karma_levels
+			var bounds := ScavRuns.karma_range()
+			if not levels is Array or levels.size() != top - 1 or levels.any(func(value: Variant) -> bool: return not (value is float or value is int)):
+				found.append("%s: karma_levels needs a number for each loyalty level from 2 to %d" % [where, top])
+			else:
+				for i in levels.size():
+					if float(levels[i]) <= (float(levels[i - 1]) if i > 0 else bounds.x) or float(levels[i]) > bounds.y:
+						found.append("%s: karma_levels must rise, within karma %s to %s" % [where, bounds.x, bounds.y])
+						break
 		var offers: Dictionary = Trading.all_offers().get(id, {})
 		if not offers.get("buy") is Array:
 			found.append("%s: no \"buy\" list in %s" % [where, Trading.OFFERS_PATH])

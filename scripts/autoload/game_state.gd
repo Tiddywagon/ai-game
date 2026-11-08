@@ -73,8 +73,14 @@ var insurer := DEFAULT_INSURER
 var hotkeys: Array = DEFAULT_HOTKEYS.duplicate()
 ## Points of interest you've been in, by map (DESIGN.md §5.2): {map id: [POI ids]}.
 var explored: Dictionary = {}
-## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
-## Not saved.
+## Scav runs (DESIGN.md §2, ScavRuns): your Scav karma (Mole's standing, -6 to +6), the unix time the
+## next Scav run is ready (0: ready), and this cooldown cycle's Scav kit (null until it's rolled; used up
+## when you deploy).
+var scav_karma := 0.0
+var scav_ready_at := 0.0
+var scav_kit: Inventory = null
+## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory,
+## "offset": seconds into the raid a Scav run joins (RaidSetup rolls it; ScavRuns)}. Not saved.
 var raid: Dictionary = {}
 ## The screen the main menu opens when it loads ("hideout" after a raid's summary; "" for none). Not
 ## saved.
@@ -102,9 +108,10 @@ func pmc_loadout() -> Inventory:
 	return inventory.duplicate_deep()
 
 
-## A random Scav kit (DESIGN.md §16.3): nothing from the stash is at risk.
+## A copy of this cooldown cycle's Scav kit (DESIGN.md §16.3, ScavRuns.kit(): rolled once a cycle, by
+## your karma's kit tier): nothing from the stash is at risk.
 func scav_loadout() -> Inventory:
-	return Inventory.scav()
+	return ScavRuns.kit().duplicate_deep()
 
 
 ## Puts item `id` on hotkey `index` (0-4; "" clears it), taking it off any other hotkey.
@@ -185,6 +192,9 @@ func _reset(new_faction: Faction) -> void:
 	insurer = DEFAULT_INSURER
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
 	explored = {}
+	scav_karma = ScavRuns.start_karma()
+	scav_ready_at = 0.0
+	scav_kit = null
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -217,6 +227,7 @@ func to_dict() -> Dictionary:
 			"insurer": insurer,
 			"hotkeys": hotkeys.duplicate(),
 			"explored": explored.duplicate(true),
+			"scav": {"karma": scav_karma, "ready_at": scav_ready_at, "kit": scav_kit.to_dict() if scav_kit else null},
 		},
 		"stash": stash.to_array(),
 	}
@@ -295,6 +306,10 @@ func from_dict(data: Dictionary) -> void:
 	var saved_explored: Dictionary = profile.get("explored", {})
 	for map_id: String in saved_explored:
 		explored[map_id] = saved_explored[map_id].map(func(id: Variant) -> String: return str(id))
+	var saved_scav: Dictionary = profile.get("scav", {}) if profile.get("scav") is Dictionary else {}
+	scav_karma = ScavRuns.clamp_karma(float(saved_scav.get("karma", scav_karma)))
+	scav_ready_at = float(saved_scav.get("ready_at", 0.0))
+	scav_kit = ScavRuns.kit_from_save(saved_scav.get("kit"))  # One with an item that's gone: rolled afresh.
 	var saved_hideout: Dictionary = profile.get("hideout", {})
 	for station: String in saved_hideout:
 		hideout[station] = maxi(int(saved_hideout[station]), int(hideout.get(station, 0)))

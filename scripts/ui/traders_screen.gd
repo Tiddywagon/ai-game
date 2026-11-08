@@ -5,7 +5,8 @@ extends MenuScreen
 ## while the screen is open redraws it, whatever noticed it first), and tabs to BUY (roubles or
 ## dollars: only what your loyalty level reaches, with a line saying how many more items each level
 ## above adds; limited offers say how many are left, SOLD OUT with the restock countdown at 0; at The
-## Broker an EXCHANGE to buy and sell dollars; at Mole his worn gear), SELL (Selling: what this trader
+## Broker an EXCHANGE to buy and sell dollars; at Mole his worn gear; Mole's loyalty is your Scav karma:
+## karma_lines()), SELL (Selling: what this trader
 ## buys of your stash, pockets, rig and backpack, each with its price and SELL, checkboxes and SELL
 ## SELECTED, a name filter, the WANTED strip of the items they pay extra for this restock; insured gear
 ## says so; selling valuables or insured gear asks first if the setting says so), BARTER (items for
@@ -290,8 +291,10 @@ func _update_countdowns() -> void:
 
 
 ## "Loyalty level 2  ·  reputation 0.27 (0.05 from barters)  ·  spent ₽ 812,000", then what the next
-## level needs.
+## level needs. Mole's loyalty is your Scav karma (karma_lines()).
 func _loyalty_lines(trader: Dictionary) -> Array[String]:
+	if TraderTable.follows_karma(trader.id):
+		return karma_lines(trader.id)
 	var loyalty: Dictionary = GameState.trader_loyalty[trader.id]
 	var bartered := Trading.barter_reputation(trader.id)
 	var lines: Array[String] = ["Loyalty level %d  ·  reputation %.2f%s  ·  spent %s" % [loyalty.level, loyalty.reputation,
@@ -307,6 +310,31 @@ func _loyalty_lines(trader: Dictionary) -> Array[String]:
 			next, need.player_level, need.reputation, UiFormat.money(need.spent), trader.name,
 			" (a dollar counts as %s)" % UiFormat.money(roundi(Progression.dollar_rate())) if trader.currency == "USD" else "",
 			Progression.barter_reputation(), Progression.barter_reputation_cap()])
+	return lines
+
+
+## A karma trader's loyalty lines (Mole: ScavRuns): "Loyalty level 2  ·  your Scav karma +1.6 (−6 to +6)
+## ·  spent ₽ 40,000", what the next level needs and how karma moves, and below 0 that he pays less and
+## charges more.
+static func karma_lines(trader_id: String) -> Array[String]:
+	var loyalty: Dictionary = GameState.trader_loyalty[trader_id]
+	var karma := ScavRuns.karma()
+	var bounds := ScavRuns.karma_range()
+	var name := TraderTable.display_name(trader_id)
+	var lines: Array[String] = ["Loyalty level %d  ·  your Scav karma %s (%s to %s)  ·  spent %s" % [loyalty.level, ScavRuns.number_text(karma, true),
+		ScavRuns.number_text(bounds.x, true), ScavRuns.number_text(bounds.y, true), UiFormat.money(loyalty.spent)]]
+	var levels := TraderTable.karma_levels(trader_id)
+	var next := int(loyalty.level) + 1
+	if next > TraderTable.max_loyalty(trader_id) or next - 2 >= levels.size():
+		lines.append("Highest loyalty level reached.")
+	else:
+		lines.append("Next level (LL%d) at Scav karma %s." % [next, ScavRuns.number_text(float(levels[next - 2]), true)])
+	lines.append("As a Scav: a friendly Scav killed %s (a boss %s), a PMC killed %s, an extract %s, %s more with a Scav beside you." % [
+		ScavRuns.number_text(ScavRuns.change_for("friendly_kill"), true), ScavRuns.number_text(ScavRuns.change_for("boss_kill"), true),
+		ScavRuns.number_text(ScavRuns.change_for("pmc_kill"), true), ScavRuns.number_text(ScavRuns.change_for("extract"), true),
+		ScavRuns.number_text(ScavRuns.change_for("extract_with_others"), true)])
+	if karma < 0.0:
+		lines.append("Below 0 %s pays less (%d%% of an item's worth now) and his gear is dearer and more worn." % [name, roundi(Selling.rate(trader_id) * 100.0)])
 	return lines
 
 

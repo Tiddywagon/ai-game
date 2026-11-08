@@ -18,8 +18,11 @@ extends Node3D
 ## Every spawn point rolled so far, by its node path: {"name", "at" (where), "kind": "container" or
 ## "loose", "active", "items" (names)}. (Loose spots that stay empty free themselves.)
 var spots := {}
-## Raid seconds until which a raid event here makes it hot (-1: none), and the event's name.
+## Raid seconds until which a raid event here makes it hot (-1: none), when that event went off (-1:
+## none; it's not hot before then: a raid joined mid-way works out the heat at earlier times) and its
+## name.
 var event_until := -1.0
+var event_at := -1.0
 var event_name := ""
 
 var _entry := {}
@@ -137,7 +140,7 @@ func requirement_met(who: Actor = null) -> bool:
 func heat(raid_seconds: float) -> float:
 	var config := PoiTable.CONFIG
 	var value: float = config.tier_heat[clampi(tier(), 1, 3) - 1]
-	if event_until >= 0.0 and raid_seconds <= event_until:
+	if event_until >= 0.0 and raid_seconds <= event_until and raid_seconds >= event_at:
 		value += config.event_heat
 	return value
 

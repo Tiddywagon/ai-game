@@ -32,6 +32,8 @@ extends Resource
 @export var helmet_table: LootTable
 @export_range(0.0, 1.0, 0.05) var rig_chance := 1.0
 @export var rig_table: LootTable
+## Off: the rig is never an armored one (rolled again; a player Scav's worst kit tiers carry no armor).
+@export var armored_rigs := true
 @export_range(0.0, 1.0, 0.05) var backpack_chance := 0.4
 @export var backpack_table: LootTable
 ## A sidearm in the pistol slot this often (one gun of pistol_table), with pistol_magazines of spares.
@@ -62,13 +64,17 @@ extends Resource
 @export_range(0, 6) var gun_mods := 0
 
 
+## Rolls for a plain rig before giving up on one (armored_rigs off).
+const UNARMORED_TRIES := 20
+
+
 ## A full kit, rolled with `rng`. `tier`: rarity multipliers (LootTable boost) on every gear roll (gun,
 ## sidearm, armor, helmet, rig, backpack and loot); empty for none.
 func build(rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> Inventory:
 	tier = LootTable.combine_boosts(rarity_boost, tier)
 	var inventory := Inventory.new()
 	if rng.randf() < rig_chance and rig_table:
-		_equip(inventory, "rig", rig_table, rng, tier)
+		_equip(inventory, "rig", rig_table, rng, tier, not armored_rigs)
 	if rng.randf() < armor_chance and armor_table:
 		_equip(inventory, "armor", armor_table, rng, tier)
 	if rng.randf() < helmet_chance and helmet_table:
@@ -174,9 +180,11 @@ static func fit_mods(gun: ItemInstance, count: int, rng: RandomNumberGenerator) 
 	return fitted
 
 
-## A copy of this kit dressed for a gear tier (PmcAi.tier(): cheap to well-equipped): `overrides`'
-## rarity (multipliers on every gear roll), ammo_rarity, helmet / backpack / pistol / stim chances,
-## gun_mods, medkit_rarity and gun_durability replace the kit's; whatever it leaves out stays.
+## A copy of this kit dressed for a gear tier (PmcAi.tier(): cheap to well-equipped; a player Scav's kit
+## tier by karma, ScavRuns.kit_tier()): `overrides`' rarity (multipliers on every gear roll),
+## ammo_rarity, armor / helmet / backpack / melee / bandage / medkit / pistol / stim chances, gun_mods,
+## medkit_rarity, gun_durability, pocket_items and armored_rigs replace the kit's; whatever it leaves
+## out stays.
 func with_tier(overrides: Dictionary) -> BotKit:
 	var kit := duplicate() as BotKit
 	if overrides.get("rarity") is Array:
@@ -187,15 +195,28 @@ func with_tier(overrides: Dictionary) -> BotKit:
 		kit.ammo_rarity = Vector2i(int(overrides.ammo_rarity[0]), int(overrides.ammo_rarity[1]))
 	if overrides.get("gun_durability") is Array and overrides.gun_durability.size() == 2:
 		kit.gun_durability = Vector2(float(overrides.gun_durability[0]), float(overrides.gun_durability[1]))
-	for key in ["helmet_chance", "backpack_chance", "pistol_chance", "stim_chance"]:
+	for key in ["armor_chance", "helmet_chance", "backpack_chance", "melee_chance", "bandage_chance", "medkit_chance", "pistol_chance", "stim_chance"]:
 		if overrides.has(key):
 			kit.set(key, clampf(float(overrides[key]), 0.0, 1.0))
 	if overrides.has("gun_mods"):
 		kit.gun_mods = maxi(int(overrides.gun_mods), 0)
+	if overrides.get("pocket_items") is Array:
+		kit.pocket_items = PackedStringArray(overrides.pocket_items)
+	if overrides.get("armored_rigs") is bool:
+		kit.armored_rigs = overrides.armored_rigs
 	return kit
 
 
-static func _equip(inventory: Inventory, slot: String, table: LootTable, rng: RandomNumberGenerator, tier := PackedFloat32Array()) -> void:
+## Equips one item of `table` in `slot`; `unarmored`: rolled again (up to UNARMORED_TRIES times) while
+## it's armor, and nothing if it still is.
+static func _equip(inventory: Inventory, slot: String, table: LootTable, rng: RandomNumberGenerator, tier := PackedFloat32Array(),
+		unarmored := false) -> void:
 	var item := table.roll_item(rng, null, tier)
+	var tries := 0
+	while unarmored and item and item.stats.has("class") and tries < UNARMORED_TRIES:
+		item = table.roll_item(rng, null, tier)
+		tries += 1
+	if unarmored and item and item.stats.has("class"):
+		return
 	if item:
 		inventory.equip(slot, ItemInstance.create(item.id))

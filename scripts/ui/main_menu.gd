@@ -7,7 +7,8 @@ extends Node
 ## faction is and starts with, from data/config/factions.json: Factions). After a raid's summary it
 ## opens straight on the hideout (GameState.menu_return). Insured items on their way back (Insurance)
 ## show a countdown under the profile and arrive in the stash when due, whatever screen is open (the
-## stash views redraw; a notice over the screen says what came back).
+## stash views redraw; a notice over the screen says what came back). Under it, while the Scav run
+## cooldown runs, "Scav ready in 12:30" (ScavRuns).
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
 const CHARACTER_SCENE := preload("res://ui/character_screen.tscn")
@@ -22,6 +23,8 @@ var _return_focus: Control
 ## Insurance returns: the countdown / arrival line under the profile, checked every second.
 var _insurance_label: Label
 var _insurance_timer: Timer
+## "Scav ready in 12:30" while the Scav cooldown runs ("" once it's ready), updated with the same timer.
+var _scav_label: Label
 var _arrival_text := ""
 var _arrival_left := 0.0
 ## The same arrival line over an open screen, top centre.
@@ -58,6 +61,11 @@ func _ready() -> void:
 	_insurance_label.theme_type_variation = &"DimLabel"
 	_insurance_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	%MoneyLabel.add_sibling(_insurance_label)
+	_scav_label = Label.new()
+	_scav_label.name = "ScavLabel"
+	_scav_label.theme_type_variation = &"DimLabel"
+	_scav_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_insurance_label.add_sibling(_scav_label)
 	_notice = PanelContainer.new()
 	_notice.name = "InsuranceNotice"
 	_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -129,6 +137,7 @@ func _refresh_profile() -> void:
 ## profile: "Bulat returned 2 insured items to your stash" for a while (also over an open screen),
 ## else "Insurance returns in 1:42".
 func _check_insurance(delta: float) -> void:
+	_scav_label.text = ScavRuns.ready_text() if GameState.faction != GameState.Faction.NONE and not ScavRuns.is_ready() else ""
 	if GameState.faction == GameState.Faction.NONE:
 		_insurance_label.text = ""
 		return

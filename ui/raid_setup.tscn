@@ -147,6 +147,7 @@ size_flags_vertical = 4
 theme_override_font_sizes/font_size = 22
 text = "SCAV
 Random gear, nothing to lose.
+You join a raid already under way.
 Loot you extract goes to your stash.
 AI Scavs leave you alone unless you shoot them."
 

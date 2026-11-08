@@ -34,7 +34,12 @@ const SAVE_PATH := "user://savegame.json"
 ## stations, sets the stash's size (no size is saved), so the stash is sized from it before its items
 ## load. Older saves get the Stash at level 1, the 10 × 30 they had; older builds refuse a version 11
 ## save, which could hold items past row 30.
-const SAVE_VERSION := 11
+## Version 13 adds Scav runs (DESIGN.md §2, ScavRuns): profile "scav" {"karma" (Mole's standing, -6 to
+## +6), "ready_at" (unix time the next Scav run is ready; 0: ready), "kit" (this cooldown cycle's Scav
+## kit, an inventory, or null until it's rolled)}. Older saves get karma 0, no cooldown and no kit
+## (_upgrade_to_v13(), for any older version), and Mole's loyalty level follows the karma (LL1 at 0)
+## whatever was saved for him.
+const SAVE_VERSION := 13
 ## Trader ids before version 9 -> the trader who took over (upgrade()).
 const TRADER_IDS_V8 := {"prapor": "bulat", "therapist": "vera", "skier": "zoya", "peacekeeper": "broker",
 	"mechanic": "tinker", "ragman": "stitch", "jaeger": "bulat"}
@@ -90,7 +95,8 @@ func delete_save() -> void:
 ## Save `data` brought up to SAVE_VERSION (a copy; GameState.from_dict() reads it). Version 8 and
 ## older: the version 9 trader ids and reputation (see the version notes). Version 9: nothing to change
 ## (no trader stock yet: GameState.from_dict() gives full stock and a restock from now). Version 10 and
-## older: the Stash station at level 1. Data with no version is taken as current.
+## older: the Stash station at level 1. Version 12 and older: Scav karma 0, no cooldown, no kit. Data
+## with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
 	if version >= SAVE_VERSION:
@@ -100,8 +106,25 @@ func upgrade(data: Dictionary) -> Dictionary:
 		_upgrade_to_v9(result)
 	if version < 11:
 		_upgrade_to_v11(result)
+	if version < 13:
+		_upgrade_to_v13(result)
 	result.version = SAVE_VERSION
 	return result
+
+
+## Version 12 and older to version 13 (in place): Scav runs, starting at karma 0 (Mole's standing), ready
+## now, with no kit rolled yet; Mole's loyalty level goes back to what karma 0 gives (LL1).
+func _upgrade_to_v13(result: Dictionary) -> void:
+	var profile: Variant = result.get("profile")
+	if not profile is Dictionary:
+		return
+	if not profile.get("scav") is Dictionary:
+		profile.scav = {"karma": ScavRuns.start_karma(), "ready_at": 0.0, "kit": null}
+	var loyalty: Variant = profile.get("trader_loyalty")
+	if loyalty is Dictionary:
+		for trader_id: String in loyalty:
+			if TraderTable.follows_karma(trader_id) and loyalty[trader_id] is Dictionary:
+				loyalty[trader_id].level = TraderTable.karma_level(trader_id, float(profile.scav.get("karma", 0.0)))
 
 
 ## Version 10 and older to version 11 (in place): the Stash station, at level 1 (the stash they had).

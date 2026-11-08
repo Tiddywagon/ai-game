@@ -4,9 +4,12 @@ extends MenuScreen
 ## FIR only, sort). INVENTORY (or Tab) opens the grid inventory with the stash beside it, to move gear
 ## between them; closing it saves. The stash's title and item count follow it (a sort, the stash
 ## growing). Esc / B leaves the filter bar first (back to INVENTORY), then closes; Enter after typing a
-## search keeps the focus on the search box, so the arrows or d-pad carry on from there.
+## search keeps the focus on the search box, so the arrows or d-pad carry on from there. The Scav karma
+## row's cooldown counts down every second.
 
 const DIM := Color(1, 1, 1, 0.35)
+## Scav karma low enough that AI Scavs shoot you on sight.
+const KARMA_LOW := Color(0.95, 0.45, 0.35)
 const INVENTORY_SCENE := preload("res://ui/inventory_screen.tscn")
 
 var _inventory_screen: InventoryScreen
@@ -23,6 +26,12 @@ func _ready() -> void:
 	_refresh()
 	_update_stash_title()
 	GameState.stash.changed.connect(_on_stash_changed)  # A sort, the stash growing with the Stash station.
+	var timer := Timer.new()
+	timer.name = "KarmaTimer"
+	timer.wait_time = 1.0
+	timer.timeout.connect(_update_karma)
+	add_child(timer)
+	timer.start()  # The Scav cooldown in the karma row counts down.
 	%InventoryButton.grab_focus.call_deferred()
 
 
@@ -144,6 +153,7 @@ func _fill_stats() -> void:
 	_row(grid, "Roubles", UiFormat.money(GameState.roubles), Color.WHITE)
 	_row(grid, "Dollars", UiFormat.money(GameState.dollars, "USD"), Color.WHITE)
 	_row(grid, "Drip", UiFormat.thousands(GameState.drip), Player.TRICK_COLOR)
+	_row(grid, "Scav karma", karma_text(), KARMA_LOW if ScavRuns.hostile(ScavRuns.karma()) else Color.WHITE).name = "ScavKarma"
 	var tricks: Dictionary = GameState.trick_shots
 	_row(grid, "Trick Shots", "%s kill%s  ·  %s hit%s (360)" % [UiFormat.thousands(tricks.kills), "" if tricks.kills == 1 else "s",
 		UiFormat.thousands(tricks.hits), "" if tricks.hits == 1 else "s"], Player.TRICK_COLOR if tricks.kills > 0 else Color.WHITE)
@@ -168,6 +178,25 @@ func _fill_skills() -> void:
 		bar.value = data.progress * 100.0
 		for control: Control in [name, level, bar]:
 			grid.add_child(control)
+
+
+## The Scav karma row again (every second: the Scav cooldown counts down while the screen is open).
+func _update_karma() -> void:
+	var row := find_child("ScavKarma", true, false) as Label
+	if row == null:
+		return
+	var text := karma_text()
+	if row.text != text:
+		row.text = text
+	row.add_theme_color_override("font_color", (KARMA_LOW if ScavRuns.hostile(ScavRuns.karma()) else Color.WHITE).lerp(Color.WHITE, 0.25))
+
+
+## The Scav karma row (DESIGN.md §2, ScavRuns): "+1.6 (Mole LL2)  ·  Standard kit  ·  Scav ready in 12:30".
+static func karma_text() -> String:
+	var karma := ScavRuns.karma()
+	var trader := ScavRuns.karma_trader()
+	return "%s (%s LL%d)  ·  %s kit  ·  %s" % [ScavRuns.number_text(karma, true), TraderTable.display_name(trader),
+		int(GameState.trader_loyalty.get(trader, {}).get("level", 1)), ScavRuns.tier_name(ScavRuns.kit_tier(karma)), ScavRuns.ready_text()]
 
 
 ## Adds a name and its value to `grid`; returns the value's label.

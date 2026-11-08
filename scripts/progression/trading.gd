@@ -16,7 +16,8 @@ extends RefCounted
 ## items only where it says so; one with "stock" trades that many times each restock, and one with a
 ## "quest" waits until that quest is completed ("Unlocks after Safekeeping"). It gives every reward.
 ## Loyalty levels go up on their own once you meet the next level's player level, reputation and money
-## spent (Progression.loyalty_needs()), up to the trader's highest. Money spent counts roubles, and
+## spent (Progression.loyalty_needs()), up to the trader's highest; Mole's follows your Scav karma
+## instead (TraderTable.karma_levels(), ScavRuns), up or down. Money spent counts roubles, and
 ## dollars at Progression.dollar_rate(); selling to a trader counts too (Selling). Changing money at the
 ## exchange doesn't (buy_dollars(): The Broker changes money once he trades with you, dearer one way
 ## than the other); the dollars count when you spend them with him. Every barter adds a little
@@ -167,11 +168,17 @@ static func trader_block_reason(trader_id: String) -> String:
 
 ## Raises `trader_id`'s loyalty level as far as the player meets Progression.loyalty_needs() (a
 ## reputation a rounding error short, within Progression.REPUTATION_EPSILON, counts), up to the trader's
-## highest (TraderTable.max_loyalty()). Returns true if it went up.
+## highest (TraderTable.max_loyalty()). A trader whose standing is your Scav karma (Mole:
+## TraderTable.karma_levels()) is set to the level your karma gives instead, which can be lower. Returns
+## true if it went up.
 static func update_loyalty(trader_id: String) -> bool:
 	if not GameState.trader_loyalty.has(trader_id):
 		return false
 	var loyalty: Dictionary = GameState.trader_loyalty[trader_id]
+	if TraderTable.follows_karma(trader_id):
+		var before := int(loyalty.level)
+		loyalty.level = TraderTable.karma_level(trader_id, GameState.scav_karma)
+		return int(loyalty.level) > before
 	var raised := false
 	while int(loyalty.level) < TraderTable.max_loyalty(trader_id):
 		var need := Progression.loyalty_needs(int(loyalty.level) + 1)
@@ -446,6 +453,9 @@ static func _config_problems() -> Array[String]:
 			or durability.size() != 2 or float(durability[0]) <= 0.0 or float(durability[1]) > 1.0 or float(durability[1]) < float(durability[0]) \
 			or float(used.get("price", 0.0)) <= 0.0:
 		found.append("%s: used_stock needs a trader, count [from, to], durability [from, to] within 0-1 and a price above 0" % where)
+	for key in ["level_durability", "level_price", "resale_margin", "karma_price", "karma_durability"]:
+		if used.has(key) and not (used[key] is float or used[key] is int):
+			found.append("%s: used_stock %s must be a number" % [where, key])
 	var tables: Dictionary = used.get("tables", {})
 	if tables.is_empty():
 		found.append("%s: used_stock has no tables" % where)

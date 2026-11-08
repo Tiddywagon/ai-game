@@ -14,8 +14,14 @@ extends Node
 ## (EventSpot_airdrop, EventSpot_truck, EventSpot_cache; no suffix: airdrop or truck). A POI with a fresh
 ## event is hot: it draws Scav waves, AI PMCs without a raid plan and Chads planning their route
 ## (PointOfInterest.heat()). Every RaidLevel has one.
+## A Scav run joins the raid under way (RaidController.start_offset): the events due before then already
+## happened (_settle_past()): their crates stand where they came down or were left, searchable, with a
+## share of what's in them already taken (ScavRuns.loot_taken() for the time since), the POI as hot as
+## the time since makes it, and nothing announced or heard.
 
-## An event went off: {"kind", "poi", "poi_name", "at", "time", "box" (its crate), "ready" (searchable)}.
+## An event went off: {"kind", "poi", "poi_name", "at", "time", "box" (its crate), "ready" (searchable),
+## "past" (it went off before you joined), "rolled" (how many items its crate came with, past events)
+## and "taken" (how many of them were gone by the time you joined)}.
 signal event_started(event: Dictionary)
 
 const KINDS := ["airdrop", "truck", "cache"]
@@ -68,6 +74,11 @@ func _setup() -> void:
 	for i in rng.randi_range(config.event_count.x, config.event_count.y):
 		schedule.append(_raid.raid_seconds() * rng.randf_range(config.event_window.x, config.event_window.y))
 	schedule.sort()
+	while not schedule.is_empty() and schedule[0] < _raid.start_offset:
+		var time: float = schedule.pop_front()
+		var choice := pick()
+		if not choice.is_empty():
+			start(choice.kind, choice.poi, choice.at, time)
 
 
 func _physics_process(_delta: float) -> void:
@@ -104,13 +115,20 @@ func pick() -> Dictionary:
 	return {"poi": choice.poi, "kind": kind, "at": choice.at}
 
 
-## Sets off a `kind` event at `poi`, at `at`. Returns the event.
-func start(kind: String, poi: PointOfInterest, at: Vector3) -> Dictionary:
+## Sets off a `kind` event at `poi`, at `at`. Returns the event. With `past_time` (raid seconds before you
+## joined) it went off then: _settle_past().
+func start(kind: String, poi: PointOfInterest, at: Vector3, past_time := -1.0) -> Dictionary:
 	var event := {"kind": kind, "poi": poi, "poi_name": poi.poi_name(), "at": at, "time": _raid.elapsed if _raid else 0.0,
-		"box": null, "ready": false}
+		"box": null, "ready": false, "past": past_time >= 0.0, "rolled": 0, "taken": 0}
+	if past_time >= 0.0:
+		event.time = past_time
 	events.append(event)
+	poi.event_at = event.time
 	poi.event_until = event.time + config.event_heat_seconds
 	poi.event_name = TITLES.get(kind, kind)
+	if event.past:
+		_settle_past(event)
+		return event
 	match kind:
 		"airdrop":
 			_airdrop(event)
@@ -122,6 +140,42 @@ func start(kind: String, poi: PointOfInterest, at: Vector3) -> Dictionary:
 	_call_ai(event)
 	event_started.emit(event)
 	return event
+
+
+## An event that went off before you joined: its crate is already where it ends up (an airdrop's landed,
+## a truck parked with its cargo crate, a cache unsealed), searchable, with ScavRuns.loot_taken() of its
+## items gone for the time since (seeded in a seeded raid). No sound, flare, announcement or AI call.
+func _settle_past(event: Dictionary) -> void:
+	var box: LootBox = null
+	match str(event.kind):
+		"airdrop":
+			box = _make_box(AIRDROP, event.at)
+			box.name = "AirdropCrate"
+		"truck":
+			var truck := TRUCK.instantiate() as Node3D
+			truck.name = "SupplyTruck"
+			_level().add_child(truck)
+			truck.global_position = event.at
+			Bot.walk_through(truck)
+			box = _make_box(CARGO, event.at + Vector3(-3.0, 0, 0))
+			box.name = "TruckCargo"
+		"cache":
+			for each in caches:
+				if is_instance_valid(each) and each.sealed and each.global_position.distance_to(event.at) < 0.5:
+					box = each
+			if box == null:
+				box = _make_box(CACHE, event.at)
+				caches.append(box)
+	if box == null:
+		return
+	box.unseal()
+	event.box = box
+	event.ready = true
+	var roll := RandomNumberGenerator.new()
+	roll.seed = hash([int(GameState.raid.seed), "event_taken", events.size()]) if GameState.raid.has("seed") else randi()
+	var passed := (_raid.start_offset if _raid else 0.0) - float(event.time)
+	event.rolled = box.grid.items.size() if box.grid else 0
+	event.taken = ScavRuns.pick_over(box.grid, ScavRuns.loot_taken(passed, _raid.raid_seconds() if _raid else 900.0), roll)
 
 
 ## The HUD line for `event`: "A plane is dropping supplies over the Main hall".

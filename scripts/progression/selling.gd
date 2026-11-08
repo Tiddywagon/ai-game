@@ -4,7 +4,8 @@ extends RefCounted
 ## what they buy and what they pay: a rate (the share of an item's worth they pay at loyalty level 1),
 ## what each loyalty level above 1 adds, and the entries they buy, by category, group (barter goods and
 ## valuables), tag or weapon part kind, each with a multiplier (the best matching one counts). Mole, the
-## fence, buys anything at a low rate, even what nobody else takes. The Broker pays in dollars (at
+## fence, buys anything at a low rate, even what nobody else takes; his rate follows your Scav karma (his
+## loyalty level, and less below karma 0). The Broker pays in dollars (at
 ## Progression.dollar_rate()); everyone else in roubles.
 ##
 ## An item's worth (item_value()) is its value as it is: the whole stack, the uses or HP left in a med,
@@ -20,6 +21,8 @@ extends RefCounted
 
 ## A new gun's durability (ItemInstance), what a gun's condition is measured against.
 const NEW_GUN_DURABILITY := 100.0
+## The lowest share of its worth bad karma can bring a trader's rate down to.
+const MIN_RATE := 0.05
 
 
 ## `trader_id`'s sell block ({} if they have none).
@@ -55,10 +58,26 @@ static func buys(trader_id: String, data: ItemData) -> bool:
 	return multiplier(trader_id, data) > 0.0
 
 
-## The share of an item's worth `trader_id` pays at your loyalty level with them.
+## The share of an item's worth `trader_id` pays at your loyalty level with them, less their
+## "karma_penalty" for each point of Scav karma below 0 (Mole; never below MIN_RATE).
 static func rate(trader_id: String) -> float:
 	var level := int(GameState.trader_loyalty.get(trader_id, {}).get("level", 1))
-	return float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (level - 1)
+	var share := float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (level - 1)
+	var penalty := float(rules(trader_id).get("karma_penalty", 0.0))
+	if penalty > 0.0 and GameState.scav_karma < 0.0:
+		share = maxf(share - penalty * -GameState.scav_karma, minf(share, MIN_RATE))
+	return share
+
+
+## The most any trader pays for items like `data`, as a share of their worth: at each trader's top
+## loyalty level, × their multiplier for it (dollars at the same rate as roubles). What the fence's prices
+## stay above (TraderStock.used_price_share()).
+static func best_rate(data: ItemData) -> float:
+	var best := 0.0
+	for trader_id in TraderTable.ids():
+		var top := float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (TraderTable.max_loyalty(trader_id) - 1)
+		best = maxf(best, top * multiplier(trader_id, data))
+	return best
 
 
 ## "RUB" or "USD": what `trader_id` pays in.

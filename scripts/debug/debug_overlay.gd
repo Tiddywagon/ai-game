@@ -109,6 +109,8 @@ func text() -> String:
 	lines.append("Raid: %s  ·  %s  ·  seed %s  ·  %d:%02d left  ·  power %s%s" % [raid.map.display_name if raid.map else raid.map_id,
 		raid.side().to_upper(), str(GameState.raid.get("seed", "random")), left / 60, left % 60, raid.power_state(),
 		"  ·  OVER: %s" % RaidOutcome.TITLES[raid.outcome.status] if raid.outcome else ""])
+	if raid.start_offset > 0.0 or raid.side() == "scav":
+		lines.append(joined_text(raid))
 	var player := raid.player
 	if player:
 		var at := player.global_position
@@ -148,6 +150,25 @@ func text() -> String:
 	for zone: ExtractZone in get_tree().get_nodes_in_group("extract_zones"):
 		lines.append("  " + extract_line(zone, player))
 	return "\n".join(lines)
+
+
+## A Scav run: when you joined and what the raid had done by then (RaidController.fast_forward), and
+## the raid's karma: "Joined at 6:40 (2 waves, 2 squads, 1 left, 1 dead, loot 40% taken: 12 of 30 in
+## containers, 3 of 8 loose)  ·  karma −1.5 (Scavs hostile, react ×1.4)".
+static func joined_text(raid: RaidController) -> String:
+	var parts: Array[String] = []
+	if raid.start_offset > 0.0:
+		var done := raid.fast_forward
+		var loot: Dictionary = done.get("loot", {})
+		parts.append("Joined at %s (%d waves, %d squads%s, %d left, %d dead, loot %d%% taken: %d of %d in containers, %d of %d loose)" % [
+			_clock(raid.start_offset), int(done.get("waves", 0)), int(done.get("squads", 0)),
+			" (%d met another and fought)" % int(done.fought) if int(done.get("fought", 0)) > 0 else "", int(done.get("left", 0)), int(done.get("dead", 0)),
+			roundi(float(loot.get("share", 0.0)) * 100.0), int(loot.get("taken", 0)), int(loot.get("items", 0)), int(loot.get("loose_taken", 0)), int(loot.get("loose", 0))])
+	if raid.side() == "scav":
+		var player := raid.player
+		parts.append("karma %s%s" % [ScavRuns.number_text(raid.karma(), true),
+			" (Scavs hostile, react ×%.1f)" % player.karma_reaction if player and player.scavs_hostile else ""])
+	return "  ·  ".join(parts)
 
 
 ## "Iron Matvei (alive, 3 of 4 guards)", "not this raid (35%)" or "none on this map".
