@@ -109,6 +109,11 @@ var trick_window_left := 0.0
 ## Trick shots this raid: hits, and kills.
 var trick_hits := 0
 var trick_kills := 0
+## As a Scav (DESIGN.md §2, ScavRuns): true while your karma has AI Scavs shoot you on sight, and what
+## their reaction time is multiplied by then. RaidController sets both, at the start and as karma
+## changes in the raid.
+var scavs_hostile := false
+var karma_reaction := 1.0
 
 var _roll_requested := false
 var _cover_requested := false
@@ -836,11 +841,36 @@ func on_hit_landed(target: Actor, damage: float, hit_position: Vector3, outcome:
 
 
 func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
+	_note_attacker(from)
 	var outcome := super(damage, from, hit_position, shot)
 	_shake_camera(HIT_SHAKE)
 	if using_item and float(outcome.get("damage", 0.0)) > 0.0 and Consumables.CONFIG.hits_interrupt:
 		cancel_use("%s interrupted: hit" % using_item.data.display_name)
 	return outcome
+
+
+func take_blow(damage: float, from: Actor, kind: String, weapon_name: String, at: Vector3) -> Dictionary:
+	_note_attacker(from)
+	return super(damage, from, kind, weapon_name, at)
+
+
+## A round from `shooter` passed close: if it was shooting at you, it attacked you.
+func on_bullet_near(shooter: Actor) -> void:
+	_note_attacker(shooter)
+
+
+## A bot whose target was you shot at you or hit you: it attacked you (Bot.attacked_player), so killing it
+## after isn't killing a friendly Scav (ScavRuns).
+func _note_attacker(from: Actor) -> void:
+	if from is Bot and from.target == self:
+		from.attacked_player = true
+
+
+## Scav to Scav, AI Scavs are hostile while your karma has them shoot you on sight (scavs_hostile).
+func is_hostile(other: Actor) -> bool:
+	if scavs_hostile and side == Side.SCAV and other is Bot and other.side == Side.SCAV and not other.is_dead:
+		return true
+	return super(other)
 
 
 func worn_gear() -> Inventory:

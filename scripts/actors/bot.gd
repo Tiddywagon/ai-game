@@ -176,6 +176,13 @@ var route := PackedVector3Array()
 ## Cells its kit took in its pockets, rig and backpack when it joined the raid: what it loots fills the
 ## rest (loot_fill()).
 var kit_cells := 0
+## Scav karma (DESIGN.md §2, ScavRuns): whether it attacked the player (shot at or hit them while they
+## were its target), whether the player has attacked it, and whether it was friendly when they first did
+## (it hadn't attacked them before, and wasn't hostile to them for their karma alone): killing it then is
+## killing a friendly Scav.
+var attacked_player := false
+var player_attacked := false
+var friendly_when_attacked := false
 
 ## Investigating something alarming (a gunshot): it runs there instead of walking.
 var _urgent := false
@@ -255,6 +262,12 @@ var _flanked := false
 var _work_timer := 0.0
 ## Its own decision rolls (seeded per bot in a seeded raid).
 var _rng := RandomNumberGenerator.new()
+## Whether _plan_extract() has run.
+var _extract_planned := false
+## Who hurt it last, and whether a hit or a blow is landing now: a death that isn't a hit's (a bleed) is
+## its last attacker's doing (die(): RaidController.bot_died_of_wounds()).
+var _last_attacker: Actor = null
+var _taking_hit := false
 ## Seconds it has been thinking (its own clock) and where its slow look around starts (rolled): where a
 ## bot holding or covering looks doesn't depend on how long the game ran before the raid.
 var _clock := 0.0
@@ -341,11 +354,74 @@ func _plain_color() -> Variant:
 
 func take_hit(damage: float, from: Actor, hit_position: Vector3, shot: Dictionary = {}) -> Dictionary:
 	_attacked_by(from)
+	_note_player_attack(from)
+	_taking_hit = true
 	var outcome := super(damage, from, hit_position, shot)
+	_taking_hit = false
 	_update_outline()  # A friendly bot shot by the player turns hostile.
 	if float(outcome.get("damage", 0.0)) > 0.0:
 		_extract_time = 0.0  # A hit starts the extract countdown again.
+		if from:
+			_last_attacker = from
+	if not outcome.is_empty():
+		_alert_witnesses(from)
 	return outcome
+
+
+## A melee swing or a grenade: as a hit, for the player's karma and the Scavs that see it.
+func take_blow(damage: float, from: Actor, kind: String, weapon_name: String, at: Vector3) -> Dictionary:
+	_note_player_attack(from)
+	_taking_hit = true
+	var outcome := super(damage, from, kind, weapon_name, at)
+	_taking_hit = false
+	_update_outline()
+	if not outcome.is_empty():
+		if from:
+			_last_attacker = from
+		_alert_witnesses(from)
+	return outcome
+
+
+## The first time the player attacks it: was it friendly to them then (it hadn't attacked them first,
+## and wasn't hostile to them for their karma alone: one that shoots a low-karma Scav on sight isn't)?
+func _note_player_attack(from: Actor) -> void:
+	if from is Player and not player_attacked and not is_dead:
+		player_attacked = true
+		friendly_when_attacked = not attacked_player and not _karma_hostile(from)
+
+
+## The player Scav attacked this Scav: other Scavs that can see them now turn on them too (RaidController).
+func _alert_witnesses(from: Actor) -> void:
+	if from is Player and from.side == Side.SCAV and side == Side.SCAV:
+		var raid := _raid_controller()
+		if raid:
+			raid.scav_witnesses(from, self)
+
+
+## Scav to Scav, it's also hostile to a player Scav whose karma has AI Scavs shoot it on sight
+## (Player.scavs_hostile, ScavRuns.hostile()): a boss and its guards too.
+func is_hostile(other: Actor) -> bool:
+	if _karma_hostile(other):
+		return true
+	return super(other)
+
+
+## True if `other` is a player Scav this Scav is hostile to for its karma.
+func _karma_hostile(other: Actor) -> bool:
+	return side == Side.SCAV and other is Player and other.side == Side.SCAV and other.scavs_hostile and not other.is_dead
+
+
+## The player Scav's karma no longer has AI Scavs shoot them on sight (RaidController): a Scav fighting
+## `player` for that alone (they're not among its enemies: it wasn't attacked by them and didn't see them
+## shoot a Scav) drops them as its target and leaves the fight.
+func calm_down(player: Actor) -> void:
+	if target != player or player == null or player in enemies or is_hostile(player):
+		return
+	target = null
+	_sees_target = false
+	fire_input = false
+	if state == State.COMBAT:
+		_leave_combat(State.IDLE)
 
 
 ## Leaves the raid through an extract: out of the fight, gone from the map with everything it carries.
@@ -369,11 +445,13 @@ func leave_raid() -> void:
 ## When this bot will head for an extract: a squad with a raid plan at the plan's leave time (or sooner:
 ## leave_reason()); other AI PMCs some time in RaidConfig.ai_pmc_extract_window of the raid (a squad
 ## once, for all of it: its leader takes it out), some Scavs (ai_scav_extract_chance) in
-## ai_scav_extract_window. A boss and its guards never leave. Seeded in a seeded raid.
+## ai_scav_extract_window. A boss and its guards never leave. Seeded in a seeded raid. Once (a raid
+## joined mid-way asks early: RaidController's fast-forward).
 func _plan_extract() -> void:
 	var raid := _raid_controller()
-	if raid == null or is_boss() or is_guard():
+	if raid == null or is_boss() or is_guard() or _extract_planned:
 		return  # A boss and its guards hold their ground.
+	_extract_planned = true
 	var rng := RandomNumberGenerator.new()
 	if GameState.raid.has("seed"):
 		rng.seed = hash([int(GameState.raid.seed), "extract", str(get_path())])
@@ -469,14 +547,24 @@ func aims_at(other: Actor) -> bool:
 ## too (no more holding back from a PMC of their faction that shot at one of them, DESIGN.md §3).
 func provoke(by: Actor) -> void:
 	var known := enemies.size()
-	super(by)
+	if _karma_hostile(by) and not by in enemies and not is_squad_mate(by):
+		enemies.append(by)  # Hostile for the player Scav's karma alone so far: now for good, whatever it does next.
+	else:
+		super(by)
 	if enemies.size() > known and squad:
 		for mate in squad.mates_of(self):
 			mate.provoke(by)
 
 
+## Dies; of its wounds (a bleed: not a hit or a blow landing now), it's its last attacker's kill
+## (RaidController.bot_died_of_wounds(): the player's Scav karma).
 func die() -> void:
+	var of_wounds := not is_dead and not _taking_hit and is_instance_valid(_last_attacker)
 	super()
+	if of_wounds:
+		var raid := _raid_controller()
+		if raid:
+			raid.bot_died_of_wounds(self, _last_attacker)
 	_loot_target = null  # Whatever it was after is free for others.
 	_update_outline()
 	# The body can be searched: its gun keeps the rounds left in it.
@@ -790,11 +878,15 @@ func shuns(other: Actor) -> bool:
 
 
 ## Seconds between first seeing its target and opening fire: its profile's reaction time, × the
-## same-faction reaction_multiplier while it hesitates at the target.
+## same-faction reaction_multiplier while it hesitates at the target, and a Scav's × the karma one
+## (Player.karma_reaction: slower just under the line, quicker the lower your karma) for a player Scav it
+## turned on for their karma alone.
 func reaction_time() -> float:
 	var seconds := profile.reaction_time if profile else 0.5
 	if target and hesitates_at(target):
 		seconds *= float(Factions.same_faction().get("reaction_multiplier", 1.0))
+	if target is Player and side == Side.SCAV and target.side == Side.SCAV and target.scavs_hostile and not target in enemies:
+		seconds *= target.karma_reaction
 	return seconds
 
 

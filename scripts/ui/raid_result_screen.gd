@@ -6,7 +6,8 @@ extends CanvasLayer
 ## to your gear (kept, lost, insured items coming back); and the loot that is now found in raid, each
 ## with its checkmark turned solid. A Run Through or MIA explains why nothing gained the checkmark. TO
 ## THE HIDEOUT goes back to the hideout (the profile is already saved: loot, gear, found-in-raid status,
-## quest progress, level).
+## quest progress, level). A Scav run shows its karma changes ("Killed a friendly Scav −1.0  ·  Extracted
+## +0.1 → karma −0.9").
 
 const MAIN_MENU := "res://ui/main_menu.tscn"
 const FADE_TIME := 0.5
@@ -53,8 +54,9 @@ func show_outcome(outcome: RaidOutcome, raid: RaidController) -> void:
 	match status:
 		RaidOutcome.Status.RUN_THROUGH:
 			var config := raid.config if raid else load("res://data/config/raid.tres") as RaidConfig
-			notes.append("Run Through: you keep your loot, but nothing became found in raid and you earned no experience. Stay in the raid for %d minutes or earn %d experience before extracting." % [
-				int(config.run_through_seconds / 60.0), config.run_through_xp])
+			var quick := raid.run_through_seconds() if raid else config.run_through_seconds
+			notes.append("Run Through: you keep your loot, but nothing became found in raid and you earned no experience. Stay in the raid for %s or earn %d experience before extracting." % [
+				("%d minutes" % int(quick / 60.0)) if is_zero_approx(fmod(quick, 60.0)) else TraderStock.clock(quick), config.run_through_xp])
 		RaidOutcome.Status.MIA:
 			notes.append("Missing in action: nothing you picked up became found in raid.")
 		RaidOutcome.Status.KILLED:
@@ -103,6 +105,7 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 				lines.append(["Left behind", "%d items (no room in the stash)" % outcome.left_behind.size()])
 		else:
 			lines.append(["Gear", "Scav kit lost; nothing from your stash was at risk"])
+		lines.append(["Karma", outcome.karma_text()])
 	elif outcome.survived():
 		lines.append(["Gear", "Kept"])
 	else:

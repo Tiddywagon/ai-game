@@ -46,7 +46,12 @@ const SAVE_PATH := "user://savegame.json"
 ## Version 13 adds the LOADOUT screen's auto-equip options (DESIGN.md §16.6): "auto_equip": {"budget":
 ## roubles, 0 for no limit, "protect_legendary"}. Older saves get no limit and protect off (nothing to
 ## change in upgrade(): GameState.from_dict() fills them in).
-const SAVE_VERSION := 13
+## Version 14 adds Scav runs (DESIGN.md §2, ScavRuns): profile "scav" {"karma" (Mole's standing, -6 to
+## +6), "ready_at" (unix time the next Scav run is ready; 0: ready), "kit" (this cooldown cycle's Scav
+## kit, an inventory, or null until it's rolled)}. Older saves get karma 0, no cooldown and no kit
+## (_upgrade_to_v14(), for any older version), and Mole's loyalty level follows the karma (LL1 at 0)
+## whatever was saved for him.
+const SAVE_VERSION := 14
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"
@@ -106,8 +111,8 @@ func delete_save() -> void:
 ## older: the version 9 trader ids and reputation (see the version notes). Version 9: nothing to change
 ## (no trader stock yet: GameState.from_dict() gives full stock and a restock from now). Version 10 and
 ## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
-## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults). Data with no
-## version is taken as current.
+## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults).
+## Version 13 and older: Scav karma 0, no cooldown, no kit. Data with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
 	if version >= SAVE_VERSION:
@@ -119,6 +124,8 @@ func upgrade(data: Dictionary) -> Dictionary:
 		_upgrade_to_v11(result)
 	if version < 12:
 		_upgrade_to_v12(result)
+	if version < 14:
+		_upgrade_to_v14(result)
 	result.version = SAVE_VERSION
 	return result
 
@@ -207,6 +214,21 @@ func _take_headsets_inside(entry: Dictionary, into: Array) -> void:
 	if entry.get("contents") is Array:
 		for inside: Variant in entry.contents:
 			_take_headsets_from(inside, into)
+
+
+## Version 13 and older to version 14 (in place): Scav runs, starting at karma 0 (Mole's standing), ready
+## now, with no kit rolled yet; Mole's loyalty level goes back to what karma 0 gives (LL1).
+func _upgrade_to_v14(result: Dictionary) -> void:
+	var profile: Variant = result.get("profile")
+	if not profile is Dictionary:
+		return
+	if not profile.get("scav") is Dictionary:
+		profile.scav = {"karma": ScavRuns.start_karma(), "ready_at": 0.0, "kit": null}
+	var loyalty: Variant = profile.get("trader_loyalty")
+	if loyalty is Dictionary:
+		for trader_id: String in loyalty:
+			if TraderTable.follows_karma(trader_id) and loyalty[trader_id] is Dictionary:
+				loyalty[trader_id].level = TraderTable.karma_level(trader_id, float(profile.scav.get("karma", 0.0)))
 
 
 ## Version 10 and older to version 11 (in place): the Stash station, at level 1 (the stash they had).

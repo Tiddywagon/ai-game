@@ -1,0 +1,50 @@
+{
+  "_comment": "Scav runs (DESIGN.md §2, §4.1, §5.1, §16.3), read by ScavRuns and checked when it loads (ScavRuns.problems()). start: a Scav run joins a raid already under way, at a random share of the raid time in window (maps: a window per map id, else the default), never leaving less than min_left_seconds on the clock; a Run Through on a Scav run is extracting sooner than raid.tres run_through_seconds or run_through_share of the time that was left when you joined, whichever is shorter (and with less experience than run_through_xp). fast_forward: what the raid did before you joined. squad_spacing: the AI PMC squads already in the raid start at least this many metres apart, or squad_spacing_unseen with a wall between them (where the map has the room; a squad that can only start in a clear line closer than squad_spacing to a squad of the other faction already fought it, and lies dead). loot_taken: the share of loose loot and container contents already gone, per_raid times the share of the raid that has passed (an event crate: since it turned up), at most max; pmc_deaths: an AI PMC's chance of lying dead somewhere, per whole raid it has been in it (its body at a point of interest with its kit). cooldown_minutes: real minutes from deploying as a Scav until the next Scav run (times the Intelligence Center's multiplier and the kit tier's cooldown). karma: Mole's standing, range [lowest, highest], starting at start; the change for killing a friendly AI Scav (friendly_kill), a guard (guard_kill) or a boss (boss_kill) as a Scav (one that hadn't attacked you before you attacked it), killing any PMC as a Scav (pmc_kill), extracting with others (extract_with_others, once a raid: a friendly AI Scav within with_others_radius metres as you extract, or one that left through the same extract in the last with_others_seconds) and any Scav extract (extract). A Scav counts as friendly when you first attack it if it hadn't attacked you and wasn't hostile to you for your karma alone; one that dies of wounds you gave it (you hurt it last) counts as your kill. Below hostile_below AI Scavs shoot your Scav on sight; their reaction time is multiplied by reaction[0] just below it (at most 2: slower, and one that sees you for a second ducks into cover before it fires), falling in a straight line to reaction[1] at the lowest karma; if the raid's karma climbs back to hostile_below, those hostile to you for it alone let you be. kit_tiers: the player's Scav kit by karma, worst first: a tier with at_most is the kit at karma at or below it (the lowest that matches), one with at_least at or above it (the highest that matches), the one with neither the rest; overrides change data/bots/scav_kit.tres (BotKit.with_tier(): rarity multipliers on every gear roll Common to Legendary, the armor, helmet, backpack, melee, bandage and medkit chances, medkit_rarity, gun_durability, pocket_items, armored_rigs: false for no armored rig), and cooldown multiplies the Scav cooldown.",
+  "start": {
+    "window": [0.2, 0.65],
+    "maps": {"test_yard": [0.2, 0.6], "factory": [0.2, 0.65]},
+    "min_left_seconds": 300,
+    "run_through_share": 0.5
+  },
+  "fast_forward": {
+    "loot_taken": {"per_raid": 0.9, "max": 0.6},
+    "pmc_deaths": 0.5,
+    "squad_spacing": 30.0,
+    "squad_spacing_unseen": 12.0
+  },
+  "cooldown_minutes": 20,
+  "karma": {
+    "range": [-6.0, 6.0],
+    "start": 0.0,
+    "friendly_kill": -1.0,
+    "guard_kill": -1.0,
+    "boss_kill": -2.0,
+    "pmc_kill": 0.25,
+    "extract_with_others": 0.5,
+    "extract": 0.1,
+    "with_others_radius": 20.0,
+    "with_others_seconds": 60.0,
+    "hostile_below": -1.0,
+    "reaction": [1.5, 1.0]
+  },
+  "kit_tiers": [
+    {"id": "outcast", "name": "Outcast", "at_most": -4.0, "cooldown": 1.0,
+      "overrides": {"rarity": [1, 0.35, 0.1, 0, 0, 0], "armor_chance": 0.0, "armored_rigs": false, "helmet_chance": 0.0, "backpack_chance": 0.2,
+        "melee_chance": 0.4, "bandage_chance": 0.25, "medkit_chance": 0.25, "gun_durability": [35, 60]}},
+    {"id": "distrusted", "name": "Distrusted", "at_most": -2.0, "cooldown": 1.0,
+      "overrides": {"rarity": [1, 0.6, 0.35, 0.2, 0, 0], "armor_chance": 0.0, "armored_rigs": false, "helmet_chance": 0.15, "backpack_chance": 0.3,
+        "bandage_chance": 0.4, "medkit_chance": 0.45, "gun_durability": [40, 75]}},
+    {"id": "standard", "name": "Standard", "cooldown": 1.0, "overrides": {}},
+    {"id": "trusted", "name": "Trusted", "at_least": 2.0, "cooldown": 1.0,
+      "overrides": {"rarity": [0.6, 1, 1.8, 2, 1, 1], "armor_chance": 0.5, "helmet_chance": 0.45, "backpack_chance": 0.6,
+        "bandage_chance": 0.8, "medkit_chance": 0.85, "gun_durability": [60, 90]}},
+    {"id": "respected", "name": "Respected", "at_least": 4.0, "cooldown": 0.9,
+      "overrides": {"rarity": [0.35, 0.9, 2.6, 3, 1, 1], "armor_chance": 0.7, "helmet_chance": 0.6, "backpack_chance": 0.75,
+        "bandage_chance": 1.0, "medkit_chance": 1.0, "medkit_rarity": [0.5, 1, 1, 1, 1, 1], "pocket_items": ["painkillers"],
+        "gun_durability": [65, 95]}},
+    {"id": "kin", "name": "Kin", "at_least": 6.0, "cooldown": 0.8,
+      "overrides": {"rarity": [0.2, 0.7, 3.2, 4, 1, 1], "armor_chance": 0.85, "helmet_chance": 0.8, "backpack_chance": 0.9,
+        "bandage_chance": 1.0, "medkit_chance": 1.0, "medkit_rarity": [0.3, 1, 1, 1, 1, 1], "pocket_items": ["painkillers", "tourniquet"],
+        "gun_durability": [75, 100]}}
+  ]
+}

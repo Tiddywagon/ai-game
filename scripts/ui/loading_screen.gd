@@ -1,6 +1,7 @@
 extends Control
-## Loading screen (DESIGN.md §16.3): shows the map, your side (your faction as a PMC, or Scav) and a tip
-## while the raid scene loads on a background thread, then switches to it.
+## Loading screen (DESIGN.md §16.3): shows the map, your side (your faction as a PMC, or Scav; a Scav run
+## joining mid-raid with the time left: "SCAV  ·  15 min raid  ·  8:20 left  ·  ...") and a tip while the
+## raid scene loads on a background thread, then switches to it.
 
 const MAIN_MENU := "res://ui/main_menu.tscn"
 ## Stays up at least this long so the screen doesn't just flash.
@@ -29,8 +30,10 @@ func _ready() -> void:
 		return
 	_path = map.scene_path
 	%MapName.text = map.display_name.to_upper()
-	%Details.text = "%s  ·  %d min raid  ·  %s" % [
-		Factions.side_name("pmc" if GameState.raid.get("side") == "pmc" else "scav").to_upper(), map.raid_minutes, map.players]
+	var joining := float(GameState.raid.get("offset", 0.0))
+	%Details.text = "%s  ·  %d min raid%s  ·  %s" % [
+		Factions.side_name("pmc" if GameState.raid.get("side") == "pmc" else "scav").to_upper(), map.raid_minutes,
+		"  ·  %s left" % TraderStock.clock(map.raid_minutes * 60.0 - joining) if joining > 0.0 else "", map.players]
 	%Tip.text = TIPS.pick_random()
 	ResourceLoader.load_threaded_request(_path)
 

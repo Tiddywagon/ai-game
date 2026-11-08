@@ -16,8 +16,11 @@ extends RefCounted
 const STATIONS_PATH := "res://data/hideout/stations.json"
 ## The station whose level sizes the stash.
 const STASH := "stash"
+## The station whose levels shorten the Scav run cooldown (a level's "scav_cooldown": the multiplier from
+## that level on; scav_cooldown_multiplier()). Not in stations.json yet: until it is, the multiplier is 1.
+const INTELLIGENCE_CENTER := "intelligence_center"
 const STATION_KEYS := ["id", "name", "description", "start_level", "levels"]
-const LEVEL_KEYS := ["level", "roubles", "stations", "traders", "requires", "crafts", "stash_size"]
+const LEVEL_KEYS := ["level", "roubles", "stations", "traders", "requires", "crafts", "stash_size", "scav_cooldown"]
 
 static var _stations: Array[Dictionary] = []
 
@@ -71,6 +74,21 @@ static func stash_size(at_level := -1) -> Vector2i:
 		var cells: Variant = entry.get("stash_size")
 		if int(entry.get("level", 0)) <= top and cells is Array and cells.size() == 2:
 			result = Vector2i(int(cells[0]), int(cells[1]))
+	return result
+
+
+## What the Scav run cooldown is multiplied by (ScavRuns.cooldown_seconds(), DESIGN.md §2): the
+## "scav_cooldown" of the highest Intelligence Center level built that has one (0.9: 10% shorter), 1
+## without the station or below its first such level.
+static func scav_cooldown_multiplier() -> float:
+	var station := find(INTELLIGENCE_CENTER)
+	var result := 1.0
+	if station.is_empty():
+		return result
+	var built := level(station)
+	for entry: Dictionary in station.get("levels", []):
+		if int(entry.get("level", 0)) <= built and (entry.get("scav_cooldown") is float or entry.get("scav_cooldown") is int):
+			result = clampf(float(entry.scav_cooldown), 0.0, 1.0)
 	return result
 
 
@@ -271,6 +289,9 @@ static func _level_problems(station: Dictionary, entry: Variant, number: int, st
 			found.append("%s: %s isn't an item that exists with a count of 1 or more" % [where, wanted])
 	if entry.has("stash_size") and station.get("id") != STASH:
 		found.append("%s: only the %s station sets stash_size" % [where, STASH])
+	if entry.has("scav_cooldown") and (station.get("id") != INTELLIGENCE_CENTER or not (entry.scav_cooldown is float or entry.scav_cooldown is int)
+			or float(entry.scav_cooldown) <= 0.0 or float(entry.scav_cooldown) > 1.0):
+		found.append("%s: only the %s station sets scav_cooldown, a multiplier above 0, at most 1" % [where, INTELLIGENCE_CENTER])
 	return found
 
 

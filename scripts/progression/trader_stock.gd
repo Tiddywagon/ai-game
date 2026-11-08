@@ -17,7 +17,10 @@ extends RefCounted
 ## pays ×1.5 for up to 3 of each (Selling.price()). The fence (Mole) sells 8-12 worn items rolled from
 ## the Scav kit tables the same way (used_offers()), one of each, nothing his loyalty level couldn't buy
 ## from a trader and nothing a trader could want (shelf_allows()), so nothing you can buy pays a Wanted
-## bonus; only what you bought is saved, as bought offers. The numbers are in data/config/trading.json.
+## bonus; only what you bought is saved, as bought offers. His loyalty level is your Scav karma's
+## (ScavRuns): each level above 1 lets him stock rarer gear in better condition, a little cheaper (never
+## as cheap as any trader pays for it), and pay more when you sell; karma below 0 makes it more worn and
+## dearer. The numbers are in data/config/trading.json.
 
 ## How many times the fence re-rolls a slot of his shelf that came up with something he may not sell.
 const SHELF_TRIES := 30
@@ -242,25 +245,62 @@ static func used_offers(trader_id: String) -> Array[Dictionary]:
 	return used_offers_on(trader_id, restock_number(trader_id))
 
 
+## The fence's loyalty level with you (1 to his highest), which his shelf goes by.
+static func used_level(trader_id: String) -> int:
+	return clampi(int(GameState.trader_loyalty.get(trader_id, {}).get("level", 1)), 1, TraderTable.max_loyalty(trader_id))
+
+
+## Points of Scav karma below 0 that worsen the fence's shelf (0 at karma 0 and up; only for a trader
+## whose standing is your karma).
+static func _karma_debt(trader_id: String) -> float:
+	return maxf(-GameState.scav_karma, 0.0) if TraderTable.follows_karma(trader_id) else 0.0
+
+
+## The share of a worn item's value the fence charges: used_stock "price", plus "level_price" (below 0:
+## cheaper) for each loyalty level above 1; for `data`, never less than the most any trader pays for it
+## at their top level (Selling.best_rate()) plus "resale_margin", so nothing he sells can be sold on at a
+## profit; plus "karma_price" for each point of karma below 0.
+static func used_price_share(trader_id: String, data: ItemData = null) -> float:
+	var rules := used_rules()
+	var share := float(rules.get("price", 1.0)) + float(rules.get("level_price", 0.0)) * (used_level(trader_id) - 1)
+	if data:
+		share = maxf(share, Selling.best_rate(data) + maxf(float(rules.get("resale_margin", 0.0)), 0.0))
+	return share + maxf(float(rules.get("karma_price", 0.0)), 0.0) * _karma_debt(trader_id)
+
+
+## How worn the fence's guns and armor come: used_stock "durability" [from, to] of their maximum, plus
+## "level_durability" for each loyalty level above 1 and "karma_durability" for each point of karma
+## below 0, kept within 0.05-1.
+static func used_durability(trader_id: String) -> Vector2:
+	var rules := used_rules()
+	var durability: Array = rules.get("durability", [0.4, 0.8])
+	var shift := float(rules.get("level_durability", 0.0)) * (used_level(trader_id) - 1) + float(rules.get("karma_durability", 0.0)) * _karma_debt(trader_id)
+	return Vector2(clampf(float(durability[0]) + shift, 0.05, 1.0), clampf(float(durability[1]) + shift, 0.05, 1.0))
+
+
 ## The fence's worn gear at restock `number`: 8-12 items rolled from the Scav kit tables (each table
 ## picked by its weight; a roll he may not sell, shelf_allows(), is rolled again) with a generator
-## seeded by the trader and the number, guns and armor at 40-80% of their durability, guns unloaded.
-## Buy offers {"id" ("mole_used_12_3": restock 12, slot 3), "item", "count", "price" (80% of its worn
-## value, Selling.item_value(), rounded up to 100), "currency", "stock": 1, "instance" (the piece
-## itself, ItemInstance.to_dict()), "used": true}.
+## seeded by the trader, the number and his loyalty level, guns and armor at 40-80% of their durability
+## (used_durability()), guns unloaded. Buy offers {"id" ("mole_used_12_3": restock 12, slot 3; at LL2
+## and up "mole_used_12_3_ll2"), "item", "count", "price" (80% of its worn value at LL1, a little less
+## each level up but always more than any trader pays for it, more below karma 0: used_price_share();
+## Selling.item_value(), rounded up to 100), "currency", "stock": 1, "instance" (the piece itself,
+## ItemInstance.to_dict()), "used": true}.
 static func used_offers_on(trader_id: String, number: int) -> Array[Dictionary]:
-	var key := "%s:%d" % [trader_id, number]
+	var level := used_level(trader_id)
+	var key := "%s:%d:%d:%.2f" % [trader_id, number, level, _karma_debt(trader_id)]
 	if _used_cache.has(key):
 		return _used_cache[key]
 	var rules := used_rules()
-	var rng := _rng(trader_id, number, "used")
+	var rng := _rng(trader_id, number, "used" if level <= 1 else "used_ll%d" % level)
 	var tables: Dictionary = rules.get("tables", {})
 	var paths: Array = tables.keys()
 	var weights := PackedFloat32Array()
 	for path: String in paths:
 		weights.append(float(tables[path]))
 	var count: Array = rules.get("count", [8, 12])
-	var durability: Array = rules.get("durability", [0.4, 0.8])
+	var durability := used_durability(trader_id)
+	var suffix := "" if level <= 1 else "_ll%d" % level
 	var currency := str(TraderTable.find(trader_id).get("currency", "RUB"))
 	var result: Array[Dictionary] = []
 	for i in rng.randi_range(int(count[0]), int(count[1])):
@@ -269,7 +309,7 @@ static func used_offers_on(trader_id: String, number: int) -> Array[Dictionary]:
 			var index := _pick(rng, weights)
 			var table := load(paths[index]) as LootTable if index >= 0 else null
 			var rolled: ItemData = table.roll_item(rng) if table else null
-			if rolled and shelf_allows(trader_id, rolled):
+			if rolled and shelf_allows(trader_id, rolled, level):
 				data = rolled
 				break
 		if data == null:
@@ -277,20 +317,21 @@ static func used_offers_on(trader_id: String, number: int) -> Array[Dictionary]:
 		var amount := rng.randi_range(maxi(data.max_stack / 5, 1), maxi(data.max_stack / 2, 1)) if data.max_stack > 1 else 1
 		var item := ItemInstance.create(data.id, amount)
 		if item.has_durability():
-			item.durability = snappedf(item.max_durability * rng.randf_range(float(durability[0]), float(durability[1])), 0.1)
-		var price := maxi(ceili(Selling.item_value(item) * float(rules.get("price", 1.0)) / 100.0) * 100, 100)
-		result.append({"id": "%s_used_%d_%d" % [trader_id, number, i + 1], "item": data.id, "count": item.count, "price": price,
+			item.durability = snappedf(item.max_durability * rng.randf_range(durability.x, durability.y), 0.1)
+		var price := maxi(ceili(Selling.item_value(item) * used_price_share(trader_id, data) / 100.0) * 100, 100)
+		result.append({"id": "%s_used_%d_%d%s" % [trader_id, number, i + 1, suffix], "item": data.id, "count": item.count, "price": price,
 			"currency": currency, "stock": 1, "instance": item.to_dict(), "used": true})
 	_used_cache[key] = result
 	return result
 
 
 ## True if the fence (`trader_id`) may put `data` on his shelf: nothing rarer than his loyalty level
-## could buy from a trader (Trading.min_loyalty(), at his highest level), nothing traders only sell from
-## a higher level than that (no LL2-4 rounds or meds) and nothing a trader could want
-## (could_be_wanted(): no valuables), so what he sells cheap never pays a Wanted bonus.
-static func shelf_allows(trader_id: String, data: ItemData) -> bool:
-	var top := TraderTable.max_loyalty(trader_id)
+## (`level`, else the one you have with him: used_level()) could buy from a trader
+## (Trading.min_loyalty()), nothing traders only sell from a higher level than that (at LL1 no LL2-4
+## rounds or meds) and nothing a trader could want (could_be_wanted(): no valuables), so what he sells
+## cheap never pays a Wanted bonus.
+static func shelf_allows(trader_id: String, data: ItemData, level := -1) -> bool:
+	var top := level if level >= 1 else used_level(trader_id)
 	var lowest := Trading.min_loyalty(data)
 	return lowest >= 1 and lowest <= top and Trading.sold_at_level(data.id) <= top and not could_be_wanted(data.id)
 

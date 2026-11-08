@@ -1,5 +1,5 @@
 {
-  "_comment": "The traders (DESIGN.md §10), read by TraderTable, in the order the TRADERS screen lists them. Each: id (offers.json, quests, insurers and saves use it), name, role, specialty (what they stock), personality (flavour), greetings (one is picked each visit to the TRADERS screen), currency (RUB or USD: what their prices are in, and what they pay when you sell), unique (what sets them apart), unlock (null: open from the start; {\"quest\": id}: trades once that quest is done), locked_greeting (with an unlock: what they say until then, instead of a greeting), restock_minutes (real minutes between restocks; left out: restock_minutes in data/config/trading.json), sell (what they buy and pay, read by Selling: rate is the share of an item's worth they pay at loyalty level 1, per_level what each level above 1 adds, buys the entries they take: an item matches an entry if it is of one of its categories, groups (barter goods and valuables), tags or weapon part kinds (\"kinds\": muzzle, sight, headset...), or always with \"any\": true; the best matching entry's multiplier, default 1, applies), max_loyalty (leave out for the top loyalty level in progression.json) and notice (optional: shown at the top of the BUY and BARTER tabs).",
+  "_comment": "The traders (DESIGN.md §10), read by TraderTable, in the order the TRADERS screen lists them. Each: id (offers.json, quests, insurers and saves use it), name, role, specialty (what they stock), personality (flavour), greetings (one is picked each visit to the TRADERS screen), currency (RUB or USD: what their prices are in, and what they pay when you sell), unique (what sets them apart), unlock (null: open from the start; {\"quest\": id}: trades once that quest is done), locked_greeting (with an unlock: what they say until then, instead of a greeting), restock_minutes (real minutes between restocks; left out: restock_minutes in data/config/trading.json), sell (what they buy and pay, read by Selling: rate is the share of an item's worth they pay at loyalty level 1, per_level what each level above 1 adds, buys the entries they take: an item matches an entry if it is of one of its categories, groups (barter goods and valuables), tags or weapon part kinds (\"kinds\": muzzle, sight, headset...), or always with \"any\": true; the best matching entry's multiplier, default 1, applies; karma_penalty: what each point of Scav karma below 0 takes off the rate), max_loyalty (leave out for the top loyalty level in progression.json), karma_levels (Mole: the Scav karma each loyalty level from 2 up needs; his level follows your karma up and down instead of the usual needs, ScavRuns) and notice (optional: shown at the top of the BUY and BARTER tabs).",
   "traders": [
     {
       "id": "bulat",
@@ -98,12 +98,13 @@
         "Mind the water. And mind who followed you."
       ],
       "currency": "RUB",
-      "unique": "Takes what nobody else will · one loyalty level for now",
+      "unique": "Takes what nobody else will · his standing is your Scav karma",
       "unlock": null,
       "restock_minutes": 60,
-      "sell": {"rate": 0.3, "per_level": 0.0, "buys": [{"any": true}]},
-      "max_loyalty": 1,
-      "notice": "Mole buys anything you bring him, even what nobody else will take, at a low price (SELL). What he sells is used gear off Scavs: a different handful every restock, worn, cheap, one of each. He also swaps worn gear for junk (BARTER)."
+      "sell": {"rate": 0.3, "per_level": 0.03, "karma_penalty": 0.02, "buys": [{"any": true}]},
+      "max_loyalty": 4,
+      "karma_levels": [1.0, 3.0, 5.0],
+      "notice": "Mole buys anything you bring him, even what nobody else will take, at a low price (SELL). What he sells is used gear off Scavs: a different handful every restock, worn, cheap, one of each. He also swaps worn gear for junk (BARTER). His loyalty is your Scav karma: LL2 at +1, LL3 at +3, LL4 at +5, for more when you sell and rarer, less worn, slightly cheaper gear; below 0 he pays less and charges more."
     },
     {
       "id": "broker",

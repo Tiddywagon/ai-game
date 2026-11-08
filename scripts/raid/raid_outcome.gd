@@ -9,7 +9,9 @@ extends RefCounted
 ##   stash after the insurer's return time unless someone takes them first (Insurance.claim(): hostile
 ##   AI near your body; missing in action, nobody does).
 ## - Scav: surviving moves everything the Scav carries into the stash (what doesn't fit is left
-##   behind). Dying costs nothing.
+##   behind). Dying costs nothing. The raid's karma changes (RaidController.karma_changes: friendly
+##   Scavs killed, PMCs killed, extracting, with others) go to your Scav karma, however it ended
+##   (ScavRuns.apply(), which also sets Mole's loyalty level).
 ## - Raid experience (none for a Run Through; GameState.add_xp(), which may raise the level), Drip and
 ##   360 trick-shot stats are added to the profile either way (and trick-shot kills count toward
 ##   quests), then the game is saved.
@@ -47,6 +49,11 @@ var found: Array[ItemInstance] = []
 ## Scav runs: items that went into the stash, and those that didn't fit.
 var moved_to_stash: Array[ItemInstance] = []
 var left_behind: Array[ItemInstance] = []
+## Scav runs: this raid's karma changes ([{"reason", "delta"}]) and your Scav karma before and after
+## them (ScavRuns).
+var karma_changes: Array = []
+var karma_before := 0.0
+var karma_after := 0.0
 ## PMC deaths: the base value of the gear you brought in and lost (not the loot), the insured items
 ## on their way back to the stash (Insurance: they arrive in insurance_seconds, real time) and the
 ## insured items someone took.
@@ -56,9 +63,11 @@ var insurance_taken: Array[ItemInstance] = []
 var insurance_seconds := 0.0
 
 
-## The status for reaching an extract: a Run Through if it was quick and you earned little.
-static func extract_status(raid_seconds: float, raid_xp: int, config: RaidConfig) -> Status:
-	if raid_seconds < config.run_through_seconds and raid_xp < config.run_through_xp:
+## The status for reaching an extract: a Run Through if it was quick (under `run_through_seconds`, else
+## RaidConfig.run_through_seconds: RaidController.run_through_seconds()) and you earned little.
+static func extract_status(raid_seconds: float, raid_xp: int, config: RaidConfig, run_through_seconds := -1.0) -> Status:
+	var quick := run_through_seconds if run_through_seconds >= 0.0 else config.run_through_seconds
+	if raid_seconds < quick and raid_xp < config.run_through_xp:
 		return Status.RUN_THROUGH
 	return Status.SURVIVED
 
@@ -117,6 +126,12 @@ func kills_text() -> String:
 	return "%d (%s)" % [kills, ", ".join(parts)] if not parts.is_empty() else str(kills)
 
 
+## The summary's karma line: "Killed a friendly Scav −1.0  ·  Extracted with a Scav +0.5 → karma 1.6"
+## (ScavRuns.changes_text()), three changes to a line.
+func karma_text() -> String:
+	return ScavRuns.changes_text(karma_changes, karma_after, 3)
+
+
 ## Total base value of the insured items that came back.
 func insurance_value() -> int:
 	var total := 0
@@ -129,7 +144,8 @@ func insurance_value() -> int:
 ## `to_profile` false (the test level run on its own) only the found-in-raid marks change.
 ## `tricks`: {"hits", "kills": [{"side", "weapon_class"}], "drip"} from the RaidController.
 ## `details`: {"xp_parts", "kill_list", "extract", "looters" (hostile AI alive near the body), "faction"
-## (the player's)} from the RaidController, for the summary and insurance.
+## (the player's), "karma" (a Scav run's karma changes)} from the RaidController, for the summary,
+## insurance and karma.
 static func settle(end: Status, raid_side: String, inventory: Inventory, raid_seconds: float, raid_xp: int,
 		raid_kills: int, to_profile: bool, tricks: Dictionary = {}, details: Dictionary = {}) -> RaidOutcome:
 	var outcome := RaidOutcome.new()
@@ -142,6 +158,10 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	outcome.kill_list = details.get("kill_list", [])
 	outcome.extract_name = str(details.get("extract", ""))
 	outcome.faction = str(details.get("faction", "")) if raid_side != "scav" else ""
+	if raid_side == "scav":
+		outcome.karma_changes = details.get("karma", [])
+	outcome.karma_before = ScavRuns.karma()
+	outcome.karma_after = ScavRuns.clamp_karma(outcome.karma_before + ScavRuns.total(outcome.karma_changes))
 	var secured: Array[ItemInstance] = []
 	if inventory.equipment.secure:
 		secured = inventory.equipment.secure.all_items()
@@ -162,6 +182,7 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	if raid_side == "scav":
 		if outcome.survived():
 			outcome._move_to_stash(inventory)
+		outcome.karma_after = ScavRuns.apply(outcome.karma_changes)
 	elif outcome.survived():
 		GameState.inventory = inventory
 	else:
