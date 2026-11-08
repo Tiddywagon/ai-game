@@ -252,9 +252,61 @@ autowrap_mode = 3
 
 [node name="AutoEquip" type="VBoxContainer" parent="Margin/Layout/Columns/SidePanel/Rows"]
 unique_name_in_owner = true
-visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AutoEquipGap" type="Control" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="AutoEquipTitle" type="Label" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip"]
+layout_mode = 2
+theme_type_variation = &"AccentLabel"
+text = "AUTO-EQUIP"
+
+[node name="BudgetRow" type="HBoxContainer" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip"]
 layout_mode = 2
 theme_override_constants/separation = 8
+
+[node name="BudgetLabel" type="Label" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip/BudgetRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+text = "Budget per item"
+
+[node name="BudgetField" type="LineEdit" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip/BudgetRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
+placeholder_text = "No limit"
+max_length = 13
+virtual_keyboard_type = 2
+
+[node name="ProtectLegendary" type="CheckButton" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "Protect Legendary"
+
+[node name="AutoEquipButton" type="Button" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "AUTO-EQUIP BEST GEAR"
+
+[node name="AutoEquipMessage" type="Label" parent="Margin/Layout/Columns/SidePanel/Rows/AutoEquip"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(276, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
 
 [node name="StashPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
 unique_name_in_owner = true

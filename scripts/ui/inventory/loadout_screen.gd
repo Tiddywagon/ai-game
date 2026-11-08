@@ -14,8 +14,11 @@ extends InventoryScreen
 ## presets (LoadoutPresets: up to five named loadouts to save, overwrite, rename, delete and LOAD, which
 ## dresses you from the stash and says what was missing); and the stash on the right. Hovering a stash
 ## item you could wear (or landing the controller cursor on it, or dragging it) shows a comparison with
-## what you wear in its slot (GearCompare), beside the stash: green ▲ better, red ▼ worse. The space under
-## the presets (%AutoEquip) is kept for automatic equipping. Closing saves.
+## what you wear in its slot (GearCompare), beside the stash: green ▲ better, red ▼ worse. Under the
+## presets, AUTO-EQUIP (%AutoEquip) puts on the best you own from the stash (LoadoutPlanner), within a
+## budget per item and optionally leaving Legendary items alone (both kept in the profile:
+## GameState.auto_equip), then shows a summary of every change with UNDO (reverses exactly what it did,
+## LoadoutPlanner.undo()) and OK. Closing saves; so do AUTO-EQUIP and UNDO.
 
 ## The slots: columns of rows of [slot, size in cells].
 const SLOT_LAYOUT := [
@@ -28,6 +31,9 @@ const CONTAINER_CELL := 40.0
 const STAT_FONT_SIZE := 15
 const COMPARE_FONT_SIZE := 15
 const COMPARE_WIDTH := 560.0
+const SUMMARY_WIDTH := 860.0
+## The summary's list of changes scrolls past this share of the screen's height.
+const SUMMARY_MAX_HEIGHT := 0.6
 const DIM_COLOR := Color(1, 1, 1, 0.35)
 const LOADOUT_HINTS := [
 	"Drag to move or onto a filled slot to swap  ·  Hover a stash item: compare  ·  R: turn  ·  Right-click: examine  ·  Ctrl-click: quick move  ·  Double-click: open",
@@ -50,6 +56,12 @@ var _closed := false
 var _hover_target: ItemInstance
 ## Where the mouse last was (from its events, in this viewport).
 var _mouse_at := Vector2(-1, -1)
+## The plan the last AUTO-EQUIP made, while its summary is open (UNDO takes it back); {} once closed.
+var auto_plan: Dictionary = {}
+## The auto-equip summary (a modal panel over the screen: the mouse, the keys and the focus stay in it) and
+## the shade behind it.
+var _summary_shade: ColorRect
+var _summary: PanelContainer
 
 
 func _ready() -> void:
@@ -67,8 +79,19 @@ func _ready() -> void:
 	%RenameButton.pressed.connect(rename_preset)
 	%DeleteButton.pressed.connect(delete_preset)
 	%PresetName.text_submitted.connect(func(_text: String) -> void: (%PresetName as LineEdit).release_focus())
-	for control: Control in [%PresetName, %SaveNewButton, %LoadButton, %OverwriteButton, %RenameButton, %DeleteButton]:
+	%AutoEquipButton.pressed.connect(auto_equip)
+	%ProtectLegendary.toggled.connect(_on_protect_toggled)
+	%BudgetField.text_changed.connect(_on_budget_typed)
+	%BudgetField.text_submitted.connect(func(_text: String) -> void: (%BudgetField as LineEdit).release_focus())
+	%BudgetField.focus_exited.connect(_apply_budget)
+	%BudgetField.tooltip_text = "Auto-equip won't use anything worth more than this (a gun with its parts and the magazine it would get; rounds and meds one at a time). Empty: no limit"
+	%ProtectLegendary.tooltip_text = "Auto-equip won't use Legendary items, rounds or meds. A gun or helmet with a Legendary part counts as Legendary. What you already wear stays on"
+	%AutoEquipButton.tooltip_text = "Put on the best you own from the stash (armor, rig, helmet, face cover, headset, backpack, melee, guns), with magazines, rounds, spare rounds and meds. Shows what changed, with UNDO"
+	for control: Control in [%PresetName, %SaveNewButton, %LoadButton, %OverwriteButton, %RenameButton, %DeleteButton,
+			%BudgetField, %ProtectLegendary, %AutoEquipButton]:
 		control.add_to_group(GridCursor.CURSOR_GROUP)
+	_build_summary()
+	show_auto_options()
 	refresh_stats()
 	refresh_presets()
 
@@ -93,18 +116,33 @@ func _exit_tree() -> void:
 		SaveManager.save_game()
 
 
-## The cursor stays off the grids while the preset name box has the keys.
+## The cursor stays off the grids while the preset name or budget box has the keys, or the auto-equip
+## summary is open.
 func cursor_allowed() -> bool:
-	return super() and not (%PresetName as LineEdit).has_focus()
+	return super() and _typing_box() == null and not summary_open()
+
+
+## The preset name box or the budget box while it has the keys, else null.
+func _typing_box() -> LineEdit:
+	for box: LineEdit in [%PresetName, %BudgetField]:
+		if box.has_focus():
+			return box
+	return null
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouse:
 		_mouse_at = (event as InputEventMouse).position
-	var box: LineEdit = %PresetName
-	if box.has_focus():
-		# Typing a name: the keys are the box's (no hotkeys, no R, Tab doesn't close); Esc / B leaves it,
-		# a click anywhere else lets go of it.
+	if summary_open():
+		# The summary has the screen: Esc / B or Tab is OK; its buttons take the rest.
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("toggle_inventory"):
+			close_summary()
+			get_viewport().set_input_as_handled()
+		return
+	var box := _typing_box()
+	if box:
+		# Typing a name or a budget: the keys are the box's (no hotkeys, no R, Tab doesn't close); Esc / B
+		# leaves it, a click anywhere else lets go of it.
 		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause"):
 			box.release_focus()
 			get_viewport().set_input_as_handled()
@@ -210,6 +248,8 @@ func stat_text(key: String) -> String:
 ## gear you could wear; null for none.
 func _compare_target() -> ItemInstance:
 	var item: ItemInstance = null
+	if summary_open():
+		return null
 	if get_viewport().gui_is_dragging() and InventoryDrag.current:
 		var point := cursor.at if cursor and cursor.active else _mouse_at
 		if (%StashPanel as Control).get_global_rect().has_point(point):
@@ -490,3 +530,231 @@ func _on_gear_changed() -> void:
 	stash.changed.emit()
 	inventory.changed.emit()
 	_build_containers()
+
+
+# --- Auto-equip -----------------------------------------------------------------------------------
+
+## Shows the auto-equip options kept in the profile (GameState.auto_equip): the budget ("" for no limit)
+## and Protect Legendary.
+func show_auto_options() -> void:
+	var options := LoadoutPlanner.clean_options(GameState.auto_equip)
+	(%BudgetField as LineEdit).text = UiFormat.thousands(options.budget) if options.budget > 0 else ""
+	(%ProtectLegendary as CheckButton).set_pressed_no_signal(options.protect_legendary)
+
+
+## Sets the budget (roubles per item, 0 for no limit), in the profile and the box.
+func set_budget(roubles: int) -> void:
+	GameState.auto_equip.budget = maxi(roubles, 0)
+	show_auto_options()
+
+
+## Only digits go in the budget box (thousands separators come back when it's left).
+func _on_budget_typed(text: String) -> void:
+	var digits := _digits(text)
+	if digits == text:
+		return
+	var field: LineEdit = %BudgetField
+	var caret := field.caret_column - (text.length() - digits.length())
+	field.text = digits
+	field.caret_column = clampi(caret, 0, digits.length())
+
+
+## The budget box was left (or AUTO-EQUIP pressed): its number becomes the budget.
+func _apply_budget() -> void:
+	var digits := _digits((%BudgetField as LineEdit).text).left(12)
+	set_budget(int(digits) if digits != "" else 0)
+
+
+static func _digits(text: String) -> String:
+	var result := ""
+	for character in text:
+		if character >= "0" and character <= "9":
+			result += character
+	return result
+
+
+func _on_protect_toggled(on: bool) -> void:
+	GameState.auto_equip.protect_legendary = on
+
+
+## AUTO-EQUIP: puts on the best you own from the stash with the options set (LoadoutPlanner.apply()),
+## saves, and shows the summary with UNDO and OK. Returns the plan. While a summary is open it does
+## nothing (that plan stays the one UNDO takes back).
+func auto_equip() -> Dictionary:
+	if summary_open():
+		return auto_plan
+	if (%BudgetField as LineEdit).has_focus():
+		(%BudgetField as LineEdit).release_focus()
+	_apply_budget()
+	auto_plan = LoadoutPlanner.apply(inventory, stash, GameState.auto_equip)
+	SaveManager.save_game()
+	_on_gear_changed()
+	_auto_message(str(auto_plan.message), false)
+	_show_summary(auto_plan)
+	return auto_plan
+
+
+## UNDO: reverses what the last AUTO-EQUIP did (LoadoutPlanner.undo(): only its own moves, so anything that
+## reached the stash meanwhile stays), saves, closes the summary and says how it went.
+func undo_auto_equip() -> Dictionary:
+	if auto_plan.is_empty():
+		return {}
+	var result := LoadoutPlanner.undo(auto_plan, inventory, stash)
+	auto_plan = {}
+	SaveManager.save_game()
+	_on_gear_changed()
+	_hide_summary()
+	_auto_message(str(result.message), not result.lines.is_empty())
+	return result
+
+
+## OK (or Esc / B, Tab): closes the summary and keeps what changed (no undo after that).
+func close_summary() -> void:
+	auto_plan = {}
+	_hide_summary()
+
+
+func summary_open() -> bool:
+	return _summary_shade != null and _summary_shade.visible
+
+
+func _auto_message(text: String, warning: bool) -> void:
+	%AutoEquipMessage.text = text
+	if warning:
+		%AutoEquipMessage.add_theme_color_override("font_color", HEAVY_COLOR)
+	else:
+		%AutoEquipMessage.remove_theme_color_override("font_color")
+
+
+func _build_summary() -> void:
+	_summary_shade = ColorRect.new()
+	_summary_shade.name = "AutoEquipShade"
+	_summary_shade.color = Color(0, 0, 0, 0.6)
+	_summary_shade.mouse_filter = Control.MOUSE_FILTER_STOP  # Nothing under it moves while it's open.
+	_summary_shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_summary_shade.hide()
+	%Overlay.add_child(_summary_shade)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_summary_shade.add_child(center)
+	_summary = PanelContainer.new()
+	_summary.name = "AutoEquipSummary"
+	_summary.custom_minimum_size.x = SUMMARY_WIDTH
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.055, 0.06, 1.0)
+	style.border_color = Color(1, 1, 1, 0.18)
+	style.set_border_width_all(1)
+	style.set_content_margin_all(24)
+	_summary.add_theme_stylebox_override("panel", style)
+	center.add_child(_summary)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 12)
+	_summary.add_child(rows)
+	var title := Label.new()
+	title.name = "SummaryTitle"
+	title.theme_type_variation = &"AccentLabel"
+	title.add_theme_font_size_override("font_size", 24)
+	rows.add_child(title)
+	var options := Label.new()
+	options.name = "SummaryOptions"
+	options.theme_type_variation = &"DimLabel"
+	rows.add_child(options)
+	rows.add_child(HSeparator.new())
+	var scroll := ScrollContainer.new()
+	scroll.name = "SummaryScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rows.add_child(scroll)
+	var lines := VBoxContainer.new()
+	lines.name = "SummaryLines"
+	lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lines.add_theme_constant_override("separation", 6)
+	scroll.add_child(lines)
+	rows.add_child(HSeparator.new())
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override("separation", 10)
+	rows.add_child(buttons)
+	var note := Label.new()
+	note.name = "SummaryNote"
+	note.theme_type_variation = &"DimLabel"
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	note.text = "UNDO puts everything back as it was"
+	buttons.add_child(note)
+	for entry in [["SummaryUndo", "UNDO", undo_auto_equip], ["SummaryOk", "OK", close_summary]]:
+		var button := Button.new()
+		button.name = entry[0]
+		button.text = entry[1]
+		button.custom_minimum_size = Vector2(170, 46)
+		button.pressed.connect(entry[2])
+		buttons.add_child(button)
+
+
+## Shows `plan`'s summary: a title with how many changes, the options it ran with, and every line
+## (changes plain, what stayed dim, what didn't work out amber).
+func _show_summary(plan: Dictionary) -> void:
+	var count := int(plan.changes)
+	(_summary.find_child("SummaryTitle", true, false) as Label).text = "AUTO-EQUIP  ·  %s" % (
+		("%d CHANGE%s" % [count, "" if count == 1 else "S"]) if count > 0 else "NOTHING TO CHANGE")
+	var options: Dictionary = plan.options
+	(_summary.find_child("SummaryOptions", true, false) as Label).text = "Budget: %s  ·  %s" % [
+		("%s per item" % UiFormat.money(int(options.budget))) if int(options.budget) > 0 else "no limit",
+		"Legendary items protected" if options.protect_legendary else "Legendary items allowed"]
+	var lines := _summary.find_child("SummaryLines", true, false) as VBoxContainer
+	for child in lines.get_children():
+		lines.remove_child(child)
+		child.queue_free()
+	var index := 0
+	for line: Dictionary in plan.lines:
+		var label := Label.new()
+		label.name = "SummaryLine_%d" % index
+		label.text = str(line.text)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.custom_minimum_size.x = SUMMARY_WIDTH - 72.0
+		label.add_theme_font_size_override("font_size", 17)
+		match str(line.tone):
+			LoadoutPlanner.KEPT:
+				label.add_theme_color_override("font_color", DIM_COLOR.lightened(0.2))
+			LoadoutPlanner.WARNING:
+				label.add_theme_color_override("font_color", HEAVY_COLOR)
+		lines.add_child(label)
+		index += 1
+	(_summary.find_child("SummaryUndo", true, false) as Button).disabled = plan.moves.is_empty()
+	_summary_shade.show()
+	_trap_focus(true)
+	_fit_summary.call_deferred()
+	var ok := _summary.find_child("SummaryOk", true, false) as Button
+	ok.grab_focus.call_deferred()
+
+
+## The list of changes as tall as it needs, up to SUMMARY_MAX_HEIGHT of the screen (then it scrolls).
+func _fit_summary() -> void:
+	var scroll := _summary.find_child("SummaryScroll", true, false) as ScrollContainer
+	var lines := _summary.find_child("SummaryLines", true, false) as Control
+	scroll.custom_minimum_size.y = minf(lines.get_combined_minimum_size().y, size.y * SUMMARY_MAX_HEIGHT)
+	_summary.reset_size()
+
+
+func _hide_summary() -> void:
+	_summary_shade.hide()
+	_trap_focus(false)
+
+
+## While the summary is open (`on`), nothing under it takes the keyboard or controller focus: the screen's
+## own content and the rest of %Overlay are FOCUS_BEHAVIOR_DISABLED, so the arrows, Tab and the d-pad only
+## move between UNDO and OK. Off gives the focus back.
+func _trap_focus(on: bool) -> void:
+	var behavior := Control.FOCUS_BEHAVIOR_DISABLED if on else Control.FOCUS_BEHAVIOR_INHERITED
+	for child in get_children() + %Overlay.get_children():
+		if child is Control and child != %Overlay and child != _summary_shade:
+			(child as Control).focus_behavior_recursive = behavior
+
+
+## The text of the summary's lines, in order (tests and tools).
+func summary_lines() -> Array[String]:
+	var result: Array[String] = []
+	var lines := _summary.find_child("SummaryLines", true, false)
+	for child in lines.get_children():
+		if not child.is_queued_for_deletion():
+			result.append((child as Label).text)
+	return result

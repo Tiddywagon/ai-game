@@ -78,6 +78,9 @@ var explored: Dictionary = {}
 ## {slot: {"id", "parts": {slot path: part id}, "upgrade", "ammo", "rounds"}}, "pockets" / "rig" /
 ## "backpack": [{"id", "count"}]}.
 var loadout_presets: Array = []
+## The LOADOUT screen's auto-equip options (DESIGN.md §16.6, LoadoutPlanner.clean_options()): {"budget":
+## roubles, 0 for no limit, "protect_legendary"}.
+var auto_equip: Dictionary = {"budget": 0, "protect_legendary": false}
 ## The raid being set up or played: {"map": map id, "side": "pmc" or "scav", "loadout": Inventory}.
 ## Not saved.
 var raid: Dictionary = {}
@@ -191,6 +194,7 @@ func _reset(new_faction: Faction) -> void:
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
 	explored = {}
 	loadout_presets = []
+	auto_equip = LoadoutPlanner.clean_options({})
 	skills = {}
 	for skill in SKILLS:
 		skills[skill[0]] = {"level": 0, "progress": 0.0}
@@ -224,6 +228,7 @@ func to_dict() -> Dictionary:
 			"hotkeys": hotkeys.duplicate(),
 			"explored": explored.duplicate(true),
 			"loadout_presets": loadout_presets.duplicate(true),
+			"auto_equip": auto_equip.duplicate(),
 		},
 		"stash": stash.to_array(),
 	}
@@ -315,6 +320,7 @@ func from_dict(data: Dictionary) -> void:
 			skills[skill] = {"level": int(entry.get("level", 0)), "progress": float(entry.get("progress", 0.0))}
 
 	loadout_presets = LoadoutPresets.sanitize(profile.get("loadout_presets", []))
+	auto_equip = LoadoutPlanner.clean_options(profile.get("auto_equip", {}))
 
 	stash.resize(Hideout.stash_size())
 	stash.load_array(data.get("stash", []))

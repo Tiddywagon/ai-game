@@ -43,7 +43,10 @@ const SAVE_PATH := "user://savegame.json"
 ## item from your old save, not an insurance return). An insured helmet's headset stays insured, with
 ## the helmet's insurer. A helmet on its way back from insurance (in either pending format) sends its
 ## headset back beside it, due at the same time. Older saves have no presets.
-const SAVE_VERSION := 12
+## Version 13 adds the LOADOUT screen's auto-equip options (DESIGN.md §16.6): "auto_equip": {"budget":
+## roubles, 0 for no limit, "protect_legendary"}. Older saves get no limit and protect off (nothing to
+## change in upgrade(): GameState.from_dict() fills them in).
+const SAVE_VERSION := 13
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"
@@ -103,7 +106,8 @@ func delete_save() -> void:
 ## older: the version 9 trader ids and reputation (see the version notes). Version 9: nothing to change
 ## (no trader stock yet: GameState.from_dict() gives full stock and a restock from now). Version 10 and
 ## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
-## ones for the stash). Data with no version is taken as current.
+## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults). Data with no
+## version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
 	if version >= SAVE_VERSION:

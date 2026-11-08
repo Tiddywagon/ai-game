@@ -1,0 +1,22 @@
+{
+  "_comment": "Auto-equip on the LOADOUT screen (DESIGN.md §16.6), loaded by LoadoutPlanner (checked on load: LoadoutPlanner.problems()). Scores are points; higher is better. armor: a piece's protection is, over each zone it covers, the zone's weight × ArmorRules.resistance(class, durability left): 10 per class, falling to half as it wears and to 0 worn out, plus a helmet's fitted face shield, minus weight_penalty per kg (the piece with its parts), plus hearing points for +100% hearing (GearUpgrades.hearing() of the piece and its parts: negative for most helmets and masks, so they cost). Head and thorax are vital (and the face is the head); the stomach, arms and legs weigh little, so a higher class wins and coverage only breaks a near-tie. A helmet and a face cover are scored as a pair: over the face only the piece that stops more counts. carry: a rig's or backpack's room, cell points per cell of its grid (at its upgrade level) minus weight_penalty per kg; an armored rig scores its room and its protection, and body armor + rig is weighed against an armored rig alone. gun: from WeaponStats with its parts and your skills: ergonomics (per point), vertical_recoil and horizontal_recoil (per degree, against), base_spread (per degree, against), durability (at 100 of 100), jam_chance (per % per shot, against), fire_rate (per round a minute), plus ammo × the best round you own for it. ammo: penetration + damage × pellets^pellet_exponent (per round). hearing: points for +100% hearing (headsets; well above armor.hearing, as a headset's slot is for hearing). melee_damage: points per point of damage. rarity_epsilon: scores this close count as a tie and the rarer item wins. upgrade: a worn item is replaced only by one that scores more than its score + max(min, |score| × margin). spare_magazines: spare rounds carried per gun, in magazines' worth (rounds you carry count when they're as good as the stash's; worse ones go back to the stash for better). meds: what goes in the pockets or rig, one of each kind (by the med's \"type\" stat), unless you carry one there already.",
+  "armor": {
+    "zones": {"head": 1.0, "face": 0.6, "thorax": 1.0, "stomach": 0.1, "left_arm": 0.04, "right_arm": 0.04, "left_leg": 0.04, "right_leg": 0.04},
+    "weight_penalty": 1.0,
+    "hearing": 20.0
+  },
+  "carry": {"cell": 1.5, "weight_penalty": 0.5},
+  "gun": {"ergonomics": 0.3, "vertical_recoil": 20.0, "horizontal_recoil": 10.0, "base_spread": 20.0, "durability": 20.0, "jam_chance": 10.0, "fire_rate": 0.02, "ammo": 1.0},
+  "ammo": {"penetration": 1.0, "damage": 0.25, "pellet_exponent": 0.5},
+  "hearing": 100.0,
+  "melee_damage": 1.0,
+  "rarity_epsilon": 0.5,
+  "upgrade": {"margin": 0.1, "min": 1.0},
+  "spare_magazines": 2,
+  "meds": [
+    {"id": "bandage", "name": "bandage", "types": ["bandage"]},
+    {"id": "tourniquet", "name": "tourniquet", "types": ["tourniquet", "hemostat"]},
+    {"id": "splint", "name": "splint", "types": ["splint"]},
+    {"id": "medkit", "name": "medkit", "types": ["medkit"]}
+  ]
+}
