@@ -1,2 +1,3 @@
 # Headless suites, one per line (tests/<name>_test.gd).
 smoke
+economy
