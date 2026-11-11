@@ -77,4 +77,4 @@ func items(list: Array) -> Array:
 ## A new profile (faction 0: BEAR, 1: USEC) with no save file on disk.
 func fresh_profile(faction := 0) -> void:
 	sm.delete_save()
-	gs.new_profile(faction)
+	gs.new_profile(gs.Faction.USEC if faction == 1 else gs.Faction.BEAR)
