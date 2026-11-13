@@ -1,7 +1,12 @@
 extends "res://tests/test_base.gd"
 ## The hideout (DESIGN.md §9): every station's data and the loader's checks (a broken copy for each
-## rule), rules.json and the cosmetics, and loading saves from before the hideout's real-time state
-## (version 16) with their levels kept.
+## rule), rules.json and the cosmetics; loading saves from before the hideout's real-time state (version
+## 16) with their levels kept; handing items over; builds and crafts in real time, also while the game is
+## closed (a save loaded later); generator fuel and power (half-speed crafts, the fuel running out while
+## closed); the Bitcoin Farm, the Water Collector, the Gym, the Intelligence Center (Scav cooldown,
+## insurance price and return time), Security's scouting, the Shooting Range's practice raid; cosmetics;
+## the needed-for icon and its hover text; the HIDEOUT screen through its buttons (headless); and
+## DESIGN.md §9's table of every level, generated from the data.
 
 const NOW := 1_000_000.0
 const HOUR := 3600.0
@@ -29,6 +34,7 @@ func run() -> void:
 	_cosmetics()
 	await _icon()
 	await _screen()
+	_design_table()
 	work.now_override = -1.0
 
 
@@ -551,3 +557,33 @@ func _screen() -> void:
 	check(hideout.is_building(hideout.find("generator")) and screen.find_child("BuildCountdown", true, false) != null, "BUILD starts the build and the countdown shows")
 	screen.queue_free()
 	await frames(1)
+
+
+## DESIGN.md §9's table of every level, as the data has it: | Station | Level | Roubles | Items | Needs |
+## Build | Gives |. The check fails while DESIGN.md says anything else (the expected table is written to
+## user://hideout_table.md to paste in).
+func _design_table() -> void:
+	section("DESIGN.md's table of every level")
+	var lines: Array[String] = ["| Station | Lvl | Roubles | Items (found in raid from level 2) | Needs | Build | Gives |", "|---|---|---|---|---|---|---|"]
+	for station: Dictionary in hideout.stations():
+		for entry: Dictionary in station.levels:
+			var items := []
+			for wanted: Dictionary in entry.get("requires", []):
+				items.append("%s ×%d" % [db.get_item(wanted.item).display_name, int(wanted.count)])
+			var needs := []
+			for other: String in entry.get("stations", {}):
+				needs.append("%s %d" % [hideout.find(other).name, int(entry.stations[other])])
+			for trader: String in entry.get("traders", {}):
+				needs.append("%s LL%d" % [load("res://scripts/data/trader_table.gd").display_name(trader), int(entry.traders[trader])])
+			if entry.has("player_level"):
+				needs.append("player level %d" % int(entry.player_level))
+			var build: String = "from the start" if int(entry.level) <= hideout.start_level(station) else load("res://scripts/ui/ui_format.gd").duration(hideout.build_seconds(entry))
+			lines.append("| %s | %d | %s | %s | %s | %s | %s |" % [station.name, int(entry.level), load("res://scripts/ui/ui_format.gd").thousands(int(entry.get("roubles", 0))),
+				", ".join(items) if not items.is_empty() else "—", ", ".join(needs) if not needs.is_empty() else "—", build, ", ".join(hideout.gives(station, entry))])
+	var table := "\n".join(lines)
+	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	if not table in design:
+		var file := FileAccess.open("user://hideout_table.md", FileAccess.WRITE)
+		file.store_string(table + "\n")
+		file.close()
+	check(table in design, "DESIGN.md §9 has the table of every level as the data has it (expected: %s)" % ProjectSettings.globalize_path("user://hideout_table.md"))

@@ -12,7 +12,7 @@ behaves; these files say what is left to build and how the work is done, so the 
 | T0 | Baseline test suites in `tests/`: smoke, economy, gear, menu (the earlier suites lived outside the repo and were lost) | done |
 | E6 | Quick Buy tab and loyalty prices: [E6_quick_buy.md](E6_quick_buy.md) (suite `tests/quickbuy_test.gd`) | done |
 | E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) (suite `tests/flea_test.gd`) | done |
-| E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) | to do |
+| E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) (suite `tests/hideout_test.gd`) | done |
 | E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) | to do |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came

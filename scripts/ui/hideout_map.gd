@@ -114,7 +114,7 @@ static func state_of(station: Dictionary) -> String:
 
 
 ## The state as the room's last line: "Ready to collect", "Building 12:30", "Crafting 4:10", "Can be
-## built", "Missing 3 / 5 in" (kinds of item handed over), "Locked: Generator 2", "Fully upgraded".
+## built", "Missing 3 / 5 in" (items handed over of all it needs), "Locked: Generator 2", "Fully upgraded".
 static func state_text(station: Dictionary) -> String:
 	match state_of(station):
 		"ready":
@@ -127,9 +127,12 @@ static func state_text(station: Dictionary) -> String:
 		"can_build":
 			return "Can be built" if Hideout.level(station) == 0 else "Upgrade ready"
 		"missing":
-			var wanted := Hideout.requirements(Hideout.next_level(station))
-			var done := wanted.size() - Hideout.outstanding(station).size()
-			return "Missing  %d / %d in" % [done, wanted.size()] if not wanted.is_empty() else "Roubles missing"
+			var needed := 0
+			var handed := 0
+			for wanted in Hideout.requirements(Hideout.next_level(station)):
+				needed += wanted.count
+				handed += wanted.count - Hideout.still_needed(station, wanted)
+			return "Missing  %d / %d in" % [handed, needed] if needed > 0 else "Roubles missing"
 		"locked":
 			return "Locked: " + Hideout.upgrade_block_reason(station).trim_prefix("Needs ").replace(" level ", " ")
 		"max":
