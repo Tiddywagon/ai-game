@@ -1,0 +1,30 @@
+{
+  "id": "contract_work",
+  "name": "Contract Work",
+  "description": "USEC issue: a Sentinel AR with a holographic sight on an M-LOK handguard, M856 tracers, a Vektor P9, a FAST helmet and a Western plate carrier. Mostly paid in dollars.",
+  "faction": "usec",
+  "unlock": {"loyalty": {"broker": 3, "stitch": 2, "vera": 2}, "tasks": 10, "quests": ["zoya_introduction"]},
+  "gear": {
+    "helmet": {"item": "fast_helmet", "trader": "broker"},
+    "headset": {"item": "headset_comtac", "trader": "stitch"},
+    "armor": {"item": "armor_mmac", "trader": "stitch"},
+    "rig": {"item": "rig_triton", "trader": "stitch"},
+    "backpack": {"item": "pack_trizip", "trader": "stitch"},
+    "primary": {"item": "sentinel_ar", "trader": "broker"},
+    "pistol": {"item": "vektor_p9", "trader": "broker"}
+  },
+  "parts": {"primary": [
+    {"path": "handguard", "item": "ar_handguard_rail", "trader": "broker"},
+    {"path": "receiver/top_rail", "item": "holo_sight", "trader": "broker"},
+    {"path": "muzzle", "item": "muzzle_556_comp", "trader": "broker"}
+  ]},
+  "rounds": [
+    {"for": "primary", "item": "ammo_556_m856", "trader": "broker", "count": 120},
+    {"for": "pistol", "item": "ammo_9x19_fmj", "trader": "broker", "count": 50}
+  ],
+  "carried": [
+    {"item": "salewa", "trader": "vera", "count": 1},
+    {"item": "cat_tourniquet", "trader": "vera", "count": 2},
+    {"item": "army_bandage", "trader": "vera", "count": 2}
+  ]
+}

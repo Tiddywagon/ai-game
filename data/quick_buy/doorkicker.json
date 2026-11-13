@@ -1,0 +1,18 @@
+{
+  "id": "doorkicker",
+  "name": "Doorkicker",
+  "description": "A pump shotgun with a tight choke, buckshot and a press vest. Every fight at arm's length, every door kicked first.",
+  "unlock": {"loyalty": {}, "tasks": 1, "quests": []},
+  "gear": {
+    "helmet": {"item": "kolpak_helmet", "trader": "stitch"},
+    "armor": {"item": "armor_zhuk3", "trader": "stitch"},
+    "rig": {"item": "tactical_rig", "trader": "stitch"},
+    "primary": {"item": "warden_870", "trader": "bulat"}
+  },
+  "parts": {"primary": [{"path": "muzzle", "item": "choke_modified", "trader": "tinker"}]},
+  "rounds": [{"for": "primary", "item": "ammo_12ga_buck", "trader": "bulat", "count": 40}],
+  "carried": [
+    {"item": "bandage", "trader": "vera", "count": 2},
+    {"item": "ai2_medkit", "trader": "vera", "count": 1}
+  ]
+}

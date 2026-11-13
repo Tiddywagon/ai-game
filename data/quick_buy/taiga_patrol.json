@@ -1,0 +1,27 @@
+{
+  "id": "taiga_patrol",
+  "name": "Taiga Patrol",
+  "description": "BEAR issue: a Tundra 47 with a 40-round magazine and a compensator, 6B23-1 plates, a ZSh helmet, the Bear assault rig and a Pilgrim pack.",
+  "faction": "bear",
+  "unlock": {"loyalty": {"bulat": 2, "stitch": 3, "tinker": 2}, "tasks": 8, "quests": []},
+  "gear": {
+    "helmet": {"item": "zsh_helmet", "trader": "stitch"},
+    "headset": {"item": "headset_gssh", "trader": "stitch"},
+    "armor": {"item": "armor_6b23", "trader": "stitch"},
+    "rig": {"item": "rig_bear", "trader": "stitch"},
+    "backpack": {"item": "pack_pilgrim", "trader": "stitch"},
+    "primary": {"item": "tundra_47", "trader": "bulat"}
+  },
+  "parts": {"primary": [
+    {"path": "magazine", "item": "akm_mag_40", "trader": "tinker"},
+    {"path": "muzzle", "item": "muzzle_762x39_comp", "trader": "tinker"},
+    {"path": "stock", "item": "ak_stock_modern", "trader": "tinker"}
+  ]},
+  "rounds": [{"for": "primary", "item": "ammo_762x39_ps", "trader": "bulat", "count": 160}],
+  "carried": [
+    {"item": "ai2_medkit", "trader": "vera", "count": 2},
+    {"item": "army_bandage", "trader": "vera", "count": 2},
+    {"item": "tourniquet", "trader": "vera", "count": 1},
+    {"item": "splint", "trader": "vera", "count": 1}
+  ]
+}

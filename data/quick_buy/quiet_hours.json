@@ -1,0 +1,21 @@
+{
+  "id": "quiet_hours",
+  "name": "Quiet Hours",
+  "description": "A Strelka machine pistol with a 9x18 can, a hatchet, a balaclava and good ears. In and out before anyone looks up.",
+  "unlock": {"loyalty": {"bulat": 2, "tinker": 2}, "tasks": 4, "quests": []},
+  "gear": {
+    "headset": {"item": "headset_sordin", "trader": "stitch"},
+    "face_cover": {"item": "balaclava", "trader": "stitch"},
+    "rig": {"item": "rig_patrol", "trader": "stitch"},
+    "backpack": {"item": "sling_bag", "trader": "stitch"},
+    "pistol": {"item": "strelka_mp", "trader": "bulat"},
+    "melee": {"item": "hatchet", "trader": "bulat"}
+  },
+  "parts": {"pistol": [{"path": "muzzle", "item": "pm_suppressor", "trader": "tinker"}]},
+  "rounds": [{"for": "pistol", "item": "ammo_9x18_pst", "trader": "bulat", "count": 100}],
+  "carried": [
+    {"item": "bandage", "trader": "vera", "count": 2},
+    {"item": "tourniquet", "trader": "vera", "count": 1},
+    {"item": "ai2_medkit", "trader": "vera", "count": 1}
+  ]
+}

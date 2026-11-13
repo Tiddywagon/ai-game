@@ -1,0 +1,25 @@
+{
+  "id": "workhorse",
+  "name": "Workhorse",
+  "description": "An AK-74N on a rail handguard with a foregrip and a red dot, class 4 armor and helmet, a roomy chest rig and a pack. Good at everything, best at coming home.",
+  "unlock": {"loyalty": {"bulat": 2, "stitch": 2, "tinker": 2, "vera": 2}, "tasks": 6, "quests": []},
+  "gear": {
+    "helmet": {"item": "zsh_helmet", "trader": "stitch"},
+    "headset": {"item": "headset_sordin", "trader": "stitch"},
+    "armor": {"item": "armor_6b23", "trader": "stitch"},
+    "rig": {"item": "rig_triton", "trader": "stitch"},
+    "backpack": {"item": "pack_mbss", "trader": "stitch"},
+    "primary": {"item": "ak_74n", "trader": "bulat"}
+  },
+  "parts": {"primary": [
+    {"path": "handguard", "item": "ak_handguard_rail", "trader": "tinker"},
+    {"path": "handguard/foregrip", "item": "foregrip", "trader": "tinker"},
+    {"path": "sight", "item": "red_dot", "trader": "tinker"}
+  ]},
+  "rounds": [{"for": "primary", "item": "ammo_545_ps", "trader": "bulat", "count": 120}],
+  "carried": [
+    {"item": "salewa", "trader": "vera", "count": 1},
+    {"item": "cat_tourniquet", "trader": "vera", "count": 1},
+    {"item": "army_bandage", "trader": "vera", "count": 2}
+  ]
+}

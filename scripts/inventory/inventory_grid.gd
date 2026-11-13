@@ -119,13 +119,32 @@ func item_at(cell: Vector2i) -> ItemInstance:
 func find_space(item: ItemInstance) -> Dictionary:
 	if not accepts(item):
 		return {}
+	var taken := _occupancy([item])
 	for turned in ([false, true] if item.data.size.x != item.data.size.y else [false]):
-		var footprint := item.footprint_if(turned)
-		for y in size.y - footprint.y + 1:
-			for x in size.x - footprint.x + 1:
-				if is_free(Vector2i(x, y), footprint, item):
-					return {"cell": Vector2i(x, y), "rotated": turned}
+		var at := _first_fit(taken, 0, item.footprint_if(turned), -1)
+		if at >= 0:
+			return {"cell": Vector2i(at % size.x, floori(float(at) / size.x)), "rotated": turned}
 	return {}
+
+
+## A cell map of the grid (1: taken), row by row, by every item but those in `ignore`: what find_space()
+## and has_room_for_all() search, one pass over the items instead of one per cell.
+func _occupancy(ignore: Array[ItemInstance] = []) -> PackedByteArray:
+	var taken := PackedByteArray()
+	taken.resize(size.x * size.y)
+	for item in items:
+		if not ignore.is_empty() and item in ignore:
+			continue
+		_mark(taken, Rect2i(item.cell, item.footprint()))
+	return taken
+
+
+## Marks `area` taken in `taken` (the part of it inside the grid).
+func _mark(taken: PackedByteArray, area: Rect2i) -> void:
+	var inside := area.intersection(Rect2i(Vector2i.ZERO, size))
+	for y in range(inside.position.y, inside.end.y):
+		for x in range(inside.position.x, inside.end.x):
+			taken[y * size.x + x] = 1
 
 
 ## Adds `item` wherever it fits, topping up existing stacks of the same item first. A stack over its max
@@ -217,11 +236,10 @@ func has_room_for(item: ItemInstance) -> bool:
 ## top of matching stacks (theirs and each other's) first, then in free space, row by row, unturned
 ## first (a barter's several rewards). Items in `freed` count as gone (what the barter takes).
 func has_room_for_all(new_items: Array[ItemInstance], freed: Array[ItemInstance] = []) -> bool:
-	var taken: Array[Rect2i] = []
+	var taken := _occupancy(freed)
 	var stacks: Array = []  # [ItemInstance like it, room left]
 	for item in items:
-		if not item in freed:
-			taken.append(Rect2i(item.cell, item.footprint()))
+		if item.data.max_stack > 1 and not item in freed:
 			stacks.append([item, item.data.max_stack - item.count])
 	for item in new_items:
 		if not accepts(item):
@@ -234,26 +252,19 @@ func has_room_for_all(new_items: Array[ItemInstance], freed: Array[ItemInstance]
 				left -= moved
 		if left == 0:
 			continue
-		var spot := Rect2i()
+		var at := -1
+		var footprint := Vector2i.ZERO
 		for turned in ([false, true] if item.data.size.x != item.data.size.y else [false]):
-			spot = _free_area(taken, item.footprint_if(turned))
-			if spot.size != Vector2i.ZERO:
+			footprint = item.footprint_if(turned)
+			at = _first_fit(taken, 0, footprint, -1)
+			if at >= 0:
 				break
-		if spot.size == Vector2i.ZERO:
+		if at < 0:
 			return false
-		taken.append(spot)
-		stacks.append([item, item.data.max_stack - left])
+		_mark(taken, Rect2i(Vector2i(at % size.x, floori(float(at) / size.x)), footprint))
+		if item.data.max_stack > 1:
+			stacks.append([item, item.data.max_stack - left])
 	return true
-
-
-## The first area of `footprint` that overlaps none of `taken`, row by row (zero-sized if none).
-func _free_area(taken: Array[Rect2i], footprint: Vector2i) -> Rect2i:
-	for y in size.y - footprint.y + 1:
-		for x in size.x - footprint.x + 1:
-			var area := Rect2i(Vector2i(x, y), footprint)
-			if not taken.any(func(other: Rect2i) -> bool: return other.intersects(area)):
-				return area
-	return Rect2i()
 
 
 ## Grows the grid to `new_size` (the stash, when the hideout's Stash station goes up a level). Only

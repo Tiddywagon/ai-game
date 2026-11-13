@@ -1,0 +1,15 @@
+{
+  "id": "last_resort",
+  "name": "Last Resort",
+  "description": "A Makarov, a box of rounds and something for the bleeding. For the raid after the one that went wrong.",
+  "unlock": {"loyalty": {}, "tasks": 0, "quests": []},
+  "gear": {
+    "rig": {"item": "scav_vest", "trader": "stitch"},
+    "pistol": {"item": "pm_pistol", "trader": "bulat"}
+  },
+  "rounds": [{"for": "pistol", "item": "ammo_9x18_p", "trader": "bulat", "count": 50}],
+  "carried": [
+    {"item": "bandage", "trader": "vera", "count": 3},
+    {"item": "tourniquet", "trader": "vera", "count": 1}
+  ]
+}

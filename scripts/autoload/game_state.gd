@@ -81,6 +81,9 @@ var loadout_presets: Array = []
 ## The LOADOUT screen's auto-equip options (DESIGN.md §16.6, LoadoutPlanner.clean_options()): {"budget":
 ## roubles, 0 for no limit, "protect_legendary"}.
 var auto_equip: Dictionary = {"budget": 0, "protect_legendary": false}
+## Custom quick-buy cards (QuickBuy.save_custom(), DESIGN.md §16.6), up to QuickBuyTable.max_custom():
+## cards like those in data/quick_buy/ with "custom": true and "left_out" (what no trader sold).
+var quick_buys: Array = []
 ## Scav runs (DESIGN.md §2, ScavRuns): your Scav karma (Mole's standing, -6 to +6), the unix time the
 ## next Scav run is ready (0: ready), and this cooldown cycle's Scav kit (null until it's rolled; used up
 ## when you deploy).

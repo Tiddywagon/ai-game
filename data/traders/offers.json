@@ -239,6 +239,7 @@
       {"id": "tinker_pistol_light", "item": "pistol_light", "price": 4500, "currency": "RUB"},
       {"id": "tinker_handstop", "item": "handstop", "price": 7500, "currency": "RUB"},
       {"id": "tinker_prism_sight", "item": "prism_sight", "price": 36000, "currency": "RUB", "ll": 2},
+      {"id": "tinker_pm_suppressor", "item": "pm_suppressor", "price": 30800, "currency": "RUB", "ll": 2, "stock": 2},
       {"id": "tinker_hornet_stock_collapsible", "item": "hornet_stock_collapsible", "price": 9500, "currency": "RUB"},
       {"id": "tinker_brigand_stock_fixed", "item": "brigand_stock_fixed", "price": 9000, "currency": "RUB"},
       {"id": "tinker_wasp_mag_20", "item": "wasp_mag_20", "price": 4200, "currency": "RUB"},

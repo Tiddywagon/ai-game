@@ -1,0 +1,25 @@
+{
+  "id": "lifeline",
+  "name": "Lifeline",
+  "description": "A Partisan carbine to keep heads down and a pack full of everything Doc Vera sells for holes in people. For the one who brings the squad home.",
+  "unlock": {"loyalty": {"vera": 3, "stitch": 2, "bulat": 1}, "tasks": 10, "quests": ["clinic_supplies"]},
+  "gear": {
+    "helmet": {"item": "kiver_helmet", "trader": "stitch"},
+    "headset": {"item": "headset_sordin", "trader": "stitch"},
+    "rig": {"item": "rig_6b5", "trader": "stitch"},
+    "backpack": {"item": "pack_trizip", "trader": "stitch"},
+    "primary": {"item": "partisan_sks", "trader": "bulat"}
+  },
+  "parts": {"primary": [{"path": "muzzle", "item": "muzzle_762x39_comp", "trader": "tinker"}]},
+  "rounds": [{"for": "primary", "item": "ammo_762x39_ps", "trader": "bulat", "count": 80}],
+  "carried": [
+    {"item": "surgical_kit", "trader": "vera", "count": 1},
+    {"item": "ifak", "trader": "vera", "count": 2},
+    {"item": "salewa", "trader": "vera", "count": 2},
+    {"item": "calok_b", "trader": "vera", "count": 2},
+    {"item": "alu_splint", "trader": "vera", "count": 2},
+    {"item": "cat_tourniquet", "trader": "vera", "count": 2},
+    {"item": "army_bandage", "trader": "vera", "count": 4},
+    {"item": "ibuprofen", "trader": "vera", "count": 1}
+  ]
+}

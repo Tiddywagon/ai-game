@@ -305,7 +305,7 @@ func _no_resale() -> void:
 				tightest = result[0]
 				tightest_name = "%s (%d bought, %d sold to %s)" % [offer.id, result[1], result[2], result[3]]
 	print("    tightest price / best resale: %.4f for %s" % [tightest, tightest_name])
-	check(offers == 261 + trading.buy_list("mole").size(), "261 offers for money plus Mole's shelf are checked (%d)" % offers)
+	check(offers == 262 + trading.buy_list("mole").size(), "262 offers for money plus Mole's shelf are checked (%d)" % offers)
 	check(losing == 0, "no offer, at its least (top loyalty and the quick-buy bundle price), sells on to any trader at top loyalty, whole or in parts, for its price or more")
 	var shelf_losing := 0
 	var shelf := 0

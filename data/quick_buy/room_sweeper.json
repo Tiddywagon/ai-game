@@ -1,0 +1,24 @@
+{
+  "id": "room_sweeper",
+  "name": "Room Sweeper",
+  "description": "A .45 submachine gun with a reflex sight, a stubby grip and a laser, hollow points and class 3 armor. Built for corridors and stairwells.",
+  "unlock": {"loyalty": {"bulat": 2, "vera": 2, "tinker": 1}, "tasks": 3, "quests": []},
+  "gear": {
+    "helmet": {"item": "kiver_helmet", "trader": "stitch"},
+    "headset": {"item": "headset_gssh", "trader": "stitch"},
+    "armor": {"item": "armor_zhuk3", "trader": "stitch"},
+    "rig": {"item": "tactical_rig", "trader": "stitch"},
+    "primary": {"item": "brigand_45", "trader": "bulat"}
+  },
+  "parts": {"primary": [
+    {"path": "sight", "item": "reflex_sight", "trader": "tinker"},
+    {"path": "foregrip", "item": "foregrip_stubby", "trader": "tinker"},
+    {"path": "tactical", "item": "tactical_laser", "trader": "tinker"}
+  ]},
+  "rounds": [{"for": "primary", "item": "ammo_45_hp", "trader": "bulat", "count": 80}],
+  "carried": [
+    {"item": "army_bandage", "trader": "vera", "count": 2},
+    {"item": "cat_tourniquet", "trader": "vera", "count": 1},
+    {"item": "car_medkit", "trader": "vera", "count": 1}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "_comment": "Quick buy on the LOADOUT screen (DESIGN.md §16.6), read by QuickBuyTable and QuickBuy; the cards are data/quick_buy/<id>.json. bundle_discount: the share a card takes off the sum of its lines at your current trader prices (Trading.price(): loyalty first, then this, each line held at its resale floor). min_magazines: a card's rounds for a gun are at least this many of its magazines (checked), and a gun swapped in gets at least that many of its own. max_custom: custom cards (SAVE CURRENT GEAR AS QUICK-BUY) a profile keeps; name_length: their names are cut to this. penetration_drop: a round standing in for another may have this share less penetration at most, as long as one that does exists. Offers are compared with a dollar at the exchange's buy rate (data/config/trading.json). similarity: the weights of how far an alternative is from what it replaces: value (per unit of log price ratio), class (armor class), penetration and damage (rounds), cells (rig and backpack room), ergonomics (guns), capacity (magazines), uses (meds).",
+  "bundle_discount": 0.1,
+  "min_magazines": 2,
+  "max_custom": 5,
+  "name_length": 24,
+  "penetration_drop": 0.2,
+  "similarity": {"value": 1.0, "class": 0.6, "penetration": 0.04, "damage": 0.01, "cells": 0.05, "ergonomics": 0.02, "capacity": 0.02, "uses": 0.1}
+}

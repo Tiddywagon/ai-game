@@ -1,0 +1,26 @@
+{
+  "id": "iron_wall",
+  "name": "Iron Wall",
+  "description": "Class 5 from head to hips: an Altyn with its face shield, Redut-T5 plates, a Grizzly 74 on a quad rail with BT rounds and the best med kit Doc Vera stocks. Slow, loud and very hard to stop.",
+  "unlock": {"loyalty": {"bulat": 3, "stitch": 4, "tinker": 2, "vera": 3}, "tasks": 14, "quests": []},
+  "gear": {
+    "helmet": {"item": "altyn_helmet", "trader": "stitch"},
+    "headset": {"item": "headset_tsport", "trader": "stitch"},
+    "armor": {"item": "armor_redut", "trader": "stitch"},
+    "rig": {"item": "rig_blackrock", "trader": "stitch"},
+    "backpack": {"item": "pack_pilgrim", "trader": "stitch"},
+    "primary": {"item": "grizzly_74", "trader": "bulat"}
+  },
+  "parts": {"primary": [
+    {"path": "handguard", "item": "ak_handguard_quad", "trader": "tinker"},
+    {"path": "handguard/foregrip", "item": "angled_foregrip", "trader": "tinker"},
+    {"path": "sight", "item": "red_dot", "trader": "tinker"}
+  ]},
+  "rounds": [{"for": "primary", "item": "ammo_545_bt", "trader": "bulat", "count": 120}],
+  "carried": [
+    {"item": "ifak", "trader": "vera", "count": 1},
+    {"item": "calok_b", "trader": "vera", "count": 1},
+    {"item": "alu_splint", "trader": "vera", "count": 1},
+    {"item": "army_bandage", "trader": "vera", "count": 2}
+  ]
+}

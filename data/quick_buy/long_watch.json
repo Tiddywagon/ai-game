@@ -1,0 +1,27 @@
+{
+  "id": "long_watch",
+  "name": "Long Watch",
+  "description": "An SVD with a prism sight and a muzzle brake, soft-point rounds, a PM for when they get close, a plate carrier and a shemagh against the dust.",
+  "unlock": {"loyalty": {"bulat": 2, "stitch": 2, "tinker": 2, "vera": 2}, "tasks": 8, "quests": []},
+  "gear": {
+    "helmet": {"item": "ssh68_helmet", "trader": "stitch"},
+    "face_cover": {"item": "shemagh", "trader": "stitch"},
+    "armor": {"item": "armor_mmac", "trader": "stitch"},
+    "rig": {"item": "rig_triton", "trader": "stitch"},
+    "backpack": {"item": "pack_daypack", "trader": "stitch"},
+    "primary": {"item": "svd", "trader": "bulat"},
+    "pistol": {"item": "pm_pistol", "trader": "bulat"}
+  },
+  "parts": {"primary": [
+    {"path": "sight", "item": "prism_sight", "trader": "tinker"},
+    {"path": "muzzle", "item": "muzzle_762x54_brake", "trader": "tinker"}
+  ]},
+  "rounds": [
+    {"for": "primary", "item": "ammo_762x54r_sp", "trader": "bulat", "count": 60},
+    {"for": "pistol", "item": "ammo_9x18_pst", "trader": "bulat", "count": 50}
+  ],
+  "carried": [
+    {"item": "salewa", "trader": "vera", "count": 1},
+    {"item": "bandage", "trader": "vera", "count": 2}
+  ]
+}
