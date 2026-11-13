@@ -60,6 +60,7 @@ func run() -> void:
 	for map: Array in MAPS:
 		await _raid({"side": "pmc", "map": map[0], "loadout": gs.pmc_loadout(), "seed": 4, "boss": false}, map[1], 20.0)
 	await _raid({"side": "scav", "map": "test_yard", "loadout": gs.scav_loadout(), "seed": 4, "boss": false, "offset": 400}, MAPS[0][1], 10.0)
+	await _practice_raid()
 	OS.remove_logger(counter)
 
 
@@ -384,6 +385,70 @@ func _settings() -> void:
 	var screen := await _open("SettingsButton")
 	check(screen != null and screen.scene_file_path == "res://ui/settings_menu.tscn" and _find(screen, "ApplyButton") != null, "SETTINGS opens")
 	await _close(screen, "BackButton", "SETTINGS")
+
+
+## The Shooting Range's practice raid played through: loot picked up, a Scav killed, a point of interest
+## walked into, out through an extract. Nothing reaches the profile: stash, gear, experience, money,
+## explored points, quests (one with kill and extract objectives active), insurance, karma, trick shots.
+func _practice_raid() -> void:
+	section("Shooting Range practice raid")
+	var errors := counter.errors
+	var quests: GDScript = load("res://scripts/progression/quest_log.gd")
+	gs.hideout["shooting_range"] = 1
+	gs.level = maxi(gs.level, 5)
+	var line: Array = quests.shown().filter(func(quest: Dictionary) -> bool: return quests.faction_of(quest) != &"")
+	for quest: Dictionary in line.slice(0, 2):
+		gs.quests[quest.id] = {"state": "active", "progress": quest.objectives.map(func(_objective: Dictionary) -> int: return 0)}
+	gs.insurance_pending = [{"due": 1e12, "items": [], "insurer": gs.insurer}]
+	var before: Dictionary = gs.to_dict()
+	var raid: Dictionary = load("res://scripts/progression/hideout.gd").practice_raid()
+	raid.seed = 4
+	gs.raid = raid
+	change_scene_to_file(MAPS[0][1])
+	await frames(3)
+	var controller: Node = root.get_tree().get_first_node_in_group("raid_controller")
+	var player: Node = controller.player if controller else null
+	check(controller != null and controller.is_practice() and player != null, "the practice raid starts on the Test Yard")
+	var pickups: Array = root.get_tree().get_nodes_in_group("interactables").filter(func(node: Node) -> bool:
+		return node.get_script() == load("res://scripts/world/loot_pickup.gd") and node.item != null)
+	var carried: int = player.inventory.all_items().size()
+	var picked: RefCounted = pickups[0].item if not pickups.is_empty() else null
+	if picked:
+		pickups[0].interact(player)
+	check(picked != null and player.inventory.all_items().size() > carried, "loot is picked up (%s)" % (picked.data.display_name if picked else "none on the map"))
+	var scav_side: int = load("res://scripts/actors/actor.gd").Side.SCAV
+	var scavs: Array = root.get_tree().get_nodes_in_group("bots").filter(func(bot: Node) -> bool: return not bot.is_dead and bot.side == scav_side)
+	for bot: Node in root.get_tree().get_nodes_in_group("bots"):
+		bot.ai_enabled = false  # Nobody shoots back while the test walks to the extract.
+	if not scavs.is_empty():
+		var hit: Dictionary = scavs[0].take_blow(10000.0, player, "melee", "Test", scavs[0].chest_point())
+		player.on_hit_landed(scavs[0], 10000.0, scavs[0].chest_point(), hit)
+	check(not scavs.is_empty() and scavs[0].is_dead and controller.kill_list.size() == 1 and controller.xp > 0,
+		"a Scav is killed: on the kill list, experience counted in the raid (%d)" % (controller.xp if controller else 0))
+	var poi: Node = root.get_tree().get_nodes_in_group("pois").filter(func(node: Node) -> bool: return not node.entry().is_empty())[0]
+	player.global_position = poi.global_position
+	await wait(0.6)
+	check(poi.poi_id in controller.visited_pois, "a point of interest is walked into (%s)" % poi.poi_id)
+	var zones: Array = root.get_tree().get_nodes_in_group("extract_zones").filter(func(zone: Node) -> bool: return zone.block_reason(player) == "")
+	check(not zones.is_empty(), "an extract is open")
+	if not zones.is_empty():
+		player.global_position = zones[0].global_position
+	var waited := 0.0
+	while controller.outcome == null and waited < 12.0:
+		await wait(0.5)
+		waited += 0.5
+	var outcome: RefCounted = controller.outcome
+	check(outcome != null and outcome.survived() and outcome.xp == 0, "out through %s: survived, no experience" % (outcome.extract_name if outcome else "nothing"))
+	var after: Dictionary = gs.to_dict()
+	for key: String in ["level", "xp", "roubles", "dollars", "drip", "trick_shots", "trader_loyalty", "inventory", "skills", "quests", "explored",
+			"insurance_pending", "scav"]:
+		check(str(after.profile[key]) == str(before.profile[key]), "the profile's %s is untouched" % key)
+	# The metabolism clock moves on in real time (out-of-raid recovery); energy and water don't change.
+	check(after.profile.metabolism.energy == before.profile.metabolism.energy and after.profile.metabolism.hydration == before.profile.metabolism.hydration,
+		"energy and water are untouched")
+	check(str(after.stash) == str(before.stash), "the stash is untouched")
+	check(counter.errors == errors, "no errors in the practice raid%s" % ("" if counter.errors == errors else ": %d, first %s" % [counter.errors - errors, counter.first]))
+	gs.raid = {}
 
 
 ## Runs `raid` on `scene` for `seconds` of game time.

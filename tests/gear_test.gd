@@ -443,6 +443,36 @@ func _preset_fuzz() -> void:
 
 # --- Auto-equip -----------------------------------------------------------------------------------
 
+## A rig in the stash holding rounds and a bandage, better than the empty one beside it: the run takes
+## them out (to load the rifle, for spares and meds) and then wears the rig it emptied, so a second run
+## has nothing left to do; undo() still puts everything back.
+func _stash_rig_with_rounds() -> void:
+	var bare: RefCounted = inventory_script.new()
+	bare.equip("secure", item("secure_alpha"))
+	var stash := _grid_of(10, 20)
+	var rifle := item("ak_74n")
+	var triton := item("rig_triton")
+	triton.contents.add(item("ammo_545_ps", 60))
+	triton.contents.add(item("bandage"))
+	for stack: RefCounted in [rifle, triton, item("tactical_rig"), item("ammo_545_ps", 20)]:
+		stash.add(stack)
+	check(planner.score("rig", triton) > planner.score("rig", item("tactical_rig")) and not triton.is_empty_container(),
+		"the Triton beats the tactical rig but holds 60 rounds and a bandage")
+	var before := _tally(bare, stash)
+	var start := _state(bare, stash)
+	var plan: Dictionary = planner.apply(bare, stash, {})
+	check(bare.equipment.rig == triton and rifle.rounds_loaded() == 30 and bare.equipment.rig.contents.count_of("ammo_545_ps") > 0
+		and bare.equipment.rig.contents.count_of("bandage") + bare.pockets.count_of("bandage") == 1,
+		"one run empties the Triton into the rifle, spares and meds and wears it, the spares and bandage in it (%s)"
+		% (bare.equipment.rig.data.id if bare.equipment.rig else "no rig"))
+	check(_tally(bare, stash) == before and _clean(_faults(bare, stash)), "nothing is lost or made up")
+	var dressed := _state(bare, stash)
+	var second: Dictionary = planner.apply(bare, stash, {})
+	check(int(second.changes) == 0 and _state(bare, stash) == dressed, "a second run changes nothing (%s)" % str(second.lines.map(func(line: Dictionary) -> String: return line.text)))
+	var lines: Array = plan.lines.map(func(line: Dictionary) -> String: return line.text)
+	check(not lines.any(func(text: String) -> bool: return text.begins_with("Kept") and "Tactical rig" in text), "the summary doesn't call the rig kept (%s)" % str(lines))
+	check(planner.undo(plan, bare, stash).ok and _state(bare, stash) == start, "undo() puts everything back exactly")
+
 func _planner() -> void:
 	section("Auto-equip")
 	var bare: RefCounted = inventory_script.new()
@@ -473,6 +503,7 @@ func _planner() -> void:
 	check(int(second.changes) == 0 and _state(bare, stash) == dressed, "a second run changes nothing")
 	var undone: Dictionary = planner.undo(plan, bare, stash)
 	check(undone.ok and undone.message == "Undone: everything is back as it was" and _state(bare, stash) == start, "undo() puts everything back exactly")
+	_stash_rig_with_rounds()
 	check(not planner.undo(plan, bare, stash).ok, "a plan is undone once")
 
 	var limited: Dictionary = planner.apply(bare, stash, {"budget": 60000})
@@ -536,14 +567,14 @@ func _planner_fuzz() -> void:
 	check(over_options == 0, "nothing newly worn is over the budget or Legendary when the options rule it out (%d)" % over_options)
 	check(not_restored == 0, "apply() then undo() always restores the exact state (%d)" % not_restored)
 
-	# A second run. The rigs and packs lying in these stashes hold barter goods, nothing auto-equip takes
-	# (one holding only rounds or meds is emptied by the first run, and then it's a candidate for the second).
+	# A second run. The rigs and packs lying in these stashes hold rounds and meds, which the first run
+	# takes out for the guns, the spares and the meds: a container it empties is worn in that same run.
 	var again := 0
 	var second_changes := 0
 	for index in 40:
 		for options: Dictionary in OPTION_SETS:
 			rng.seed = 9000 + index
-			var stash := _random_stash(rng, Vector2i(10, 60), 60, junk_ids)
+			var stash := _random_stash(rng, Vector2i(10, 60), 60, small_ids)
 			var inventory := _random_inventory(rng)
 			var first: Dictionary = planner.apply(inventory, stash, options)
 			again += 1 if int(first.changes) > 0 else 0

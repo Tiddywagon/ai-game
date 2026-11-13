@@ -19,6 +19,9 @@ extends RefCounted
 ## 5. Spare rounds for each gun (spare_magazines magazines' worth) in the rig, then the pockets, then the
 ##    backpack, best rounds first. Rounds you carry of its caliber count when they're among the best you
 ##    own; worse ones you carry go back to the stash (whole stacks) to make room for better ones.
+## 6. If steps 3-5 emptied a rig or backpack lying in the stash (its rounds, meds, magazine or gun taken
+##    out), the rig and backpack are chosen again (an emptied one is now a candidate) and, when that
+##    changes something, meds and spare rounds are packed again: one run ends where a second would.
 ## An empty slot takes the best candidate in the stash (at any depth, never a container with something in
 ## it); a worn item is replaced only by one that scores clearly better (upgrade margin), and goes to the
 ## stash. A new rig or backpack takes what the old one held, as much as fits (the rest stays in the old
@@ -52,6 +55,9 @@ extends RefCounted
 const CONFIG_PATH := "res://data/config/auto_equip.json"
 ## Single slots filled after the body armor and rig and the helmet and face cover, in order.
 const GEAR_SLOTS: Array[String] = ["headset", "backpack", "melee"]
+## How many more times a run chooses the rig and backpack again after emptying a container in the stash
+## (_run()).
+const MAX_PASSES := 3
 ## Gun slots, in the order they're filled.
 const GUN_SLOTS: Array[String] = ["primary", "secondary", "pistol"]
 ## Where spare rounds go, in order, and where meds go (quick treatment reaches them there).
@@ -422,15 +428,37 @@ static func apply(inventory: Inventory, stash: InventoryGrid, options: Dictionar
 
 static func _run(inventory: Inventory, stash: InventoryGrid, options: Dictionary) -> Dictionary:
 	var ctx := {"inventory": inventory, "stash": stash, "options": options, "moves": [], "lines": [], "kept": [],
-		"empty": [], "new": [], "changes": 0}
+		"empty": [], "new": [], "changes": 0, "worn": inventory.equipment.duplicate()}
+	var holding := _holding(stash)
 	_armor_and_rig(ctx)
 	_helmet_and_face(ctx)
 	for slot in GEAR_SLOTS:
 		_fill_slot(ctx, slot)
 	for slot in GUN_SLOTS:
 		_fill_gun_slot(ctx, slot)
+	var packing: int = ctx.lines.size()
 	_pack_meds(ctx)
 	_pack_spare_rounds(ctx)
+	# A rig or backpack in the stash only becomes a candidate once it's empty: when the steps above emptied
+	# one (its rounds, meds, magazine or gun taken out), the rig and backpack are chosen again, and if that
+	# changes anything the meds and spares are packed again (their earlier warnings replaced), so one run
+	# ends where a second would. Bounded: each pass needs a container the one before emptied.
+	for again in MAX_PASSES:
+		var emptied := holding.filter(func(container: ItemInstance) -> bool:
+			return container.is_empty_container() and stash.find_holder(container) != null)
+		if emptied.is_empty():
+			break
+		holding = _holding(stash)
+		var changes: int = ctx.changes
+		var stale: Array = ctx.lines.slice(packing).filter(func(line: Dictionary) -> bool: return line.tone == WARNING)
+		_armor_and_rig(ctx)
+		_fill_slot(ctx, "backpack")
+		if ctx.changes == changes:
+			break
+		ctx.lines = ctx.lines.filter(func(line: Dictionary) -> bool: return not stale.any(func(old: Dictionary) -> bool: return is_same(old, line)))
+		packing = ctx.lines.size()
+		_pack_meds(ctx)
+		_pack_spare_rounds(ctx)
 	_closing_lines(ctx)
 	for grid in inventory.grids():
 		grid.changed.emit()
@@ -440,6 +468,16 @@ static func _run(inventory: Inventory, stash: InventoryGrid, options: Dictionary
 	var message := "Nothing better in the stash: you already wear the best you own" if changes == 0 \
 		else "Auto-equipped: %d change%s" % [changes, "" if changes == 1 else "s"]
 	return {"moves": ctx.moves, "lines": ctx.lines, "changes": changes, "message": message, "options": options}
+
+
+## Stash containers (at any depth) with something in them: what a run may empty (_run()).
+static func _holding(stash: InventoryGrid) -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	for found in _stash_items(stash):
+		var item: ItemInstance = found.item
+		if not item.is_empty_container():
+			result.append(item)
+	return result
 
 
 static func _line(ctx: Dictionary, text: String, tone: String) -> void:
@@ -1317,10 +1355,13 @@ static func _move_contents(ctx: Dictionary, old: ItemInstance, new: ItemInstance
 
 
 static func _closing_lines(ctx: Dictionary) -> void:
-	if not ctx.kept.is_empty():
-		_line(ctx, "Kept (nothing better in the stash): %s" % ", ".join(_slot_names(ctx.kept)), KEPT)
-	if not ctx.empty.is_empty():
-		_line(ctx, "Still empty (nothing for it in the stash): %s" % ", ".join(_slot_names(ctx.empty)), KEPT)
+	# A slot kept or left empty on one pass may have changed on the next (_run()): only what's still as it was.
+	var kept: Array = ctx.kept.filter(func(slot: String) -> bool: return ctx.inventory.equipment.get(slot) == ctx.worn.get(slot))
+	var empty: Array = ctx.empty.filter(func(slot: String) -> bool: return ctx.inventory.equipment.get(slot) == null)
+	if not kept.is_empty():
+		_line(ctx, "Kept (nothing better in the stash): %s" % ", ".join(_slot_names(kept)), KEPT)
+	if not empty.is_empty():
+		_line(ctx, "Still empty (nothing for it in the stash): %s" % ", ".join(_slot_names(empty)), KEPT)
 	var uninsured: Array[String] = []
 	for item: ItemInstance in ctx.new:
 		if Insurance.is_insurable(item) and not item.insured and (ctx.inventory as Inventory).slot_of(item) != "" \
