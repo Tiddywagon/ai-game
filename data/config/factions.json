@@ -1,5 +1,5 @@
 {
-  "_comment": "The two PMC factions (DESIGN.md §3), loaded by Factions (checked on load: Factions.problems()). Per faction: name and member (what one of them is called: 'Shot in the head by a USEC operator'), background, look (body and accent colours, [r, g, b] 0-1: the body capsule and its head band), voice (id: the WAVs in assets/audio/voice/<id>_<event>.wav; pitch: playback pitch; lines: 2-3 per event, text plus an English subtitle when the text isn't English), starter (a new character's kit: equipment slot -> {id, ammo}, pockets, stash cells as InventoryGrid entries), ai_kit (the BotKit AI PMCs of the faction carry: its loot tables are the real Eastern / Western bias) and gear_bias (display text only: what that kit leans on, in words). squads: how AI PMC squads are formed and keep together. same_faction: how PMCs of one faction hold back from each other. voice: when lines are heard and how often a speaker may talk.",
+  "_comment": "The two PMC factions (DESIGN.md §3), loaded by Factions (checked on load: Factions.problems()). Per faction: name and member (what one of them is called: 'Shot in the head by a USEC operator'), background, look (body and accent colours, [r, g, b] 0-1: the body capsule and its head band), voice (id: the WAVs in assets/audio/voice/<id>_<event>.wav; pitch: playback pitch; lines: 2-3 per event, text plus an English subtitle when the text isn't English), starter (a new character's kit: equipment slot -> {id, ammo}, pockets, stash cells as InventoryGrid entries), ai_kit (the BotKit AI PMCs of the faction carry: its loot tables are the real Eastern / Western bias) and gear_bias (display text only: what that kit leans on, in words). squads: how AI PMC squads are formed and keep together. same_faction: how PMCs of one faction hold back from each other. voice: when lines are heard and how often a speaker may talk. perks: the faction trader's discount.",
   "factions": {
     "bear": {
       "name": "BEAR",
@@ -69,6 +69,10 @@
       "ai_kit": "res://data/bots/usec_kit.tres",
       "gear_bias": "Western: AR-pattern rifles, SMGs and marksman rifles, Western plate carriers and high-cut helmets"
     }
+  },
+  "perks": {
+    "_comment": "Faction perks (DESIGN.md §3, §10): your faction's trader (BEAR: Bulat, USEC: Tinker; GameState.FACTION_TRADER) sells to you trader_discount (a share, 0-0.15) cheaper on top of loyalty prices (Trading.price()), never below the resale floor. Each faction also has its own quest line from that trader (data/quests/faction_lines.json).",
+    "trader_discount": 0.05
   },
   "squads": {
     "_comment": "AI PMC squads (DESIGN.md §4.4): size_weights by squad size (1-3), spacing: metres between a follower's spot and the leader (followers fan out behind it, wedge_degrees apart), tolerance: how far from its spot a follower may drift before it walks back, catch_up: farther than this behind it sprints, spawn_spacing: metres between squad mates at their spawn point.",

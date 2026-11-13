@@ -11,8 +11,10 @@ extends RefCounted
 ## offer of it from before his last restock can't be bought. A trader who isn't unlocked yet (The
 ## Broker) doesn't trade at all. What you get goes to the stash and is never found in raid.
 ## What an offer costs is price(): its price less the trader's loyalty discount ("buy_discount" in
-## traders.json: 3% at LL2, 6% at LL3, 9% at LL4; none at Mole's), and the quick-buy bundle discount on a
-## QuickBuy line, never below the resale floor (resale_floor(): what the best-paying trader pays for the
+## traders.json: 3% at LL2, 6% at LL3, 9% at LL4; none at Mole's), then the faction discount at your
+## faction's trader (faction_discount(): Bulat for BEAR, Tinker for USEC, "trader_discount" in
+## data/config/factions.json), and the quick-buy bundle discount on a QuickBuy line, never below the
+## resale floor (resale_floor(): what the best-paying trader pays for the
 ## item at their top level, whole or in parts, plus "resale_floor" in trading.json), so nothing can be
 ## bought and sold on at a profit. The BUY tab, buy(), buy_block_reason(), the trader panel and quick buy
 ## all go through it; barters have no money price.
@@ -168,16 +170,26 @@ static func buy_discount(trader_id: String, level := -1) -> float:
 	return float(shares[clampi(level, 1, shares.size()) - 1])
 
 
+## The share your faction's trader (GameState.FACTION_TRADER: Bulat for BEAR, Tinker for USEC) takes
+## off on top of loyalty prices: Factions.trader_discount(); 0 for every other trader.
+static func faction_discount(trader_id: String) -> float:
+	if trader_id == "" or GameState.FACTION_TRADER.get(GameState.faction, "") != trader_id:
+		return 0.0
+	return Factions.trader_discount()
+
+
 ## What `offer` costs from `trader_id` now, in its currency: its price less the trader's loyalty
-## discount (buy_discount()) and then `bundle` more (QuickBuy's bundle discount on a quick-buy line),
-## rounded, but never below the offer's resale floor (offer_floor()) unless its own price is. Everything
-## that shows or charges a trader price goes through it.
+## discount (buy_discount()), then the faction discount (faction_discount()) and then `bundle` more
+## (QuickBuy's bundle discount on a quick-buy line), rounded, but never below the offer's resale floor
+## (offer_floor()) unless its own price is. Everything that shows or charges a trader price goes
+## through it.
 static func price(trader_id: String, offer: Dictionary, bundle := 0.0) -> int:
 	var base := int(offer.get("price", 0))
 	var share := buy_discount(trader_id)
-	if share <= 0.0 and bundle <= 0.0:
+	var faction := faction_discount(trader_id)
+	if share <= 0.0 and faction <= 0.0 and bundle <= 0.0:
 		return base
-	var cut := roundi(base * (1.0 - share) * (1.0 - bundle))
+	var cut := roundi(base * (1.0 - share) * (1.0 - faction) * (1.0 - bundle))
 	return mini(maxi(cut, offer_floor(offer)), base)
 
 
@@ -208,30 +220,41 @@ static func offer_floor(offer: Dictionary) -> int:
 	return floor
 
 
-## The BUY row's price: "₽ 39,770  ·  −3% at your loyalty (was ₽ 41,000)", or just the price when
-## nothing comes off.
+## The BUY row's price: "₽ 39,770  ·  −3% at your loyalty (was ₽ 41,000)", "−8% at your loyalty and
+## as BEAR" at your faction's trader ("−5% as BEAR" at LL1), or just the price when nothing comes off
+## (the share shown is what the price really comes down by: the resale floor can hold it up).
 static func price_text(trader_id: String, offer: Dictionary) -> String:
 	var currency := str(offer.get("currency", "RUB"))
 	var base := int(offer.get("price", 0))
 	var now := price(trader_id, offer)
 	if now >= base:
 		return UiFormat.money(now, currency)
-	return "%s  ·  −%d%% at your loyalty (was %s)" % [UiFormat.money(now, currency), roundi((base - now) * 100.0 / base), UiFormat.money(base, currency)]
+	var why: Array[String] = []
+	if buy_discount(trader_id) > 0.0:
+		why.append("at your loyalty")
+	if faction_discount(trader_id) > 0.0:
+		why.append("as %s" % Factions.display_name(Factions.of_profile(GameState.faction)))
+	return "%s  ·  −%d%% %s (was %s)" % [UiFormat.money(now, currency), roundi((base - now) * 100.0 / base), " and ".join(why),
+		UiFormat.money(base, currency)]
 
 
-## The trader panel's line on loyalty prices: "Buy prices: 3% off at your LL2 (6% at LL3, 9% at LL4)";
-## "" for a trader with no loyalty discount (Mole).
+## The trader panel's line on buy prices: "Buy prices: 3% off at your LL2 (6% at LL3, 9% at LL4)", and
+## at your faction's trader "  ·  5% more off for BEAR"; "" for a trader with neither (Mole).
 static func discount_text(trader_id: String) -> String:
+	var faction := faction_discount(trader_id)
+	var perk := "%d%% %soff for %s" % [roundi(faction * 100.0), "more " if buy_discount(trader_id) > 0.0 else "",
+		Factions.display_name(Factions.of_profile(GameState.faction))] if faction > 0.0 else ""
 	var top := TraderTable.max_loyalty(trader_id)
 	if buy_discount(trader_id, top) <= 0.0:
-		return ""
+		return "Buy prices: " + perk if perk != "" else ""
 	var level := int(GameState.trader_loyalty.get(trader_id, {}).get("level", 1))
 	var now := buy_discount(trader_id, level)
 	var text := "Buy prices: %s at your LL%d" % ["%d%% off" % roundi(now * 100.0) if now > 0.0 else "full price", level]
 	var more: Array[String] = []
 	for next in range(level + 1, top + 1):
 		more.append("%d%%%s at LL%d" % [roundi(buy_discount(trader_id, next) * 100.0), " off" if more.is_empty() and now <= 0.0 else "", next])
-	return text + (" (%s)" % ", ".join(more) if not more.is_empty() else "")
+	text += " (%s)" % ", ".join(more) if not more.is_empty() else ""
+	return text + ("  ·  " + perk if perk != "" else "")
 
 
 ## The loyalty level `offer` needs (1 if it doesn't say).

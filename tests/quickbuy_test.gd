@@ -168,6 +168,10 @@ func _prices() -> void:
 	var bundle: float = table.bundle_discount()
 	check(is_equal_approx(bundle, 0.1), "the bundle discount is 10%")
 	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	# DESIGN's card table is without the faction discount (the faction's own trader takes it off their lines).
+	var perks: Dictionary = load("res://scripts/data/factions.gd").data().perks
+	var perk: float = perks.trader_discount
+	perks.trader_discount = 0.0
 	for card: Dictionary in table.all():
 		_levels(1, card)
 		var at_unlock: Dictionary = quick.plan(card)
@@ -194,6 +198,22 @@ func _prices() -> void:
 		var shown := [_money(at_unlock), _money(top)]
 		check(cells.size() >= 6 and cells[-3].strip_edges() == shown[0] and cells[-2].strip_edges() == shown[1],
 			"%s: DESIGN's card table says %s at unlock and %s at LL4 (%s)" % [card.name, shown[0], shown[1], str(cells)])
+	# With it, a BEAR character pays less for Bulat's lines only: Workhorse at LL4, line by line.
+	var workhorse: Dictionary = _card("workhorse")
+	_levels(4)
+	var without: Dictionary = quick.plan(workhorse)
+	perks.trader_discount = perk
+	var with_perk: Dictionary = quick.plan(workhorse)
+	var cheaper := 0
+	var others_same := true
+	for i in with_perk.lines.size():
+		var line: Dictionary = with_perk.lines[i]
+		check(int(line.price) == trading.price(line.trader, line.offer, bundle) * int(line.packs), "Workhorse: %s costs what Trading.price() says" % line.offer.id)
+		if line.trader == "bulat" and int(line.price) < int(without.lines[i].price):
+			cheaper += 1
+		others_same = others_same and (line.trader == "bulat" or int(line.price) == int(without.lines[i].price))
+	check(cheaper > 0 and others_same and int(with_perk.roubles) < int(without.roubles),
+		"Workhorse at LL4 for BEAR: %d of Bulat's lines cheaper, the rest the same, ₽ %d < ₽ %d" % [cheaper, int(with_perk.roubles), int(without.roubles)])
 
 
 ## "₽ 361,599" or "₽ 297,172 + $ 1,782", as DESIGN's table writes a plan's price.

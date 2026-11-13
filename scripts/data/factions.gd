@@ -6,7 +6,8 @@ extends RefCounted
 ## 2-3 lines per event: Voice), a new character's kit and stash (starter_kit(), starter_stash()) and the
 ## BotKit its AI PMCs carry (ai_kit(): Eastern or Western gear). Also how AI PMC squads form
 ## (squad_config(), roll_squad_size()), how PMCs of one faction hold back from each other
-## (same_faction()) and how far voice lines carry and how often (voice_config()).
+## (same_faction()) and how far voice lines carry and how often (voice_config()). The faction perk:
+## your faction's trader (GameState.FACTION_TRADER) sells to you trader_discount() cheaper (Trading.price()).
 ## Faction ids are lower-case StringNames, &"bear" and &"usec" (GameState.Faction BEAR / USEC:
 ## of_profile()); &"" is no faction (a Scav, a boss or guard, the player as a Scav).
 
@@ -22,6 +23,8 @@ const FIELDS := ["name", "member", "background", "look", "voice", "starter", "ai
 ## The accent (a band round the head) on the placeholder body: its height on the 1.8 m capsule and size.
 const ACCENT_HEIGHT := 1.5
 const ACCENT_RADII := Vector2(0.3, 0.42)
+## The faction discount at your faction's trader stays within this share (problems()).
+const MAX_TRADER_DISCOUNT := 0.15
 
 ## The file data() loads (tests point it at a broken copy), and what was wrong with it when it last
 ## loaded (problems(); each one also an error).
@@ -238,6 +241,12 @@ static func same_faction() -> Dictionary:
 	return data().get("same_faction", {})
 
 
+## "perks.trader_discount": the share your faction's trader takes off on top of loyalty prices (BEAR at
+## Bulat's, USEC at Tinker's: Trading.faction_discount()). 0 when the file has none.
+static func trader_discount() -> float:
+	return float(data().get("perks", {}).get("trader_discount", 0.0))
+
+
 ## How voice lines are heard and how often: hearing_radius, noise_radius, speaker_cooldown,
 ## event_cooldowns, pitch_jitter, subtitle_seconds.
 static func voice_config() -> Dictionary:
@@ -315,6 +324,9 @@ static func problems() -> Array[String]:
 		found.append("same_faction: reaction_multiplier below 1")
 	if float(hold.get("hold_fire_beyond", -1.0)) < 0.0 or float(hold.get("aimed_at_degrees", 0.0)) <= 0.0:
 		found.append("same_faction: hold_fire_beyond or aimed_at_degrees missing")
+	var perk: Variant = data().get("perks", {}).get("trader_discount")
+	if not (perk is float or perk is int) or float(perk) < 0.0 or float(perk) > MAX_TRADER_DISCOUNT:
+		found.append("perks: trader_discount must be a share from 0 to %s" % MAX_TRADER_DISCOUNT)
 	var voice_tuning := voice_config()
 	for key in ["hearing_radius", "noise_radius", "speaker_cooldown", "subtitle_seconds"]:
 		if float(voice_tuning.get(key, 0.0)) <= 0.0:

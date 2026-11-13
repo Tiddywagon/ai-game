@@ -5,3 +5,4 @@ gear
 quickbuy
 flea
 hideout
+faction_perks

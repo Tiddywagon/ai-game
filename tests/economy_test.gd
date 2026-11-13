@@ -43,11 +43,12 @@ func run() -> void:
 	stock.now_override = -1.0
 
 
-## A new BEAR profile at a fixed time (restocks an hour later).
-func _profile() -> void:
+## A new profile at a fixed time (restocks an hour later): BEAR (`faction` 0) or USEC (1). The sections
+## pinning Bulat's loyalty prices use USEC, whose faction trader is Tinker: no faction discount at Bulat's.
+func _profile(faction := 0) -> void:
 	stock.now_override = NOW
 	sm.delete_save()
-	gs.new_profile(gs.Faction.BEAR)
+	gs.new_profile(gs.Faction.USEC if faction == 1 else gs.Faction.BEAR)
 
 
 func _offer(trader: String, id: String) -> Dictionary:
@@ -79,7 +80,7 @@ func _unlock_broker() -> void:
 
 func _buying() -> void:
 	section("Buying")
-	_profile()
+	_profile(1)
 	var nails := _offer("zoya", "zoya_nails")
 	check(int(nails.price) == 7500 and trading.buy_block_reason(nails, "zoya") == "", "Zoya's nails cost 7,500 and can be bought")
 	check(trading.buy("zoya", nails) == "", "buy() succeeds")
@@ -99,7 +100,7 @@ func _buying() -> void:
 
 func _loyalty_prices() -> void:
 	section("Loyalty prices")
-	_profile()
+	_profile(1)
 	_unlock_broker()
 	check(traders.problems().is_empty() and trading.problems().is_empty(), "TraderTable.problems() and Trading.problems() are empty")
 	for trader: String in traders.ids():
@@ -158,7 +159,7 @@ func _loyalty_prices() -> void:
 
 func _loyalty_and_stock() -> void:
 	section("Loyalty and stock")
-	_profile()
+	_profile(1)
 	var rifle := _offer("bulat", "bulat_ak_74n")
 	check(int(rifle.ll) == 2 and int(rifle.stock) == 2, "Bulat's AK-74N is an LL2 offer with 2 in stock")
 	check(trading.buy("bulat", rifle) == "Needs loyalty level 2" and gs.roubles == 500000, "it can't be bought at LL1")
@@ -177,9 +178,9 @@ func _loyalty_and_stock() -> void:
 	check(not trading.update_loyalty("bulat") and gs.trader_loyalty.bulat.level == 2, "0.34 reputation doesn't reach LL3 (0.35)")
 	check(trading.shown_offers("bulat").has(rifle) and stock.left("bulat", rifle) == 2, "at LL2 the offer shows, 2 left")
 	check(trading.price("bulat", rifle) == 39770, "at LL2 it costs 3%% less: 39,770, not 41,000 (%d)" % trading.price("bulat", rifle))
-	check(trading.buy("bulat", rifle) == "" and trading.buy("bulat", rifle) == "" and gs.stash.count_of("ak_74n") == 3, "both are bought")
+	check(trading.buy("bulat", rifle) == "" and trading.buy("bulat", rifle) == "" and gs.stash.count_of("ak_74n") == 2, "both are bought")
 	check(stock.left("bulat", rifle) == 0 and trading.buy("bulat", rifle).begins_with("Sold out until the restock")
-		and gs.stash.count_of("ak_74n") == 3 and gs.roubles == 500000 - 2 * 39770, "then it's sold out and a third costs nothing")
+		and gs.stash.count_of("ak_74n") == 2 and gs.roubles == 500000 - 2 * 39770, "then it's sold out and a third costs nothing")
 	check(stock.left("bulat", _offer("bulat", "bulat_ammo_9x18_p")) == -1, "an offer without stock has no limit")
 	check(is_equal_approx(stock.seconds_left("bulat"), 3600.0) and stock.restock_number("bulat") == 1, "the restock is an hour away")
 	stock.now_override = NOW + 3599.0
@@ -287,8 +288,19 @@ func _exchange() -> void:
 
 func _no_resale() -> void:
 	section("No resale profit")
-	_profile()
+	_no_resale_for(0)
+	_no_resale_for(1)
+	_flea_no_resale()
+
+
+## The sweep for one faction (0: BEAR, 1: USEC): every offer at top loyalty, with the faction discount at
+## the faction's own trader and the quick-buy bundle discount on top.
+func _no_resale_for(faction: int) -> void:
+	_profile(faction)
 	_unlock_broker()
+	var own: String = gs.FACTION_TRADER[gs.faction]
+	check(trading.faction_discount(own) > 0.0 and trading.faction_discount("bulat" if own == "tinker" else "tinker") == 0.0,
+		"%s: the faction discount is %s's (%.2f), at no one else's" % [["BEAR", "USEC"][faction], own, trading.faction_discount(own)])
 	for trader: String in traders.ids():
 		gs.trader_loyalty[trader].level = traders.max_loyalty(trader)
 	var offers := 0
@@ -310,7 +322,7 @@ func _no_resale() -> void:
 				tightest_name = "%s (%d bought, %d sold to %s)" % [offer.id, result[1], result[2], result[3]]
 	print("    tightest price / best resale: %.4f for %s" % [tightest, tightest_name])
 	check(offers == 262 + trading.buy_list("mole").size(), "262 offers for money plus Mole's shelf are checked (%d)" % offers)
-	check(losing == 0, "no offer, at its least (top loyalty and the quick-buy bundle price), sells on to any trader at top loyalty, whole or in parts, for its price or more")
+	check(losing == 0, "no offer, at its least (top loyalty, the faction discount and the quick-buy bundle price), sells on to any trader at top loyalty, whole or in parts, for its price or more")
 	var shelf_losing := 0
 	var shelf := 0
 	for level in [1, 2, 3, 4]:
@@ -321,7 +333,6 @@ func _no_resale() -> void:
 				if _resale("mole", offer)[0] <= 1.0:
 					shelf_losing += 1
 	check(shelf >= 8 * 24 and shelf_losing == 0, "nor does any of Mole's worn gear over 6 restocks at each of his levels (%d items)" % shelf)
-	_flea_no_resale()
 
 
 ## The flea market's listings against every trader at their top loyalty: over a day of refreshes, with
