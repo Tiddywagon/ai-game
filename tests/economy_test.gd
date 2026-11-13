@@ -1,5 +1,6 @@
 extends "res://tests/test_base.gd"
-## Economy: buying, loyalty, stock and restocks, selling, Wanted items, the exchange, no resale profit,
+## Economy: buying, loyalty, stock and restocks, selling, Wanted items, the exchange, no resale profit
+## (trader offers, Mole's shelf and the flea market's listings),
 ## barters, Mole's karma levels, player levels, the hideout and crafting.
 
 const NOW := 1_000_000.0
@@ -318,6 +319,37 @@ func _no_resale() -> void:
 				if _resale("mole", offer)[0] <= 1.0:
 					shelf_losing += 1
 	check(shelf >= 8 * 24 and shelf_losing == 0, "nor does any of Mole's worn gear over 6 restocks at each of his levels (%d items)" % shelf)
+	_flea_no_resale()
+
+
+## The flea market's listings against every trader at their top loyalty: over a day of refreshes, with
+## your pressure pushing every listed item's price as low as it goes, none sells on for its price or
+## more, whole or in parts, nor with the Wanted bonus for anything a trader could want (at any restock).
+func _flea_no_resale() -> void:
+	var flea: GDScript = load("res://scripts/progression/flea_market.gd")
+	gs.level = 15
+	var first: int = flea.refresh_number()
+	var listed := 0
+	var losing := 0
+	var tightest := 1000.0
+	var tightest_name := ""
+	for refresh in range(first, first + 48):
+		for listing: Dictionary in flea.listings_on(refresh):
+			var piece: RefCounted = listing.item
+			flea.push(piece.data.id, -1.0)
+			listed += 1
+			var cost: int = flea.price(listing)
+			var paid := maxi(_best_paid(piece)[0], _apart(piece)[0])
+			if stock.could_be_wanted(piece.data.id) and stock.wanted_by(piece.data.id).is_empty():
+				paid = floori(paid * stock.wanted_multiplier())  # Wanted at another restock.
+			if cost <= paid:
+				losing += 1
+				print("    resale profit: flea %s %s costs %d, sells for %d" % [listing.id, piece.data.id, cost, paid])
+			if float(cost) / maxi(paid, 1) < tightest:
+				tightest = float(cost) / maxi(paid, 1)
+				tightest_name = "%s (%d bought, %d sold)" % [piece.data.id, cost, paid]
+	print("    tightest flea price / best resale: %.4f for %s" % [tightest, tightest_name])
+	check(listed > 1000 and losing == 0, "no flea listing over a day (%d, every price pushed as low as it goes) sells on to a trader at a profit" % listed)
 
 
 ## [price / best resale, the price in roubles, the best resale in roubles, who pays it] for `offer`: the

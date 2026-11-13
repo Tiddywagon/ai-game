@@ -17,6 +17,10 @@ const NOW := -1.0
 const CACHE_LIMIT := 20000
 
 static var _drift_cache := {}
+## The listings of each refresh still up, by refresh number (listings_on()), and the gun parts the market
+## may list (_part_pool()).
+static var _batches := {}
+static var _parts := []
 
 
 ## The market's clock: the real clock (TraderStock.now(), which tests override), never earlier than the
@@ -145,3 +149,200 @@ static func floor_price(item: ItemInstance) -> int:
 	if TraderStock.could_be_wanted(item.data.id):
 		lowest = maxi(lowest, ceili(Selling.best_resale(item) * TraderStock.wanted_multiplier() * (1.0 + Trading.resale_margin())))
 	return lowest
+
+
+# --- Listings -----------------------------------------------------------------------------------
+
+## Which refresh unix time `when` falls in: a new batch of listings goes up at the start of each.
+static func refresh_number(when := NOW) -> int:
+	return floori(_at(when) / FleaTable.refresh_seconds())
+
+
+## Seconds until the next batch of listings goes up.
+static func seconds_to_refresh() -> float:
+	return (refresh_number() + 1) * FleaTable.refresh_seconds() - time()
+
+
+## Every listing that's up at `when` and that you haven't bought, newest batch first: the batches of the
+## refreshes whose listings can still be up (listings_on()), less those that ended.
+static func listings(when := NOW) -> Array[Dictionary]:
+	var at := _at(when)
+	var newest := refresh_number(at)
+	var back := ceili(FleaTable.span(FleaTable.listings(), "minutes", Vector2(30, 240)).y * 60.0 / FleaTable.refresh_seconds())
+	var result: Array[Dictionary] = []
+	for number in range(newest, newest - back - 1, -1):
+		for listing in listings_on(number):
+			if float(listing.ends) > at and not GameState.flea.bought.has(listing.id):
+				result.append(listing)
+	_forget_before(newest - back)
+	return result
+
+
+## The listing with id `id` if it's up and not bought ({} if not).
+static func find(id: String) -> Dictionary:
+	for listing in listings():
+		if listing.id == id:
+			return listing
+	return {}
+
+
+## The listings that go up at refresh `number`, the same for everyone: per rarity, per_refresh of them
+## (a fraction is a chance of one more), each an item of that rarity the market may list (FleaTable.pool(),
+## picked by category_weight), with a generator seeded by the refresh number. Each is {"id"
+## ("flea_51234_7": refresh, slot), "item" (the ItemInstance: guns and armor worn to condition, a gun
+## sometimes with extra parts, stacks a share of a full one), "posted" and "ends" (unix times), "spread"
+## (its price against the market price), "seller", "rating", "floor" (floor_price())}. Kept for the
+## refreshes still up.
+static func listings_on(number: int) -> Array[Dictionary]:
+	if _batches.has(number):
+		return _batches[number]
+	var rules := FleaTable.listings()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = ("flea:%d" % number).hash()
+	var posted := number * FleaTable.refresh_seconds()
+	var minutes := FleaTable.span(rules, "minutes", Vector2(30, 240))
+	var spread := FleaTable.span(rules, "spread", Vector2.ONE)
+	var rating := FleaTable.span(rules, "rating", Vector2(2.5, 5.0))
+	var counts: Dictionary = rules.get("per_refresh", {})
+	var result: Array[Dictionary] = []
+	for rarity in ItemData.RARITY_IDS.size():
+		var wanted := float(counts.get(ItemData.RARITY_IDS[rarity], 0.0))
+		var amount := floori(wanted) + (1 if rng.randf() < wanted - floorf(wanted) else 0)
+		var pool := FleaTable.pool(rarity)
+		var weights := PackedFloat32Array()
+		for id in pool:
+			weights.append(FleaTable.category_weight(ItemDB.get_item(id)))
+		for i in amount:
+			var index := TraderStock._pick(rng, weights)
+			if index < 0:
+				break
+			var piece := _roll_item(pool[index], rng)
+			result.append({"id": "flea_%d_%d" % [number, result.size() + 1], "item": piece, "posted": posted,
+				"ends": posted + snappedf(rng.randf_range(minutes.x, minutes.y), 1.0) * 60.0, "spread": snappedf(rng.randf_range(spread.x, spread.y), 0.001),
+				"seller": _seller(rng), "rating": snappedf(rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(piece)})
+	_batches[number] = result
+	return result
+
+
+## Item `id` as a listing has it: a share of a full stack, guns and armor worn to the listings'
+## condition, a gun sometimes with extra parts in its empty slots (parts the market may list).
+static func _roll_item(id: String, rng: RandomNumberGenerator) -> ItemInstance:
+	var rules := FleaTable.listings()
+	var data := ItemDB.get_item(id)
+	var share := FleaTable.span(rules, "stack", Vector2.ONE)
+	var piece := ItemInstance.create(id, maxi(roundi(data.max_stack * rng.randf_range(share.x, share.y)), 1))
+	if piece.has_durability():
+		var condition := FleaTable.span(rules, "condition", Vector2.ONE)
+		piece.durability = snappedf(piece.max_durability * rng.randf_range(condition.x, condition.y), 0.1)
+	var parts: Dictionary = rules.get("parts", {})
+	if piece.is_gun() and rng.randf() < float(parts.get("chance", 0.0)):
+		var count := FleaTable.span(parts, "count", Vector2.ONE)
+		var mods := _part_pool()
+		for i in rng.randi_range(int(count.x), int(count.y)):
+			for attempt in TraderStock.SHELF_TRIES:
+				var part := ItemInstance.create(mods[rng.randi_range(0, mods.size() - 1)])
+				var path := WeaponMods.slot_for(piece, part, true)
+				if path != "":
+					WeaponMods.install(piece, path, part)
+					break
+	FoundInRaid.set_found(piece, FoundInRaid.gives_fir(FoundInRaid.Source.FLEA_MARKET))
+	return piece
+
+
+## The gun parts the market may list (any rarity), sorted by id.
+static func _part_pool() -> Array:
+	if _parts.is_empty():
+		for rarity in ItemData.RARITY_IDS.size():
+			for id in FleaTable.pool(rarity):
+				var data := ItemDB.get_item(id)
+				if WeaponMods.is_mod(data) and not WeaponMods.is_gear_mod(data):
+					_parts.append(id)
+		_parts.sort()
+	return _parts
+
+
+## A made-up seller handle: "GrimBadger", sometimes with two digits ("SlyOtter07").
+static func _seller(rng: RandomNumberGenerator) -> String:
+	var names: Dictionary = FleaTable.listings().get("names", {})
+	var first: Array = names.get("first", ["Anon"])
+	var second: Array = names.get("second", [""])
+	var handle := "%s%s" % [first[rng.randi_range(0, first.size() - 1)], second[rng.randi_range(0, second.size() - 1)]]
+	return handle + ("%02d" % rng.randi_range(0, 99) if rng.randf() < 0.5 else "")
+
+
+## Drops the batches and bought marks of refreshes before `number` (their listings are all down).
+static func _forget_before(number: int) -> void:
+	for key: int in _batches.keys():
+		if key < number:
+			_batches.erase(key)
+	for id: String in GameState.flea.bought.keys():
+		var parts := id.split("_")
+		if parts.size() >= 3 and int(parts[1]) < number:
+			GameState.flea.bought.erase(id)
+
+
+## What `listing` costs now, in roubles: its item's market price × its spread, never below its floor.
+static func price(listing: Dictionary) -> int:
+	return maxi(roundi(market_price(listing.item) * float(listing.spread)), int(listing.floor))
+
+
+## Seconds until `listing` comes down.
+static func seconds_left(listing: Dictionary) -> float:
+	return maxf(float(listing.ends) - time(), 0.0)
+
+
+## What `listing`'s price is against its item's worth (Selling.item_value()): below 1 is good value.
+static func value_ratio(listing: Dictionary) -> float:
+	return float(price(listing)) / maxf(Selling.item_value(listing.item), 1.0)
+
+
+## The cheapest a trader sells one item `id` for at your loyalty prices (Trading.price()), counting what
+## your loyalty level doesn't reach yet: {"trader", "price" (roubles, a dollar at the exchange's buy
+## rate), "each" (for a pack of rounds: per round), "level"}, {} if no trader sells it for money.
+static func trader_price(id: String) -> Dictionary:
+	var best := {}
+	for trader_id in TraderTable.ids():
+		for offer: Dictionary in Trading.offers(trader_id).get("buy", []):
+			if str(offer.get("item", "")) != id:
+				continue
+			var cost := Trading.price(trader_id, offer) * (Trading.exchange_roubles(1, true) if offer.get("currency", "RUB") == "USD" else 1)
+			var each := float(cost) / maxi(int(offer.get("count", 1)), 1)
+			if best.is_empty() or each < float(best.each):
+				best = {"trader": trader_id, "price": cost, "each": each, "level": Trading.offer_level(offer)}
+	return best
+
+
+## Why `listing` can't be bought now ("" if it can): the market is locked, it's gone (bought or down),
+## the price changed since you saw `seen` (-1: don't check), not enough roubles, no room in the stash.
+static func buy_block_reason(listing: Dictionary, seen := -1) -> String:
+	var locked := lock_reason()
+	if locked != "":
+		return locked
+	if listing.is_empty() or find(str(listing.id)).is_empty():
+		return "Gone: sold or taken down"
+	var cost := price(listing)
+	if seen >= 0 and seen != cost:
+		return "The price changed: %s now" % UiFormat.money(cost)
+	if GameState.roubles < cost:
+		return "Not enough roubles"
+	if not GameState.stash.has_room_for(listing.item):
+		return "No room in the stash"
+	return ""
+
+
+## Buys `listing` for its price (only if that's still `seen`, unless -1) into the stash, never found in
+## raid, and pushes the item's price up (pressure "buy"). "" on success, else why not.
+static func buy(listing: Dictionary, seen := -1) -> String:
+	var reason := buy_block_reason(listing, seen)
+	if reason != "":
+		return reason
+	var cost := price(listing)
+	var piece: ItemInstance = (listing.item as ItemInstance).duplicate_deep()
+	FoundInRaid.set_found(piece, FoundInRaid.gives_fir(FoundInRaid.Source.FLEA_MARKET))
+	if not GameState.stash.add(piece):
+		return "No room in the stash"
+	GameState.roubles -= cost
+	GameState.flea.bought[str(listing.id)] = true
+	push(piece.data.id, float(FleaTable.pressure().get("buy", 0.0)))
+	update()
+	return ""
