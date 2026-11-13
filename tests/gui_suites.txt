@@ -1,1 +1,2 @@
 # Suites that need a display (run under xvfb), one per line.
+menu
