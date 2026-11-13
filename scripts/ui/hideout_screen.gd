@@ -120,10 +120,10 @@ func _refresh() -> void:
 		name.text = output.data.display_name + ("  ×%d" % output.count if output.count > 1 else "")
 		result.add_child(name)
 		row.add_child(result)
-		var blocked := Hideout.craft_block_reason(station, recipe)
+		var blocked := HideoutWork.craft_block_reason(station, recipe)
 		if level < unlock_level:
 			blocked = "Needs %s level %d" % [station.name, unlock_level]
-		row.add_child(_action_button("CRAFT", blocked, func() -> String: return Hideout.craft(station, recipe)))
+		row.add_child(_action_button("CRAFT", blocked, func() -> String: return HideoutWork.craft(station, recipe)))
 		%Details.add_child(row)
 
 

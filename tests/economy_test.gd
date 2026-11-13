@@ -15,6 +15,7 @@ var traders: GDScript
 var barters: GDScript
 var progression: GDScript
 var hideout: GDScript
+var work: GDScript
 var search: GDScript
 
 
@@ -26,6 +27,7 @@ func run() -> void:
 	barters = load("res://scripts/data/barter_table.gd")
 	progression = load("res://scripts/progression/progression.gd")
 	hideout = load("res://scripts/progression/hideout.gd")
+	work = load("res://scripts/progression/hideout_work.gd")
 	search = load("res://scripts/progression/item_search.gd")
 	_buying()
 	_loyalty_prices()
@@ -526,12 +528,17 @@ func _levels() -> void:
 
 func _hideout() -> void:
 	section("Hideout and crafting")
+	work.now_override = NOW
 	_profile()
 	var generator: Dictionary = hideout.find("generator")
 	check(hideout.level(generator) == 0 and hideout.upgrade(generator) == "Missing items" and gs.roubles == 500000, "the generator needs a fuel can")
 	_give("fuel_can")
-	check(hideout.upgrade(generator) == "" and hideout.level(generator) == 1, "with one it's built")
+	check(hideout.upgrade(generator) == "" and hideout.level(generator) == 0 and hideout.is_building(generator), "with one its build starts")
 	check(gs.roubles == 450000 and gs.stash.count_of("fuel_can") == 0, "50,000 roubles and the fuel can are taken")
+	_later(2.9)
+	check(hideout.level(generator) == 0, "it isn't built yet after 2.9 minutes")
+	_later(0.1)
+	check(hideout.level(generator) == 1 and not hideout.is_building(generator), "three minutes in, it's built")
 
 	var stash_station: Dictionary = hideout.find("stash")
 	_give("bolts", 5, true)  # Found in raid: every level from 2 takes found-in-raid items.
@@ -546,8 +553,10 @@ func _hideout() -> void:
 	for each in gs.stash.items:
 		if not each.data.id in ["bolts", "screws", "duct_tape"]:
 			kept[each] = [each.cell, each.count]
-	check(hideout.upgrade(stash_station) == "" and gs.hideout.stash == 2 and gs.roubles == 100000, "then it's built for 500,000")
-	check(gs.stash.size == Vector2i(10, 40) and hideout.stash_size() == Vector2i(10, 40), "the stash is 10x40")
+	check(hideout.upgrade(stash_station) == "" and gs.hideout.stash == 1 and gs.roubles == 100000 and gs.stash.size == Vector2i(10, 30),
+		"its build starts for 500,000; the stash stays 10x30 meanwhile")
+	_later(40.0)
+	check(gs.hideout.stash == 2 and gs.stash.size == Vector2i(10, 40) and hideout.stash_size() == Vector2i(10, 40), "40 minutes later the stash is 10x40")
 	var moved := 0
 	for each: RefCounted in kept:
 		if not each in gs.stash.items or each.cell != kept[each][0] or each.count != kept[each][1]:
@@ -559,14 +568,28 @@ func _hideout() -> void:
 
 	var medstation: Dictionary = hideout.find("medstation")
 	var recipe: Dictionary = hideout.all_crafts(medstation)[0][1]
-	check(recipe.id == "medkit" and hideout.craft(medstation, recipe) == "Upgrade the station first", "a craft needs its station built")
+	check(recipe.id == "medkit" and work.craft(medstation, recipe) == "Upgrade the station first", "a craft needs its station built")
 	check(search.count("bandage", false) == 4 and hideout.upgrade(medstation) == "" and search.count("bandage", false) == 2 and gs.roubles == 70000,
-		"the medstation is built with two of your four bandages and 30,000 roubles")
-	check(hideout.craft(medstation, recipe) == "Missing items", "the medkit craft needs duct tape too")
+		"the medstation's build takes two of your four bandages and 30,000 roubles")
+	check(work.craft(medstation, recipe) == "Upgrade the station first", "no crafting while it's still being built")
+	_later(5.0)
+	check(work.craft(medstation, recipe) == "Missing items", "the medkit craft needs duct tape too")
 	_give("duct_tape")
-	check(hideout.craft(medstation, recipe) == "" and gs.stash.count_of("ai2_medkit") == 2 and _fir_count("ai2_medkit") == 1,
-		"the craft makes a found-in-raid medkit")
+	check(work.craft(medstation, recipe) == "" and gs.stash.count_of("ai2_medkit") == 1 and work.queue(medstation).size() == 1,
+		"the craft is queued: nothing made yet")
 	check(search.count("bandage", false) == 0 and search.count("duct_tape", false) == 0, "and uses up two bandages and the duct tape")
+	_later(5.0)
+	check(work.collect(medstation) == "Nothing to collect", "the generator has no fuel: after 5 minutes the 5-minute craft is half done")
+	_later(5.0)
+	check(work.collect(medstation) == "" and gs.stash.count_of("ai2_medkit") == 2 and _fir_count("ai2_medkit") == 1,
+		"after 10 it's done and collected, found in raid")
+	work.now_override = -1.0
+
+
+## Moves the hideout clock on `minutes` and brings it up to date.
+func _later(minutes: float) -> void:
+	work.now_override += minutes * 60.0
+	work.update()
 
 
 func _sum(counts: Dictionary) -> int:

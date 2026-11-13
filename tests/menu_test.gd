@@ -154,8 +154,8 @@ func _hideout() -> void:
 	check(build.size() == 1 and not build[0].disabled, "the generator has a BUILD button")
 	build[0].pressed.emit()
 	await frames(3)
-	check(gs.hideout.get("generator", 0) == 1 and gs.roubles == 450000 and gs.stash.count_of("fuel_can") == 0, "pressing it builds the generator")
-	check((_find(screen, "Status") as Label).text == "Done." and (list.get_child(index) as Button).text.ends_with("level 1 / 3"), "the screen says so")
+	check(gs.hideout_state.builds.has("generator") and gs.roubles == 450000 and gs.stash.count_of("fuel_can") == 0, "pressing it starts the generator's build")
+	check((_find(screen, "Status") as Label).text == "Done.", "the screen says so")
 	await _close(screen, "BackButton", "HIDEOUT")
 
 

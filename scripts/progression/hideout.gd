@@ -188,18 +188,40 @@ static func stash_size(at_level := -1) -> Vector2i:
 
 
 ## What the Scav run cooldown is multiplied by (ScavRuns.cooldown_seconds(), DESIGN.md §2): the
-## "scav_cooldown" of the highest Intelligence Center level built that has one (0.9: 10% shorter), 1
-## without the station or below its first such level.
+## "scav_cooldown" of the highest Intelligence Center level built (0.9: 10% shorter) while it has power,
+## else 1.
 static func scav_cooldown_multiplier() -> float:
+	return _intel_multiplier("scav_cooldown")
+
+
+## What insurance prices are multiplied by (Insurance.price()): the Intelligence Center's
+## "insurance_price" while it has power, else 1.
+static func insurance_price_multiplier() -> float:
+	return _intel_multiplier("insurance_price")
+
+
+## What insurance return times are multiplied by (Insurance.schedule()): the Intelligence Center's
+## "insurance_time" while it has power, else 1.
+static func insurance_time_multiplier() -> float:
+	return _intel_multiplier("insurance_time")
+
+
+static func _intel_multiplier(key: String) -> float:
 	var station := find(INTELLIGENCE_CENTER)
-	var result := 1.0
-	if station.is_empty():
-		return result
-	var built := level(station)
-	for entry: Dictionary in station.get("levels", []):
-		if int(entry.get("level", 0)) <= built and (entry.get("scav_cooldown") is float or entry.get("scav_cooldown") is int):
-			result = clampf(float(entry.scav_cooldown), 0.0, 1.0)
-	return result
+	if station.is_empty() or level(station) == 0 or not HideoutWork.has_power():
+		return 1.0
+	return clampf(float(built_value(INTELLIGENCE_CENTER, key, 1.0)), 0.01, 1.0)
+
+
+## Security's scouting tier (0: not built; 1: whether the map's boss is in, 2: and how many AI PMCs,
+## 3: and how many guards the boss has).
+static func scouting() -> int:
+	return int(built_value(SECURITY, "scouting", 0))
+
+
+## The Shooting Range's practice tier (0: not built; 1: Scavs only, 2: AI PMCs too, 3: the boss too).
+static func practice() -> int:
+	return int(built_value(SHOOTING_RANGE, "practice", 0))
 
 
 static func max_level(station: Dictionary) -> int:
@@ -216,11 +238,85 @@ static func requirements(level_entry: Dictionary) -> Array[Requirement]:
 	return Requirement.list(level_entry.get("requires", []))
 
 
-## Why `station` can't be upgraded now, or "" if it can.
+# --- Handing over and building ------------------------------------------------------------------
+
+## How many of `item_id` are handed over toward `station`'s next level (kept on the station).
+static func handed(station: Dictionary, item_id: String) -> int:
+	return int(GameState.hideout_state.get("handed", {}).get(station.id, {}).get(item_id, 0))
+
+
+## How many more of `wanted` (a requirement of the next level) still have to be handed over.
+static func still_needed(station: Dictionary, wanted: Requirement) -> int:
+	return maxi(wanted.count - handed(station, wanted.item_id), 0)
+
+
+## The next level's items still to be handed over, as requirements for what's left.
+static func outstanding(station: Dictionary) -> Array[Requirement]:
+	var result: Array[Requirement] = []
+	for wanted in requirements(next_level(station)):
+		var more := still_needed(station, wanted)
+		if more > 0:
+			result.append(Requirement.from_dict({"item": wanted.item_id, "count": more, "fir": wanted.fir}))
+	return result
+
+
+## Why `wanted` can't be handed over to `station` now ("" if it can): the station is building or fully
+## upgraded, it's all in, or you have none that count.
+static func hand_over_block_reason(station: Dictionary, wanted: Requirement) -> String:
+	if next_level(station).is_empty():
+		return "Fully upgraded"
+	if is_building(station):
+		return "Building"
+	if still_needed(station, wanted) == 0:
+		return "All handed over"
+	if ItemSearch.count(wanted.item_id, wanted.fir) == 0:
+		return "You have none found in raid" if wanted.fir else "You have none"
+	return ""
+
+
+## Hands over as many of `wanted` as the next level still needs and you have (found in raid ones only
+## if it says so; ItemSearch takes from the stash and your character). "" on success.
+static func hand_over(station: Dictionary, wanted: Requirement) -> String:
+	var reason := hand_over_block_reason(station, wanted)
+	if reason != "":
+		return reason
+	var taken := ItemSearch.take(wanted.item_id, still_needed(station, wanted), wanted.fir)
+	var state := GameState.hideout_state
+	if not state.handed.has(station.id):
+		state.handed[station.id] = {}
+	state.handed[station.id][wanted.item_id] = handed(station, wanted.item_id) + taken
+	return ""
+
+
+## The build running on `station` ({"level", "ends"}), or {}.
+static func building(station: Dictionary) -> Dictionary:
+	return GameState.hideout_state.get("builds", {}).get(station.id, {})
+
+
+static func is_building(station: Dictionary) -> bool:
+	return not building(station).is_empty()
+
+
+## Seconds until `station`'s build is done (0 if none).
+static func build_seconds_left(station: Dictionary) -> float:
+	var build := building(station)
+	return maxf(float(build.ends) - HideoutWork.now(), 0.0) if not build.is_empty() else 0.0
+
+
+## Real seconds level `entry` takes to build.
+static func build_seconds(entry: Dictionary) -> float:
+	return float(entry.get("build_minutes", 0.0)) * 60.0
+
+
+## Why `station`'s next level can't be built now, or "" if it can: fully upgraded, building, other
+## stations' levels, trader loyalty levels, your level, the money, and the items not handed over yet
+## that you don't have.
 static func upgrade_block_reason(station: Dictionary) -> String:
 	var next := next_level(station)
 	if next.is_empty():
 		return "Fully upgraded"
+	if is_building(station):
+		return "Building: %s left" % UiFormat.duration(build_seconds_left(station))
 	var needed_stations: Dictionary = next.get("stations", {})
 	for other: String in needed_stations:
 		var other_station := find(other)
@@ -230,25 +326,41 @@ static func upgrade_block_reason(station: Dictionary) -> String:
 	for trader: String in needed_traders:
 		if loyalty(trader) < int(needed_traders[trader]):
 			return "Needs %s LL%d%s" % [TraderTable.display_name(trader), int(needed_traders[trader]), TraderTable.locked_suffix(trader)]
+	if GameState.level < int(next.get("player_level", 1)):
+		return "Needs player level %d" % int(next.player_level)
 	if GameState.roubles < int(next.get("roubles", 0)):
 		return "Not enough roubles"
-	if not ItemSearch.can_afford(requirements(next)):
+	if not ItemSearch.can_afford(outstanding(station)):
 		return "Missing items"
 	return ""
 
 
-## Builds the next level. Returns "" on success, else why not.
+## Starts building the next level: hands over whatever is still missing (you have it all: see
+## upgrade_block_reason()), pays the roubles and starts the clock; the level is built once its build time
+## has passed (HideoutWork.update()), at once for a build time of 0. Returns "" on success, else why not.
 static func upgrade(station: Dictionary) -> String:
+	HideoutWork.update()
 	var reason := upgrade_block_reason(station)
 	if reason != "":
 		return reason
 	var next := next_level(station)
-	ItemSearch.pay(requirements(next))
+	ItemSearch.pay(outstanding(station))
 	GameState.roubles -= int(next.get("roubles", 0))
-	GameState.hideout[station.id] = level(station) + 1
+	GameState.hideout_state.handed.erase(station.id)
+	GameState.hideout_state.builds[station.id] = {"level": int(next.level), "ends": snappedf(HideoutWork.now() + build_seconds(next), 1.0)}
+	HideoutWork.update()
+	return ""
+
+
+## Finishes `station`'s build: the level is built (the Stash grows the stash at once).
+static func finish_build(station: Dictionary) -> void:
+	var build := building(station)
+	if build.is_empty():
+		return
+	GameState.hideout_state.builds.erase(station.id)
+	GameState.hideout[station.id] = maxi(level(station), int(build.level))
 	if station.id == STASH:
 		GameState.stash.resize(stash_size())
-	return ""
 
 
 ## Your loyalty level with `trader_id`, as far as an upgrade's "traders" requirement goes: 0 if there's
@@ -278,48 +390,76 @@ static func all_crafts(station: Dictionary) -> Array:
 	return result
 
 
-## Why `recipe` can't be crafted now, or "" if it can.
-static func craft_block_reason(station: Dictionary, recipe: Dictionary) -> String:
-	if recipe not in crafts(station):
-		return "Upgrade the station first"
-	if not ItemSearch.can_afford(Requirement.list(recipe.inputs)):
+## What the level `entry` of `station` gives, one line each ("Grows the stash to 10 × 40", "Unlocks 4
+## crafts", "2 fuel slots, fuel lasts ×1.25"): what the HIDEOUT screen and DESIGN.md §9's table say.
+static func gives(station: Dictionary, entry: Dictionary) -> Array[String]:
+	var lines: Array[String] = []
+	if entry.has("stash_size"):
+		lines.append("Stash %d × %d" % [int(entry.stash_size[0]), int(entry.stash_size[1])])
+	if entry.has("fuel_slots"):
+		lines.append("%d fuel slots, fuel lasts ×%s" % [int(entry.fuel_slots), str(snappedf(float(entry.fuel_efficiency), 0.01))])
+	if entry.has("card_slots"):
+		lines.append("%d graphics card slots" % int(entry.card_slots))
+	if entry.has("produces"):
+		var made := ItemDB.get_item(str(entry.produces.item))
+		lines.append("%s every %s%s, holds %d" % [made.display_name if made else entry.produces.item, UiFormat.duration(float(entry.produces.minutes) * 60.0),
+			" with one card" if entry.has("card_slots") else "", int(entry.produces.cap)])
+	if entry.has("training"):
+		lines.append("Train Strength or Endurance: %d points every %d h" % [int(entry.training.points), int(entry.training.hours)])
+	if entry.has("scav_cooldown"):
+		lines.append("Scav cooldown −%d%%, insurance −%d%%, returns −%d%%" % [roundi((1.0 - float(entry.scav_cooldown)) * 100.0),
+			roundi((1.0 - float(entry.insurance_price)) * 100.0), roundi((1.0 - float(entry.insurance_time)) * 100.0)])
+	if entry.has("scouting"):
+		lines.append(["", "Scouting: is the boss in", "Scouting: the boss and the AI PMCs", "Scouting: the boss, its guards and the AI PMCs"][int(entry.scouting)])
+	if entry.has("practice"):
+		lines.append(["", "Practice: Scavs only", "Practice: AI PMCs too", "Practice: the boss too"][int(entry.practice)])
+	if station.id == "nutrition_unit" or station.id == "rest_space":
+		var bonus := Consumables.CONFIG.nutrition_unit_bonus if station.id == "nutrition_unit" else Consumables.CONFIG.rest_space_bonus
+		lines.append("Energy and hydration refill +%d%%" % roundi(bonus * 100.0))
+	var count := (entry.get("crafts", []) as Array).size()
+	if count > 0:
+		lines.append("%d craft%s" % [count, "" if count == 1 else "s"])
+	return lines
+
+
+# --- Cosmetics ----------------------------------------------------------------------------------
+
+static func has_cosmetic(id: String) -> bool:
+	return id in GameState.hideout_state.get("cosmetics", [])
+
+
+## Why cosmetic `id` can't be bought now ("" if it can).
+static func cosmetic_block_reason(id: String) -> String:
+	var entry := find_cosmetic(id)
+	if entry.is_empty():
+		return "No such cosmetic"
+	if has_cosmetic(id):
+		return "Already done"
+	if GameState.roubles < int(entry.get("roubles", 0)):
+		return "Not enough roubles"
+	if not ItemSearch.can_afford(Requirement.list(entry.get("requires", []))):
 		return "Missing items"
-	var outputs := _outputs(recipe)
-	if outputs.is_empty():
-		return "No room in the stash"
-	# Everything it makes has to fit: try it on a copy of the stash.
-	var copy := InventoryGrid.new(GameState.stash.size, &"stash")
-	copy.load_array(GameState.stash.to_array())
-	for piece in outputs:
-		if not copy.add(piece):
-			return "No room in the stash"
 	return ""
 
 
-## Crafts `recipe`: takes the inputs, puts the output (found in raid) in the stash. "" on success. An
-## output of several items that don't stack (2 energy drinks) comes as that many items.
-static func craft(station: Dictionary, recipe: Dictionary) -> String:
-	var reason := craft_block_reason(station, recipe)
+## Buys cosmetic `id`: roubles and items paid, saved with the hideout, drawn on the plan. "" on success.
+static func buy_cosmetic(id: String) -> String:
+	var reason := cosmetic_block_reason(id)
 	if reason != "":
 		return reason
-	ItemSearch.pay(Requirement.list(recipe.inputs))
-	for piece in _outputs(recipe):
-		GameState.stash.add(FoundInRaid.make(piece.data.id, piece.count, FoundInRaid.Source.CRAFT))
+	var entry := find_cosmetic(id)
+	ItemSearch.pay(Requirement.list(entry.get("requires", [])))
+	GameState.roubles -= int(entry.get("roubles", 0))
+	GameState.hideout_state.cosmetics.append(id)
 	return ""
 
 
-## What `recipe` makes, as stacks no bigger than the item's max stack (none if the item is missing).
-static func _outputs(recipe: Dictionary) -> Array[ItemInstance]:
-	var pieces: Array[ItemInstance] = []
-	var data := ItemDB.get_item(str(recipe.output.item))
-	if data == null:
-		return pieces
-	var left := int(recipe.output.get("count", 1))
-	while left > 0:
-		var piece := ItemInstance.create(data.id, mini(left, data.max_stack))
-		pieces.append(piece)
-		left -= piece.count
-	return pieces
+## The cosmetic bought for `slot` ({} if none).
+static func cosmetic_in(slot: String) -> Dictionary:
+	for entry in cosmetics():
+		if entry.get("slot") == slot and has_cosmetic(str(entry.id)):
+			return entry
+	return {}
 
 
 # --- Checks -------------------------------------------------------------------------------------

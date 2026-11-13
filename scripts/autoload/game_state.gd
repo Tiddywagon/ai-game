@@ -364,3 +364,4 @@ func from_dict(data: Dictionary) -> void:
 		if item and not stash.add(item):
 			insurance_pending.append({"item": item.to_dict(), "due": 0.0, "insurer": "", Insurance.FROM_SAVE: true})
 	Trading.update_all_loyalty()
+	HideoutWork.update()  # Builds, crafts, fuel and production carry on from the saved clock to now.

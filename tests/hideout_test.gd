@@ -16,7 +16,34 @@ func run() -> void:
 	_data()
 	_loader()
 	_migration()
+	_handover()
+	_builds()
+	_crafts()
 	work.now_override = -1.0
+
+
+## Gives `amount` of `id` to the stash, found in raid or not.
+func _give(id: String, amount := 1, found := false) -> void:
+	for i in amount:
+		var piece := item(id)
+		piece.fir = found
+		gs.stash.add(piece)
+
+
+## Moves the hideout clock on `minutes` and brings it up to date.
+func _later(minutes: float) -> void:
+	work.now_override += minutes * 60.0
+	work.update()
+
+
+## A station built to `at_level` at once (for the checks that need it).
+func _built(id: String, at_level := 1) -> Dictionary:
+	gs.hideout[id] = at_level
+	return hideout.find(id)
+
+
+func _requirement(id: String, count: int, fir: bool) -> RefCounted:
+	return load("res://scripts/progression/requirement.gd").from_dict({"item": id, "count": count, "fir": fir})
 
 
 ## A new BEAR profile at `when` with plenty of money.
@@ -140,3 +167,123 @@ func _migration() -> void:
 	var clean: Dictionary = work.from_save(junk)
 	check(clean.handed == {"medstation": {"bandage": 2}} and clean.crafts.medstation.size() == 1 and clean.crafts.medstation[0].left == 50.0
 		and clean.cards.size() == 1 and clean.cosmetics == ["poster_wall"], "a damaged state is cleaned: unknown stations, items and cosmetics drop out")
+
+
+func _handover() -> void:
+	section("Handing items over")
+	_profile()
+	var generator: Dictionary = _built("generator")
+	var level2: Array = hideout.requirements(hideout.next_level(generator))
+	var cans: RefCounted = level2[0]
+	check(cans.item_id == "fuel_can" and cans.count == 2 and cans.fir, "Generator level 2 wants 2 fuel cans found in raid")
+	_give("fuel_can", 1, false)
+	check(hideout.hand_over(generator, cans) == "You have none found in raid" and hideout.handed(generator, "fuel_can") == 0,
+		"one that isn't found in raid doesn't count")
+	_give("fuel_can", 1, true)
+	check(hideout.hand_over(generator, cans) == "" and hideout.handed(generator, "fuel_can") == 1 and hideout.still_needed(generator, cans) == 1
+		and gs.stash.count_of("fuel_can") == 1, "the found-in-raid one is handed over: 1 / 2, the other stays in the stash")
+	check(hideout.upgrade(generator) == "Missing items", "the build can't start with items missing")
+	_give("fuel_can", 3, true)
+	check(hideout.hand_over(generator, cans) == "" and hideout.handed(generator, "fuel_can") == 2 and gs.stash.count_of("fuel_can") == 3,
+		"handing over again takes only the one still needed")
+	check(hideout.hand_over(generator, cans) == "All handed over", "then that item is done")
+	gs.to_dict()
+	var saved: Dictionary = gs.to_dict()
+	gs.from_dict(saved)
+	check(hideout.handed(generator, "fuel_can") == 2, "what's handed over is kept on the station through a save")
+	_give("wires", 1, true)
+	_give("pressure_gauge", 1, true)
+	var roubles: int = gs.roubles
+	check(hideout.upgrade(generator) == "" and hideout.is_building(generator) and gs.roubles == roubles and gs.stash.count_of("wires") == 0
+		and gs.stash.count_of("fuel_can") == 3 and gs.hideout_state.handed.get("generator", {}).is_empty(),
+		"BUILD hands over the rest you have and starts: the handed cans are used, the 3 in the stash kept")
+	check(hideout.hand_over(generator, cans) == "Building", "nothing more is handed over while it builds")
+	var medstation: Dictionary = hideout.find("medstation")
+	gs.roubles = 1000
+	_give("bandage", 2)
+	check(hideout.upgrade(medstation) == "Not enough roubles" and search_count("bandage") >= 2, "the money is paid when the build starts")
+
+
+func search_count(id: String) -> int:
+	return load("res://scripts/progression/item_search.gd").count(id, false)
+
+
+func _builds() -> void:
+	section("Builds take real time, also while the game is closed")
+	_profile()
+	var lavatory: Dictionary = hideout.find("lavatory")
+	_give("duct_tape")
+	_give("toilet_paper")
+	check(hideout.upgrade(lavatory) == "" and hideout.level(lavatory) == 0 and is_equal_approx(hideout.build_seconds_left(lavatory), 180.0),
+		"the Lavatory's level 1 starts: 3 minutes to go")
+	check(hideout.upgrade(lavatory).begins_with("Building: 3 min left"), "UPGRADE says it's building (%s)" % hideout.upgrade(lavatory))
+	_later(1.0)
+	check(hideout.level(lavatory) == 0 and is_equal_approx(hideout.build_seconds_left(lavatory), 120.0), "a minute later: 2 minutes left")
+	var saved: Dictionary = gs.to_dict()
+	work.now_override += 10.0 * HOUR
+	gs.from_dict(saved)
+	check(hideout.level(lavatory) == 1 and not hideout.is_building(lavatory), "closed for 10 hours: it finished meanwhile")
+	var stash_station: Dictionary = hideout.find("stash")
+	gs.trader_loyalty.bulat.level = 2
+	for id in ["bolts", "screws"]:
+		_give(id, 5, true)
+	_give("duct_tape", 2, true)
+	check(hideout.upgrade(stash_station) == "" and gs.stash.size == Vector2i(10, 30), "the Stash's level 2 starts building")
+	saved = gs.to_dict()
+	work.now_override += 41.0 * 60.0
+	gs.from_dict(saved)
+	check(gs.hideout.stash == 2 and gs.stash.size == Vector2i(10, 40), "loaded 41 minutes later, the stash has grown")
+	var gym: Dictionary = hideout.find("gym")
+	gs.level = 1
+	gs.hideout.rest_space = 2
+	gs.hideout.gym = 2
+	check(hideout.upgrade(gym) == "Needs player level 12", "the Gym's level 3 needs player level 12")
+	var clock: float = gs.hideout_state.clock
+	work.now_override -= 2.0 * HOUR
+	work.update()
+	check(gs.hideout_state.clock == clock, "the clock never runs backwards")
+	work.now_override += 2.0 * HOUR
+
+
+func _crafts() -> void:
+	section("Crafts: queued, real time, collected")
+	_profile()
+	var medstation: Dictionary = _built("medstation")
+	var recipe: Dictionary = hideout.all_crafts(medstation)[2][1]  # Glucose shot, 5 minutes.
+	check(recipe.id == "glucose_shot" and int(recipe.minutes) == 5, "the glucose shot takes 5 minutes")
+	_give("empty_injector", 5)
+	_give("sugar", 5)
+	for i in 3:
+		check(work.craft(medstation, recipe) == "", "craft %d is queued" % (i + 1))
+	check(work.craft(medstation, recipe) == "The queue is full (3)" and search_count("empty_injector") == 2, "a fourth doesn't fit the queue; inputs went for three")
+	_built("generator")
+	gs.hideout_state.fuel.append({"item": "fuel_can", "left": 4.0 * HOUR})
+	check(work.has_power(), "with fuel the generator powers the hideout")
+	_later(4.0)
+	check(work.ready(medstation).is_empty() and work.queue(medstation).size() == 3 and is_equal_approx(work.queue(medstation)[0].left, 60.0),
+		"4 minutes in, the first has a minute left")
+	_later(2.0)
+	check(work.ready(medstation).size() == 1 and work.queue(medstation).size() == 2 and is_equal_approx(work.queue(medstation)[0].left, 240.0),
+		"6 minutes in: one done, the next a minute in")
+	var saved: Dictionary = gs.to_dict()
+	work.now_override += 1.0 * HOUR
+	gs.from_dict(saved)
+	check(work.ready(medstation).size() == 3 and work.queue(medstation).is_empty(), "loaded an hour later, all three are done")
+	var shots: int = gs.stash.count_of("glucose_shot")
+	check(work.collect(medstation) == "" and gs.stash.count_of("glucose_shot") == shots + 3 and work.ready(medstation).is_empty(), "COLLECT puts the three in the stash")
+	var fir := 0
+	for each in gs.stash.items:
+		if each.data.id == "glucose_shot" and each.fir:
+			fir += 1
+	check(fir == 3, "found in raid, as crafts always are")
+	check(work.collect(medstation) == "Nothing to collect", "nothing left to collect")
+	check(work.craft(medstation, recipe) == "", "another one queued")
+	gs.hideout_state.power_on = false
+	_later(5.0)
+	check(work.ready(medstation).is_empty() and is_equal_approx(work.queue(medstation)[0].left, 150.0), "generator off: 5 minutes do half the work")
+	gs.hideout_state.power_on = true
+	_later(2.5)
+	var filler := []
+	while gs.stash.add(item("gold_bar")):
+		filler.append(true)
+	check(work.collect(medstation) == "No room in the stash" and work.ready(medstation).size() == 1, "with the stash full the craft waits")
