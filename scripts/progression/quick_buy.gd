@@ -5,19 +5,18 @@ extends RefCounted
 ## QuickBuyTable.max_custom() custom ones saved from what you wear (save_custom(): GameState.quick_buys,
 ## saved).
 ##
-## plan() works a card out against the traders as they are now: each line from its trader at your
-## loyalty price (Trading.price()), less the bundle discount (QuickBuyTable.bundle_discount(), each line
-## held at its resale floor). A line whose offer is sold out (counting what the card itself takes), above
-## your loyalty level, from a trader who doesn't trade with you yet, or gone, gets the closest available
-## offer of the same kind instead (_substitute(): the same item from another trader first, then the
-## nearest by value and key stats, roubles before dollars on a tie), never a downgrade in function (a
-## magazine holds as many, a sight is the same type, rounds keep their penetration within
-## penetration_drop while an alternative does); a gun swapped to another caliber takes rounds of its
-## own. With nothing to stand in, the line is left out and not charged, and a gun left out takes its
-## parts and rounds with it. dress() puts the kit together on a new character: gear in its slots, parts
-## at their slot paths (the defaults they replace go to the stash), each magazine loaded to capacity,
-## spare rounds in the rig, pockets, then backpack in full stacks, meds and other items in the pockets,
-## rig, then backpack.
+## plan() works a card out against the traders as they are now: each line from its trader at your loyalty
+## price (Trading.price()), less the bundle discount (QuickBuyTable.bundle_discount(), each line held at
+## its resale floor). A line whose offer is sold out (counting what the card itself takes), above your
+## loyalty level, from a trader who doesn't trade with you yet, or gone, gets the closest available offer
+## of the same kind instead (_resolve(), with a rule per kind: the same item from another trader first,
+## then the nearest by value and key stats, roubles before dollars on a tie), never a downgrade in function
+## (a magazine holds as many, a sight is the same type, rounds keep their penetration within
+## penetration_drop while an alternative does); a gun swapped to another caliber takes rounds of its own.
+## With nothing to stand in, the line is left out and not charged, and a gun left out takes its parts and
+## rounds with it. dress() puts the kit together on a new character: gear in its slots, parts at their slot
+## paths (the defaults they replace go to the stash), each magazine loaded to capacity, spare rounds in the
+## rig, pockets, then backpack in full stacks, meds and other items in the pockets, rig, then backpack.
 ##
 ## buy() pays for a plan the player confirmed: roubles and dollars, stock taken once per offer, each line
 ## counted toward its trader's money spent, everything you wore and carried into the stash with what's

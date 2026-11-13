@@ -5,8 +5,6 @@ extends "res://tests/test_base.gd"
 const NOW := 1_000_000.0
 ## What a dollar is worth in roubles when it's sold at the exchange: the no-resale check's rate.
 const DOLLAR := 125
-## The quick-buy bundle discount (data/config/quick_buy.json): the no-resale sweep checks the price less it.
-const BUNDLE := 0.1
 
 ## Game scripts, loaded in run() (the autoloads they use exist by then).
 var trading: GDScript
@@ -294,10 +292,13 @@ func _no_resale() -> void:
 	var losing := 0
 	var tightest := 1000.0
 	var tightest_name := ""
+	# The quick-buy bundle discount comes on top of loyalty prices: the least an offer can cost.
+	var bundle: float = load("res://scripts/data/quick_buy_table.gd").bundle_discount()
+	check(bundle > 0.0, "the quick-buy bundle discount is read (%.2f)" % bundle)
 	for trader: String in traders.ids():
 		for offer: Dictionary in trading.buy_list(trader):
 			offers += 1
-			var result := _resale(trader, offer, BUNDLE)
+			var result := _resale(trader, offer, bundle)
 			if result[0] <= 1.0:
 				losing += 1
 				print("    resale profit: %s %s costs %d, sells for %d to %s" % [trader, offer.id, result[1], result[2], result[3]])
