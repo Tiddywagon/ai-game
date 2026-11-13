@@ -534,9 +534,9 @@ func _hideout() -> void:
 	check(gs.roubles == 450000 and gs.stash.count_of("fuel_can") == 0, "50,000 roubles and the fuel can are taken")
 
 	var stash_station: Dictionary = hideout.find("stash")
-	_give("bolts", 5)
-	_give("screws", 5)
-	_give("duct_tape", 2)
+	_give("bolts", 5, true)  # Found in raid: every level from 2 takes found-in-raid items.
+	_give("screws", 5, true)
+	_give("duct_tape", 2, true)
 	gs.roubles = 600000
 	check(hideout.upgrade(stash_station) == "Needs Bulat LL2" and gs.stash.size == Vector2i(10, 30), "the Stash's level 2 needs Bulat LL2")
 	gs.trader_loyalty.bulat.level = 2

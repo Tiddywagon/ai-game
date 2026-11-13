@@ -1,0 +1,10 @@
+[
+  {"id": "string_lights", "name": "String lights", "slot": "lighting", "color": [1.0, 0.8, 0.48], "roubles": 40000,
+    "description": "Warm bulbs strung along every corridor.", "requires": [{"item": "light_bulb", "count": 4}, {"item": "wires", "count": 2}]},
+  {"id": "painted_walls", "name": "Painted walls", "slot": "walls", "color": [0.3, 0.4, 0.36], "roubles": 60000,
+    "description": "Two coats of army green over the bare concrete.", "requires": [{"item": "duct_tape", "count": 2}, {"item": "bleach", "count": 1}]},
+  {"id": "rubber_floor", "name": "Rubber floor tiles", "slot": "floor", "color": [0.16, 0.18, 0.22], "roubles": 75000,
+    "description": "Interlocking gym tiles: quieter, warmer, cleaner.", "requires": [{"item": "screws", "count": 4}, {"item": "ripstop_fabric", "count": 2}]},
+  {"id": "poster_wall", "name": "Poster wall", "slot": "posters", "color": [0.85, 0.35, 0.3], "roubles": 20000,
+    "description": "Old film posters and a map of the region along the main hall.", "requires": [{"item": "toilet_paper", "count": 2}, {"item": "duct_tape", "count": 1}]}
+]

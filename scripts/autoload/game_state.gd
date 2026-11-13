@@ -59,6 +59,9 @@ var quests: Dictionary = {}
 ## Hideout station id -> level built (DESIGN.md §9, Hideout). Missing: not built. The Stash starts at
 ## level 1 (Hideout.starting_levels()).
 var hideout: Dictionary = {}
+## What the hideout is doing over real time (DESIGN.md §9, HideoutWork): handed-over items, builds,
+## crafts, fuel, production, graphics cards, the Gym and cosmetics.
+var hideout_state: Dictionary = {}
 ## The PMC's energy and hydration (DESIGN.md §13.7): carried from raid to raid, recovering over real
 ## time out of raid (Consumables.recover_profile()), from `metabolism_time` (Unix seconds, 0: not yet).
 var energy := START_ENERGY
@@ -194,6 +197,7 @@ func _reset(new_faction: Faction) -> void:
 	hydration = START_HYDRATION
 	metabolism_time = 0.0
 	hideout = Hideout.starting_levels()
+	hideout_state = HideoutWork.blank()
 	stash = InventoryGrid.new(Hideout.stash_size(), &"stash")
 	trader_loyalty = {}
 	for trader in TraderTable.ids():
@@ -242,6 +246,7 @@ func to_dict() -> Dictionary:
 			"skills": skills.duplicate(true),
 			"quests": quests.duplicate(true),
 			"hideout": hideout.duplicate(),
+			"hideout_state": HideoutWork.to_save(),
 			"metabolism": {"energy": snappedf(energy, 0.01), "hydration": snappedf(hydration, 0.01), "time": metabolism_time},
 			"insurance_pending": insurance_pending.duplicate(true),
 			"insurer": insurer,
@@ -340,6 +345,7 @@ func from_dict(data: Dictionary) -> void:
 	var saved_hideout: Dictionary = profile.get("hideout", {})
 	for station: String in saved_hideout:
 		hideout[station] = maxi(int(saved_hideout[station]), int(hideout.get(station, 0)))
+	hideout_state = HideoutWork.from_save(profile.get("hideout_state"))
 	var saved_skills: Dictionary = profile.get("skills", {})
 	for skill: String in saved_skills:
 		if skills.has(skill):

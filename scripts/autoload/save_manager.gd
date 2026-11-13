@@ -62,7 +62,13 @@ const SAVE_PATH := "user://savegame.json"
 ## market's clock, unix time)}. The market's own listings are rolled again from the clock, so only what
 ## you bought is saved. Older saves start with none of it (nothing to change in upgrade():
 ## GameState.from_dict() starts it blank).
-const SAVE_VERSION := 16
+## Version 17 adds the hideout's real-time state (DESIGN.md §9, HideoutWork): profile "hideout_state"
+## {"clock", "handed", "builds", "crafts", "ready", "power_on", "fuel", "production", "cards",
+## "gym_ready", "cosmetics"}. Station levels stay in "hideout" as before, so older saves keep every level
+## they built; they start with nothing handed over, building or crafting (crafts were instant before
+## version 17), the generator on with no fuel and the clock at the moment they load (nothing to change in
+## upgrade(): GameState.from_dict() starts the block blank).
+const SAVE_VERSION := 17
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"
@@ -124,7 +130,8 @@ func delete_save() -> void:
 ## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
 ## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults).
 ## Version 13 and older: Scav karma 0, no cooldown, no kit. Version 14: nothing to change (no custom
-## quick-buy cards). Data with no version is taken as current.
+## quick-buy cards). Versions 15 and 16: nothing to change (no flea market, no hideout state: blank).
+## Data with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
 	if version >= SAVE_VERSION:

@@ -4,3 +4,4 @@ economy
 gear
 quickbuy
 flea
+hideout
