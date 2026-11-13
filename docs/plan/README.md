@@ -9,7 +9,7 @@ behaves; these files say what is left to build and how the work is done, so the 
 |---|---|---|
 | A1-A3, S1 | Scav and boss polish, factions and AI PMC squads, PMC roaming, Scav runs and karma | done |
 | E1-E5 | Trader roster and levels, selling and restocks, barters, stash, LOADOUT screen and auto-equip | done |
-| T0 | Baseline test suites in `tests/` (the earlier suites lived outside the repo and were lost) | in progress |
+| T0 | Baseline test suites in `tests/`: smoke, economy, gear, menu (the earlier suites lived outside the repo and were lost) | done |
 | E6 | Quick Buy tab and loyalty prices: [E6_quick_buy.md](E6_quick_buy.md) | to rebuild (first build was lost before it was committed) |
 | E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) | to do |
 | E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) | to do |
@@ -18,6 +18,13 @@ behaves; these files say what is left to build and how the work is done, so the 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
 through, so their content is designed here; DESIGN.md says so where it matters. The exact wording of the flea
 market and hideout requests is no longer available either: E7 and E8 are written from notes.
+
+## Known bugs to fix
+
+- Auto-equip can still improve things on a second run: when a rig or backpack in the stash holds rounds or meds,
+  the first run takes them out for spares and meds after the rig was already chosen (only empty containers are
+  candidates), so a second run then wears that rig (`scripts/inventory/loadout_planner.gd` around `:500`, step
+  order in `_run`). Fix with E6 or on its own; `tests/gear_test.gd` should then test a stash rig holding rounds.
 
 ## Ground rules for every step
 
