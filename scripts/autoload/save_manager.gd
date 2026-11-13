@@ -51,7 +51,12 @@ const SAVE_PATH := "user://savegame.json"
 ## kit, an inventory, or null until it's rolled)}. Older saves get karma 0, no cooldown and no kit
 ## (_upgrade_to_v14(), for any older version), and Mole's loyalty level follows the karma (LL1 at 0)
 ## whatever was saved for him.
-const SAVE_VERSION := 14
+## Version 15 adds custom quick-buy cards (DESIGN.md §16.6, QuickBuy): profile "quick_buys", up to five
+## cards saved from your gear ({"id", "name", "custom", "gear", "parts", "rounds", "carried",
+## "left_out"}), cleaned on load (QuickBuy.sanitize(): lines whose item or trader is gone are named in
+## left_out). Older saves have none (nothing to change in upgrade(): GameState.from_dict() starts the
+## list empty).
+const SAVE_VERSION := 15
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"
@@ -112,7 +117,8 @@ func delete_save() -> void:
 ## (no trader stock yet: GameState.from_dict() gives full stock and a restock from now). Version 10 and
 ## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
 ## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults).
-## Version 13 and older: Scav karma 0, no cooldown, no kit. Data with no version is taken as current.
+## Version 13 and older: Scav karma 0, no cooldown, no kit. Version 14: nothing to change (no custom
+## quick-buy cards). Data with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
 	if version >= SAVE_VERSION:

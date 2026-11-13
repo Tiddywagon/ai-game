@@ -318,8 +318,11 @@ static func _resolve(line: Dictionary, taken: Dictionary, rule: Dictionary) -> D
 				continue
 			if unusable(trader_id, offer, packs_for(line, offer), taken) != "":
 				continue
-			var key := [0 if data.id == wanted.id else 1, 0 if (rule.within as Callable).call(data) else 1,
-				snappedf(distance(wanted, value, data, _unit_value(trader_id, offer)), 0.0001),
+			# The same item from another trader first (any of them as close as the other: then roubles first),
+			# then one within the limits, then the nearest, then roubles, the cheaper, the offer id.
+			var same := data.id == wanted.id
+			var key := [0 if same else 1, 0 if (rule.within as Callable).call(data) else 1,
+				0.0 if same else snappedf(distance(wanted, value, data, _unit_value(trader_id, offer)), 0.0001),
 				1 if offer.get("currency", "RUB") == "USD" else 0, _unit_value(trader_id, offer), str(offer.id)]
 			if best.is_empty() or key < best_key:
 				best = {"trader": trader_id, "offer": offer}
@@ -556,3 +559,296 @@ static func names(items: Array) -> Array[String]:
 	for name: String in counts:
 		result.append(name + (" ×%d" % counts[name] if int(counts[name]) > 1 else ""))
 	return result
+
+
+# --- Buying ---------------------------------------------------------------------------------------
+
+## Buys `plan` (plan() with `inventory` and `stash`, as the confirm dialog showed it) onto `inventory`:
+## {"ok", "message", "reasons" (every reason it couldn't), "changed" (prices or stock moved since the
+## plan: nothing bought, "plan" is the card worked out again to show)}. A plan is bought once ("done").
+static func buy(plan: Dictionary, inventory: Inventory, stash: InventoryGrid) -> Dictionary:
+	if plan.get("done", false):
+		return {"ok": false, "changed": false, "reasons": ["Already bought"], "message": "Already bought"}
+	var now := _totals(resolve(plan.card))
+	if str(now.signature) != str(plan.signature):
+		return {"ok": false, "changed": true, "plan": plan(plan.card, inventory, stash), "reasons": ["Prices or stock changed"],
+			"message": "Prices or stock changed since you opened it: check the card again"}
+	plan.missing = missing(plan.card)
+	plan.to_stash = to_stash(plan, inventory)
+	plan.room = stash.has_room_for_all(plan.to_stash)
+	plan.reasons = reasons(plan)
+	if not plan.reasons.is_empty():
+		return {"ok": false, "changed": false, "reasons": plan.reasons, "message": plan.reasons[0]}
+	plan.done = true
+	_pay(plan)
+	# What you wore and carried goes to the stash, with what's in it (the secure container stays on).
+	for slot in LoadoutPresets.SLOTS:
+		var worn := inventory.unequip(slot)
+		if worn:
+			_stash(worn, inventory, stash)
+	for piece in inventory.pockets.items.duplicate():
+		inventory.pockets.remove(piece)
+		_stash(piece, inventory, stash)
+	var kit: Inventory = plan.kit.inventory
+	kit.equipment["secure"] = null
+	var bought: Array[ItemInstance] = []
+	for slot in LoadoutPresets.SLOTS:
+		var piece: ItemInstance = kit.equipment.get(slot)
+		if piece:
+			kit.equipment[slot] = null
+			bought.append(piece)
+			if not inventory.equip(slot, piece):
+				_stash(piece, inventory, stash)
+	for piece in kit.pockets.items.duplicate():
+		kit.pockets.remove(piece)
+		bought.append(piece)
+		if not inventory.pockets.place(piece, piece.cell, piece.rotated) and not inventory.pockets.add(piece):
+			_stash(piece, inventory, stash)
+	for piece: ItemInstance in plan.kit.displaced + plan.kit.overflow:
+		bought.append(piece)
+		_stash(piece, inventory, stash)
+	for piece in bought:
+		FoundInRaid.set_found(piece, FoundInRaid.gives_fir(FoundInRaid.Source.QUICK_BUY))
+	inventory.changed.emit()
+	stash.changed.emit()
+	var paid: Array[String] = []
+	if int(plan.roubles) > 0:
+		paid.append(UiFormat.money(int(plan.roubles)))
+	if int(plan.dollars) > 0:
+		paid.append(UiFormat.money(int(plan.dollars), "USD"))
+	return {"ok": true, "changed": false, "reasons": [] as Array[String],
+		"message": "Bought %s for %s. What you wore is in the stash." % [str(plan.card.get("name", "the card")), " + ".join(paid)]}
+
+
+## Pays for `plan`'s lines: the money, the stock (once per offer, all the packs the card takes), and
+## each line toward its trader's money spent (Trading.spent_value()), then loyalty is checked.
+static func _pay(plan: Dictionary) -> void:
+	GameState.roubles -= int(plan.roubles)
+	GameState.dollars -= int(plan.dollars)
+	var stock := {}
+	for line: Dictionary in plan.lines:
+		if line.left_out:
+			continue
+		var key := "%s/%s" % [line.trader, line.offer.id]
+		if not stock.has(key):
+			stock[key] = [line.trader, line.offer, 0]
+		stock[key][2] += int(line.packs)
+		if GameState.trader_loyalty.has(line.trader):
+			GameState.trader_loyalty[line.trader].spent += Trading.spent_value(int(line.price), str(line.currency))
+	for key: String in stock:
+		TraderStock.take(str(stock[key][0]), stock[key][1], int(stock[key][2]))
+	for key: String in stock:
+		Trading.update_loyalty(str(stock[key][0]))
+
+
+## Puts `piece` in the stash (buy() checked it all fits); should that ever fail, on you, never lost.
+static func _stash(piece: ItemInstance, inventory: Inventory, stash: InventoryGrid) -> void:
+	if stash.add(piece) or piece.count <= 0:
+		return
+	if not inventory.add(piece):
+		GameState.insurance_pending.append({"item": piece.to_dict(), "due": 0.0, "insurer": "", Insurance.FROM_SAVE: true})
+		push_error("QuickBuy: no room anywhere for %s; it waits for room in the stash" % piece.data.display_name)
+
+
+# --- Custom cards ---------------------------------------------------------------------------------
+
+## SAVE CURRENT GEAR AS QUICK-BUY: a custom card named `name` from what `inventory` wears and carries
+## (record()), added to GameState.quick_buys. {"ok", "message", "card"}.
+static func save_custom(name: String, inventory: Inventory) -> Dictionary:
+	if GameState.quick_buys.size() >= QuickBuyTable.max_custom():
+		return {"ok": false, "message": "%d custom cards already: delete one first" % QuickBuyTable.max_custom(), "card": {}}
+	var card := record(name, inventory)
+	if lines(card).is_empty():
+		return {"ok": false, "message": "Nothing you wear or carry is sold by a trader", "card": {}}
+	GameState.quick_buys.append(card)
+	var message := "Saved %s as a quick-buy card." % card.name
+	if not card.left_out.is_empty():
+		message += " Not for sale, left out: %s." % ", ".join(card.left_out)
+	return {"ok": true, "message": message, "card": card}
+
+
+## Deletes custom card `index`. False if there's no such card.
+static func remove_custom(index: int) -> bool:
+	if index < 0 or index >= GameState.quick_buys.size():
+		return false
+	GameState.quick_buys.remove_at(index)
+	return true
+
+
+## A custom card of what `inventory` wears (but the secure container) and carries in the pockets, rig
+## and backpack: each item from the cheapest offer you qualify for (else the cheapest anyone sells),
+## parts a gun doesn't come with by slot path, rounds (loaded and carried) by kind for the gun of their
+## caliber, other items by kind with their counts. What no trader sells, and rounds no gun on the card
+## fires, are named in "left_out" (kept on the card).
+static func record(name: String, inventory: Inventory) -> Dictionary:
+	var cleaned := name.strip_edges().left(QuickBuyTable.name_length()).strip_edges()
+	var card := {"id": _free_id(), "name": cleaned if cleaned != "" else _free_name(), "description": "Saved from your gear.",
+		"custom": true, "gear": {}, "parts": {}, "rounds": [], "carried": [], "left_out": []}
+	var left: Array[String] = []
+	var guns := {}
+	for slot in LoadoutPresets.SLOTS:
+		var item: ItemInstance = inventory.equipment.get(slot)
+		if item == null:
+			continue
+		var source := cheapest(item.data.id)
+		if source.is_empty():
+			left.append(item.data.display_name)
+			continue
+		card.gear[slot] = {"item": item.data.id, "trader": source.trader}
+		if item.is_gun():
+			guns[slot] = item
+	for slot: String in guns:
+		var gun: ItemInstance = guns[slot]
+		var defaults: Dictionary = gun.data.weapon.default_mods
+		var parts: Array = []
+		var skipped: Array[String] = []
+		for entry in WeaponMods.walk(gun):
+			if entry.mod == null:
+				continue
+			var path := str(entry.path)
+			var part: ItemInstance = entry.mod
+			if skipped.any(func(parent: String) -> bool: return path.begins_with(parent + "/")):
+				left.append(part.data.display_name)
+				continue
+			if str(defaults.get(path, "")) == part.data.id:
+				continue
+			var source := cheapest(part.data.id)
+			if source.is_empty():
+				left.append(part.data.display_name)
+				skipped.append(path)
+				continue
+			parts.append({"path": path, "item": part.data.id, "trader": source.trader})
+		if not parts.is_empty():
+			card.parts[slot] = parts
+	# Rounds by kind: loaded in the guns, then carried.
+	var rounds := {}
+	var order: Array[String] = []
+	for slot: String in guns:
+		for stack: ItemInstance in (guns[slot] as ItemInstance).magazine:
+			if not rounds.has(stack.data.id):
+				order.append(stack.data.id)
+			rounds[stack.data.id] = int(rounds.get(stack.data.id, 0)) + stack.count
+	var carried := {}
+	var carried_order: Array[String] = []
+	for grid in inventory.ammo_grids():
+		for item in grid.items:
+			if item.data.category == ItemData.Category.AMMO:
+				if not rounds.has(item.data.id):
+					order.append(item.data.id)
+				rounds[item.data.id] = int(rounds.get(item.data.id, 0)) + item.count
+			else:
+				if not carried.has(item.data.id):
+					carried_order.append(item.data.id)
+				carried[item.data.id] = int(carried.get(item.data.id, 0)) + item.count
+	for id in order:
+		var ammo := ItemDB.get_item(id)
+		var gun_slot := ""
+		for slot: String in guns:
+			var gun: ItemInstance = guns[slot]
+			if gun.data.weapon.caliber == str(ammo.stats.get("caliber", "")) and (gun_slot == "" or gun.loaded_ammo == id):
+				gun_slot = slot
+		var source := cheapest(id)
+		if gun_slot == "" or source.is_empty():
+			left.append("%s ×%d" % [ammo.display_name, int(rounds[id])])
+			continue
+		card.rounds.append({"for": gun_slot, "item": id, "trader": source.trader, "count": int(rounds[id])})
+	for id in carried_order:
+		var data := ItemDB.get_item(id)
+		var source := cheapest(id)
+		if source.is_empty():
+			left.append(data.display_name + (" ×%d" % int(carried[id]) if int(carried[id]) > 1 else ""))
+			continue
+		card.carried.append({"item": id, "trader": source.trader, "count": int(carried[id])})
+	card.left_out = left
+	return card
+
+
+## The offer to buy item `id` from: the cheapest (a dollar at the exchange's buy rate) of those you can buy
+## from now (the trader trades with you, your loyalty reaches it), else the cheapest anyone sells.
+## {"trader", "offer"}, or {} if no trader sells it for money.
+static func cheapest(id: String) -> Dictionary:
+	var best := {}
+	var best_key := []
+	for trader_id in TraderTable.ids():
+		for offer: Dictionary in Trading.offers(trader_id).get("buy", []):
+			if str(offer.get("item", "")) != id:
+				continue
+			var qualified := TraderTable.is_unlocked(trader_id) and Trading.loyalty_block_reason(trader_id, offer) == ""
+			var key := [0 if qualified else 1, _unit_value(trader_id, offer), str(offer.id)]
+			if best.is_empty() or key < best_key:
+				best = {"trader": trader_id, "offer": offer}
+				best_key = key
+	return best
+
+
+## "custom_N" with the lowest N no custom card has.
+static func _free_id() -> String:
+	var number := 1
+	while GameState.quick_buys.any(func(card: Dictionary) -> bool: return card.get("id") == "custom_%d" % number):
+		number += 1
+	return "custom_%d" % number
+
+
+## "Custom N" with the lowest N no custom card is called.
+static func _free_name() -> String:
+	var number := 1
+	while GameState.quick_buys.any(func(card: Dictionary) -> bool: return str(card.get("name", "")).to_lower() == "custom %d" % number):
+		number += 1
+	return "Custom %d" % number
+
+
+## Saved custom cards made safe to use (GameState.from_dict()): at most max_custom(), each with a name,
+## an id, "custom", and only lines whose item exists and whose trader exists (the rest named in
+## "left_out", with what it already had).
+static func sanitize(saved: Variant) -> Array:
+	var result := []
+	if not saved is Array:
+		return result
+	for entry: Variant in saved:
+		if not entry is Dictionary or result.size() >= QuickBuyTable.max_custom():
+			continue
+		var card := {"id": "custom_%d" % (result.size() + 1), "custom": true, "description": "Saved from your gear.",
+			"name": str(entry.get("name", "")).strip_edges().left(QuickBuyTable.name_length()), "gear": {}, "parts": {}, "rounds": [], "carried": [], "left_out": []}
+		if card.name == "":
+			card.name = "Custom %d" % (result.size() + 1)
+		var left: Array = card.left_out
+		for name: Variant in entry.get("left_out", []) if entry.get("left_out") is Array else []:
+			left.append(str(name))
+		var gear: Variant = entry.get("gear", {})
+		if gear is Dictionary:
+			for slot in LoadoutPresets.SLOTS:
+				if gear.get(slot) is Dictionary and _line_ok(gear[slot], left):
+					card.gear[slot] = {"item": str(gear[slot].item), "trader": str(gear[slot].trader)}
+		var parts: Variant = entry.get("parts", {})
+		if parts is Dictionary:
+			for slot: Variant in parts:
+				if card.gear.has(str(slot)) and parts[slot] is Array:
+					var kept := []
+					for part: Variant in parts[slot]:
+						if part is Dictionary and str(part.get("path", "")) != "" and _line_ok(part, left):
+							kept.append({"path": str(part.path), "item": str(part.item), "trader": str(part.trader)})
+					if not kept.is_empty():
+						card.parts[str(slot)] = kept
+		for kind in [ROUNDS, CARRIED]:
+			var entries: Variant = entry.get(kind, [])
+			for line: Variant in entries if entries is Array else []:
+				if line is Dictionary and int(line.get("count", 0)) >= 1 and _line_ok(line, left) \
+						and (kind == CARRIED or card.gear.has(str(line.get("for", "")))):
+					var kept := {"item": str(line.item), "trader": str(line.trader), "count": int(line.count)}
+					if kind == ROUNDS:
+						kept["for"] = str(line["for"])
+					card[kind].append(kept)
+		result.append(card)
+	return result
+
+
+## True if saved `line` names an item and trader that exist; else its item goes into `left`.
+static func _line_ok(line: Dictionary, left: Array) -> bool:
+	var id := str(line.get("item", ""))
+	if not ItemDB.has_item(id):
+		left.append("%s (no longer in the game)" % id)
+		return false
+	if not TraderTable.has(str(line.get("trader", ""))):
+		left.append(ItemDB.get_item(id).display_name)
+		return false
+	return true

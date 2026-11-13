@@ -205,6 +205,7 @@ func _reset(new_faction: Faction) -> void:
 	explored = {}
 	loadout_presets = []
 	auto_equip = LoadoutPlanner.clean_options({})
+	quick_buys = []
 	scav_karma = ScavRuns.start_karma()
 	scav_ready_at = 0.0
 	scav_kit = null
@@ -242,6 +243,7 @@ func to_dict() -> Dictionary:
 			"explored": explored.duplicate(true),
 			"loadout_presets": loadout_presets.duplicate(true),
 			"auto_equip": auto_equip.duplicate(),
+			"quick_buys": quick_buys.duplicate(true),
 			"scav": {"karma": scav_karma, "ready_at": scav_ready_at, "kit": scav_kit.to_dict() if scav_kit else null},
 		},
 		"stash": stash.to_array(),
@@ -339,6 +341,7 @@ func from_dict(data: Dictionary) -> void:
 
 	loadout_presets = LoadoutPresets.sanitize(profile.get("loadout_presets", []))
 	auto_equip = LoadoutPlanner.clean_options(profile.get("auto_equip", {}))
+	quick_buys = QuickBuy.sanitize(profile.get("quick_buys", []))
 
 	stash.resize(Hideout.stash_size())
 	stash.load_array(data.get("stash", []))

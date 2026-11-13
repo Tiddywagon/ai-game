@@ -2,3 +2,4 @@
 smoke
 economy
 gear
+quickbuy

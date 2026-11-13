@@ -2174,6 +2174,23 @@ Nothing is lost or made up: whatever has no room goes back where it came from an
 
 Not yet: a gun that has a magazine never gets a bigger one from the stash (only an empty magazine slot is filled); UNDO works only while the summary is open.
 
+#### Quick Buy cards
+
+The ten cards (`data/quick_buy/<id>.json`). The request asked for "the 6 loadouts from the table and 4 more"; that table never arrived, so all ten were designed for the game: cheap ones cheap, unlocks from nothing to LL4 with many tasks, one for each faction. Prices are what the card costs with full stock, at the loyalty levels its unlock asks (LL1 elsewhere) and with every trader at LL4: the lines at your loyalty prices less the 10% bundle discount (`quickbuy_test` checks this table against the data).
+
+| Card | Kit | Unlock | At unlock | At LL4 |
+|---|---|---|---|---|
+| Last Resort | PM pistol, 50 × 9x18 P, Scav vest; 3 bandages, a tourniquet | Nothing | ₽ 28,620 | ₽ 26,044 |
+| Doorkicker | Warden 870 with a modified choke, 40 × 12ga buckshot; Kolpak helmet, Zhuk-3 press vest (class 3), tactical chest rig; 2 bandages, an AI-2 | 1 task | ₽ 123,030 | ₽ 112,313 |
+| Room Sweeper | Brigand 45 with a mini reflex sight, stubby foregrip and laser, 80 × .45 HP; Kiver-M helmet, GSSh-01 headset, Zhuk-3, tactical chest rig; 2 army bandages, a CAT tourniquet, a car first aid kit | Bulat LL2, Doc Vera LL2, 3 tasks | ₽ 221,753 | ₽ 204,179 |
+| Quiet Hours | Strelka MP with the 9x18 suppressor, 100 × 9x18 PSt, a hatchet; Sordin headset, balaclava, Patrol armored vest (class 2), sling bag; 2 bandages, a tourniquet, an AI-2 | Bulat LL2, Tinker LL2, 4 tasks | ₽ 146,423 | ₽ 135,654 |
+| Workhorse | AK-74N with a rail handguard, vertical foregrip and red dot, 120 × 5.45x39 PS; ZSh-1-2M helmet (class 4), Sordin, 6B23-1 (class 4), Triton chest rig, MBSS backpack; a Salewa, a CAT, 2 army bandages | Bulat, Stitch, Tinker and Doc Vera LL2, 6 tasks | ₽ 361,599 | ₽ 339,233 |
+| Long Watch | SVD with a prism sight and muzzle brake, 60 × 7.62x54R SP; PM pistol with 50 × 9x18 PSt; SSh-68 helmet, shemagh, MMAC plate carrier (class 3), Triton, Daypack; a Salewa, 2 bandages | Bulat, Stitch, Tinker and Doc Vera LL2, 8 tasks | ₽ 386,827 | ₽ 362,900 |
+| Taiga Patrol (BEAR only) | Tundra 47 with a 40-round magazine, 7.62x39 compensator and modern stock, 160 × 7.62x39 PS; ZSh-1-2M, GSSh-01, 6B23-1, Bear assault rig, Pilgrim backpack; 2 AI-2s, 2 army bandages, a tourniquet, a splint | Bulat LL2, Stitch LL3, Tinker LL2, 8 tasks | ₽ 458,782 | ₽ 440,191 |
+| Contract Work (USEC only) | Sentinel AR with an M-LOK handguard, holographic sight and 5.56 compensator, 120 × 5.56 M856; Vektor P9 with 50 × 9x19 FMJ; FAST helmet (class 4), ComTac headset, MMAC, Triton, Trizip backpack; a Salewa, 2 CATs, 2 army bandages. The guns, their parts and rounds and the FAST are The Broker's, in dollars | The Broker LL3 (*A Word in His Ear*), Stitch LL2, Doc Vera LL2, 10 tasks | ₽ 297,172 + $ 1,782 | ₽ 278,790 + $ 1,724 |
+| Lifeline | Partisan with a 7.62x39 compensator, 80 × 7.62x39 PS; Kiver-M, Sordin, 6B5 armored rig (class 3), Trizip; a CMS surgical kit, 2 IFAKs, 2 Salewas, 2 CALOK-Bs, 2 aluminium splints, 2 CATs, 4 army bandages, ibuprofen | Doc Vera LL3, Stitch LL2, 10 tasks, *Clinic Supplies* | ₽ 554,289 | ₽ 528,585 |
+| Iron Wall | Grizzly 74 with a quad-rail handguard, angled foregrip and red dot, 120 × 5.45x39 BT; Altyn helmet with its face shield (class 5), Tactical Sport headset, Redut-T5 (class 5, arms too), Blackrock chest rig, Pilgrim; an IFAK, a CALOK-B, an aluminium splint, 2 army bandages | Bulat LL3, Stitch LL4, Tinker LL2, Doc Vera LL3, 14 tasks | ₽ 1,030,048 | ₽ 1,019,903 |
+
 ## 17. Settings
 
 Settings open from the main menu (gear icon) and the pause menu. Six tabs; edits only take effect on **Apply**, which also saves `user://settings.cfg`. **Reset to Defaults** resets the open tab; **Back** with unapplied edits asks to discard them. Q / E or LB / RB switch tabs.
