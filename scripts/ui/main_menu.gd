@@ -1,6 +1,7 @@
 extends Node
 ## Main menu (DESIGN.md §16): a slowly panning dusk scene with ambient music, the title top-left,
-## the main buttons stacked on the left (ENTER RAID, LOADOUT, HIDEOUT, CHARACTER, TRADERS, QUIT), the profile top-right (faction, "LEVEL 10 · 36,250 / 39,500
+## the main buttons stacked on the left (ENTER RAID, LOADOUT, HIDEOUT, CHARACTER, TRADERS, FLEA MARKET (locked with "Level 15"
+## before then: FleaMarket), QUIT), the profile top-right (faction, "LEVEL 10 · 36,250 / 39,500
 ## XP" with a thin bar toward the next level, money) and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
 ## On first launch the player picks a faction, which creates the profile (each button says what the
@@ -8,13 +9,15 @@ extends Node
 ## opens straight on the hideout (GameState.menu_return). Insured items on their way back (Insurance)
 ## show a countdown under the profile and arrive in the stash when due, whatever screen is open (the
 ## stash views redraw; a notice over the screen says what came back). Under it, while the Scav run
-## cooldown runs, "Scav ready in 12:30" (ScavRuns).
+## cooldown runs, "Scav ready in 12:30" (ScavRuns), and under that what waits on the flea market ("Flea
+## market: 2 sold (₽ 84,000): collect on the FLEA MARKET").
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
 const LOADOUT_SCENE := preload("res://ui/loadout_screen.tscn")
 const CHARACTER_SCENE := preload("res://ui/character_screen.tscn")
 const HIDEOUT_SCENE := preload("res://ui/hideout_screen.tscn")
 const TRADERS_SCENE := preload("res://ui/traders_screen.tscn")
+const FLEA_SCENE := preload("res://ui/flea_screen.tscn")
 const SETTINGS_SCENE := preload("res://ui/settings_menu.tscn")
 const MUSIC_FADE_IN := 3.0
 ## Seconds "Bulat returned 2 insured items to your stash" stays up.
@@ -26,6 +29,8 @@ var _insurance_label: Label
 var _insurance_timer: Timer
 ## "Scav ready in 12:30" while the Scav cooldown runs ("" once it's ready), updated with the same timer.
 var _scav_label: Label
+## What waits to be collected on the flea market ("" for nothing), with the same timer.
+var _flea_label: Label
 var _arrival_text := ""
 var _arrival_left := 0.0
 ## The same arrival line over an open screen, top centre.
@@ -51,6 +56,7 @@ func _ready() -> void:
 	%HideoutButton.pressed.connect(_open.bind(HIDEOUT_SCENE, %HideoutButton))
 	%CharacterButton.pressed.connect(_open.bind(CHARACTER_SCENE, %CharacterButton))
 	%TradersButton.pressed.connect(_open.bind(TRADERS_SCENE, %TradersButton))
+	%FleaButton.pressed.connect(_open.bind(FLEA_SCENE, %FleaButton))
 	%SettingsButton.pressed.connect(_open.bind(SETTINGS_SCENE, %SettingsButton))
 	%QuitButton.pressed.connect(_ask_quit)
 	_quit_dialog.confirmed.connect(get_tree().quit)
@@ -68,6 +74,11 @@ func _ready() -> void:
 	_scav_label.theme_type_variation = &"DimLabel"
 	_scav_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_insurance_label.add_sibling(_scav_label)
+	_flea_label = Label.new()
+	_flea_label.name = "FleaLabel"
+	_flea_label.theme_type_variation = &"DimLabel"
+	_flea_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_scav_label.add_sibling(_flea_label)
 	_notice = PanelContainer.new()
 	_notice.name = "InsuranceNotice"
 	_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -132,6 +143,10 @@ func _refresh_profile() -> void:
 	%XpBar.value = Progression.level_progress(GameState.xp, GameState.level) * 100.0
 	%XpBar.visible = has_profile
 	%MoneyLabel.text = "%s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")] if has_profile else ""
+	var flea := %FleaButton as Button
+	flea.disabled = has_profile and not FleaMarket.is_unlocked()
+	flea.text = "FLEA MARKET" if not flea.disabled else "FLEA MARKET   ·   %s" % FleaMarket.lock_text()
+	flea.tooltip_text = FleaMarket.lock_reason() if flea.disabled else ""
 
 
 ## Delivers insurance returns that are due, on time whatever screen is open (grid views redraw when
@@ -140,6 +155,10 @@ func _refresh_profile() -> void:
 ## else "Insurance returns in 1:42" (or "1 item from your old save waiting for room in the stash").
 func _check_insurance(delta: float) -> void:
 	_scav_label.text = ScavRuns.ready_text() if GameState.faction != GameState.Faction.NONE and not ScavRuns.is_ready() else ""
+	var listed: int = GameState.flea.listings.size() if GameState.faction != GameState.Faction.NONE else 0
+	if listed > 0 and not FleaMarket.update().is_empty():
+		SaveManager.save_game()  # A listing sold or came back while you were away or in the menu.
+	_flea_label.text = FleaMarket.notice_text() if listed > 0 else ""
 	if GameState.faction == GameState.Faction.NONE:
 		_insurance_label.text = ""
 		return

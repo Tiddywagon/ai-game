@@ -1,7 +1,8 @@
 extends "res://tests/test_base.gd"
 ## Menus and raids (needs a display): every screen of the main menu opens and closes through its
 ## buttons (LOADOUT with AUTO-EQUIP and UNDO and its QUICK BUY tab buying a card, CHARACTER, HIDEOUT with an upgrade, TRADERS with every
-## trader's tabs, a purchase and a sale, ENTER RAID up to the loadout check, SETTINGS), then a seeded PMC
+## trader's tabs, a purchase and a sale, FLEA MARKET locked before level 15, then browsing, filtering,
+## buying, listing, a sale and COLLECT, and opened from TRADERS, ENTER RAID up to the loadout check, SETTINGS), then a seeded PMC
 ## raid on each map and a Scav run joined mid-raid, with the AI on. A Logger counts every error the
 ## engine reports (script errors included): there must be none.
 ## Each raid renders its first and last 0.1 s; in between only the render loop pauses (scripts,
@@ -52,6 +53,7 @@ func run() -> void:
 	await _character()
 	await _hideout()
 	await _traders()
+	await _flea()
 	await _raid_setup()
 	await _settings()
 	check(counter.errors == 0, "no errors in the menus%s" % ("" if counter.errors == 0 else ": %d, first %s" % [counter.errors, counter.first]))
@@ -189,6 +191,107 @@ func _traders() -> void:
 	check(price > 0 and gs.stash.count_of("nails") == 0 and gs.roubles == 450000 - 7500 + price
 		and (_find(screen, "Status") as Label).text.begins_with("Sold 1 item to Auntie Zoya"), "its SELL button sells them back (for %d)" % price)
 	await _close(screen, "BackButton", "TRADERS")
+
+
+func _flea() -> void:
+	section("FLEA MARKET")
+	var flea: GDScript = load("res://scripts/progression/flea_market.gd")
+	var stock: GDScript = load("res://scripts/progression/trader_stock.gd")
+	var level: int = gs.level
+	gs.level = 14
+	menu._refresh_profile()
+	var button: Button = _find(menu, "FleaButton")
+	check(button.disabled and button.text.ends_with("Level 15"), "level 14: FLEA MARKET is locked (\"%s\")" % button.text)
+	gs.level = 15
+	menu._refresh_profile()
+	check(not button.disabled and button.text == "FLEA MARKET", "level 15: it opens")
+	stock.now_override = 2_000_000.0
+	var screen := await _open("FleaButton")
+	check(screen != null and screen.scene_file_path == "res://ui/flea_screen.tscn", "FLEA MARKET opens")
+	var tabs: TabContainer = _find(screen, "Tabs")
+	check(tabs.get_tab_count() == 3 and tabs.get_tab_title(0) == "BROWSE" and tabs.get_tab_title(1) == "SELL" and tabs.get_tab_title(2) == "MY LISTINGS",
+		"tabs BROWSE, SELL and MY LISTINGS")
+	var rows: Array = _find(screen, "Listings").get_children().filter(func(row: Node) -> bool: return row.has_meta("listing"))
+	check(rows.size() == flea.listings().size() and rows.size() > 50, "BROWSE shows every listing up (%d)" % rows.size())
+	var prices := rows.map(func(row: Node) -> int: return flea.price(row.get_meta("listing")))
+	var sorted := prices.duplicate()
+	sorted.sort()
+	check(prices == sorted, "sorted by price, cheapest first")
+	(_find(screen, "Sort") as OptionButton).select(1)
+	(_find(screen, "Sort") as OptionButton).item_selected.emit(1)
+	await frames(2)
+	rows = _find(screen, "Listings").get_children().filter(func(row: Node) -> bool: return row.has_meta("listing"))
+	var times := rows.map(func(row: Node) -> float: return flea.seconds_left(row.get_meta("listing")))
+	var sorted_times := times.duplicate()
+	sorted_times.sort()
+	check(times == sorted_times, "sorted by time left")
+	var target: Dictionary = rows[0].get_meta("listing")
+	var search: LineEdit = _find(screen, "Search")
+	search.text = target.item.data.display_name
+	search.text_changed.emit(search.text)
+	var visible := rows.filter(func(row: Node) -> bool: return row.visible)
+	check(not visible.is_empty() and visible.all(func(row: Node) -> bool: return row.get_meta("listing").item.data.display_name.contains(target.item.data.display_name))
+		and visible.size() < rows.size(), "the search shows only %s (%d rows)" % [target.item.data.display_name, visible.size()])
+	search.text = ""
+	search.text_changed.emit("")
+	var rarity: OptionButton = _find(screen, "Rarity")
+	rarity.select(1)
+	rarity.item_selected.emit(1)
+	check(rows.all(func(row: Node) -> bool: return row.visible == (row.get_meta("listing").item.data.rarity == 0)), "the rarity filter shows only Common listings")
+	rarity.select(0)
+	rarity.item_selected.emit(0)
+	var cost: int = flea.price(target)
+	var money: int = gs.roubles
+	var buy: Button = rows[0].find_children("*", "Button", false, false)[0]
+	check(buy.text == "BUY" and not buy.disabled, "the listing has a BUY button")
+	buy.pressed.emit()
+	await frames(3)
+	check(gs.roubles == money - cost and (_find(screen, "Status") as Label).text.begins_with("Bought ") and flea.find(target.id).is_empty(),
+		"BUY charges the price shown (%d) and the listing goes" % cost)
+	var watch: RefCounted = item("roler")
+	watch.fir = true
+	gs.stash.add(watch)
+	tabs.current_tab = 1
+	screen._fill_all()
+	await frames(2)
+	var picks: Array = _find(screen, "StashItems").get_children().filter(func(row: Node) -> bool: return row.has_meta("item") and row.get_meta("item") == watch)
+	check(picks.size() == 1, "SELL lists the found-in-raid Roler")
+	(picks[0].get_node("Pick") as Button).pressed.emit()
+	await frames(2)
+	var price_box: SpinBox = _find(screen, "AskingPrice")
+	check(price_box != null and roundi(price_box.value) == flea.market_price(watch) and (_find(screen, "Fee") as Label).text.begins_with("Fee: ")
+		and (_find(screen, "Estimate") as Label).text.begins_with("Sells in"), "the form asks the market price and shows the fee and how fast it sells")
+	var asking := roundi(price_box.value)
+	var fee: int = flea.listing_fee(watch, asking)
+	money = gs.roubles
+	(_find(screen, "ListButton") as Button).pressed.emit()
+	await frames(3)
+	check(gs.roubles == money - fee, "LIST pays the fee (%d)" % fee)
+	check(flea.own_listings().size() == 1 and gs.stash.find_holder(watch) == null, "and the Roler is listed")
+	stock.now_override = 2_000_000.0 + 3600.0
+	screen._tick()
+	await frames(2)
+	tabs.current_tab = 2
+	var mine: Node = _find(screen, "Mine_own_1")
+	var collect: Button = mine.find_children("*", "Button", false, false)[0] if mine else null
+	check(collect != null and collect.text == "COLLECT" and tabs.get_tab_title(2) == "MY LISTINGS (1)", "an hour later it has sold: COLLECT")
+	money = gs.roubles
+	collect.pressed.emit()
+	await frames(3)
+	check(gs.roubles == money + asking and flea.own_listings().is_empty(), "COLLECT pays the asking price (%d)" % asking)
+	await _close(screen, "BackButton", "FLEA MARKET")
+	var traders := await _open("TradersButton")
+	(_find(traders, "FleaButton") as Button).pressed.emit()
+	await frames(3)
+	var over: Node = _find(traders, "FleaScreen")
+	check(over != null and not (_find(traders, "Margin") as Control).visible, "TRADERS opens the flea market over itself")
+	(_find(over, "BackButton") as Button).pressed.emit()
+	await frames(3)
+	check(not is_instance_valid(over) and (_find(traders, "Margin") as Control).visible, "and comes back to TRADERS")
+	await _close(traders, "BackButton", "TRADERS")
+	stock.now_override = -1.0
+	gs.level = level
+	menu._refresh_profile()
 
 
 func _raid_setup() -> void:

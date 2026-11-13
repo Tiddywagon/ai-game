@@ -23,7 +23,10 @@ extends MenuScreen
 ## QuestLog). Each deal saves the game and redraws the tabs, keeping the open tab and the keyboard or
 ## pad focus (or giving it to the tab bar); the SELL tab, which lists everything you own, is drawn only
 ## when shown, and a sale updates it in place and leaves the other tabs to be drawn when next shown.
-## Right-click an item (long-press on touch: TouchGestures) to examine it.
+## Right-click an item (long-press on touch: TouchGestures) to examine it. FLEA MARKET in the header
+## opens the flea market over this screen (locked with "Level 15" before then: FleaMarket).
+
+const FLEA_SCENE := preload("res://ui/flea_screen.tscn")
 
 ## Item cells in offer rows: pixels per grid cell, and the most room one may take.
 const OFFER_CELL := 30.0
@@ -70,6 +73,10 @@ var _find_index := 0
 
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
+	%FleaButton.disabled = not FleaMarket.is_unlocked()
+	%FleaButton.text = "FLEA MARKET" if FleaMarket.is_unlocked() else "FLEA MARKET  ·  %s" % FleaMarket.lock_text()
+	%FleaButton.tooltip_text = FleaMarket.lock_reason()
+	%FleaButton.pressed.connect(_open_flea)
 	_traders = TraderTable.all()
 	var group := ButtonGroup.new()
 	for trader: Dictionary in _traders:
@@ -119,6 +126,18 @@ func _on_tab_changed(_tab: int) -> void:
 	var shown := %Tabs.get_current_tab_control() as Control
 	if not _refreshing and _find_panel.visible and (shown == null or String(shown.name) != "BARTER"):
 		_close_find()
+
+
+## Opens the FLEA MARKET over this screen; closing it comes back here, the tabs drawn again (the stash
+## and your money may have changed).
+func _open_flea() -> void:
+	var screen := FLEA_SCENE.instantiate()
+	$Margin.hide()
+	screen.closed.connect(func() -> void:
+		$Margin.show()
+		_refresh()
+		%FleaButton.grab_focus())
+	add_child(screen)
 
 
 func _on_cancel() -> void:
