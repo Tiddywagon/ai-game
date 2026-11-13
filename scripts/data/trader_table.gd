@@ -16,6 +16,8 @@ const PATH := "res://data/traders/traders.json"
 const FIELDS := ["id", "name", "role", "specialty", "personality", "greetings", "currency", "unique", "unlock", "sell"]
 const CURRENCIES := {"RUB": "Roubles", "USD": "Dollars"}
 const GREETINGS := 3
+## A trader's "buy_discount" share stays below this at every loyalty level (problems()).
+const MAX_BUY_DISCOUNT := 0.5
 
 ## The file read (tests point it at a broken copy, then reload()).
 static var path := PATH
@@ -202,6 +204,16 @@ static func problems() -> Array[String]:
 				for i in levels.size():
 					if float(levels[i]) <= (float(levels[i - 1]) if i > 0 else bounds.x) or float(levels[i]) > bounds.y:
 						found.append("%s: karma_levels must rise, within karma %s to %s" % [where, bounds.x, bounds.y])
+						break
+		if entry.has("buy_discount"):
+			var shares: Variant = entry.buy_discount
+			if not shares is Array or shares.size() != Progression.max_loyalty() or shares.any(func(value: Variant) -> bool:
+					return not (value is float or value is int) or float(value) < 0.0 or float(value) >= MAX_BUY_DISCOUNT):
+				found.append("%s: buy_discount needs a share for each loyalty level 1-%d, each 0 up to below %s" % [where, Progression.max_loyalty(), MAX_BUY_DISCOUNT])
+			else:
+				for i in range(1, shares.size()):
+					if float(shares[i]) < float(shares[i - 1]):
+						found.append("%s: buy_discount must not fall from one loyalty level to the next" % where)
 						break
 		var offers: Dictionary = Trading.all_offers().get(id, {})
 		if not offers.get("buy") is Array:

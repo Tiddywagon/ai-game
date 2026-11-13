@@ -16,6 +16,7 @@
       "unique": "Insurance: cheap, slow",
       "unlock": null,
       "restock_minutes": 60,
+      "buy_discount": [0, 0.03, 0.06, 0.09],
       "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"categories": ["weapon", "ammo", "throwable", "melee"]}, {"kinds": ["muzzle", "barrel", "handguard", "foregrip", "stock", "pistol_grip", "receiver", "sight", "tactical", "magazine"], "multiplier": 0.8}, {"groups": ["Military"]}]}
     },
     {
@@ -33,6 +34,7 @@
       "unique": "Insurance: dearer, faster",
       "unlock": null,
       "restock_minutes": 60,
+      "buy_discount": [0, 0.03, 0.06, 0.09],
       "sell": {"rate": 0.55, "per_level": 0.03, "buys": [{"categories": ["meds", "food"]}, {"groups": ["Medical supply"], "multiplier": 1.2}]}
     },
     {
@@ -50,6 +52,7 @@
       "unique": "Cheap barters · can introduce you to The Broker",
       "unlock": null,
       "restock_minutes": 60,
+      "buy_discount": [0, 0.03, 0.06, 0.09],
       "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"groups": ["Tools", "Household", "Fuel", "Electronics", "Hardware"]}, {"categories": ["junk"], "multiplier": 0.9}, {"categories": ["food", "key", "container"], "multiplier": 0.8}]}
     },
     {
@@ -67,6 +70,7 @@
       "unique": "Upgrades gear",
       "unlock": null,
       "restock_minutes": 60,
+      "buy_discount": [0, 0.03, 0.06, 0.09],
       "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"categories": ["armor", "helmet", "rig", "backpack", "face_cover"]}, {"kinds": ["face_shield", "headset"]}, {"groups": ["Materials"], "tags": ["cloth"]}]}
     },
     {
@@ -84,6 +88,7 @@
       "unique": "Gunsmith quests",
       "unlock": null,
       "restock_minutes": 60,
+      "buy_discount": [0, 0.03, 0.06, 0.09],
       "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"kinds": ["muzzle", "barrel", "handguard", "foregrip", "stock", "pistol_grip", "receiver", "sight", "tactical", "magazine"]}, {"tags": ["weapon"]}, {"categories": ["weapon"], "multiplier": 0.9}, {"groups": ["Electronics", "Tech"], "multiplier": 0.9}]}
     },
     {
@@ -121,6 +126,7 @@
       "unique": "Dollars only · unlocked by Auntie Zoya's introduction",
       "unlock": {"quest": "zoya_introduction"},
       "restock_minutes": 60,
+      "buy_discount": [0, 0.03, 0.06, 0.09],
       "sell": {"rate": 0.65, "per_level": 0.03, "buys": [{"categories": ["weapon", "valuable"]}, {"tags": ["valuable"]}]},
       "locked_greeting": "I don't believe we've been introduced. Come back when someone I trust has said your name."
     }

@@ -5,6 +5,8 @@ extends "res://tests/test_base.gd"
 const NOW := 1_000_000.0
 ## What a dollar is worth in roubles when it's sold at the exchange: the no-resale check's rate.
 const DOLLAR := 125
+## The quick-buy bundle discount (data/config/quick_buy.json): the no-resale sweep checks the price less it.
+const BUNDLE := 0.1
 
 ## Game scripts, loaded in run() (the autoloads they use exist by then).
 var trading: GDScript
@@ -27,6 +29,7 @@ func run() -> void:
 	hideout = load("res://scripts/progression/hideout.gd")
 	search = load("res://scripts/progression/item_search.gd")
 	_buying()
+	_loyalty_prices()
 	_loyalty_and_stock()
 	_selling()
 	_wanted()
@@ -93,6 +96,65 @@ func _buying() -> void:
 		"Mole sells 8-12 worn items, one of each")
 
 
+func _loyalty_prices() -> void:
+	section("Loyalty prices")
+	_profile()
+	_unlock_broker()
+	check(traders.problems().is_empty() and trading.problems().is_empty(), "TraderTable.problems() and Trading.problems() are empty")
+	for trader: String in traders.ids():
+		var shares: Array = [trading.buy_discount(trader, 1), trading.buy_discount(trader, 2), trading.buy_discount(trader, 3), trading.buy_discount(trader, 4)]
+		check(shares == ([0.0, 0.0, 0.0, 0.0] if trader == "mole" else [0.0, 0.03, 0.06, 0.09]),
+			"%s takes %s off at LL1-4" % [trader, str(shares)])
+	var nails := _offer("zoya", "zoya_nails")
+	var rifle := _offer("bulat", "bulat_ak_74n")
+	var scope := _offer("broker", "broker_scope_6_8")
+	var money := func(amount: int, currency := "RUB") -> String: return load("res://scripts/ui/ui_format.gd").money(amount, currency)
+	check(trading.price("zoya", nails) == 7500 and trading.price_text("zoya", nails) == money.call(7500), "at LL1 the price is the offer's own, shown plain")
+	check(trading.discount_text("zoya") == "Buy prices: full price at your LL1 (3% off at LL2, 6% at LL3, 9% at LL4)",
+		"the panel says what each level takes off (%s)" % trading.discount_text("zoya"))
+	for level in [2, 3, 4]:
+		gs.trader_loyalty.bulat.level = level
+		gs.trader_loyalty.broker.level = level
+		var share: float = [0.0, 0.0, 0.03, 0.06, 0.09][level]
+		check(trading.price("bulat", rifle) == roundi(41000 * (1.0 - share)) and trading.price("broker", scope) == roundi(1150 * (1.0 - share)),
+			"LL%d: the AK-74N costs %d, the 6-8x scope $%d" % [level, trading.price("bulat", rifle), trading.price("broker", scope)])
+	gs.trader_loyalty.bulat.level = 2
+	check(trading.price_text("bulat", rifle) == "%s  ·  −3%% at your loyalty (was %s)" % [money.call(39770), money.call(41000)],
+		"a BUY row shows the discount (%s)" % trading.price_text("bulat", rifle))
+	check(trading.discount_text("bulat") == "Buy prices: 3% off at your LL2 (6% at LL3, 9% at LL4)", "and the panel the levels to come (%s)" % trading.discount_text("bulat"))
+	gs.trader_loyalty.bulat.level = 4
+	check(trading.discount_text("bulat") == "Buy prices: 9% off at your LL4" and trading.discount_text("mole") == "", "at the top level just the share; Mole has no line")
+	# Every path charges price(): buy_block_reason() and buy() at LL4.
+	gs.trader_loyalty.bulat.level = 2
+	gs.roubles = 39770
+	check(trading.buy_block_reason(rifle, "bulat") == "", "39,770 is enough at LL2 (the discounted price is what's checked)")
+	gs.roubles = 39769
+	check(trading.buy_block_reason(rifle, "bulat") == "Not enough roubles", "39,769 isn't")
+	gs.roubles = 100000
+	var spent: int = gs.trader_loyalty.bulat.spent
+	check(trading.buy("bulat", rifle) == "" and gs.roubles == 100000 - 39770 and gs.trader_loyalty.bulat.spent == spent + 39770,
+		"buy() takes 39,770 and counts 39,770 toward money spent")
+	gs.trader_loyalty.broker.level = 4
+	gs.dollars = 1047
+	spent = gs.trader_loyalty.broker.spent
+	check(trading.buy("broker", scope) == "" and gs.dollars == 0 and gs.trader_loyalty.broker.spent == spent + 1047 * 140,
+		"a dollar offer at LL4: $1,047, counted at 140 a dollar")
+	# The floor: a discount never goes below what the best-paying trader pays, plus 3%.
+	var floor_rifle: int = trading.offer_floor(rifle)
+	var resale: int = selling.best_resale(trading.offer_item(rifle))
+	check(resale > 0 and floor_rifle == ceili(resale * 1.03), "the AK-74N's floor is its best resale (%d) plus 3%% (%d)" % [resale, floor_rifle])
+	gs.trader_loyalty.bulat.level = 4
+	check(trading.price("bulat", rifle, 0.9) == floor_rifle and trading.price("bulat", rifle, 0.0) == 37310,
+		"a 90% cut stops at the floor; LL4's 9% leaves 37,310")
+	var cheap := {"id": "test_cheap_rifle", "item": "ak_74n", "count": 1, "price": floor_rifle - 100}
+	check(trading.price("bulat", cheap) == floor_rifle - 100, "an offer already below its floor isn't raised")
+	var whole: RefCounted = trading.offer_item(rifle)
+	var parts := 0
+	for part: RefCounted in whole.mods.values():
+		parts += selling.best_resale(part)
+	check(resale >= parts, "the floor counts the gun taken apart too (%d whole or in parts, the parts alone %d)" % [resale, parts])
+
+
 func _loyalty_and_stock() -> void:
 	section("Loyalty and stock")
 	_profile()
@@ -113,9 +175,10 @@ func _loyalty_and_stock() -> void:
 	gs.trader_loyalty.bulat.spent = 9000000
 	check(not trading.update_loyalty("bulat") and gs.trader_loyalty.bulat.level == 2, "0.34 reputation doesn't reach LL3 (0.35)")
 	check(trading.shown_offers("bulat").has(rifle) and stock.left("bulat", rifle) == 2, "at LL2 the offer shows, 2 left")
+	check(trading.price("bulat", rifle) == 39770, "at LL2 it costs 3%% less: 39,770, not 41,000 (%d)" % trading.price("bulat", rifle))
 	check(trading.buy("bulat", rifle) == "" and trading.buy("bulat", rifle) == "" and gs.stash.count_of("ak_74n") == 3, "both are bought")
 	check(stock.left("bulat", rifle) == 0 and trading.buy("bulat", rifle).begins_with("Sold out until the restock")
-		and gs.stash.count_of("ak_74n") == 3 and gs.roubles == 500000 - 82000, "then it's sold out and a third costs nothing")
+		and gs.stash.count_of("ak_74n") == 3 and gs.roubles == 500000 - 2 * 39770, "then it's sold out and a third costs nothing")
 	check(stock.left("bulat", _offer("bulat", "bulat_ammo_9x18_p")) == -1, "an offer without stock has no limit")
 	check(is_equal_approx(stock.seconds_left("bulat"), 3600.0) and stock.restock_number("bulat") == 1, "the restock is an hour away")
 	stock.now_override = NOW + 3599.0
@@ -234,7 +297,7 @@ func _no_resale() -> void:
 	for trader: String in traders.ids():
 		for offer: Dictionary in trading.buy_list(trader):
 			offers += 1
-			var result := _resale(trader, offer)
+			var result := _resale(trader, offer, BUNDLE)
 			if result[0] <= 1.0:
 				losing += 1
 				print("    resale profit: %s %s costs %d, sells for %d to %s" % [trader, offer.id, result[1], result[2], result[3]])
@@ -243,7 +306,7 @@ func _no_resale() -> void:
 				tightest_name = "%s (%d bought, %d sold to %s)" % [offer.id, result[1], result[2], result[3]]
 	print("    tightest price / best resale: %.4f for %s" % [tightest, tightest_name])
 	check(offers == 261 + trading.buy_list("mole").size(), "261 offers for money plus Mole's shelf are checked (%d)" % offers)
-	check(losing == 0, "no offer sells on to any trader at top loyalty for its price or more")
+	check(losing == 0, "no offer, at its least (top loyalty and the quick-buy bundle price), sells on to any trader at top loyalty, whole or in parts, for its price or more")
 	var shelf_losing := 0
 	var shelf := 0
 	for level in [1, 2, 3, 4]:
@@ -256,18 +319,41 @@ func _no_resale() -> void:
 	check(shelf >= 8 * 24 and shelf_losing == 0, "nor does any of Mole's worn gear over 6 restocks at each of his levels (%d items)" % shelf)
 
 
-## [price / best resale, the price in roubles, the best resale in roubles, who pays it] for `offer`.
-func _resale(trader: String, offer: Dictionary) -> Array:
-	var cost := int(offer.price) * (DOLLAR if offer.get("currency", "RUB") == "USD" else 1)
+## [price / best resale, the price in roubles, the best resale in roubles, who pays it] for `offer`: the
+## price at the trader's level now less `bundle` (Trading.price()), against the most any trader pays for
+## what it gives, whole or taken apart into its parts (each to whoever pays most).
+func _resale(trader: String, offer: Dictionary, bundle := 0.0) -> Array:
+	var cost: int = mini(trading.price(trader, offer), trading.price(trader, offer, bundle)) * (DOLLAR if offer.get("currency", "RUB") == "USD" else 1)
 	var bought: RefCounted = trading.offer_item(offer)
+	var whole := _best_paid(bought)
+	var apart := _apart(bought)
+	if apart[0] > whole[0]:
+		return [float(cost) / maxi(apart[0], 1), cost, apart[0], "several traders (in parts)"]
+	return [float(cost) / maxi(whole[0], 1), cost, whole[0], whole[1]]
+
+
+## [the most a trader pays for `piece` whole, in roubles, who].
+func _best_paid(piece: RefCounted) -> Array:
 	var best := 0
 	var best_trader := ""
 	for buyer: String in traders.ids():
-		var paid: int = selling.price(buyer, bought) * (DOLLAR if selling.currency(buyer) == "USD" else 1)
+		var paid: int = selling.price(buyer, piece) * (DOLLAR if selling.currency(buyer) == "USD" else 1)
 		if paid > best:
 			best = paid
 			best_trader = buyer
-	return [float(cost) / maxi(best, 1), cost, best, best_trader]
+	return [best, best_trader]
+
+
+## [what `piece` fetches taken apart: the bare item and each part (taken apart too) to whoever pays most].
+func _apart(piece: RefCounted) -> Array:
+	if piece.mods.is_empty():
+		return _best_paid(piece)
+	var bare: RefCounted = piece.duplicate_deep()
+	bare.mods = {}
+	var total: int = _best_paid(bare)[0]
+	for part: RefCounted in piece.mods.values():
+		total += maxi(_best_paid(part)[0], _apart(part)[0])
+	return [total, ""]
 
 
 func _barters() -> void:

@@ -310,6 +310,9 @@ func _loyalty_lines(trader: Dictionary) -> Array[String]:
 			next, need.player_level, need.reputation, UiFormat.money(need.spent), trader.name,
 			" (a dollar counts as %s)" % UiFormat.money(roundi(Progression.dollar_rate())) if trader.currency == "USD" else "",
 			Progression.barter_reputation(), Progression.barter_reputation_cap()])
+	var prices := Trading.discount_text(trader.id)
+	if prices != "":
+		lines.append(prices + ".")
 	return lines
 
 
@@ -360,7 +363,7 @@ func _build_buy(trader: Dictionary) -> void:
 		var name := Label.new()
 		name.name = "OfferText"
 		var level := Trading.offer_level(offer)
-		var details: Array[String] = [UiFormat.money(int(offer.price), str(offer.get("currency", "RUB")))]
+		var details: Array[String] = [Trading.price_text(trader.id, offer)]
 		if level > 1:
 			details.append("LL%d" % level)
 		if item.has_durability() and offer.get("used", false):

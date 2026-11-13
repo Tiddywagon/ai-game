@@ -80,6 +80,39 @@ static func best_rate(data: ItemData) -> float:
 	return best
 
 
+## The most any trader would ever pay for `item`, in roubles: each trader at their top loyalty level (no
+## Wanted bonus: nothing a trader sells is ever Wanted; no karma penalty), a dollar at the exchange's sell
+## rate (what selling the dollars on fetches), for the item whole or taken apart, each part to whoever
+## pays most for it, whichever pays more. Trading.resale_floor() keeps every discounted price above it.
+static func best_resale(item: ItemInstance) -> int:
+	var whole := 0
+	for trader_id in TraderTable.ids():
+		whole = maxi(whole, _top_price(trader_id, item))
+	if item.mods.is_empty():
+		return whole
+	var bare := item.duplicate_deep()
+	bare.mods = {}
+	var apart := 0
+	for trader_id in TraderTable.ids():
+		apart = maxi(apart, _top_price(trader_id, bare))
+	for part: ItemInstance in item.mods.values():
+		apart += best_resale(part)
+	return maxi(whole, apart)
+
+
+## What `trader_id` pays for `item` at their top loyalty level, in roubles (dollars at the exchange's sell
+## rate). 0 if they don't buy it.
+static func _top_price(trader_id: String, item: ItemInstance) -> int:
+	var times := multiplier(trader_id, item.data)
+	if times <= 0.0:
+		return 0
+	var top := float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (TraderTable.max_loyalty(trader_id) - 1)
+	var roubles := _worth(item) * top * times
+	if currency(trader_id) == "USD":
+		return floori(roubles / Progression.dollar_rate()) * Trading.exchange_roubles(1, false)
+	return floori(roubles)
+
+
 ## "RUB" or "USD": what `trader_id` pays in.
 static func currency(trader_id: String) -> String:
 	return str(TraderTable.find(trader_id).get("currency", "RUB"))

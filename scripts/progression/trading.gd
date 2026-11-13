@@ -10,6 +10,12 @@ extends RefCounted
 ## (TraderStock, by the offer's "id"). The fence's worn gear is rolled each restock (buy_list()); an
 ## offer of it from before his last restock can't be bought. A trader who isn't unlocked yet (The
 ## Broker) doesn't trade at all. What you get goes to the stash and is never found in raid.
+## What an offer costs is price(): its price less the trader's loyalty discount ("buy_discount" in
+## traders.json: 3% at LL2, 6% at LL3, 9% at LL4; none at Mole's), and the quick-buy bundle discount on a
+## QuickBuy line, never below the resale floor (resale_floor(): what the best-paying trader pays for the
+## item at their top level, whole or in parts, plus "resale_floor" in trading.json), so nothing can be
+## bought and sold on at a profit. The BUY tab, buy(), buy_block_reason(), the trader panel and quick buy
+## all go through it; barters have no money price.
 ## Barters follow the same loyalty rule (BarterTable checks their rarity rules): the BARTER tab shows
 ## the ones your level reaches and counts the rest ("3 more barters at LL2"). A barter takes what it asks
 ## for from the stash only (and its containers: what the BARTER tab counts and FIND shows), found-in-raid
@@ -31,6 +37,9 @@ static var _offers := {}
 static var _config := {}
 ## The lowest loyalty level each item is sold at for money, by item id (sold_at_level()).
 static var _sold_at := {}
+## Each offer's resale floor in its own currency, by offer id (offer_floor(); the fence's worn gear isn't
+## kept).
+static var _floors := {}
 
 
 ## offers.json: {trader id: {"buy": [...]}}.
@@ -146,6 +155,85 @@ static func offer_item(offer: Dictionary) -> ItemInstance:
 	return ItemInstance.create(str(offer.get("item", "")), int(offer.get("count", 1)))
 
 
+# --- Prices -------------------------------------------------------------------------------------
+
+## The share `trader_id` takes off their buy prices at loyalty level `level` (your level with them when
+## -1): their "buy_discount" in traders.json, one share per level from LL1; 0 for a trader without one.
+static func buy_discount(trader_id: String, level := -1) -> float:
+	var shares: Variant = TraderTable.find(trader_id).get("buy_discount", [])
+	if not shares is Array or shares.is_empty():
+		return 0.0
+	if level < 0:
+		level = int(GameState.trader_loyalty.get(trader_id, {}).get("level", 1))
+	return float(shares[clampi(level, 1, shares.size()) - 1])
+
+
+## What `offer` costs from `trader_id` now, in its currency: its price less the trader's loyalty
+## discount (buy_discount()) and then `bundle` more (QuickBuy's bundle discount on a quick-buy line),
+## rounded, but never below the offer's resale floor (offer_floor()) unless its own price is. Everything
+## that shows or charges a trader price goes through it.
+static func price(trader_id: String, offer: Dictionary, bundle := 0.0) -> int:
+	var base := int(offer.get("price", 0))
+	var share := buy_discount(trader_id)
+	if share <= 0.0 and bundle <= 0.0:
+		return base
+	var cut := roundi(base * (1.0 - share) * (1.0 - bundle))
+	return mini(maxi(cut, offer_floor(offer)), base)
+
+
+## The least any discount may bring `item` down to, in roubles: what the best-paying trader pays for it at
+## their top loyalty level, whole or in parts (Selling.best_resale(); a dollar at the exchange's sell
+## rate), plus "resale_floor" (a share) in data/config/trading.json, rounded up.
+static func resale_floor(item: ItemInstance) -> int:
+	return ceili(Selling.best_resale(item) * (1.0 + resale_margin()))
+
+
+## "resale_floor" in data/config/trading.json: how far above the best resale a discounted price stays.
+static func resale_margin() -> float:
+	return float(config().get("resale_floor", 0.0))
+
+
+## `offer`'s resale floor (resale_floor() of what it gives) in its own currency: dollars at the
+## exchange's sell rate, rounded up. Kept per offer id.
+static func offer_floor(offer: Dictionary) -> int:
+	var key := str(offer.get("id", ""))
+	var keep: bool = key != "" and not offer.get("used", false)
+	if keep and _floors.has(key):
+		return int(_floors[key])
+	var item := offer_item(offer)
+	var roubles := resale_floor(item) if item else 0
+	var floor := ceili(float(roubles) / maxi(exchange_roubles(1, false), 1)) if offer.get("currency", "RUB") == "USD" else roubles
+	if keep:
+		_floors[key] = floor
+	return floor
+
+
+## The BUY row's price: "₽ 39,770  ·  −3% at your loyalty (was ₽ 41,000)", or just the price when
+## nothing comes off.
+static func price_text(trader_id: String, offer: Dictionary) -> String:
+	var currency := str(offer.get("currency", "RUB"))
+	var base := int(offer.get("price", 0))
+	var now := price(trader_id, offer)
+	if now >= base:
+		return UiFormat.money(now, currency)
+	return "%s  ·  −%d%% at your loyalty (was %s)" % [UiFormat.money(now, currency), roundi((base - now) * 100.0 / base), UiFormat.money(base, currency)]
+
+
+## The trader panel's line on loyalty prices: "Buy prices: 3% off at your LL2 (6% at LL3, 9% at LL4)";
+## "" for a trader with no loyalty discount (Mole).
+static func discount_text(trader_id: String) -> String:
+	var top := TraderTable.max_loyalty(trader_id)
+	if buy_discount(trader_id, top) <= 0.0:
+		return ""
+	var level := int(GameState.trader_loyalty.get(trader_id, {}).get("level", 1))
+	var now := buy_discount(trader_id, level)
+	var text := "Buy prices: %s at your LL%d" % ["%d%% off" % roundi(now * 100.0) if now > 0.0 else "full price", level]
+	var more: Array[String] = []
+	for next in range(level + 1, top + 1):
+		more.append("%d%%%s at LL%d" % [roundi(buy_discount(trader_id, next) * 100.0), " off" if more.is_empty() and now <= 0.0 else "", next])
+	return text + (" (%s)" % ", ".join(more) if not more.is_empty() else "")
+
+
 ## The loyalty level `offer` needs (1 if it doesn't say).
 static func offer_level(offer: Dictionary) -> int:
 	return int(offer.get("ll", 1))
@@ -231,11 +319,11 @@ static func buy_block_reason(offer: Dictionary, trader_id := "") -> String:
 		return "Gone: %s has restocked" % TraderTable.display_name(trader_id)  # A row drawn before the restock.
 	if trader_id != "" and TraderStock.left(trader_id, offer) == 0:
 		return "Sold out until the restock (in %s)" % TraderStock.countdown_text(trader_id)
-	var price := int(offer.get("price", 0))
+	var cost := price(trader_id, offer)
 	if offer.get("currency", "RUB") == "USD":
-		if GameState.dollars < price:
+		if GameState.dollars < cost:
 			return "Not enough dollars"
-	elif GameState.roubles < price:
+	elif GameState.roubles < cost:
 		return "Not enough roubles"
 	var item := offer_item(offer)
 	if item == null:
@@ -251,14 +339,14 @@ static func buy(trader_id: String, offer: Dictionary) -> String:
 	var reason := buy_block_reason(offer, trader_id)
 	if reason != "":
 		return reason
-	var price := int(offer.get("price", 0))
+	var cost := price(trader_id, offer)
 	var currency := str(offer.get("currency", "RUB"))
 	if currency == "USD":
-		GameState.dollars -= price
+		GameState.dollars -= cost
 	else:
-		GameState.roubles -= price
+		GameState.roubles -= cost
 	if GameState.trader_loyalty.has(trader_id):
-		GameState.trader_loyalty[trader_id].spent += spent_value(price, currency)
+		GameState.trader_loyalty[trader_id].spent += spent_value(cost, currency)
 	TraderStock.take(trader_id, offer)
 	var item := offer_item(offer)
 	FoundInRaid.set_found(item, FoundInRaid.gives_fir(FoundInRaid.Source.TRADER))
@@ -453,6 +541,8 @@ static func _config_problems() -> Array[String]:
 			or durability.size() != 2 or float(durability[0]) <= 0.0 or float(durability[1]) > 1.0 or float(durability[1]) < float(durability[0]) \
 			or float(used.get("price", 0.0)) <= 0.0:
 		found.append("%s: used_stock needs a trader, count [from, to], durability [from, to] within 0-1 and a price above 0" % where)
+	if not (rule.get("resale_floor") is float or rule.get("resale_floor") is int) or float(rule.get("resale_floor", -1.0)) < 0.0:
+		found.append("%s: resale_floor must be a share, 0 or more" % where)
 	for key in ["level_durability", "level_price", "resale_margin", "karma_price", "karma_durability"]:
 		if used.has(key) and not (used[key] is float or used[key] is int):
 			found.append("%s: used_stock %s must be a number" % [where, key])
