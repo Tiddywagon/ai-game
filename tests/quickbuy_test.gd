@@ -4,7 +4,9 @@ extends "res://tests/test_base.gd"
 ## LL4, as DESIGN's table says), buying with a realistic kit (nothing lost or made, the secure container
 ## untouched, stock, money spent, not found in raid), dollars, a full stash, each substitution rule,
 ## nothing to stand in, custom cards (through a save, five at most, left-outs kept), the save upgrade and
-## the time a full stash takes.
+## the time a full stash takes; then the QUICK BUY tab on the LOADOUT screen: the tab keys (not while
+## typing or with a window open), the cards, the confirm dialog's focus and shade, CONFIRM once, and the
+## dialog and CONFIRM times on a full stash.
 
 const NOW := 1_000_000.0
 
@@ -31,6 +33,7 @@ func run() -> void:
 	_substitutes()
 	_custom()
 	_timing()
+	await _screen()
 	stock.now_override = -1.0
 
 
@@ -534,3 +537,119 @@ func _timing() -> void:
 	var result: Dictionary = quick.buy(plan, gs.inventory, gs.stash)
 	var bought := (Time.get_ticks_usec() - started) / 1000.0
 	check(result.ok and bought < 200.0, "CONFIRM takes %.1f ms (under 200)" % bought)
+
+
+func _key(action: String) -> void:
+	var event := InputEventAction.new()
+	event.action = action
+	event.pressed = true
+	root.push_input(event)
+	var release := InputEventAction.new()
+	release.action = action
+	root.push_input(release)
+
+
+func _screen() -> void:
+	section("The QUICK BUY tab")
+	_profile()
+	var card := _card("workhorse")
+	_meet(card)
+	change_scene_to_file("res://ui/loadout_screen.tscn")
+	await frames(4)
+	var screen: Control = current_scene
+	check(screen.tab == 0 and screen.find_child("TabQuickBuy", true, false) != null, "LOADOUT opens on its LOADOUT tab, QUICK BUY beside it")
+	_key("ui_tab_next")
+	await frames(2)
+	var tab: Control = screen.quick_buy
+	check(screen.tab == 1 and tab.visible and not screen.get_node("Margin/Layout/Columns").visible, "E (or RB) switches to QUICK BUY")
+	check(tab.card_view("workhorse") != null and tab.card_view("contract_work") == null and tab.card_view("taiga_patrol") != null,
+		"it shows the BEAR player's cards")
+	var view: Control = tab.card_view("iron_wall")
+	check(view.find_child("CardLock", true, false) != null and (view.find_child("CardBuy", true, false) as Button).disabled
+		and (view.find_child("CardLock", true, false) as Label).text.begins_with("Needs Bulat LL3"), "a locked card says what it needs, BUY off")
+	var price: String = (tab.card_view("workhorse").find_child("CardPrice", true, false) as RichTextLabel).get_parsed_text()
+	check(price.contains("−10%") and price.contains(load("res://scripts/ui/ui_format.gd").thousands(int(tab.plans.workhorse.roubles))),
+		"a card shows its price, the full one struck through and −10%% (%s)" % price.replace("\n", " "))
+	check(not (tab.card_view("workhorse").find_child("CardStats", true, false) as Label).text.is_empty(), "and the would-be loadout's stats")
+	_key("ui_tab_previous")
+	await frames(2)
+	check(screen.tab == 0, "Q (or LB) goes back")
+	_key("ui_tab_next")
+	await frames(2)
+	tab.name_box.grab_focus()
+	await frames(1)
+	_key("ui_tab_previous")
+	await frames(2)
+	check(screen.tab == 1 and screen.tabs_allowed() == false, "while the name box has the keys, Q does nothing")
+	tab.name_box.release_focus()
+	screen.set_tab(0)
+	(screen.find_child("PresetName", true, false) as LineEdit).grab_focus()
+	await frames(1)
+	_key("ui_tab_next")
+	await frames(2)
+	check(screen.tab == 0, "nor E while the preset name is typed")
+	(screen.find_child("PresetName", true, false) as LineEdit).release_focus()
+	screen._open_window(gs.inventory.equipment.secure)
+	await frames(1)
+	_key("ui_tab_next")
+	await frames(2)
+	check(screen.tab == 0 and not screen.tabs_allowed(), "nor with a container window open")
+	screen.set_tab(1)
+	await frames(2)
+	var plan: Dictionary = tab.open_dialog("workhorse")
+	await frames(3)
+	var shade: Control = screen.find_child("QuickBuyShade", true, false)
+	var overlay: Control = screen.overlay()
+	check(tab.dialog_open() and shade.get_index() == overlay.get_child_count() - 1, "BUY opens the dialog over the container window")
+	check(root.gui_get_focus_owner() == screen.find_child("DialogConfirm", true, false), "the focus is on CONFIRM (%s)" % root.gui_get_focus_owner())
+	var buy_button: Button = tab.card_view("workhorse").find_child("CardBuy", true, false)
+	check(buy_button.get_focus_mode_with_override() == Control.FOCUS_NONE and (screen.find_child("CloseButton", true, false) as Control).get_focus_mode_with_override() == Control.FOCUS_NONE,
+		"nothing under it can take the focus")
+	var stays := true
+	for i in 4:
+		_key("ui_focus_next")
+		await frames(1)
+		var owner := root.gui_get_focus_owner()
+		stays = stays and owner != null and (owner.name == "DialogConfirm" or owner.name == "DialogCancel")
+	check(stays, "moving the focus stays between CANCEL and CONFIRM")
+	_key("ui_tab_next")
+	await frames(2)
+	check(screen.tab == 1 and tab.dialog_open(), "the tab keys do nothing while it's open")
+	var lines: Array = tab.dialog_lines()
+	check(lines.any(func(text: String) -> bool: return text.begins_with("AK-74N  ·  Bulat")) and lines.any(func(text: String) -> bool: return text.begins_with("To the stash:")),
+		"it lists every line with its trader and price, and what goes to the stash")
+	_key("ui_cancel")
+	await frames(2)
+	check(not tab.dialog_open() and screen.is_inside_tree() and buy_button.get_focus_mode_with_override() != Control.FOCUS_NONE,
+		"Esc cancels it (the screen stays) and gives the focus back")
+	screen._close_window(gs.inventory.equipment.secure)
+	# A full 10 x 70 stash: the dialog under 100 ms, CONFIRM under 200 ms, and only once.
+	gs.stash.resize(Vector2i(10, 70))
+	for y in range(30, 66):
+		for x in 10:
+			gs.stash.place(item("dorm_key"), Vector2i(x, y), false)
+	var started := Time.get_ticks_usec()
+	plan = tab.open_dialog("workhorse")
+	var opened := (Time.get_ticks_usec() - started) / 1000.0
+	check(plan.reasons.is_empty() and opened < 100.0, "on a full 10 x 70 stash the dialog opens in %.1f ms (under 100)" % opened)
+	await frames(2)
+	var roubles: int = gs.roubles
+	started = Time.get_ticks_usec()
+	var result: Dictionary = tab.confirm()
+	var confirmed := (Time.get_ticks_usec() - started) / 1000.0
+	check(result.ok and confirmed < 200.0, "CONFIRM buys it in %.1f ms (under 200, saving included)" % confirmed)
+	var again: Dictionary = tab.confirm()
+	check(not again.ok and gs.roubles == roubles - int(plan.roubles), "a second press buys nothing more")
+	await frames(2)
+	check(not tab.dialog_open() and gs.inventory.equipment.primary.data.id == "ak_74n"
+		and (tab.find_child("QuickBuyStatus", true, false) as Label).text.begins_with("Bought Workhorse"), "the dialog closes and says what was bought")
+	tab.name_box.text = "From the tab"
+	var saved: Dictionary = tab.save_current()
+	await frames(2)
+	check(saved.ok and tab.card_view(saved.card.id) != null and tab.card_view(saved.card.id).find_child("CardTag", true, false).text == "CUSTOM",
+		"SAVE CURRENT GEAR AS QUICK-BUY adds a CUSTOM card")
+	tab.delete_custom(saved.card.id)
+	await frames(2)
+	check(gs.quick_buys.is_empty() and tab.card_view(saved.card.id) == null, "DELETE removes it")
+	screen.close()
+	await frames(2)

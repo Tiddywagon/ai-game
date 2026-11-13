@@ -581,6 +581,14 @@ static func buy(plan: Dictionary, inventory: Inventory, stash: InventoryGrid) ->
 		return {"ok": false, "changed": false, "reasons": plan.reasons, "message": plan.reasons[0]}
 	plan.done = true
 	_pay(plan)
+	# One "changed" each at the end, not one per item moved (the screens redraw on it).
+	var quiet: Array[Object] = [stash, inventory, inventory.pockets]
+	for grid in inventory.grids():
+		quiet.append(grid)
+	for grid in plan.kit.inventory.grids():
+		quiet.append(grid)
+	for each in quiet:
+		each.set_block_signals(true)
 	# What you wore and carried goes to the stash, with what's in it (the secure container stays on).
 	for slot in LoadoutPresets.SLOTS:
 		var worn := inventory.unequip(slot)
@@ -609,6 +617,10 @@ static func buy(plan: Dictionary, inventory: Inventory, stash: InventoryGrid) ->
 		_stash(piece, inventory, stash)
 	for piece in bought:
 		FoundInRaid.set_found(piece, FoundInRaid.gives_fir(FoundInRaid.Source.QUICK_BUY))
+	for each in quiet:
+		each.set_block_signals(false)
+	for grid in inventory.grids():
+		grid.changed.emit()
 	inventory.changed.emit()
 	stash.changed.emit()
 	var paid: Array[String] = []

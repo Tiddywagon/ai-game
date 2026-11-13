@@ -19,6 +19,11 @@ extends InventoryScreen
 ## budget per item and optionally leaving Legendary items alone (both kept in the profile:
 ## GameState.auto_equip), then shows a summary of every change with UNDO (reverses exactly what it did,
 ## LoadoutPlanner.undo()) and OK. Closing saves; so do AUTO-EQUIP and UNDO.
+##
+## Two tabs: LOADOUT (all of the above) and QUICK BUY (QuickBuyTab: whole loadouts bought from the
+## traders in one go). Q / E or LB / RB switch them, through _unhandled_input(), and do nothing while a
+## text box or the filter bar has the keys, an item is being dragged, or the examine panel, the modding
+## screen, a container window or any dialog is open (tabs_allowed()).
 
 ## The slots: columns of rows of [slot, size in cells].
 const SLOT_LAYOUT := [
@@ -35,6 +40,8 @@ const SUMMARY_WIDTH := 860.0
 ## The summary's list of changes scrolls past this share of the screen's height.
 const SUMMARY_MAX_HEIGHT := 0.6
 const DIM_COLOR := Color(1, 1, 1, 0.35)
+## The energy and water line's width here (narrower than in a raid: the tabs need the room).
+const TAB_STATUS_WIDTH := 340.0
 const LOADOUT_HINTS := [
 	"Drag to move or onto a filled slot to swap  ·  Hover a stash item: compare  ·  R: turn  ·  Right-click: examine  ·  Ctrl-click: quick move  ·  Double-click: open",
 	"D-pad or left stick: move the cursor (on a stash item: compare)  ·  The buttons below pick up, turn, quick-move and examine",
@@ -62,6 +69,10 @@ var auto_plan: Dictionary = {}
 ## the shade behind it.
 var _summary_shade: ColorRect
 var _summary: PanelContainer
+## The QUICK BUY tab, and the tab shown (0: LOADOUT, 1: QUICK BUY).
+var quick_buy: QuickBuyTab
+var tab := 0
+var _tab_buttons: Array[Button] = []
 
 
 func _ready() -> void:
@@ -91,13 +102,17 @@ func _ready() -> void:
 			%BudgetField, %ProtectLegendary, %AutoEquipButton]:
 		control.add_to_group(GridCursor.CURSOR_GROUP)
 	_build_summary()
+	_build_tabs()
 	show_auto_options()
 	refresh_stats()
 	refresh_presets()
 
 
 func _update_hint(device: int) -> void:
-	%Hint.text = LOADOUT_HINTS[device] if device >= 0 and device < LOADOUT_HINTS.size() else LOADOUT_HINTS[0]
+	if tab == 1:
+		%Hint.text = "%s: switch tabs  ·  BUY shows every line before you pay" % ("LB / RB" if device == 1 else "Q / E")
+	else:
+		%Hint.text = LOADOUT_HINTS[device] if device >= 0 and device < LOADOUT_HINTS.size() else LOADOUT_HINTS[0]
 	%CloseButton.text = "CLOSE  (%s)" % Settings.key_label("toggle_inventory")
 
 
@@ -116,18 +131,101 @@ func _exit_tree() -> void:
 		SaveManager.save_game()
 
 
-## The cursor stays off the grids while the preset name or budget box has the keys, or the auto-equip
-## summary is open.
+## The cursor stays off the grids while the preset name or budget box has the keys, the auto-equip
+## summary is open or the QUICK BUY tab is shown.
 func cursor_allowed() -> bool:
-	return super() and _typing_box() == null and not summary_open()
+	return super() and _typing_box() == null and not summary_open() and tab == 0
 
 
-## The preset name box or the budget box while it has the keys, else null.
+## The preset name box, the budget box or the quick-buy name box while it has the keys, else null.
 func _typing_box() -> LineEdit:
-	for box: LineEdit in [%PresetName, %BudgetField]:
-		if box.has_focus():
+	for box: LineEdit in [%PresetName, %BudgetField, quick_buy.name_box if quick_buy else null]:
+		if box and box.has_focus():
 			return box
 	return null
+
+
+# --- Tabs -----------------------------------------------------------------------------------------
+
+## LOADOUT | QUICK BUY in the header, and the QUICK BUY tab under it (hidden until picked).
+func _build_tabs() -> void:
+	var title := $Margin/Layout/Header/Title as Label
+	title.hide()  # The tabs name the screen.
+	var header := title.get_parent() as HBoxContainer
+	var strip := HBoxContainer.new()
+	strip.name = "Tabs"
+	strip.add_theme_constant_override("separation", 4)
+	header.add_child(strip)
+	header.move_child(strip, title.get_index() + 1)
+	var group := ButtonGroup.new()
+	for entry in [["TabLoadout", "LOADOUT"], ["TabQuickBuy", "QUICK BUY"]]:
+		var button := Button.new()
+		button.name = entry[0]
+		button.text = entry[1]
+		button.toggle_mode = true
+		button.button_group = group
+		button.custom_minimum_size = Vector2(0, 48)
+		button.add_theme_font_size_override("font_size", 20)
+		button.focus_mode = Control.FOCUS_NONE
+		button.tooltip_text = "Q / E or LB / RB: switch tabs"
+		button.pressed.connect(set_tab.bind(_tab_buttons.size()))
+		strip.add_child(button)
+		_tab_buttons.append(button)
+	_tab_buttons[0].button_pressed = true
+	# The tabs are wider than the title they replace: the energy and water line gives up the room.
+	var status := header.get_node_or_null("BodyStatus") as Control
+	if status:
+		for control: Control in [status] + status.get_children():
+			control.custom_minimum_size.x = TAB_STATUS_WIDTH
+	quick_buy = QuickBuyTab.new()
+	quick_buy.screen = self
+	quick_buy.visible = false
+	var columns := $Margin/Layout/Columns as Control
+	columns.get_parent().add_child(quick_buy)
+	columns.get_parent().move_child(quick_buy, columns.get_index() + 1)
+
+
+## Shows tab `index` (0: LOADOUT, 1: QUICK BUY).
+func set_tab(index: int) -> void:
+	tab = clampi(index, 0, 1)
+	_tab_buttons[tab].button_pressed = true
+	($Margin/Layout/Columns as Control).visible = tab == 0
+	quick_buy.visible = tab == 1
+	if tab == 1:
+		compare_item(null)
+		quick_buy.refresh(true)
+		quick_buy.focus_first.call_deferred()
+	_update_hint(InputHub.device)
+
+
+## True when Q / E (LB / RB) may switch tabs: no text box or filter bar has the keys, nothing is being
+## dragged, and no examine panel, modding screen, container window, summary or dialog is open.
+func tabs_allowed() -> bool:
+	if _typing_box() != null or (%FilterBar as StashFilterBar).has_focus_inside() or get_viewport().gui_is_dragging():
+		return false
+	if _examine.visible or get_node_or_null("WeaponModScreen") or not _windows.is_empty() or summary_open() or quick_buy.dialog_open():
+		return false
+	var upgrade_panel := %Overlay.get_node_or_null("GearUpgradePanel") as GearUpgradePanel
+	return not (upgrade_panel and upgrade_panel.visible)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var step := -1 if event.is_action_pressed("ui_tab_previous") else (1 if event.is_action_pressed("ui_tab_next") else 0)
+	if step == 0 or not tabs_allowed():
+		return
+	set_tab(posmod(tab + step, 2))
+	get_viewport().set_input_as_handled()
+
+
+## The layer dialogs go on (QuickBuyTab's confirm dialog).
+func overlay() -> Control:
+	return %Overlay
+
+
+## After a quick buy: everything shown is drawn again.
+func gear_changed() -> void:
+	_on_gear_changed()
+	refresh_stats()
 
 
 func _input(event: InputEvent) -> void:
@@ -137,6 +235,12 @@ func _input(event: InputEvent) -> void:
 		# The summary has the screen: Esc / B or Tab is OK; its buttons take the rest.
 		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("toggle_inventory"):
 			close_summary()
+			get_viewport().set_input_as_handled()
+		return
+	if quick_buy and quick_buy.dialog_open():
+		# The quick-buy dialog has the screen: Esc / B or Tab cancels; its buttons take the rest.
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("toggle_inventory"):
+			quick_buy.close_dialog()
 			get_viewport().set_input_as_handled()
 		return
 	var box := _typing_box()
@@ -721,7 +825,7 @@ func _show_summary(plan: Dictionary) -> void:
 		index += 1
 	(_summary.find_child("SummaryUndo", true, false) as Button).disabled = plan.moves.is_empty()
 	_summary_shade.show()
-	_trap_focus(true)
+	trap_focus(true, _summary_shade)
 	_fit_summary.call_deferred()
 	var ok := _summary.find_child("SummaryOk", true, false) as Button
 	ok.grab_focus.call_deferred()
@@ -737,16 +841,17 @@ func _fit_summary() -> void:
 
 func _hide_summary() -> void:
 	_summary_shade.hide()
-	_trap_focus(false)
+	trap_focus(false, _summary_shade)
 
 
-## While the summary is open (`on`), nothing under it takes the keyboard or controller focus: the screen's
-## own content and the rest of %Overlay are FOCUS_BEHAVIOR_DISABLED, so the arrows, Tab and the d-pad only
-## move between UNDO and OK. Off gives the focus back.
-func _trap_focus(on: bool) -> void:
+## While a modal panel is open (`on`: the auto-equip summary, the quick-buy dialog; `keep` is its shade
+## in %Overlay), nothing under it takes the keyboard or controller focus: the screen's own content and the
+## rest of %Overlay are FOCUS_BEHAVIOR_DISABLED, so the arrows, Tab and the d-pad only move between its
+## buttons. Off gives the focus back.
+func trap_focus(on: bool, keep: Control) -> void:
 	var behavior := Control.FOCUS_BEHAVIOR_DISABLED if on else Control.FOCUS_BEHAVIOR_INHERITED
 	for child in get_children() + %Overlay.get_children():
-		if child is Control and child != %Overlay and child != _summary_shade:
+		if child is Control and child != %Overlay and child != keep:
 			(child as Control).focus_behavior_recursive = behavior
 
 

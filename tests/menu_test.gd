@@ -1,6 +1,6 @@
 extends "res://tests/test_base.gd"
 ## Menus and raids (needs a display): every screen of the main menu opens and closes through its
-## buttons (LOADOUT with AUTO-EQUIP and UNDO, CHARACTER, HIDEOUT with an upgrade, TRADERS with every
+## buttons (LOADOUT with AUTO-EQUIP and UNDO and its QUICK BUY tab buying a card, CHARACTER, HIDEOUT with an upgrade, TRADERS with every
 ## trader's tabs, a purchase and a sale, ENTER RAID up to the loadout check, SETTINGS), then a seeded PMC
 ## raid on each map and a Scav run joined mid-raid, with the AI on. A Logger counts every error the
 ## engine reports (script errors included): there must be none.
@@ -110,6 +110,24 @@ func _loadout() -> void:
 	(_find(screen, "SummaryUndo") as Button).pressed.emit()
 	await frames(3)
 	check(not summary.visible and gs.inventory.equipment.helmet == null and _gear_state() == before, "UNDO closes it and puts everything back")
+	(_find(screen, "TabQuickBuy") as Button).pressed.emit()
+	await frames(3)
+	var tab: Control = _find(screen, "QuickBuyTab")
+	check(tab.visible and not _find(screen, "Columns").visible and _find(tab, "Card_last_resort") != null
+		and _find(tab, "QuickBuyCards").get_child_count() == 9, "the QUICK BUY tab shows the nine BEAR cards")
+	(_find(_find(tab, "Card_last_resort"), "CardBuy") as Button).pressed.emit()
+	await frames(3)
+	check((_find(screen, "QuickBuyShade") as Control).visible and get_root().gui_get_focus_owner() == _find(screen, "DialogConfirm"),
+		"BUY on Last Resort opens the confirm dialog, CONFIRM focused")
+	var roubles: int = gs.roubles
+	(_find(screen, "DialogConfirm") as Button).pressed.emit()
+	await frames(3)
+	check(not (_find(screen, "QuickBuyShade") as Control).visible and gs.inventory.equipment.pistol != null
+		and gs.inventory.equipment.pistol.data.id == "pm_pistol" and gs.roubles < roubles, "CONFIRM buys it: the PM is on, the money paid")
+	gs.roubles = roubles  # The screens below count on the money they started with.
+	(_find(screen, "TabLoadout") as Button).pressed.emit()
+	await frames(2)
+	check(_find(screen, "Columns").visible and not tab.visible, "LOADOUT is back")
 	await _close(screen, "CloseButton", "LOADOUT")
 
 
