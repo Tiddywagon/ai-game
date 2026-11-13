@@ -1,6 +1,6 @@
-# Work plan (feature batch in progress)
+# Work plan (feature batch complete)
 
-Working notes for the features still being built. DESIGN.md stays the source of truth for how the game
+Working notes for the feature batch, now complete (the status table below). DESIGN.md stays the source of truth for how the game
 behaves; these files say what is left to build and how the work is done, so the plan survives a fresh clone.
 
 ## Status
@@ -13,7 +13,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E6 | Quick Buy tab and loyalty prices: [E6_quick_buy.md](E6_quick_buy.md) (suite `tests/quickbuy_test.gd`) | done |
 | E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) (suite `tests/flea_test.gd`) | done |
 | E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) (suite `tests/hideout_test.gd`) | done |
-| E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) | to do |
+| E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) (suite `tests/faction_perks_test.gd`) | done |
+| | **The batch is complete**: every step is done and no known bug is open | |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
 through, so their content is designed here; DESIGN.md says so where it matters. The exact wording of the flea
@@ -21,10 +22,8 @@ market and hideout requests is no longer available either: E7 and E8 are written
 
 ## Known bugs to fix
 
-- Auto-equip can still improve things on a second run: when a rig or backpack in the stash holds rounds or meds,
-  the first run takes them out for spares and meds after the rig was already chosen (only empty containers are
-  candidates), so a second run then wears that rig (`scripts/inventory/loadout_planner.gd` around `:500`, step
-  order in `_run`). Not fixed with E6 (it didn't touch LoadoutPlanner); fix on its own; `tests/gear_test.gd` should then test a stash rig holding rounds.
+None open. (Auto-equip improving on a second run when a stash rig or backpack held rounds or meds was fixed
+with E9: `LoadoutPlanner` chooses the rig and backpack again once a run empties one; `tests/gear_test.gd`.)
 
 ## Ground rules for every step
 
@@ -34,7 +33,7 @@ market and hideout requests is no longer available either: E7 and E8 are written
 - Match the surrounding code: `##` doc comments, tabs, typed GDScript, static helper classes extending
   RefCounted, data in `data/` (JSON or .tres) read by a loader with a `problems()` check that runs when the items
   load. Tunable numbers go in data/config files, not literals.
-- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (16 now) and its comment block list every version.
+- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (17 now) and its comment block list every version.
   New saved state bumps it once per step, with `GameState.from_dict()` / `SaveManager.upgrade()` loading every
   older save without losing progress.
 - Invariants that have bitten before: never lose or create items or rounds; a stack never exceeds its max stack
