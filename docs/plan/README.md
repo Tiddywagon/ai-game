@@ -11,7 +11,7 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E1-E5 | Trader roster and levels, selling and restocks, barters, stash, LOADOUT screen and auto-equip | done |
 | T0 | Baseline test suites in `tests/`: smoke, economy, gear, menu (the earlier suites lived outside the repo and were lost) | done |
 | E6 | Quick Buy tab and loyalty prices: [E6_quick_buy.md](E6_quick_buy.md) (suite `tests/quickbuy_test.gd`) | done |
-| E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) | to do |
+| E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) (suite `tests/flea_test.gd`) | done |
 | E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) | to do |
 | E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) | to do |
 
@@ -34,7 +34,7 @@ market and hideout requests is no longer available either: E7 and E8 are written
 - Match the surrounding code: `##` doc comments, tabs, typed GDScript, static helper classes extending
   RefCounted, data in `data/` (JSON or .tres) read by a loader with a `problems()` check that runs when the items
   load. Tunable numbers go in data/config files, not literals.
-- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (15 now) and its comment block list every version.
+- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (16 now) and its comment block list every version.
   New saved state bumps it once per step, with `GameState.from_dict()` / `SaveManager.upgrade()` loading every
   older save without losing progress.
 - Invariants that have bitten before: never lose or create items or rounds; a stack never exceeds its max stack
