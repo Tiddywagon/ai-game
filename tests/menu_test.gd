@@ -1,6 +1,6 @@
 extends "res://tests/test_base.gd"
 ## Menus and raids (needs a display): every screen of the main menu opens and closes through its
-## buttons (LOADOUT with AUTO-EQUIP and UNDO and its QUICK BUY tab buying a card, CHARACTER, HIDEOUT with an upgrade, TRADERS with every
+## buttons (LOADOUT with AUTO-EQUIP and UNDO and its QUICK BUY tab buying a card, CHARACTER, HIDEOUT's plan and station panel (a build, fuel, handing over, a craft collected, a cosmetic), TRADERS with every
 ## trader's tabs, a purchase and a sale, FLEA MARKET locked before level 15, then browsing, filtering,
 ## buying, listing, a sale and COLLECT, and opened from TRADERS, ENTER RAID up to the loadout check, SETTINGS), then a seeded PMC
 ## raid on each map and a Scav run joined mid-raid, with the AI on. A Logger counts every error the
@@ -144,18 +144,79 @@ func _character() -> void:
 func _hideout() -> void:
 	section("HIDEOUT")
 	var hideout: GDScript = load("res://scripts/progression/hideout.gd")
+	var work: GDScript = load("res://scripts/progression/hideout_work.gd")
 	var screen := await _open("HideoutButton")
-	var list: Node = _find(screen, "StationList") if screen else null
-	check(screen != null and list.get_child_count() == hideout.stations().size() and hideout.stations().size() >= 7, "HIDEOUT lists every station")
-	var index: int = hideout.stations().find(hideout.find("generator"))
-	(list.get_child(index) as Button).pressed.emit()
+	var map: Node = _find(screen, "Map") if screen else null
+	var rooms: Array = hideout.stations().filter(func(station: Dictionary) -> bool: return _find(map, "Room_" + station.id) is Button)
+	check(screen != null and rooms.size() == 13, "HIDEOUT shows the plan with every station as a room")
+	var room: Button = _find(map, "Room_generator")
+	check("Can be built" in room.text and "Locked" in (_find(map, "Room_bitcoin_farm") as Button).text, "the generator's room says it can be built, the farm's that it's locked")
+	room.pressed.emit()
 	await frames(2)
-	var build: Array = _find(screen, "Details").find_children("*", "Button", true, false).filter(func(button: Button) -> bool: return button.text == "BUILD")
-	check(build.size() == 1 and not build[0].disabled, "the generator has a BUILD button")
-	build[0].pressed.emit()
+	var details: Node = _find(screen, "Details")
+	var build: Button = _find(details, "Build")
+	check(build != null and not build.disabled and build.text == "BUILD" and _find(details, "Level_3") != null, "its panel shows the upgrade tree with BUILD")
+	build.pressed.emit()
 	await frames(3)
 	check(gs.hideout_state.builds.has("generator") and gs.roubles == 450000 and gs.stash.count_of("fuel_can") == 0, "pressing it starts the generator's build")
-	check((_find(screen, "Status") as Label).text == "Done.", "the screen says so")
+	check((_find(screen, "Status") as Label).text == "Done." and _find(details, "BuildCountdown") != null and "Building" in room.text,
+		"the panel counts the build down, the room says Building")
+	work.now_override = Time.get_unix_time_from_system() + 4.0 * 60.0
+	screen._tick()
+	await frames(2)
+	check(gs.hideout.get("generator", 0) == 1 and _find(details, "FuelGauge") != null and _find(details, "PowerSwitch") != null,
+		"four minutes later it's built: the fuel gauge and the switch")
+	gs.stash.add(item("fuel_can"))
+	screen._refresh()
+	await frames(2)
+	(_find(details, "AddFuel") as Button).pressed.emit()
+	await frames(3)
+	check(gs.hideout_state.fuel.size() == 1 and work.has_power() and (_find(details, "FuelGauge") as ProgressBar).value > 0.4
+		and (_find(screen, "Power") as Label).text.begins_with("POWER ON"), "ADD FUEL CAN fills a slot: power on, the gauge up")
+	(_find(details, "PowerSwitch") as CheckButton).button_pressed = false
+	await frames(3)
+	check(not work.has_power() and (_find(screen, "Power") as Label).text.begins_with("NO POWER"), "the switch turns the generator off")
+	(_find(details, "PowerSwitch") as CheckButton).button_pressed = true
+	await frames(3)
+	(_find(map, "Room_medstation") as Button).pressed.emit()
+	await frames(2)
+	var hand: Button = _find(details, "HandOver_bandage")
+	check(hand != null and not hand.disabled, "the Medstation's bandages have HAND OVER")
+	hand.pressed.emit()
+	await frames(3)
+	check(hideout.handed(hideout.find("medstation"), "bandage") == 2 and "2 / 2 in" in (_find(_find(details, "HandOver_bandage").get_parent(), "Count") as Label).text,
+		"handing over shows 2 / 2")
+	(_find(details, "Build") as Button).pressed.emit()
+	await frames(3)
+	work.now_override += 6.0 * 60.0
+	screen._tick()
+	await frames(2)
+	gs.stash.add(item("duct_tape"))
+	screen._refresh()
+	await frames(2)
+	(_find(details, "Craft_medkit") as Button).pressed.emit()
+	await frames(3)
+	check(work.queue(hideout.find("medstation")).size() == 1 and _find(details, "Queue_0") != null and "Crafting" in (_find(map, "Room_medstation") as Button).text,
+		"CRAFT queues the medkit: the queue counts it down, the room says Crafting")
+	var medkits: int = gs.stash.count_of("ai2_medkit")
+	work.now_override += 6.0 * 60.0
+	screen._tick()
+	await frames(2)
+	check("READY" in (_find(map, "Room_medstation") as Button).text and _find(details, "Collect") != null, "done: the room says it's ready, the panel has COLLECT")
+	(_find(details, "Collect") as Button).pressed.emit()
+	await frames(3)
+	check(gs.stash.count_of("ai2_medkit") == medkits + 1, "COLLECT puts the medkit in the stash")
+	(_find(screen, "DecorButton") as Button).pressed.emit()
+	await frames(2)
+	gs.stash.add(item("toilet_paper"))
+	gs.stash.add(item("toilet_paper"))
+	gs.stash.add(item("duct_tape"))
+	screen._refresh()
+	await frames(2)
+	(_find(details, "Buy_poster_wall") as Button).pressed.emit()
+	await frames(3)
+	check(gs.hideout_state.cosmetics == ["poster_wall"], "DECOR buys the poster wall (%s)" % (_find(screen, "Status") as Label).text)
+	work.now_override = -1.0
 	await _close(screen, "BackButton", "HIDEOUT")
 
 
@@ -178,9 +239,10 @@ func _traders() -> void:
 	var row: Node = _find(tabs, "Offer_zoya_nails")
 	var buy: Button = row.find_children("*", "Button", false, false)[0] if row else null
 	check(buy != null and buy.text == "BUY" and not buy.disabled, "Zoya's nails have a BUY button")
+	var before: int = gs.roubles  # What the hideout's builds left.
 	buy.pressed.emit()
 	await frames(3)
-	check(gs.stash.count_of("nails") == 1 and gs.roubles == 450000 - 7500 and (_find(screen, "Status") as Label).text == "Done.", "pressing it buys them")
+	check(gs.stash.count_of("nails") == 1 and gs.roubles == before - 7500 and (_find(screen, "Status") as Label).text == "Done.", "pressing it buys them")
 	tabs.current_tab = tabs.get_node("SELL").get_index()
 	var sell_rows: Array = tabs.get_node("SELL/Rows").get_children().filter(func(child: Node) -> bool:
 		return child.has_meta("item") and (child.get_meta("item") as RefCounted).data.id == "nails")
@@ -188,7 +250,7 @@ func _traders() -> void:
 	var price: int = load("res://scripts/progression/selling.gd").price("zoya", sell_rows[0].get_meta("item"))
 	(sell_rows[0].get_node("SellButton") as Button).pressed.emit()
 	await frames(3)
-	check(price > 0 and gs.stash.count_of("nails") == 0 and gs.roubles == 450000 - 7500 + price
+	check(price > 0 and gs.stash.count_of("nails") == 0 and gs.roubles == before - 7500 + price
 		and (_find(screen, "Status") as Label).text.begins_with("Sold 1 item to Auntie Zoya"), "its SELL button sells them back (for %d)" % price)
 	await _close(screen, "BackButton", "TRADERS")
 

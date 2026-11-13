@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hideout_screen.gd" id="1_hideout"]
+[ext_resource type="Script" path="res://scripts/ui/hideout_map.gd" id="2_map"]
 
 [node name="HideoutScreen" type="Control"]
 layout_mode = 3
@@ -48,6 +49,16 @@ text = "HIDEOUT"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="Power" type="Label" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"AccentLabel"
+
+[node name="PowerGap" type="Control" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+
 [node name="Money" type="Label" parent="Margin/Layout/Header"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -56,6 +67,16 @@ theme_type_variation = &"AccentLabel"
 
 [node name="MoneyGap" type="Control" parent="Margin/Layout/Header"]
 custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+
+[node name="DecorButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 48)
+layout_mode = 2
+text = "DECOR"
+
+[node name="DecorGap" type="Control" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(12, 0)
 layout_mode = 2
 
 [node name="BackButton" type="Button" parent="Margin/Layout/Header"]
@@ -69,11 +90,13 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 32
 
-[node name="StationList" type="VBoxContainer" parent="Margin/Layout/Columns"]
+[node name="Map" type="Control" parent="Margin/Layout/Columns"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(380, 0)
+custom_minimum_size = Vector2(720, 450)
 layout_mode = 2
-theme_override_constants/separation = 8
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.4
+script = ExtResource("2_map")
 
 [node name="DetailsPanel" type="PanelContainer" parent="Margin/Layout/Columns"]
 layout_mode = 2
@@ -88,7 +111,12 @@ layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Details" type="VBoxContainer" parent="Margin/Layout/Columns/DetailsPanel/Rows/Scroll"]
+[node name="Pad" type="MarginContainer" parent="Margin/Layout/Columns/DetailsPanel/Rows/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_right = 18
+
+[node name="Details" type="VBoxContainer" parent="Margin/Layout/Columns/DetailsPanel/Rows/Scroll/Pad"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -98,5 +126,5 @@ theme_override_constants/separation = 10
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-text = "Requirements with the checkmark only take found-in-raid items. Everything you craft is found in raid."
+text = "Pick a room. Requirements with the checkmark only take found-in-raid items; hand them over as you find them. Everything you craft is found in raid."
 autowrap_mode = 3

@@ -16,6 +16,9 @@ const KINDS := {
 	"craft": ["craft", "crafts"],
 	"gear": ["gear upgrade", "gear upgrades"],
 }
+## marker(): nothing uses the item, only things that can be done again use it (crafts, barters, gear
+## upgrades), or a hideout level or a quest still needs some.
+enum Marker { NONE, USED, NEEDED }
 ## Gear upgrade groups (data/config/gear_upgrades.json) by what they upgrade.
 const GEAR_GROUPS := {"armor": "Armor", "carry": "Rigs and backpacks", "electronics": "Headsets"}
 
@@ -107,6 +110,102 @@ static func tooltip(id: String) -> String:
 			needs.append("found in raid")
 		lines.append("  " + use.name + (" — " + ", ".join(needs) if not needs.is_empty() else ""))
 	return "\n".join(lines)
+
+
+## What the hideout and quests still need of item `id`: [{"kind" ("upgrade" or "quest"), "name", "more"
+## (how many still to hand over), "fir"}]: every hideout level not built yet (the next one less what's
+## handed over to it; none for a level being built) and every quest not completed (less what's handed in).
+static func still_needed(id: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for station in Hideout.stations():
+		var next := int(Hideout.next_level(station).get("level", 0))
+		for entry: Dictionary in station.levels:
+			if int(entry.level) <= Hideout.level(station) or (int(entry.level) == next and Hideout.is_building(station)):
+				continue
+			for requirement: Dictionary in entry.get("requires", []):
+				if requirement.get("item", "") != id:
+					continue
+				var more := int(requirement.get("count", 1)) - (Hideout.handed(station, id) if int(entry.level) == next else 0)
+				if more > 0:
+					result.append({"kind": "upgrade", "name": "%s level %d" % [station.name, int(entry.level)], "more": more,
+						"fir": bool(requirement.get("fir", false))})
+	for quest in QuestLog.all():
+		if QuestLog.state(quest) == "completed":
+			continue
+		var objectives: Array = quest.get("objectives", [])
+		for index in objectives.size():
+			var objective: Dictionary = objectives[index]
+			if objective.get("type", "") == "hand_in" and objective.get("item", "") == id:
+				var more := int(objective.get("count", 1)) - QuestLog.progress(quest, index)
+				if more > 0:
+					result.append({"kind": "quest", "name": "%s (%s)" % [quest.name, TraderTable.display_name(str(quest.get("trader", "")))],
+						"more": more, "fir": bool(objective.get("fir", false))})
+	return result
+
+
+## "Needed: Generator level 2 — 1 more, found in raid; Scrap Run (Bulat) — 3 more" (one line a use),
+## or "" if the hideout and quests need none: the hover text of the needed-for icon.
+static func needed_text(id: String) -> String:
+	var lines := []
+	for use in still_needed(id):
+		lines.append("%s: %s — %d more%s" % ["Hideout" if use.kind == "upgrade" else "Quest", use.name, use.more, ", found in raid" if use.fir else ""])
+	return "\n".join(lines)
+
+
+static var _markers := {}
+static var _markers_frame := -1
+static var _markers_key := 0
+
+
+## The needed-for icon item `id` gets in every grid (ItemDraw): Marker.NEEDED while a hideout level or a
+## quest still needs some (still_needed()), USED when only crafts, barters or gear upgrades take it,
+## NONE otherwise. Worked out for every item in one pass, again only when the hideout's levels, what's
+## handed over or the quests change (checked at most once a frame).
+static func marker(id: String) -> Marker:
+	var frame := Engine.get_process_frames()
+	if frame != _markers_frame:
+		_markers_frame = frame
+		var key := hash([GameState.hideout, GameState.hideout_state.get("handed", {}), GameState.hideout_state.get("builds", {}).keys(), GameState.quests])
+		if key != _markers_key or _markers.is_empty():
+			_markers_key = key
+			_markers = _all_markers()
+	return _markers.get(id, Marker.NONE)
+
+
+static func _all_markers() -> Dictionary:
+	var result := {"": Marker.NONE}
+	var used := func(wanted: Variant) -> void:
+		if wanted is Dictionary and wanted.has("item"):
+			result[str(wanted.item)] = maxi(int(result.get(str(wanted.item), Marker.NONE)), Marker.USED)
+	for barter in BarterTable.all():
+		for give: Variant in barter.get("requires", []):
+			used.call(give)
+	for station in Hideout.stations():
+		for entry: Dictionary in station.levels:
+			for recipe: Dictionary in entry.get("crafts", []):
+				for input: Variant in recipe.get("inputs", []):
+					used.call(input)
+	var gear: Dictionary = GearUpgrades.config().get("items", {})
+	for group: String in gear:
+		for level: Array in gear[group]:
+			for cost: Variant in level:
+				used.call(cost)
+	for source: String in GearUpgrades.sources():
+		for cost: Variant in GearUpgrades.config().sources[source].get("extra_items", []):
+			used.call(cost)
+	var named := {}
+	for station in Hideout.stations():
+		for entry: Dictionary in station.levels:
+			for requirement: Dictionary in entry.get("requires", []):
+				named[str(requirement.get("item", ""))] = true
+	for quest in QuestLog.all():
+		for objective: Dictionary in quest.get("objectives", []):
+			if objective.get("type", "") == "hand_in":
+				named[str(objective.get("item", ""))] = true
+	for id: String in named:
+		if not still_needed(id).is_empty():
+			result[id] = Marker.NEEDED
+	return result
 
 
 static func _use(kind: String, name: String, requirement: Dictionary) -> Dictionary:

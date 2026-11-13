@@ -26,6 +26,9 @@ func run() -> void:
 	_intelligence()
 	_security()
 	_shooting_range()
+	_cosmetics()
+	await _icon()
+	await _screen()
 	work.now_override = -1.0
 
 
@@ -477,3 +480,74 @@ func _shooting_range() -> void:
 	check(controller.is_real_raid() and controller.is_practice() and not controller.counts_for_profile(), "the raid counts as practice: nothing reaches the profile")
 	controller.free()
 	gs.raid = {}
+
+
+func _cosmetics() -> void:
+	section("Cosmetics")
+	_profile()
+	check(hideout.cosmetic_block_reason("poster_wall") == "Missing items" and hideout.cosmetic_in("posters").is_empty(), "the poster wall wants junk")
+	_give("toilet_paper", 2)
+	_give("duct_tape", 1)
+	var roubles: int = gs.roubles
+	check(hideout.buy_cosmetic("poster_wall") == "" and gs.roubles == roubles - 20000 and hideout.cosmetic_in("posters").id == "poster_wall"
+		and gs.stash.count_of("toilet_paper") == 0, "bought for 20,000 and the junk: the plan shows it")
+	check(hideout.buy_cosmetic("poster_wall") == "Already done", "once")
+	var saved: Dictionary = gs.to_dict()
+	gs.from_dict(saved)
+	check(hideout.has_cosmetic("poster_wall"), "it's saved")
+
+
+func _icon() -> void:
+	section("The needed-for icon")
+	_profile()
+	var uses: GDScript = load("res://scripts/progression/item_uses.gd")
+	var draw: GDScript = load("res://scripts/ui/inventory/item_draw.gd")
+	await process_frame
+	check(uses.marker("pressure_gauge") == uses.Marker.NEEDED and uses.marker("matches") == uses.Marker.USED, "a hideout level needs pressure gauges; only crafts and barters take matches")
+	var unused := ""
+	for data: Resource in db.all_items():
+		if uses.of(data.id).is_empty():
+			unused = data.id
+			break
+	check(unused != "" and uses.marker(unused) == uses.Marker.NONE, "an item nothing takes has no icon (%s)" % unused)
+	var gauge := item("pressure_gauge")
+	var rect := Rect2(0, 0, 64, 64)
+	var text: String = draw.tooltip_at(gauge, rect, draw.needed_icon_rect(rect).get_center())
+	check("Hideout: Generator level 2 — 1 more, found in raid" in text and "Water Collector level 2" in text, "hovering the icon says what for and how many more (%s)" % text)
+	_built("generator")
+	_give("fuel_can", 1, true)
+	hideout.hand_over(hideout.find("generator"), hideout.requirements(hideout.next_level(hideout.find("generator")))[0])
+	await process_frame
+	check("Hideout: Generator level 2 — 1 more, found in raid" in uses.needed_text("fuel_can"), "what's handed over counts: one more fuel can")
+	gs.hideout.generator = 3
+	gs.hideout.water_collector = 3
+	gs.hideout.bitcoin_farm = 0
+	await process_frame
+	check(not "Generator" in uses.needed_text("pressure_gauge") and not "Water Collector" in uses.needed_text("pressure_gauge")
+		and "Gym level 3" in uses.needed_text("pressure_gauge"), "built levels drop out (%s)" % uses.needed_text("pressure_gauge"))
+	check(draw.tooltip(gauge).contains("Needed for:"), "the item's hover text still lists every use")
+
+
+func _screen() -> void:
+	section("The HIDEOUT screen")
+	_profile(NOW)
+	work.now_override = -1.0
+	_give("fuel_can")
+	var screen: Node = load("res://ui/hideout_screen.tscn").instantiate()
+	root.add_child(screen)
+	await frames(3)
+	var map: Node = screen.find_child("Map", true, false)
+	check(map.rooms.size() == 13, "the plan has a room for each station")
+	for station: Dictionary in hideout.stations():
+		(map.rooms[station.id] as Button).pressed.emit()
+		await frames(1)
+		var details: Node = screen.find_child("Details", true, false)
+		check(screen.station() == station and details.find_child("Level_1", true, false) != null and details.find_child("Build", true, false) != null,
+			"%s: its panel shows the upgrade tree and BUILD" % station.name)
+	(map.rooms["generator"] as Button).pressed.emit()
+	await frames(1)
+	(screen.find_child("Build", true, false) as Button).pressed.emit()
+	await frames(2)
+	check(hideout.is_building(hideout.find("generator")) and screen.find_child("BuildCountdown", true, false) != null, "BUILD starts the build and the countdown shows")
+	screen.queue_free()
+	await frames(1)

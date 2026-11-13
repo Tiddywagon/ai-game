@@ -5,8 +5,10 @@ extends RefCounted
 ## never the only cue, the found-in-raid checkmark in the bottom-right corner (faded while it's only
 ## pending, during a raid) and a gold "+N" for upgraded gear. Meds with several uses show the uses
 ## left ("2/3") and medkits their HP left, where a stack shows its count (not on tiny icons). Insured
-## gear has a blue corner in the top right. Used by grids, equipment slots, the drag preview and item
-## lists.
+## gear has a blue corner in the top right. An item the hideout or a quest still needs carries the
+## needed-for icon (a small house) on its left edge, amber, grey when only crafts, barters or gear upgrades
+## take it (ItemUses.marker()); hovering it says what for and how many more. Used by grids, equipment
+## slots, the drag preview and item lists.
 
 const TEXT_COLOR := Color(0.92, 0.91, 0.86)
 const NAME_STRIP := 18.0
@@ -19,6 +21,10 @@ const UPGRADE_COLOR := Color(1.0, 0.82, 0.35)
 ## The corner of insured gear, and its size.
 const INSURED_COLOR := Color(0.35, 0.65, 1.0)
 const INSURED_SIZE := 11.0
+## The needed-for icon: its size, and its colours (needed by the hideout or a quest; only used).
+const NEEDED_SIZE := 11.0
+const NEEDED_COLOR := Color(1.0, 0.72, 0.25)
+const USED_COLOR := Color(0.72, 0.72, 0.68)
 
 
 static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bool, alpha := 1.0, count := -1) -> void:
@@ -48,6 +54,9 @@ static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bo
 		var corner_at := rect.position + Vector2(rect.size.x - 2.0, 2.0)
 		canvas.draw_colored_polygon(PackedVector2Array([corner_at, corner_at + Vector2(-INSURED_SIZE, 0), corner_at + Vector2(0, INSURED_SIZE)]),
 			Color(INSURED_COLOR, alpha))
+	var needed := ItemUses.marker(item.data.id)
+	if needed != ItemUses.Marker.NONE:
+		draw_needed_icon(canvas, needed_icon_rect(rect), needed == ItemUses.Marker.NEEDED, alpha)
 	var marked := has_fir_mark(item)
 	if marked:
 		draw_fir_mark(canvas, fir_mark_rect(rect), item.fir_pending and not item.fir, alpha)
@@ -109,6 +118,9 @@ static func tooltip(item: ItemInstance) -> String:
 	var needed := ItemUses.summary(item.data.id)
 	if needed != "":
 		lines.append("Needed for: " + needed)
+	var more := ItemUses.needed_text(item.data.id)
+	if more != "":
+		lines.append(more)
 	var wanted := TraderStock.wanted_text(item.data.id)
 	if wanted != "":
 		lines.append(wanted)
@@ -120,11 +132,39 @@ static func tooltip(item: ItemInstance) -> String:
 	return "\n".join(lines)
 
 
-## Hover text at `at` over `item` drawn in `rect`: just "Found in raid" over the checkmark.
+## Hover text at `at` over `item` drawn in `rect`: just "Found in raid" over the checkmark, and what
+## it's needed for over the needed-for icon.
 static func tooltip_at(item: ItemInstance, rect: Rect2, at: Vector2) -> String:
 	if has_fir_mark(item) and fir_mark_rect(rect).grow(3.0).has_point(at):
 		return FoundInRaid.status_text(item)
+	if ItemUses.marker(item.data.id) != ItemUses.Marker.NONE and needed_icon_rect(rect).grow(3.0).has_point(at):
+		var more := ItemUses.needed_text(item.data.id)
+		return more if more != "" else "Needed for: " + ItemUses.summary(item.data.id)
 	return tooltip(item)
+
+
+## Where the needed-for icon goes in an item drawn in `rect`: the left edge, under the name strip (the
+## top-left corner on small icons).
+static func needed_icon_rect(rect: Rect2) -> Rect2:
+	var top := NAME_STRIP + 5.0 if rect.size.y >= 40.0 else 3.0
+	return Rect2(rect.position + Vector2(4.0, top), Vector2(NEEDED_SIZE, NEEDED_SIZE))
+
+
+## The needed-for icon in `box`: a small house, amber when `needed` (the hideout or a quest), else grey.
+static func draw_needed_icon(canvas: CanvasItem, box: Rect2, needed: bool, alpha := 1.0) -> void:
+	var color := Color(NEEDED_COLOR if needed else USED_COLOR, alpha * (1.0 if needed else 0.7))
+	var w := box.size.x
+	var h := box.size.y
+	var p := box.position
+	var house := PackedVector2Array([p + Vector2(w * 0.5, 0), p + Vector2(w, h * 0.45), p + Vector2(w * 0.85, h * 0.45), p + Vector2(w * 0.85, h),
+		p + Vector2(w * 0.15, h), p + Vector2(w * 0.15, h * 0.45), p + Vector2(0, h * 0.45)])
+	canvas.draw_colored_polygon(house, Color(0, 0, 0, 0.55 * alpha))
+	canvas.draw_set_transform(box.get_center(), 0.0, Vector2(0.8, 0.8))
+	var inner := PackedVector2Array()
+	for point in house:
+		inner.append(point - box.get_center())
+	canvas.draw_colored_polygon(inner, color)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 
 static func has_fir_mark(item: ItemInstance) -> bool:
