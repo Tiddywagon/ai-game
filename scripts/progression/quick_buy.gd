@@ -101,10 +101,11 @@ static func packs_for(line: Dictionary, offer: Dictionary) -> int:
 
 # --- Unlocking ------------------------------------------------------------------------------------
 
-## How many quests you've completed (QuestLog).
+## How many quests you've completed: those you can see (QuestLog.shown(): another faction's line never
+## counts).
 static func tasks_completed() -> int:
 	var count := 0
-	for quest in QuestLog.all():
+	for quest in QuestLog.shown():
 		if QuestLog.state(quest) == "completed":
 			count += 1
 	return count

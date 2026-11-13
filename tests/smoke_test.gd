@@ -9,7 +9,7 @@ const VALIDATORS := {
 	"Factions": "res://scripts/data/factions.gd", "BossTable": "res://scripts/data/boss_table.gd",
 	"BarterTable": "res://scripts/data/barter_table.gd", "PmcAi": "res://scripts/data/pmc_ai.gd",
 	"PoiTable": "res://scripts/data/poi_table.gd", "TraderTable": "res://scripts/data/trader_table.gd",
-	"ScavRuns": "res://scripts/raid/scav_runs.gd",
+	"ScavRuns": "res://scripts/raid/scav_runs.gd", "QuestLog": "res://scripts/progression/quest_log.gd",
 }
 
 

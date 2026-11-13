@@ -14,7 +14,8 @@ extends RefCounted
 ##   (ScavRuns.apply(), which also sets Mole's loyalty level).
 ## - Raid experience (none for a Run Through; GameState.add_xp(), which may raise the level), Drip and
 ##   360 trick-shot stats are added to the profile either way (and trick-shot kills count toward
-##   quests), then the game is saved.
+##   quests; in a PMC raid so do kills, and extracting, toward kill and extract objectives:
+##   QuestLog.record_raid()), then the game is saved.
 
 enum Status { SURVIVED, RUN_THROUGH, KILLED, MIA }
 
@@ -144,8 +145,9 @@ func insurance_value() -> int:
 ## `to_profile` false (the test level run on its own) only the found-in-raid marks change.
 ## `tricks`: {"hits", "kills": [{"side", "weapon_class"}], "drip"} from the RaidController.
 ## `details`: {"xp_parts", "kill_list", "extract", "looters" (hostile AI alive near the body), "faction"
-## (the player's), "karma" (a Scav run's karma changes)} from the RaidController, for the summary,
-## insurance and karma.
+## (the player's), "karma" (a Scav run's karma changes), "map" (its id)} from the RaidController, for
+## the summary, insurance, karma and the quests' kill and extract objectives (a PMC raid's:
+## QuestLog.record_raid()).
 static func settle(end: Status, raid_side: String, inventory: Inventory, raid_seconds: float, raid_xp: int,
 		raid_kills: int, to_profile: bool, tricks: Dictionary = {}, details: Dictionary = {}) -> RaidOutcome:
 	var outcome := RaidOutcome.new()
@@ -204,6 +206,8 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	GameState.trick_shots.hits += outcome.trick_hits
 	GameState.trick_shots.kills += outcome.trick_kills
 	QuestLog.record_trick_kills(trick_kill_list)
+	if raid_side == "pmc":
+		QuestLog.record_raid(outcome.kill_list, end == Status.SURVIVED, str(details.get("map", "")))
 	SaveManager.save_game()
 	return outcome
 

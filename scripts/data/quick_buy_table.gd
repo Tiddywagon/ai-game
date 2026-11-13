@@ -168,9 +168,13 @@ static func _unlock_problems(card: Dictionary, where: String) -> Array[String]:
 	var quests: Variant = unlock.get("quests", [])
 	if not quests is Array or quests.any(func(quest: Variant) -> bool: return QuestLog.find(str(quest)).is_empty()):
 		found.append("%s: unlock quests must be quests that exist" % where)
+	elif quests.any(func(quest: Variant) -> bool:
+			return QuestLog.faction_of(QuestLog.find(str(quest))) not in [&"", StringName(str(card.get("faction", "")))]):
+		found.append("%s: unlock quests must be quests everyone who sees the card can do (the card's faction or none)" % where)
 	var tasks := int(unlock.get("tasks", 0))
-	if tasks < 0 or tasks > QuestLog.all().size():
-		found.append("%s: %d tasks completed can't be reached: there are %d quests" % [where, tasks, QuestLog.all().size()])
+	for faction: StringName in ([StringName(str(card.faction))] if Factions.has(StringName(str(card.get("faction", "")))) else Factions.ids()):
+		if tasks < 0 or tasks > QuestLog.shown(faction).size():
+			found.append("%s: %d tasks completed can't be reached: there are %d quests for %s" % [where, tasks, QuestLog.shown(faction).size(), faction])
 	return found
 
 

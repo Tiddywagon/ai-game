@@ -945,8 +945,8 @@ func _build_tasks(trader: Dictionary) -> void:
 			continue
 		box.add_child(_note(quest.get("description", "")))
 		for i in quest.objectives.size():
-			if QuestLog.objective_type(quest, i) == "trick_kill":
-				box.add_child(_trick_objective(quest, i, state))
+			if QuestLog.objective_type(quest, i) in QuestLog.RAID_TYPES:
+				box.add_child(_raid_objective(quest, i, state))
 				continue
 			if QuestLog.objective_type(quest, i) == "roubles":
 				box.add_child(_money_objective(quest, i, state))
@@ -970,6 +970,9 @@ func _build_tasks(trader: Dictionary) -> void:
 			var needs := ", ".join(ExtractTable.condition_texts(rules))
 			box.add_child(_note("Unlocks the %s extract on %s%s" % [unlock.entry.name, map.display_name if map else unlock.map,
 				" (%s)" % needs if needs != "" else ""]))
+		for barter: Dictionary in BarterTable.for_trader(str(quest.trader)).filter(func(each: Dictionary) -> bool: return BarterTable.quest(each) == quest.id):
+			box.add_child(_note("Unlocks a barter with %s%s: %s" % [TraderTable.display_name(str(quest.trader)),
+				" (%s only)" % Factions.display_name(QuestLog.faction_of(quest)) if QuestLog.faction_of(quest) != &"" else "", BarterTable.reward_text(barter)]))
 		for unlocked: Dictionary in _traders.filter(func(each: Dictionary) -> bool: return TraderTable.unlock_quest(each.id) == quest.id):
 			box.add_child(_note("Unlocks %s: %s" % [unlocked.name, str(unlocked.specialty).to_lower()]))
 		match state:
@@ -1138,14 +1141,26 @@ func _money_objective(quest: Dictionary, index: int, state: String) -> Control:
 	return line
 
 
-## A trick-kill objective: what it asks for and how many so far.
-func _trick_objective(quest: Dictionary, index: int, state: String) -> Control:
+## What an objective counted in raids shows: its badge, its colour (white: none) and its tooltip.
+const RAID_OBJECTIVES := {
+	"trick_kill": ["360", Player.TRICK_COLOR, "Counted at the end of each raid, whether you survive or not: spin a full 360° with a bolt-action rifle or DMR, then kill with the first shot"],
+	"kill": ["KILL", Color.WHITE, "Counted at the end of each PMC raid, whether you survive or not"],
+	"extract": ["EXIT", Color.WHITE, "Counted when you extract from a PMC raid (a Run Through doesn't count)"],
+	"explore": ["MAP", Color.WHITE, "Points of interest explored on the map, ever: those found before you took the task count too"],
+}
+
+
+## An objective counted in raids (trick kills, kills, extracts, exploring): what it asks for and how many
+## so far.
+func _raid_objective(quest: Dictionary, index: int, state: String) -> Control:
+	var type := QuestLog.objective_type(quest, index)
+	var look: Array = RAID_OBJECTIVES[type]
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 10)
 	var badge := Label.new()
-	badge.text = "360"
-	badge.add_theme_color_override("font_color", Player.TRICK_COLOR)
-	badge.custom_minimum_size.x = 44
+	badge.text = look[0]
+	badge.add_theme_color_override("font_color", look[1])
+	badge.custom_minimum_size.x = 52
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	line.add_child(badge)
 	var label := Label.new()
@@ -1155,10 +1170,10 @@ func _trick_objective(quest: Dictionary, index: int, state: String) -> Control:
 	if state != "available":
 		var done := QuestLog.progress(quest, index)
 		var count := Label.new()
-		count.text = "%d / %d in raids" % [done, QuestLog.objective_count(quest, index)]
+		count.text = "%d / %d %s" % [done, QuestLog.objective_count(quest, index), "explored" if type == "explore" else "in raids"]
 		count.add_theme_color_override("font_color", RequirementRow.MET_COLOR if done >= QuestLog.objective_count(quest, index) else Color(1, 1, 1, 0.7))
 		line.add_child(count)
-	line.tooltip_text = "Counted at the end of each raid, whether you survive or not: spin a full 360° with a bolt-action rifle or DMR, then kill with the first shot"
+	line.tooltip_text = look[2]
 	return line
 
 

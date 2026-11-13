@@ -1,0 +1,136 @@
+[
+  {
+    "id": "bear_old_unit",
+    "name": "Old Unit",
+    "trader": "bulat",
+    "faction": "bear",
+    "description": "My old unit is spread across this valley now. Show me you can go out there and come back, and bring me a taste of home from the field.",
+    "objectives": [
+      {"type": "extract", "count": 1},
+      {"type": "hand_in", "item": "tushonka", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 30000, "xp": 2000, "reputation": 0.04, "items": [{"item": "ammo_545_ps", "count": 60}]}
+  },
+  {
+    "id": "bear_contractors",
+    "name": "Contractors",
+    "trader": "bulat",
+    "faction": "bear",
+    "requires": ["bear_old_unit"],
+    "level": 5,
+    "description": "Western contractors walk my roads like they own them. Three of them. I don't need to know where.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "faction": "usec", "count": 3}
+    ],
+    "rewards": {"roubles": 50000, "xp": 4000, "reputation": 0.05, "items": [{"item": "zsh_helmet", "count": 1}]}
+  },
+  {
+    "id": "bear_ground_truth",
+    "name": "Ground Truth",
+    "trader": "bulat",
+    "faction": "bear",
+    "requires": ["bear_contractors"],
+    "level": 10,
+    "description": "Before my people go into the customs yard I want eyes on every corner of it. Walk it, learn it, and walk back out.",
+    "objectives": [
+      {"type": "explore", "map": "customs_yard", "count": 6},
+      {"type": "extract", "map": "customs_yard", "count": 1}
+    ],
+    "rewards": {"roubles": 75000, "xp": 6000, "reputation": 0.06, "items": [{"item": "armor_6b23", "count": 1}]}
+  },
+  {
+    "id": "bear_radio_silence",
+    "name": "Radio Silence",
+    "trader": "bulat",
+    "faction": "bear",
+    "requires": ["bear_ground_truth"],
+    "level": 15,
+    "description": "USEC teams chatter on VHF all day. Take five of them off the air and bring me one of their radios, still working.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "faction": "usec", "count": 5},
+      {"type": "hand_in", "item": "vhf_radio", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 100000, "xp": 9000, "reputation": 0.08, "items": [{"item": "grizzly_74", "count": 1}]}
+  },
+  {
+    "id": "bear_last_word",
+    "name": "Last Word",
+    "trader": "bulat",
+    "faction": "bear",
+    "requires": ["bear_radio_silence"],
+    "level": 20,
+    "description": "The woods are theirs now. Make them ours: six of them in the trees, and come back out twice so they know it wasn't luck. Then my old unit's stores are open to you.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "faction": "usec", "map": "woodland", "count": 6},
+      {"type": "extract", "map": "woodland", "count": 2}
+    ],
+    "rewards": {"roubles": 150000, "xp": 14000, "reputation": 0.1}
+  },
+  {
+    "id": "usec_contract_renewal",
+    "name": "Contract Renewal",
+    "trader": "tinker",
+    "faction": "usec",
+    "description": "The company renews contracts for operators who come back. Come back, and bring me something to keep the bench running.",
+    "objectives": [
+      {"type": "extract", "count": 1},
+      {"type": "hand_in", "item": "aa_battery", "count": 3, "fir": true}
+    ],
+    "rewards": {"roubles": 30000, "xp": 2000, "reputation": 0.04, "items": [{"item": "ammo_556_fmj", "count": 60}]}
+  },
+  {
+    "id": "usec_hostile_contact",
+    "name": "Hostile Contact",
+    "trader": "tinker",
+    "faction": "usec",
+    "requires": ["usec_contract_renewal"],
+    "level": 5,
+    "description": "BEAR squads have been hitting our supply runs. Three of them. Don't bring me their tags, I believe you.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "faction": "bear", "count": 3}
+    ],
+    "rewards": {"roubles": 50000, "xp": 4000, "reputation": 0.05, "items": [{"item": "fast_helmet", "count": 1}]}
+  },
+  {
+    "id": "usec_site_survey",
+    "name": "Site Survey",
+    "trader": "tinker",
+    "faction": "usec",
+    "requires": ["usec_hostile_contact"],
+    "level": 10,
+    "description": "The resort on the shoreline could be a forward base. I need someone to walk the whole site and get back out to report.",
+    "objectives": [
+      {"type": "explore", "map": "shoreline", "count": 6},
+      {"type": "extract", "map": "shoreline", "count": 1}
+    ],
+    "rewards": {"roubles": 75000, "xp": 6000, "reputation": 0.06, "items": [{"item": "armor_mmac", "count": 1}]}
+  },
+  {
+    "id": "usec_data_recovery",
+    "name": "Data Recovery",
+    "trader": "tinker",
+    "faction": "usec",
+    "requires": ["usec_site_survey"],
+    "level": 15,
+    "description": "BEAR copied our route plans onto their drives. Five of them carried it; one drive comes back to me.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "faction": "bear", "count": 5},
+      {"type": "hand_in", "item": "ssd_drive", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 100000, "xp": 9000, "reputation": 0.08, "items": [{"item": "hornet_smg", "count": 1}]}
+  },
+  {
+    "id": "usec_clean_exfil",
+    "name": "Clean Exfil",
+    "trader": "tinker",
+    "faction": "usec",
+    "requires": ["usec_data_recovery"],
+    "level": 20,
+    "description": "The factory is their ground. Six of them inside, and two clean exfils so command believes it. After that, I build you something from the company crates.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "faction": "bear", "map": "factory", "count": 6},
+      {"type": "extract", "map": "factory", "count": 2}
+    ],
+    "rewards": {"roubles": 150000, "xp": 14000, "reputation": 0.1}
+  }
+]

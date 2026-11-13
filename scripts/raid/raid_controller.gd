@@ -1012,7 +1012,7 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 	outcome = RaidOutcome.settle(status, side(), player.inventory, own_seconds(), xp,
 		player.kills, counts_for_profile(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
 		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
-			"faction": String(player.faction), "karma": karma_changes.duplicate(true)})
+			"faction": String(player.faction), "karma": karma_changes.duplicate(true), "map": map_key()})
 	raid_ended.emit(outcome)
 	return outcome
 

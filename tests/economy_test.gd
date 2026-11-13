@@ -436,7 +436,7 @@ func _barters() -> void:
 	section("Barters")
 	_profile()
 	check(barters.problems().is_empty(), "BarterTable.problems() is empty")
-	check(barters.all().size() == 155, "there are 155 barters (%d)" % barters.all().size())
+	check(barters.all().size() == 157, "there are 157 barters, two of them faction-only (%d)" % barters.all().size())
 	var asked := {}
 	for barter: Dictionary in barters.all():
 		for requirement in barters.requirements(barter):

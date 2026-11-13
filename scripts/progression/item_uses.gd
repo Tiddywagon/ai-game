@@ -27,7 +27,7 @@ const GEAR_GROUPS := {"armor": "Armor", "carry": "Rigs and backpacks", "electron
 ## found-in-raid items count)}], in KINDS order.
 static func of(id: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for quest in QuestLog.all():
+	for quest in QuestLog.shown():
 		if QuestLog.state(quest) == "completed":
 			continue
 		for objective: Dictionary in quest.get("objectives", []):
@@ -41,6 +41,8 @@ static func of(id: String) -> Array[Dictionary]:
 				if requirement.get("item", "") == id:
 					result.append(_use("upgrade", "%s level %d" % [station.name, int(entry.level)], requirement))
 	for barter in BarterTable.all():
+		if not BarterTable.visible(barter):
+			continue
 		for give: Variant in barter.get("requires", []):
 			if give is Dictionary and give.get("item", "") == id:
 				result.append(_use("barter", barter_text(barter), give))
@@ -129,7 +131,7 @@ static func still_needed(id: String) -> Array[Dictionary]:
 				if more > 0:
 					result.append({"kind": "upgrade", "name": "%s level %d" % [station.name, int(entry.level)], "more": more,
 						"fir": bool(requirement.get("fir", false))})
-	for quest in QuestLog.all():
+	for quest in QuestLog.shown():
 		if QuestLog.state(quest) == "completed":
 			continue
 		var objectives: Array = quest.get("objectives", [])
@@ -165,7 +167,8 @@ static func marker(id: String) -> Marker:
 	var frame := Engine.get_process_frames()
 	if frame != _markers_frame:
 		_markers_frame = frame
-		var key := hash([GameState.hideout, GameState.hideout_state.get("handed", {}), GameState.hideout_state.get("builds", {}).keys(), GameState.quests])
+		var key := hash([GameState.hideout, GameState.hideout_state.get("handed", {}), GameState.hideout_state.get("builds", {}).keys(), GameState.quests,
+			GameState.faction])
 		if key != _markers_key or _markers.is_empty():
 			_markers_key = key
 			_markers = _all_markers()
@@ -178,6 +181,8 @@ static func _all_markers() -> Dictionary:
 		if wanted is Dictionary and wanted.has("item"):
 			result[str(wanted.item)] = maxi(int(result.get(str(wanted.item), Marker.NONE)), Marker.USED)
 	for barter in BarterTable.all():
+		if not BarterTable.visible(barter):
+			continue
 		for give: Variant in barter.get("requires", []):
 			used.call(give)
 	for station in Hideout.stations():
@@ -198,7 +203,7 @@ static func _all_markers() -> Dictionary:
 		for entry: Dictionary in station.levels:
 			for requirement: Dictionary in entry.get("requires", []):
 				named[str(requirement.get("item", ""))] = true
-	for quest in QuestLog.all():
+	for quest in QuestLog.shown():
 		for objective: Dictionary in quest.get("objectives", []):
 			if objective.get("type", "") == "hand_in":
 				named[str(objective.get("item", ""))] = true

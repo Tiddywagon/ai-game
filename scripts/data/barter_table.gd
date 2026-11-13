@@ -92,12 +92,19 @@ static func _shape_problem(entry: Variant) -> String:
 	return ""
 
 
-## `trader_id`'s barters, in their file's order.
+## `trader_id`'s barters you can see (visible()), in their file's order.
 static func for_trader(trader_id: String) -> Array[Dictionary]:
 	all()
 	var result: Array[Dictionary] = []
-	result.assign(_by_trader.get(trader_id, []))
+	result.assign(_by_trader.get(trader_id, []).filter(visible))
 	return result
+
+
+## False for a barter waiting for a quest your faction doesn't get (QuestLog.visible()): a faction-only
+## barter, never shown, counted or listed as a use to the other faction.
+static func visible(barter: Dictionary) -> bool:
+	var entry := QuestLog.find(quest(barter))
+	return entry.is_empty() or QuestLog.visible(entry)
 
 
 ## Barter `id` ({} if there's none).
