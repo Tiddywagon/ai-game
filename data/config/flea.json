@@ -1,0 +1,30 @@
+{
+  "_comment": "The flea market (DESIGN.md §10, Flea market), read by FleaTable and FleaMarket. unlock_level: the player level it opens at. refresh_minutes: new listings go up every this many real minutes (the clock runs while the game is closed; the same listings for everyone on the same clock). listings: per_refresh, how many new listings of each rarity go up each refresh (a fraction is a chance of one more: legendary 0.04 is one listing in 25 refreshes); category_weight, how much likelier (above 1) or rarer an item of a category is picked within its rarity (default 1); minutes [from, to] a listing stays up; spread [from, to], its price against the market price; condition [from, to], the share of their durability guns and armor come with; parts, the chance a gun comes with extra parts and how many [from, to]; stack [from, to], the share of a full stack stackable items come in; rating [from, to], the seller's rating out of 5; names, the made-up seller handles (a first part, a second part and sometimes two digits). drift: each item's market price is its worth (Selling.item_value()) times a multiplier that walks within min-max around center: every bucket_minutes one seeded step of up to speed (a share of the way to a bound), the walk being the sum of the last window steps, so it wanders and comes back, the same for everyone on the same clock; trend_hours: the price trend arrow compares against the price this long ago, showing a change above trend_threshold. pressure: buying a listing adds buy to that item's multiplier, putting one up takes sell off, at most max either way; it halves every half_life_hours. fee: listing costs base (a share of the asking price) up front, plus over for each 1.0 the asking price is above the market price (1.2 times: 0.2 × over more), at most max; never refunded. slots: base listings at unlock_level, one more every every levels. sale: how fast a listing sells by its price against the market price at listing: minutes, a curve of [price ratio, minutes] points (straight lines between them; under the first point as fast as it, over the last never), times a seeded random factor in spread; a listing stays up hours, then comes back unsold. floor: no listing is ever cheaper than the item's resale floor (Trading.resale_floor(): the best trader's top-loyalty price plus resale_floor in trading.json), the Wanted bonus included for anything a trader could want. banned: never listed and never for sale: these ids, categories and tags, secure containers, the boss uniques (bosses.json) and rounds with at least min_penetration.",
+  "unlock_level": 15,
+  "refresh_minutes": 30,
+  "listings": {
+    "per_refresh": {"common": 12, "uncommon": 9, "rare": 6, "ultra_rare": 3, "epic": 1.2, "legendary": 0.04},
+    "category_weight": {"attachment": 0.35, "ammo": 1.5, "weapon": 1.5, "armor": 1.5, "helmet": 1.3, "meds": 1.3, "valuable": 1.2},
+    "minutes": [30, 240],
+    "spread": [0.94, 1.3],
+    "condition": [0.55, 1.0],
+    "parts": {"chance": 0.35, "count": [1, 2]},
+    "stack": [0.2, 1.0],
+    "rating": [2.5, 5.0],
+    "names": {
+      "first": ["Rusty", "Grim", "Lucky", "Silent", "Old", "Big", "Red", "Cold", "Quiet", "Swift", "Iron", "Dusty", "Crooked", "Sly", "Frosty", "Lazy", "Grey", "Wild"],
+      "second": ["Badger", "Crow", "Pike", "Lynx", "Wolf", "Ferret", "Hawk", "Bear", "Moth", "Otter", "Rook", "Stoat", "Marten", "Viper", "Goose", "Elk", "Fox", "Vole"]
+    }
+  },
+  "drift": {"bucket_minutes": 60, "window": 24, "min": 0.8, "max": 1.4, "center": 1.0, "speed": 0.18, "trend_hours": 6, "trend_threshold": 0.02},
+  "pressure": {"buy": 0.04, "sell": 0.04, "max": 0.25, "half_life_hours": 6},
+  "fee": {"base": 0.05, "over": 0.5, "max": 0.6},
+  "slots": {"base": 3, "every": 5},
+  "sale": {"minutes": [[0.8, 2], [1.0, 8], [1.1, 45], [1.2, 150], [1.3, 420]], "spread": [0.6, 1.4], "hours": 12},
+  "banned": {
+    "ids": [],
+    "categories": ["key", "container"],
+    "tags": ["quest", "keycard"],
+    "min_penetration": 55
+  }
+}

@@ -84,6 +84,11 @@ var auto_equip: Dictionary = {"budget": 0, "protect_legendary": false}
 ## Custom quick-buy cards (QuickBuy.save_custom(), DESIGN.md §16.6), up to QuickBuyTable.max_custom():
 ## cards like those in data/quick_buy/ with "custom": true and "left_out" (what no trader sold).
 var quick_buys: Array = []
+## Your side of the flea market (DESIGN.md §10, FleaMarket): {"pressure": {item id: {"value": share,
+## "bucket": the drift bucket it was set in}}, "bought": {listing id: true} (listings still up that you
+## bought), "listings": your own listings, "next_id": the next one's number, "clock": the market's clock
+## (unix time it was last brought up to date; it never runs backwards)}.
+var flea: Dictionary = FleaMarket.blank()
 ## Scav runs (DESIGN.md §2, ScavRuns): your Scav karma (Mole's standing, -6 to +6), the unix time the
 ## next Scav run is ready (0: ready), and this cooldown cycle's Scav kit (null until it's rolled; used up
 ## when you deploy).
@@ -206,6 +211,7 @@ func _reset(new_faction: Faction) -> void:
 	loadout_presets = []
 	auto_equip = LoadoutPlanner.clean_options({})
 	quick_buys = []
+	flea = FleaMarket.blank()
 	scav_karma = ScavRuns.start_karma()
 	scav_ready_at = 0.0
 	scav_kit = null

@@ -6,7 +6,7 @@ extends Node
 ## Adding an item never needs code: drop a file in. Ids must be unique across both kinds. Once loaded,
 ## the trader offers and barters (Trading.problems()) and the hideout stations (Hideout.problems()) are
 ## checked against the items, and so are the Scav kit tiers' pocket items (ScavRuns.item_problems()) and
-## the quick-buy cards (QuickBuyTable.problems()).
+## the quick-buy cards (QuickBuyTable.problems()) and the flea market's rules (FleaTable.problems()).
 ## Usage: ItemDB.get_item("bandage").display_name
 
 const ITEMS_DIR := "res://data/items"
@@ -34,6 +34,8 @@ func _ready() -> void:
 		push_warning("ScavRuns: " + problem)
 	for problem in QuickBuyTable.problems():
 		push_warning("QuickBuyTable: " + problem)
+	for problem in FleaTable.problems():
+		push_warning("FleaTable: " + problem)
 
 
 ## Returns the definition for `id`, or null (with a warning) if no item has that id.
