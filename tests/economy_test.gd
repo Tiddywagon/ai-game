@@ -350,6 +350,36 @@ func _flea_no_resale() -> void:
 				tightest_name = "%s (%d bought, %d sold)" % [piece.data.id, cost, paid]
 	print("    tightest flea price / best resale: %.4f for %s" % [tightest, tightest_name])
 	check(listed > 1000 and losing == 0, "no flea listing over a day (%d, every price pushed as low as it goes) sells on to a trader at a profit" % listed)
+	# Flea selling: nothing a trader, the flea or a barter gives is found in raid, so none of it can be listed.
+	var fir: GDScript = load("res://scripts/inventory/found_in_raid.gd")
+	var sources := 0
+	var listable := 0
+	var bought: Array = []
+	for trader: String in traders.ids():
+		for offer: Dictionary in trading.buy_list(trader):
+			bought.append([trading.offer_item(offer), fir.Source.TRADER])
+		for barter: Dictionary in barters.for_trader(trader):
+			for reward: RefCounted in barters.reward_items(barter):
+				bought.append([reward, fir.Source.BARTER])
+	for listing: Dictionary in flea.listings():
+		bought.append([listing.item.duplicate_deep(), fir.Source.FLEA_MARKET])
+	for entry: Array in bought:
+		var piece: RefCounted = entry[0]
+		fir.set_found(piece, fir.gives_fir(entry[1]))
+		if not gs.stash.add(piece):
+			continue
+		sources += 1
+		if flea.list_block_reason(piece, 1) == "":
+			listable += 1
+			print("    listable: %s" % piece.data.id)
+		gs.stash.remove(piece)
+	check(sources > 600 and listable == 0, "nothing bought from a trader, the flea market or a barter can be put up on the flea (%d checked)" % sources)
+	gs.roubles = 50_000_000
+	var listing: Dictionary = flea.listings()[0]
+	check(flea.buy(listing) == "", "(a listing bought for real)")
+	var copies: Array = gs.stash.all_items().filter(func(each: RefCounted) -> bool: return each.data.id == listing.item.data.id)
+	check(not copies.is_empty() and copies.all(func(each: RefCounted) -> bool: return flea.list_block_reason(each, 1) != ""),
+		"what's bought on the flea can't be listed again (\"%s\")" % (flea.list_block_reason(copies[0], 1) if not copies.is_empty() else ""))
 
 
 ## [price / best resale, the price in roubles, the best resale in roubles, who pays it] for `offer`: the

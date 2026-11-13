@@ -88,7 +88,7 @@ func _new_profiles() -> void:
 
 func _round_trip() -> void:
 	section("Save and load")
-	check(sm.SAVE_VERSION == 15, "SAVE_VERSION is 15")
+	check(sm.SAVE_VERSION == 16, "SAVE_VERSION is 16")
 	sm.delete_save()
 	gs.new_profile(gs.Faction.BEAR)
 	var mods: GDScript = load("res://scripts/inventory/weapon_mods.gd")
@@ -153,7 +153,7 @@ func _upgrade() -> void:
 	var original := _text(old)
 	var result: Dictionary = sm.upgrade(old)
 	check(_text(old) == original and int(old.version) == 8, "upgrade() leaves the original untouched")
-	check(int(result.version) == 15, "the result is version 15")
+	check(int(result.version) == 16, "the result is version 16")
 	var loyalty: Dictionary = result.profile.trader_loyalty
 	var ids: Array = loyalty.keys()
 	ids.sort()

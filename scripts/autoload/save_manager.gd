@@ -56,7 +56,13 @@ const SAVE_PATH := "user://savegame.json"
 ## "left_out"}), cleaned on load (QuickBuy.sanitize(): lines whose item or trader is gone are named in
 ## left_out). Older saves have none (nothing to change in upgrade(): GameState.from_dict() starts the
 ## list empty).
-const SAVE_VERSION := 15
+## Version 16 adds the flea market (DESIGN.md §10, FleaMarket): profile "flea" {"pressure": {item id:
+## {"value", "bucket"}}, "bought": [listing ids still up that you bought], "listings": your own listings
+## ({"id", "item", "price", "fee", "market", "listed", "ends", "sells", "state"}), "next_id", "clock" (the
+## market's clock, unix time)}. The market's own listings are rolled again from the clock, so only what
+## you bought is saved. Older saves start with none of it (nothing to change in upgrade():
+## GameState.from_dict() starts it blank).
+const SAVE_VERSION := 16
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"

@@ -4,7 +4,9 @@ extends "res://tests/test_base.gd"
 ## fast it moves, your pressure and its decay, the trend) and the floor against trader prices; the
 ## market's listings (seeded per refresh, the same again, coming and going while the game is closed,
 ## rarer items less often, no banned ones, worn guns and armor, extra parts, never under the floor) and
-## buying them (the price charged, never found in raid, pressure, gone once bought, every refusal).
+## buying them (the price charged, never found in raid, pressure, gone once bought, every refusal); your
+## own listings (found in raid from the stash only, the fee, slots by level), how fast they sell by how
+## fair the price is (also while the game is closed), expiry and collecting, banned items and the save.
 
 const NOW := 1_000_000.0
 const HOUR := 3600.0
@@ -29,6 +31,10 @@ func run() -> void:
 	_floor()
 	_listings()
 	_buying()
+	_own_listings()
+	_sale_timing()
+	_banned()
+	_saving()
 	stock.now_override = -1.0
 
 
@@ -304,3 +310,157 @@ func _find(id: String) -> RefCounted:
 		if each.data.id == id:
 			return each
 	return null
+
+
+## A found-in-raid `id` in the stash.
+func _fir(id: String, amount := 1) -> RefCounted:
+	var piece: RefCounted = item(id, amount)
+	load("res://scripts/inventory/found_in_raid.gd").set_found(piece, true)
+	check(gs.stash.add(piece), "(%s put in the stash)" % id)
+	return piece
+
+
+func _own_listings() -> void:
+	section("Your listings")
+	_profile()
+	var watch: RefCounted = item("roler")
+	gs.stash.add(watch)
+	check(flea.list_block_reason(watch, 100000) == "Only found-in-raid items can be listed", "only found-in-raid items")
+	var loose: RefCounted = item("roler")
+	loose.fir = true
+	check(flea.list_block_reason(loose, 100000) == "Only items in your stash can be listed", "only from the stash")
+	var gun: RefCounted = _fir("ak_74n")
+	var parts: Array = load("res://scripts/inventory/weapon_mods.gd").installed(gun)
+	parts[0].fir = false
+	check(flea.list_block_reason(gun, 50000) == "Something on or in it isn't found in raid", "not with a part that isn't found in raid")
+	var pack: RefCounted = _fir(_a_backpack())
+	var inside: RefCounted = item("bandage")
+	inside.fir = true
+	pack.contents.add(inside)
+	check(flea.list_block_reason(pack, 50000) == "Empty it first", "a container only empty")
+	var found: RefCounted = _fir("roler")
+	var market: int = flea.market_price(found)
+	check(flea.list_block_reason(found, 0) == "Set a price", "not for nothing")
+	check(is_equal_approx(flea.fee_share(found, market), 0.05) and flea.listing_fee(found, market) == ceili(market * 0.05),
+		"the fee at the market price (%d) is 5%%: %d" % [market, flea.listing_fee(found, market)])
+	var dear := roundi(market * 1.2)
+	check(absf(flea.fee_share(found, dear) - 0.15) < 0.001, "at 1.2× the market price it's 15%% (%.3f)" % flea.fee_share(found, dear))
+	check(is_equal_approx(flea.fee_share(found, market * 5), 0.6), "and never above 60%")
+	gs.roubles = flea.listing_fee(found, market) - 1
+	check(flea.list_block_reason(found, market).begins_with("Not enough roubles for the"), "not without the roubles for the fee")
+	gs.roubles = 1_000_000
+	var before: float = flea.multiplier("roler")
+	var fee: int = flea.listing_fee(found, market)
+	check(flea.put_up(found, market) == "", "lists a found-in-raid Roler at the market price")
+	check(gs.roubles == 1_000_000 - fee and gs.stash.find_holder(found) == null, "pays the fee (%d) and takes it out of the stash" % fee)
+	var listing: Dictionary = flea.own_listings()[-1]
+	check(listing.state == flea.UP and listing.price == market and listing.fee == fee and listing.item.id == "roler" and listing.item.fir, "the listing keeps the item, found in raid")
+	check(flea.multiplier("roler") < before, "putting one up pushes its price down (×%.3f → ×%.3f)" % [before, flea.multiplier("roler")])
+	check(flea.slots() == 3 and flea.slots_used() == 1, "1 of 3 slots taken at level 15")
+	for i in 2:
+		check(flea.put_up(_fir("bolts"), 50000) == "", "(another listing)")
+	var fourth: RefCounted = _fir("roler")
+	check(flea.list_block_reason(fourth, 100000) == "All 3 listing slots are taken", "a fourth needs a free slot")
+	gs.level = 20
+	check(flea.slots() == 4 and flea.list_block_reason(fourth, 100000) == "", "level 20 has a fourth slot")
+	gs.level = 15
+	var waiting: Dictionary = flea.own_listings()[0]
+	var stash_before: int = _count("roler")
+	check(flea.take_down(waiting) == "" and _count("roler") == stash_before + 1 and flea.slots_used() == 2, "taking one down brings the item back (the fee stays paid)")
+
+
+func _a_backpack() -> String:
+	for data in db.all_items():
+		if data.category == data.Category.BACKPACK:
+			return data.id
+	return ""
+
+
+func _sale_timing() -> void:
+	section("Sale timing by fairness")
+	_profile(25)
+	var cheap: RefCounted = _fir("roler")
+	var fair: RefCounted = _fir("roler")
+	var over: RefCounted = _fir("roler")
+	var far: RefCounted = _fir("roler")
+	var market: int = flea.market_price(cheap)
+	check(flea.estimate_text(cheap, market) == "Sells in 5 min - 12 min", "at market: \"%s\"" % flea.estimate_text(cheap, market))
+	check(flea.estimate_text(far, roundi(market * 1.5)).begins_with("Won't sell"), "far over: \"%s\"" % flea.estimate_text(far, roundi(market * 1.5)))
+	flea.put_up(cheap, roundi(market * 0.9))
+	flea.put_up(fair, flea.market_price(fair))
+	flea.put_up(over, roundi(flea.market_price(over) * 1.15))
+	flea.put_up(far, roundi(flea.market_price(far) * 1.5))
+	var own: Array = flea.own_listings()
+	var minutes := own.map(func(listing: Dictionary) -> float: return (float(listing.sells) - float(listing.listed)) / 60.0 if float(listing.sells) > 0.0 else -1.0)
+	print("    minutes to sell at 0.9×, 1×, 1.15× and 1.5× market: %s" % [minutes])
+	check(minutes[0] > 0.0 and minutes[0] <= 5.0 * 1.4 and minutes[1] > 0.0 and minutes[1] <= 8.0 * 1.4, "under and at market it sells within minutes")
+	check(minutes[2] >= 45.0 * 0.6 and minutes[2] <= 150.0 * 1.4 and minutes[2] > minutes[1], "a little over takes longer")
+	check(minutes[3] < 0.0, "far over doesn't sell")
+	# The game closes; three hours later it starts again.
+	check(sm.save_game(), "(saved)")
+	stock.now_override = NOW + 3 * HOUR
+	gs.roubles = 0
+	sm.load_game()
+	own = flea.own_listings()
+	check(own.size() == 4 and own.slice(0, 3).all(func(listing: Dictionary) -> bool: return listing.state == flea.SOLD) and own[3].state == flea.UP,
+		"three hours later, the game closed in between, the three fairly priced ones have sold")
+	check(flea.notice_text().begins_with("Flea market: 3 sold") and flea.slots_used() == 1, "the main menu says so (\"%s\"); sold ones free their slot" % flea.notice_text())
+	var money: int = gs.roubles
+	var sold_for: int = own[0].price + own[1].price + own[2].price
+	var result: Dictionary = flea.collect_all()
+	check(result.roubles == sold_for and gs.roubles == money + sold_for and flea.own_listings().size() == 1, "COLLECT pays the asking prices in full (%d)" % sold_for)
+	stock.now_override = NOW + 12 * HOUR - 1.0
+	check(flea.own_listings()[0].state == flea.UP and flea.time_left(flea.own_listings()[0]) <= 1.0, "the dear one is still up a second before 12 hours")
+	stock.now_override = NOW + 12 * HOUR
+	var back: Dictionary = flea.own_listings()[0]
+	check(back.state == flea.EXPIRED and flea.notice_text() == "Flea market: 1 item back unsold: collect on the FLEA MARKET", "at 12 hours it comes back unsold")
+	var filled := 0
+	while gs.stash.add(item("ammo_556_fmj", 60)):
+		filled += 1
+	check(flea.collect(back) == "No room in the stash" and flea.own_listings().size() == 1, "with no room in the stash it waits")
+	for each: RefCounted in gs.stash.items.duplicate():
+		gs.stash.remove(each)
+	check(flea.collect(back) == "" and _count("roler") == 1 and _find("roler").fir and flea.own_listings().is_empty(), "then comes back to the stash, still found in raid")
+	stock.now_override = NOW + 10 * HOUR
+	check(flea.time() == NOW + 12 * HOUR, "(the market's clock stays at 12 hours)")
+
+
+func _banned() -> void:
+	section("Banned items")
+	_profile()
+	var banned := {"secure_alpha": "a secure container", "drillmaster_whistle": "a boss unique", "ammo_338_ap": "the .338 AP round (79 penetration)",
+		"ammo_545_ppbs": "5.45 PPBS (62)"}
+	for data in db.all_items():
+		if data.category == data.Category.KEY:
+			banned[data.id] = "a key (%s)" % data.display_name
+			break
+	for data in db.all_items():
+		if data.has_tag("keycard"):
+			banned[data.id] = "a keycard (%s)" % data.display_name
+			break
+	for id: String in banned:
+		var piece: RefCounted = _fir(id)
+		check(table.is_banned(piece.data) and flea.list_block_reason(piece, 100000) == table.ban_reason(piece.data), "%s can't be listed (\"%s\")" % [banned[id], table.ban_reason(piece.data)])
+	check(not table.is_banned(db.get_item("ammo_545_bs")) and not table.is_banned(db.get_item("roler")) and not table.is_banned(db.get_item("ak_74n")),
+		"5.45 BS (45), a Roler and an AK-74N can")
+
+
+func _saving() -> void:
+	section("Save round trip")
+	_profile()
+	var listing: Dictionary = flea.listings()[0]
+	flea.buy(listing)
+	var found: RefCounted = _fir("roler")
+	flea.put_up(found, 123456)
+	var before: Dictionary = flea.to_save()
+	check(sm.save_game(), "(saved)")
+	gs.flea = flea.blank()
+	sm.load_game()
+	var after: Dictionary = flea.to_save()
+	check(JSON.stringify(after) == JSON.stringify(before), "listings, pressure, what you bought, the next number and the market's clock come back")
+	check(flea.find(listing.id).is_empty() and flea.own_listings()[0].price == 123456, "the bought listing stays bought; your listing is still up")
+	var old: Dictionary = gs.to_dict()
+	old.profile.erase("flea")
+	old["version"] = 15
+	gs.from_dict(old)
+	check(JSON.stringify(gs.flea) == JSON.stringify(flea.blank()), "a version 15 save starts with a blank market")

@@ -250,6 +250,7 @@ func to_dict() -> Dictionary:
 			"loadout_presets": loadout_presets.duplicate(true),
 			"auto_equip": auto_equip.duplicate(),
 			"quick_buys": quick_buys.duplicate(true),
+			"flea": FleaMarket.to_save(),
 			"scav": {"karma": scav_karma, "ready_at": scav_ready_at, "kit": scav_kit.to_dict() if scav_kit else null},
 		},
 		"stash": stash.to_array(),
@@ -348,6 +349,7 @@ func from_dict(data: Dictionary) -> void:
 	loadout_presets = LoadoutPresets.sanitize(profile.get("loadout_presets", []))
 	auto_equip = LoadoutPlanner.clean_options(profile.get("auto_equip", {}))
 	quick_buys = QuickBuy.sanitize(profile.get("quick_buys", []))
+	flea = FleaMarket.from_save(profile.get("flea"))
 
 	stash.resize(Hideout.stash_size())
 	stash.load_array(data.get("stash", []))
