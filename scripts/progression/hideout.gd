@@ -36,6 +36,8 @@ const WATER_COLLECTOR := "water_collector"
 const GYM := "gym"
 const SECURITY := "security"
 const SHOOTING_RANGE := "shooting_range"
+## Where the Shooting Range's practice sessions are.
+const PRACTICE_MAP := "test_yard"
 ## Every station the hideout has (DESIGN.md §9), in the order the data lists them.
 const ALL_STATIONS := ["generator", "stash", "medstation", "nutrition_unit", "rest_space", "workbench", "water_collector",
 	"lavatory", "shooting_range", "gym", "intelligence_center", "bitcoin_farm", "security"]
@@ -222,6 +224,63 @@ static func scouting() -> int:
 ## The Shooting Range's practice tier (0: not built; 1: Scavs only, 2: AI PMCs too, 3: the boss too).
 static func practice() -> int:
 	return int(built_value(SHOOTING_RANGE, "practice", 0))
+
+
+## Security's scouting for a raid on `map_id` about to start (DESIGN.md §16.3): {} without Security, else
+## {"map", "tier", "boss" (true if the map's boss is in: rolled now with the boss's chance, and the
+## raid is then held to it: apply_scouting()), "guards" (tier 3, with the boss in: how many), "pmcs"
+## (tier 2+: AI PMCs on the map)}. A map without a boss has no "boss".
+static func scout(map_id: String, rng: RandomNumberGenerator) -> Dictionary:
+	var tier := scouting()
+	if tier == 0:
+		return {}
+	var result := {"map": map_id, "tier": tier}
+	var boss := BossTable.for_map(map_id)
+	if not boss.is_empty():
+		result.boss = rng.randf() < float(boss.chance)
+		if tier >= 3 and result.boss:
+			result.guards = rng.randi_range(int(boss.guards[0]), int(boss.guards[1]))
+	if tier >= 2:
+		result.pmcs = PmcAi.budget(map_id)
+	return result
+
+
+## What the raid setup says about `scouting` (scout()), one line each.
+static func scouting_lines(scouting_result: Dictionary) -> Array[String]:
+	var lines: Array[String] = []
+	if scouting_result.is_empty():
+		return lines
+	var boss := BossTable.for_map(str(scouting_result.map))
+	if not scouting_result.has("boss"):
+		lines.append("Security: no boss on this map.")
+	elif scouting_result.boss:
+		lines.append("Security: %s is in this raid%s." % [BossTable.full_name(boss),
+			" with %d %s" % [int(scouting_result.guards), BossTable.guard_plural(boss)] if scouting_result.has("guards") else ""])
+	else:
+		lines.append("Security: %s isn't in this raid." % BossTable.full_name(boss))
+	if scouting_result.has("pmcs"):
+		lines.append("Security: %d AI PMCs on the map." % int(scouting_result.pmcs))
+	return lines
+
+
+## Holds the raid (GameState.raid) to what Security scouted: the boss in or not, its guards, the AI PMCs.
+static func apply_scouting(raid: Dictionary, scouting_result: Dictionary) -> void:
+	for key: String in ["boss", "guards", "pmcs"]:
+		if scouting_result.has(key) and scouting_result.get("map") == raid.get("map"):
+			raid[key] = scouting_result[key]
+
+
+## The Shooting Range's practice session (DESIGN.md §9): a PMC raid on the Test Yard with a copy of your
+## gear, flagged "practice" (RaidController.is_practice()): nothing is lost or gained and no experience.
+## Tier 1 has Scavs only, 2 the map's AI PMCs too, 3 its boss too. {} without the Shooting Range.
+static func practice_raid() -> Dictionary:
+	var tier := practice()
+	if tier == 0:
+		return {}
+	var raid := {"map": PRACTICE_MAP, "side": "pmc", "loadout": GameState.pmc_loadout(), "practice": true, "boss": tier >= 3}
+	if tier < 2:
+		raid.pmcs = 0
+	return raid
 
 
 static func max_level(station: Dictionary) -> int:

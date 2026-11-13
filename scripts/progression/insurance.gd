@@ -71,8 +71,10 @@ static func insurer_text(id := "") -> String:
 	if each.is_empty():
 		return ""
 	var hours: Array = each.return_hours
-	return "%s · %d%% · back in %d-%d h (%s-%s)" % [each.name, roundi(float(each.rate) * 100.0), int(hours[0]), int(hours[1]),
-		_clock(real_seconds(float(hours[0]))), _clock(real_seconds(float(hours[1])))]
+	var faster := Hideout.insurance_time_multiplier()  # The Intelligence Center, while it has power.
+	return "%s · %s%% · back in %d-%d h (%s-%s)" % [each.name, str(snappedf(float(each.rate) * 100.0 * Hideout.insurance_price_multiplier(), 0.1)),
+		roundi(float(hours[0]) * faster), roundi(float(hours[1]) * faster), _clock(real_seconds(float(hours[0])) * faster),
+		_clock(real_seconds(float(hours[1])) * faster)]
 
 
 static func now() -> float:
@@ -80,12 +82,13 @@ static func now() -> float:
 
 
 ## What insuring `item` with `insurer_id` (default: your pick) costs: the insurer's share of its value
-## with its parts fitted (not what's inside it or loaded in it).
+## with its parts fitted (not what's inside it or loaded in it), × the hideout Intelligence Center's
+## insurance price multiplier while it has power (Hideout.insurance_price_multiplier()).
 static func price(item: ItemInstance, insurer_id := "") -> int:
 	var value := item.data.base_value * item.count
 	for part in WeaponMods.installed(item):
 		value += part.data.base_value
-	var rate := float(insurer(insurer_id).get("rate", CONFIG.insurance_rate))
+	var rate := float(insurer(insurer_id).get("rate", CONFIG.insurance_rate)) * Hideout.insurance_price_multiplier()
 	return maxi(ceili(value * rate / 100.0) * 100, CONFIG.insurance_min_price)
 
 
@@ -182,7 +185,8 @@ static func _part_of_any(part: ItemInstance, guns: Array[ItemInstance]) -> bool:
 
 
 ## Queues `items` (insurance returns, each with its insurer) in GameState.insurance_pending, due after
-## the insurer's return time (one roll per insurer, so a claim arrives together).
+## the insurer's return time (one roll per insurer, so a claim arrives together), × the Intelligence
+## Center's return time multiplier while it has power (Hideout.insurance_time_multiplier()).
 static func schedule(items: Array[ItemInstance], rng: RandomNumberGenerator = null) -> void:
 	if rng == null:
 		rng = RandomNumberGenerator.new()
@@ -193,7 +197,7 @@ static func schedule(items: Array[ItemInstance], rng: RandomNumberGenerator = nu
 		var id := str(each.get("id", ""))
 		if not due_by.has(id):
 			var hours: Array = each.get("return_hours", [24, 24])
-			due_by[id] = now() + real_seconds(rng.randf_range(float(hours[0]), float(hours[1])))
+			due_by[id] = now() + real_seconds(rng.randf_range(float(hours[0]), float(hours[1]))) * Hideout.insurance_time_multiplier()
 		GameState.insurance_pending.append({"item": item.to_dict(), "due": due_by[id], "insurer": id})
 
 

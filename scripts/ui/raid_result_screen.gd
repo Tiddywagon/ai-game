@@ -64,6 +64,11 @@ func show_outcome(outcome: RaidOutcome, raid: RaidController) -> void:
 		_:
 			if not outcome.found.is_empty():
 				notes.append("These now carry the found-in-raid checkmark: quests, hideout upgrades and some barters only take items with it.")
+	if bool(GameState.raid.get("practice", false)):  # The Shooting Range: nothing at stake.
+		notes.assign(["Practice session: nothing you brought or picked up was lost or kept, and no experience was earned."])
+		%FoundTitle.text = "PRACTICE SESSION  ·  NOTHING KEPT"
+		for child in %FoundItems.get_children():
+			child.queue_free()
 	%Note.text = "\n".join(notes)
 	%Note.visible = not notes.is_empty()
 	%MenuButton.grab_focus()

@@ -254,6 +254,16 @@ func is_real_raid() -> bool:
 	return GameState.raid.has("side")
 
 
+## A Shooting Range practice session (Hideout.practice_raid()): nothing it does reaches the profile.
+func is_practice() -> bool:
+	return bool(GameState.raid.get("practice", false))
+
+
+## True when what happens in this raid goes to the profile: a real raid that isn't practice.
+func counts_for_profile() -> bool:
+	return is_real_raid() and not is_practice()
+
+
 func enter_extract(zone: ExtractZone) -> void:
 	extract_zone = zone
 	extract_time = 0.0
@@ -310,7 +320,7 @@ func _track_poi() -> void:
 		return
 	visited_pois.append(poi.poi_id)
 	var first := false
-	if is_real_raid() and not poi.entry().is_empty() and poi.map_id == map_key():
+	if counts_for_profile() and not poi.entry().is_empty() and poi.map_id == map_key():
 		first = GameState.explore(map_key(), poi.poi_id)
 	if first:
 		discovered_pois.append(poi.poi_id)
@@ -986,21 +996,21 @@ func scav_witnesses(shooter: Actor, victim: Bot) -> int:
 func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 	if outcome:
 		return outcome
-	if status == RaidOutcome.Status.RUN_THROUGH:
+	if status == RaidOutcome.Status.RUN_THROUGH or is_practice():
 		xp = 0
 		for part in xp_parts:
 			xp_parts[part] = 0
-	elif status == RaidOutcome.Status.SURVIVED:
+	elif status == RaidOutcome.Status.SURVIVED and not is_practice():
 		xp_parts.survived = config.xp_survived
 		xp += config.xp_survived
-	if is_real_raid() and side() == "pmc":
+	if counts_for_profile() and side() == "pmc":
 		RaidOutcome.keep_metabolism(player.health, status == RaidOutcome.Status.KILLED or status == RaidOutcome.Status.MIA)
 	if side() == "scav" and (status == RaidOutcome.Status.SURVIVED or status == RaidOutcome.Status.RUN_THROUGH):
 		if extracted_with_others():
 			_add_karma("extract_with_others")
 		_add_karma("extract")
 	outcome = RaidOutcome.settle(status, side(), player.inventory, own_seconds(), xp,
-		player.kills, is_real_raid(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
+		player.kills, counts_for_profile(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
 		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
 			"faction": String(player.faction), "karma": karma_changes.duplicate(true)})
 	raid_ended.emit(outcome)

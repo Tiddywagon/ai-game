@@ -29,6 +29,9 @@ var _edit: Button
 var _loadout_screen: LoadoutScreen
 ## Counts the Scav cooldown down on the SCAV button, every second.
 var _scav_timer: Timer
+## What the hideout's Security scouted for this raid (Hideout.scout(): rolled once per map when the
+## check shows, and the raid is held to it at READY), or {}.
+var _scout := {}
 
 @onready var _steps: Array[Control] = [%MapStep, %SideStep, %LoadoutStep]
 @onready var _step_labels: Array[Label] = [%MapStepLabel, %SideStepLabel, %LoadoutStepLabel]
@@ -247,6 +250,11 @@ func _show_loadout() -> void:
 				checks.append("Your %s is worn (%d / %d): it may jam. Repair it in the modding screen." % [gun.data.display_name,
 					roundi(gun.durability), roundi(gun.max_durability)])
 		checks.append("If you die, everything you bring is lost, except your secure container and insured gear.")
+	if Hideout.scouting() > 0 and _scout.get("map", "") != _map.id:
+		var roll := RandomNumberGenerator.new()
+		roll.randomize()
+		_scout = Hideout.scout(_map.id, roll)
+	checks.append_array(Hideout.scouting_lines(_scout))
 	%Checks.text = "\n".join(checks.map(func(line: String) -> String: return "•  " + line))
 	%Checks.add_theme_color_override("font_color", WARNING_COLOR if _side == "pmc" else MenuEntryButton.TEXT)
 	%RaidSummary.text = "%s  ·  %d min  ·  %s" % [_map.display_name, _map.raid_minutes, Factions.side_name(_side)]
@@ -360,7 +368,7 @@ static func use_entry_item(map: MapInfo, loadout: Inventory) -> bool:
 	return false
 
 
-## READY: the raid is set up (GameState.raid) and the loading screen comes. A Scav run joins at a random
+## READY: the raid is set up (GameState.raid, held to what Security scouted) and the loading screen comes. A Scav run joins at a random
 ## moment of the raid (ScavRuns.roll_offset()) and starts the Scav cooldown (ScavRuns.deploy(), which
 ## saves). Nothing happens for a Scav run still on cooldown.
 func _start_raid() -> void:
@@ -369,6 +377,7 @@ func _start_raid() -> void:
 	if entry_block_reason(_map, _side, _loadout) != "" or not use_entry_item(_map, _loadout):
 		return
 	GameState.raid = {"map": _map.id, "side": _side, "loadout": _loadout}
+	Hideout.apply_scouting(GameState.raid, _scout)
 	if _side == "scav":
 		var roll := RandomNumberGenerator.new()
 		roll.randomize()

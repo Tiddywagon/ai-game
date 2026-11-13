@@ -1,7 +1,8 @@
 class_name BossSpawn
 extends Node3D
 ## Where a map's boss (DESIGN.md §4.3, data/config/bosses.json: BossTable) may turn up. At raid start
-## it rolls the boss's chance (35%; seeded by the raid; GameState.raid "boss": true or false forces it)
+## it rolls the boss's chance (35%; seeded by the raid; GameState.raid "boss": true or false forces it,
+## and "guards" the number of guards: what the hideout's Security scouted)
 ## and if it comes up, the boss stands here with 2-4 guards at its Marker3D children (its haunt, which
 ## the boss then wanders, the guards staying with it). Boss and guards are a squad (Squad, the guards in
 ## a ring around the boss): they share targets and push as a group (Bot), and raid events don't pull
@@ -62,6 +63,8 @@ func spawn(rng: RandomNumberGenerator) -> Array[Bot]:
 	squad.append(boss)
 	var spots := haunt().slice(1)
 	var count := rng.randi_range(int(entry.guards[0]), int(entry.guards[1]))
+	if GameState.raid.has("guards"):  # Scouted by the hideout's Security (Hideout.scout()).
+		count = clampi(int(GameState.raid.guards), int(entry.guards[0]), int(entry.guards[1]))
 	for i in count:
 		var at: Vector3 = to_local(spots[i % spots.size()]) if not spots.is_empty() else Vector3(cos(TAU * i / count), 0, sin(TAU * i / count)) * 2.0
 		at += Vector3(rng.randf_range(-0.4, 0.4), 0.0, rng.randf_range(-0.4, 0.4))

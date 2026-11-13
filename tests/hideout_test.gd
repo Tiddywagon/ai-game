@@ -19,6 +19,13 @@ func run() -> void:
 	_handover()
 	_builds()
 	_crafts()
+	_fuel()
+	_farm()
+	_water()
+	_gym()
+	_intelligence()
+	_security()
+	_shooting_range()
 	work.now_override = -1.0
 
 
@@ -287,3 +294,186 @@ func _crafts() -> void:
 	while gs.stash.add(item("gold_bar")):
 		filler.append(true)
 	check(work.collect(medstation) == "No room in the stash" and work.ready(medstation).size() == 1, "with the stash full the craft waits")
+
+
+func _fuel() -> void:
+	section("Generator fuel and power")
+	_profile()
+	var generator: Dictionary = hideout.find("generator")
+	check(work.add_fuel() == "Build the Generator first" and not work.has_power(), "no generator, no fuel slots, no power")
+	_built("generator")
+	check(work.add_fuel() == "You have no fuel", "fuel goes in from the stash")
+	_give("fuel_can", 3)
+	check(work.add_fuel() == "" and work.add_fuel() == "" and work.add_fuel() == "Every fuel slot is full" and gs.stash.count_of("fuel_can") == 1,
+		"level 1 has two fuel slots")
+	check(work.has_power() and is_equal_approx(work.fuel_seconds_left(), 8.0 * HOUR) and is_equal_approx(work.fuel_fraction(), 1.0),
+		"two cans: 8 hours of power, the gauge full")
+	_later(60.0)
+	check(is_equal_approx(work.fuel_seconds_left(), 7.0 * HOUR) and gs.hideout_state.fuel.size() == 2 and is_equal_approx(gs.hideout_state.fuel[0].left, 3.0 * HOUR),
+		"an hour later: 7 hours left, the first can burning")
+	work.set_power(false)
+	_later(120.0)
+	check(not work.has_power() and is_equal_approx(gs.hideout_state.fuel[0].left, 3.0 * HOUR), "switched off: no power and no fuel burns")
+	work.set_power(true)
+	gs.hideout.generator = 3
+	_later(60.0)
+	check(is_equal_approx(gs.hideout_state.fuel[0].left, 3.0 * HOUR - HOUR / 1.5), "at level 3 fuel lasts ×1.5: an hour burns 40 minutes of a can")
+	check(work.add_fuel() == "" and gs.hideout_state.fuel.size() == 3, "level 3 has more slots")
+	var medstation: Dictionary = _built("medstation")
+	_give("empty_injector", 1)
+	_give("sugar", 1)
+	work.craft(medstation, hideout.all_crafts(medstation)[2][1])
+	gs.hideout_state.fuel.assign([{"item": "fuel_can", "left": 100.0}])  # 150 seconds of power at ×1.5.
+	var saved: Dictionary = gs.to_dict()
+	work.now_override += 250.0
+	gs.from_dict(saved)
+	check(gs.hideout_state.fuel.is_empty() and not work.has_power(), "closed while the fuel ran out: the generator is dry")
+	check(is_equal_approx(work.queue(medstation)[0].left, 300.0 - 150.0 - 50.0), "the craft ran full speed while there was power, half speed after (%s)" % work.queue(medstation)[0].left)
+
+
+func _farm() -> void:
+	section("The Bitcoin Farm")
+	_profile()
+	var farm: Dictionary = hideout.find("bitcoin_farm")
+	check(work.install_card() == "Build the Bitcoin Farm first", "no farm, no cards")
+	_built("generator", 2)
+	_built("bitcoin_farm")
+	gs.hideout_state.fuel.assign([{"item": "fuel_can", "left": 1000.0 * HOUR}])
+	check(work.install_card() == "You have no graphics card" and work.seconds_to_next("bitcoin_farm") == -1.0, "without cards it makes nothing")
+	_give("gpu", 1, true)
+	_give("gpu", 3, false)
+	check(work.install_card() == "" and work.card_count() == 1 and gs.hideout_state.cards[0].fir == false, "a card goes in (one not found in raid first)")
+	check(is_equal_approx(work.seconds_to_next("bitcoin_farm"), 24.0 * HOUR), "one card: a coin a day")
+	check(work.install_card() == "" and work.install_card() == "" and work.install_card() == "Every card slot is full" and work.card_count() == 3,
+		"level 1 takes three cards")
+	check(is_equal_approx(work.production_speed("bitcoin_farm"), 1.5), "three cards: 1 + 2 × 0.25 = 1.5 times as fast")
+	_later(16.0 * 60.0)
+	check(work.production("bitcoin_farm").waiting == 1, "16 hours later a coin is waiting")
+	var saved: Dictionary = gs.to_dict()
+	work.now_override += 10.0 * 24.0 * HOUR
+	gs.from_dict(saved)
+	check(work.production("bitcoin_farm").waiting == 3, "ten days closed: it stops at its cap of three")
+	var coins: int = gs.stash.count_of("bitcoin")
+	check(work.collect_production("bitcoin_farm") == "" and gs.stash.count_of("bitcoin") == coins + 3 and work.production("bitcoin_farm").waiting == 0,
+		"COLLECT puts the three coins in the stash")
+	var fir: int = gs.stash.items.filter(func(each: RefCounted) -> bool: return each.data.id == "bitcoin" and each.fir).size()
+	check(fir == 3, "found in raid")
+	gs.hideout_state.fuel.clear()
+	_later(48.0 * 60.0)
+	check(work.production("bitcoin_farm").waiting == 0 and work.seconds_to_next("bitcoin_farm") == -1.0, "no power: the farm stops")
+	var before: int = search_count("gpu")
+	check(work.remove_card() == "" and work.card_count() == 2 and search_count("gpu") == before + 1, "a card comes back out into the stash")
+	gs.hideout_state.cards.append({"id": "gpu", "fir": true})
+	var fir_before: int = load("res://scripts/progression/item_search.gd").count("gpu", true)
+	work.remove_card()
+	check(load("res://scripts/progression/item_search.gd").count("gpu", true) == fir_before + 1, "as it went in: found in raid stays found in raid")
+
+
+func _water() -> void:
+	section("The Water Collector")
+	_profile()
+	_built("generator")
+	_built("water_collector")
+	gs.hideout_state.fuel.assign([{"item": "fuel_can", "left": 2.0 * HOUR}])
+	var bottles: int = gs.stash.count_of("water_bottle")
+	_later(120.0)
+	check(work.production("water_collector").waiting == 1, "with power: a bottle every 2 hours")
+	_later(240.0)
+	check(work.production("water_collector").waiting == 2, "without power half as fast, up to its cap of 2")
+	check(work.collect_production("water_collector") == "" and gs.stash.count_of("water_bottle") == bottles + 2, "collected into the stash")
+	check(work.collect_production("water_collector") == "Nothing to collect", "then it's empty")
+
+
+func _gym() -> void:
+	section("The Gym")
+	_profile()
+	check(work.train("strength") == "Build the Gym first", "no Gym, no training")
+	_built("gym")
+	check(work.train("vitality") == "The Gym trains Strength or Endurance", "only Strength and Endurance")
+	check(work.train("strength") == "" and is_equal_approx(gs.skills.strength.progress, 0.3), "a session: 30 points, 30% of Strength level 1")
+	check(work.train("endurance").begins_with("Rested in 8:00:00"), "the next one is 8 hours away")
+	_later(8.0 * 60.0)
+	gs.hideout.gym = 3
+	check(work.train("endurance") == "" and is_equal_approx(gs.skills.endurance.progress, 0.6), "at level 3 a session gives 60 points")
+	check(work.train("strength").begins_with("Rested in 4:00:00"), "and comes round every 4 hours")
+
+
+func _intelligence() -> void:
+	section("The Intelligence Center")
+	_profile()
+	var insurance: GDScript = load("res://scripts/progression/insurance.gd")
+	var scav: GDScript = load("res://scripts/raid/scav_runs.gd")
+	var armor := item("slick_carrier")
+	var base_price: int = insurance.price(armor)
+	var base_cooldown: float = scav.cooldown_seconds()
+	_built("generator")
+	_built("intelligence_center")
+	check(hideout.scav_cooldown_multiplier() == 1.0 and insurance.price(armor) == base_price, "built but without power: no bonus")
+	gs.hideout_state.fuel.assign([{"item": "fuel_can", "left": 4.0 * HOUR}])
+	check(is_equal_approx(hideout.scav_cooldown_multiplier(), 0.9) and is_equal_approx(scav.cooldown_seconds(), base_cooldown * 0.9),
+		"with power: the Scav cooldown is 10% shorter")
+	check(base_price == 33600 and insurance.price(armor) == 32000, "insurance costs 5%% less: %d, was %d" % [insurance.price(armor), base_price])
+	gs.hideout.intelligence_center = 3
+	gs.raid = {}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	gs.insurance_pending.clear()
+	insurance.schedule(items([armor]), rng)
+	var due: float = float(gs.insurance_pending[0].due) - insurance.now()
+	var hours: Array = insurance.insurer("bulat").return_hours
+	check(due >= insurance.real_seconds(float(hours[0])) * 0.7 - 1.0 and due <= insurance.real_seconds(float(hours[1])) * 0.7 + 1.0,
+		"at level 3 insured gear comes back in 70% of the time")
+	check(is_equal_approx(hideout.insurance_price_multiplier(), 0.85) and is_equal_approx(hideout.scav_cooldown_multiplier(), 0.7), "and costs 15% less, the cooldown 30% shorter")
+	gs.insurance_pending.clear()
+
+
+func _security() -> void:
+	section("Security: scouting")
+	_profile()
+	var rng := RandomNumberGenerator.new()
+	check(hideout.scout("test_yard", rng).is_empty(), "no Security, no scouting")
+	_built("security")
+	var found_in := false
+	var found_out := false
+	for i in 40:
+		rng.seed = i
+		var scouted: Dictionary = hideout.scout("test_yard", rng)
+		found_in = found_in or scouted.boss
+		found_out = found_out or not scouted.boss
+		if i == 0:
+			check(not scouted.has("pmcs") and not scouted.has("guards"), "level 1 says only whether the boss is in")
+	check(found_in and found_out, "the boss is in some raids and not in others")
+	gs.hideout.security = 3
+	var scouted := {}
+	for i in 40:
+		rng.seed = i
+		scouted = hideout.scout("test_yard", rng)
+		if scouted.boss:
+			break
+	check(scouted.boss and scouted.has("guards") and scouted.has("pmcs"), "level 3: the guards and the AI PMCs too")
+	var lines: Array = hideout.scouting_lines(scouted)
+	check(lines.size() == 2 and "is in this raid with %d" % scouted.guards in lines[0] and "AI PMCs" in lines[1], "the raid setup says so (%s)" % str(lines))
+	var raid := {"map": "test_yard", "side": "pmc"}
+	hideout.apply_scouting(raid, scouted)
+	check(raid.boss == true and raid.guards == scouted.guards and raid.pmcs == scouted.pmcs, "and the raid is held to it")
+	var other := {"map": "factory", "side": "pmc"}
+	hideout.apply_scouting(other, scouted)
+	check(not other.has("boss"), "scouting for one map never holds another")
+
+
+func _shooting_range() -> void:
+	section("The Shooting Range")
+	_profile()
+	check(hideout.practice_raid().is_empty(), "no Shooting Range, no practice")
+	_built("shooting_range")
+	var raid: Dictionary = hideout.practice_raid()
+	check(raid.map == "test_yard" and raid.practice and raid.side == "pmc" and raid.pmcs == 0 and raid.boss == false, "level 1: the Test Yard, Scavs only")
+	check(raid.loadout != gs.inventory, "with a copy of your gear: nothing you own is at stake")
+	gs.hideout.shooting_range = 3
+	raid = hideout.practice_raid()
+	check(not raid.has("pmcs") and raid.boss == true, "level 3: AI PMCs and the boss too")
+	gs.raid = raid
+	var controller: Node = load("res://scripts/raid/raid_controller.gd").new()
+	check(controller.is_real_raid() and controller.is_practice() and not controller.counts_for_profile(), "the raid counts as practice: nothing reaches the profile")
+	controller.free()
+	gs.raid = {}
