@@ -80,7 +80,13 @@ nothing spends it), so a small one is added in this step.
   each of several sets and an Epic one), ending with a new large secure container (4×4, bigger than Kappa;
   original name) as the reward.
 
-## 6. Drip Slots (small)
+## 6. Drip Slots (small) — superseded: see the note below
+
+A full cosmetic slot machine is now planned (E15_drip_cosmetics.md), so E10 does not build a machine. E10 only
+provides the Oddities bonus as an allowance (`Figures.bonus("drip_spin")`, one free spin per real day, with the
+day it was last used saved) for that machine to use. The text below is kept for reference only.
+
+### (not built) Drip Slots
 
 - A slot machine on the shelf screen: a spin costs Drip (config), three reels with weighted symbols, payouts from
   a table in `data/config/drip_slots.json` (three of a kind: an item from a rarity pool that includes figures;

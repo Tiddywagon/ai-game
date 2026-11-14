@@ -18,6 +18,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E11 | Data-driven quest system (more objective types, unlocks, quest log, raid tracker): [E11_quests.md](E11_quests.md) | after E10 |
 | E12 | At least 60 quests across traders, maps, factions and bosses: [E12_quest_content.md](E12_quest_content.md) | after E11 |
 | E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) | after E12 |
+| E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) | after E13 |
+| E15 | Drip economy, cosmetic slot machine, skins, Cosmetics tab: [E15_drip_cosmetics.md](E15_drip_cosmetics.md) | after E14 (two parts) |
 | | **The first batch (through E9) is complete**: every step is done and no known bug is open | |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
