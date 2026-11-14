@@ -14,7 +14,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) (suite `tests/flea_test.gd`) | done |
 | E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) (suite `tests/hideout_test.gd`) | done |
 | E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) (suite `tests/faction_perks_test.gd`) | done |
-| | **The batch is complete**: every step is done and no known bug is open | |
+| E10 | Collectible figures, Collectors Shelf, set bonuses, Collector quests: [E10_figures.md](E10_figures.md) | in progress |
+| | **The first batch (through E9) is complete**: every step is done and no known bug is open | |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
 through, so their content is designed here; DESIGN.md says so where it matters. The exact wording of the flea
