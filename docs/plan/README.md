@@ -16,6 +16,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) (suite `tests/faction_perks_test.gd`) | done |
 | E10 | Collectible figures, Collectors Shelf, set bonuses, Collector quests: [E10_figures.md](E10_figures.md) | in progress |
 | E11 | Data-driven quest system (more objective types, unlocks, quest log, raid tracker): [E11_quests.md](E11_quests.md) | after E10 |
+| E12 | At least 60 quests across traders, maps, factions and bosses: [E12_quest_content.md](E12_quest_content.md) | after E11 |
+| E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) | after E12 |
 | | **The first batch (through E9) is complete**: every step is done and no known bug is open | |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
