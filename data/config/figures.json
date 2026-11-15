@@ -1,0 +1,30 @@
+{
+  "_comment": "Collectible figures (DESIGN.md §6.6), read by FigureTable (checked when the items load: FigureTable.problems()) and Figures. The figures themselves are the items in data/items/figures/ (category figure, 1x1, stats set and model). shelf: the hideout station that displays them (its levels' display_slots in data/hideout/stations.json) and how many slots one shelf board holds (columns). sets: in the order the COLLECTION screen lists them; a set's bonus (type, value) is on while every figure of the set is on the shelf: search_speed (share faster loot search), pmc_kill_xp (share more XP for a PMC kill), trader_prices (share off trader buy prices and on trader sell rates, never past the resale floor), boss_chance (added to every boss's chance, up to 100%), metabolism (share slower energy and hydration drain), drip_spin (free Drip slot spins a real day), exploration_xp (share more XP for exploring a point of interest). sources: where figures drop, each a chance and a loot table of data/loot_tables/figures/ (rolled on a stream of their own, so nothing else changes): container (any searched container; chances: other chances by LootContainer id), scav_body and pmc_body (AI bodies; a PMC's is of its own faction's table faction_share of the time), boss (the boss's own figure, bosses.json \"figure\"), landmark (an original point of interest's own figure, pois.json \"figure\", in one of its containers), flea (per_refresh: the chance one figure listing goes up at a refresh). Never in a Shooting Range practice raid.",
+  "shelf": {"station": "collectors_shelf", "columns": 14},
+  "sets": [
+    {"id": "raiders", "name": "Raiders", "about": "The Scavs and raiders you meet out there.", "found": "On Scav and PMC bodies",
+     "bonus": {"type": "search_speed", "value": 0.05}},
+    {"id": "factions", "name": "Factions", "about": "Three BEAR and three USEC operators.", "found": "On AI PMCs of that faction",
+     "bonus": {"type": "pmc_kill_xp", "value": 0.05}},
+    {"id": "traders", "name": "Traders", "about": "One for each of the seven traders.", "found": "A barter with that trader",
+     "bonus": {"type": "trader_prices", "value": 0.03}},
+    {"id": "bosses", "name": "Bosses", "about": "One for each map's boss.", "found": "On that boss",
+     "bonus": {"type": "boss_chance", "value": 0.1}},
+    {"id": "wildlife", "name": "Wildlife", "about": "Animals of the region.", "found": "In containers, hidden stashes and airdrops",
+     "bonus": {"type": "metabolism", "value": 0.1}},
+    {"id": "oddities", "name": "Oddities", "about": "Strange little things.", "found": "In containers, hidden stashes and airdrops",
+     "bonus": {"type": "drip_spin", "value": 1}},
+    {"id": "landmarks", "name": "Landmarks", "about": "One for each original point of interest.", "found": "At its own point of interest",
+     "bonus": {"type": "exploration_xp", "value": 0.1}}
+  ],
+  "sources": {
+    "container": {"chance": 0.012, "table": "res://data/loot_tables/figures/finds.tres",
+      "chances": {"floor_stash": 0.15, "airdrop_crate": 0.4, "supply_cargo": 0.12, "weapon_cache": 0.08, "safe": 0.03, "duffle_bag": 0.03, "drawer": 0.025}},
+    "scav_body": {"chance": 0.04, "table": "res://data/loot_tables/figures/raiders.tres"},
+    "pmc_body": {"chance": 0.08, "table": "res://data/loot_tables/figures/raiders.tres", "faction_share": 0.6,
+      "faction_tables": {"bear": "res://data/loot_tables/figures/bear.tres", "usec": "res://data/loot_tables/figures/usec.tres"}},
+    "boss": {"chance": 0.3},
+    "landmark": {"chance": 0.1},
+    "flea": {"per_refresh": 0.12, "table": "res://data/loot_tables/figures/market.tres"}
+  }
+}

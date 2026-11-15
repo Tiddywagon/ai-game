@@ -10,7 +10,7 @@ extends RefCounted
 const PATH := "res://data/config/bosses.json"
 const LOOT := preload("res://data/loot_tables/boss_loot.tres")
 const BODY_LOOT := preload("res://data/loot_tables/boss_body.tres")
-const FIELDS := ["id", "name", "title", "theme", "chance", "guards", "guard_name", "loot_focus", "unique", "boss", "guard"]
+const FIELDS := ["id", "name", "title", "theme", "chance", "guards", "guard_name", "loot_focus", "unique", "figure", "boss", "guard"]
 const GEAR_SLOTS := ["armor", "helmet", "rig", "backpack"]
 ## The lowest armor class a boss's and a guard's armor and helmet (and an armored rig) may have.
 const MIN_ARMOR_CLASS := {"boss": 5, "guard": 4}

@@ -1,6 +1,6 @@
 class_name Hideout
 extends RefCounted
-## Hideout stations (DESIGN.md §9): the 13 stations in data/hideout/stations.json, the rules in
+## Hideout stations (DESIGN.md §9): the 14 stations in data/hideout/stations.json, the rules in
 ## rules.json and the cosmetics in cosmetics.json (all checked when the items load: problems()), levels
 ## built in GameState.hideout. Upgrading costs roubles, items (found in raid from level 2: only items
 ## with the checkmark count for those), sometimes other stations' levels, a trader's loyalty level
@@ -19,7 +19,8 @@ extends RefCounted
 ## "fuel_efficiency" (the Generator), "card_slots" (the Bitcoin Farm), "produces": {"item", "minutes",
 ## "cap"} (the Water Collector and the Bitcoin Farm), "training": {"points", "hours"} (the Gym),
 ## "scav_cooldown", "insurance_price", "insurance_time" (the Intelligence Center: multipliers),
-## "scouting" (Security) and "practice" (the Shooting Range): tiers 1-3}]}.
+## "scouting" (Security) and "practice" (the Shooting Range): tiers 1-3, "display_slots" (the Collectors
+## Shelf: how many figures it displays, Figures)}]}.
 
 const STATIONS_PATH := "res://data/hideout/stations.json"
 const RULES_PATH := "res://data/hideout/rules.json"
@@ -36,23 +37,25 @@ const WATER_COLLECTOR := "water_collector"
 const GYM := "gym"
 const SECURITY := "security"
 const SHOOTING_RANGE := "shooting_range"
+## The station that displays collectible figures (DESIGN.md §6.6, Figures): its levels' "display_slots".
+const COLLECTORS_SHELF := "collectors_shelf"
 ## Where the Shooting Range's practice sessions are.
 const PRACTICE_MAP := "test_yard"
 ## Every station the hideout has (DESIGN.md §9), in the order the data lists them.
 const ALL_STATIONS := ["generator", "stash", "medstation", "nutrition_unit", "rest_space", "workbench", "water_collector",
-	"lavatory", "shooting_range", "gym", "intelligence_center", "bitcoin_farm", "security"]
+	"lavatory", "shooting_range", "gym", "intelligence_center", "bitcoin_farm", "security", "collectors_shelf"]
 const STATION_KEYS := ["id", "name", "description", "start_level", "room", "needs_power", "unpowered_rate", "fuel", "cards", "levels"]
 const LEVEL_KEYS := ["level", "roubles", "stations", "traders", "player_level", "build_minutes", "requires", "crafts", "stash_size",
 	"fuel_slots", "fuel_efficiency", "card_slots", "produces", "training", "scav_cooldown", "insurance_price", "insurance_time",
-	"scouting", "practice"]
+	"scouting", "practice", "display_slots"]
 ## Level keys only one station may set.
 const OWN_KEYS := {"stash_size": STASH, "fuel_slots": GENERATOR, "fuel_efficiency": GENERATOR, "card_slots": BITCOIN_FARM,
 	"training": GYM, "scav_cooldown": INTELLIGENCE_CENTER, "insurance_price": INTELLIGENCE_CENTER,
-	"insurance_time": INTELLIGENCE_CENTER, "scouting": SECURITY, "practice": SHOOTING_RANGE}
+	"insurance_time": INTELLIGENCE_CENTER, "scouting": SECURITY, "practice": SHOOTING_RANGE, "display_slots": COLLECTORS_SHELF}
 ## Level keys every level of their station sets.
 const EVERY_LEVEL_KEYS := {GENERATOR: ["fuel_slots", "fuel_efficiency"], BITCOIN_FARM: ["card_slots", "produces"],
 	WATER_COLLECTOR: ["produces"], GYM: ["training"], SECURITY: ["scouting"], SHOOTING_RANGE: ["practice"],
-	INTELLIGENCE_CENTER: ["scav_cooldown", "insurance_price", "insurance_time"]}
+	INTELLIGENCE_CENTER: ["scav_cooldown", "insurance_price", "insurance_time"], COLLECTORS_SHELF: ["display_slots"]}
 const RECIPE_KEYS := ["id", "minutes", "inputs", "output"]
 const COSMETIC_KEYS := ["id", "name", "slot", "color", "roubles", "description", "requires"]
 ## Cosmetic slots: one cosmetic each, drawn on the hideout plan (HideoutMap).
@@ -472,6 +475,8 @@ static func gives(station: Dictionary, entry: Dictionary) -> Array[String]:
 		lines.append(["", "Scouting: is the boss in", "Scouting: the boss and the AI PMCs", "Scouting: the boss, its guards and the AI PMCs"][int(entry.scouting)])
 	if entry.has("practice"):
 		lines.append(["", "Practice: Scavs only", "Practice: AI PMCs too", "Practice: the boss too"][int(entry.practice)])
+	if entry.has("display_slots"):
+		lines.append("%d display slots for figures" % int(entry.display_slots))
 	if station.id == "nutrition_unit" or station.id == "rest_space":
 		var bonus := Consumables.CONFIG.nutrition_unit_bonus if station.id == "nutrition_unit" else Consumables.CONFIG.rest_space_bonus
 		lines.append("Energy and hydration refill +%d%%" % roundi(bonus * 100.0))
@@ -688,6 +693,8 @@ static func _level_problems(station: Dictionary, entry: Variant, number: int, st
 			found.append("%s: %s is a tier from 1 to 3" % [where, key])
 	if entry.has("card_slots") and (not _is_number(entry.card_slots) or int(entry.card_slots) < 1):
 		found.append("%s: card_slots below 1" % where)
+	if entry.has("display_slots") and (not _is_number(entry.display_slots) or int(entry.display_slots) < 1):
+		found.append("%s: display_slots below 1" % where)
 	var training: Variant = entry.get("training")
 	if entry.has("training") and not (training is Dictionary and _is_number(training.get("points")) and float(training.points) > 0.0
 			and _is_number(training.get("hours")) and float(training.hours) > 0.0):

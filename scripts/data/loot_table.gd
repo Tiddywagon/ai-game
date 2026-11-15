@@ -7,8 +7,9 @@ extends Resource
 ## A roll picks a rarity by weight: the base weights × this table's rarity multipliers × the map's (Lab Zero
 ## doubles Epic and Legendary). Then it picks an item of that rarity the table allows, weighted by each
 ## item's loot_weight × the table's item_weights. A table allows every item in its item list, of its
-## categories, of its groups, with any of its tags or of its types (all of them together; anything if
-## it has none of these): a toolbox rolls the Hardware and Tools groups, a safe anything tagged
+## categories, of its groups, with any of its tags or of its types (all of them together; anything but
+## collectible figures if it has none of these: figures only come from the tables that name them,
+## DESIGN.md §6.6): a toolbox rolls the Hardware and Tools groups, a safe anything tagged
 ## "valuable" (DESIGN.md §6.5). Rarities with nothing allowed in them get no weight, so the others
 ## share their chance. Pass a RandomNumberGenerator for repeatable results. Rolled inside a point of
 ## interest (DESIGN.md §5.2), items matching its focus tags weigh PoiConfig.focus_weight times more.
@@ -43,7 +44,8 @@ const RARITY_COUNT := 6
 ## Items of `rarity` this table can roll (loot_weight above 0).
 func candidates(rarity: int) -> Array[ItemData]:
 	var anything := categories.is_empty() and items.is_empty() and groups.is_empty() and tags.is_empty() and types.is_empty()
-	return ItemDB.lootable(rarity, []).filter(func(item: ItemData) -> bool: return anything or _source(item) != "")
+	return ItemDB.lootable(rarity, []).filter(func(item: ItemData) -> bool:
+		return (anything and item.category != ItemData.Category.FIGURE) or _source(item) != "")
 
 
 ## Why this table holds `item`: "list" (its item list or categories), "tag" (only its groups or tags),

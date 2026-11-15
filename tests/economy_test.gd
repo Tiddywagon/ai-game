@@ -239,7 +239,7 @@ func _selling() -> void:
 	for data in db.all_items():
 		if not selling.buys("mole", data):
 			unsold += 1
-	check(unsold == 0, "Mole buys every one of the 505 items")
+	check(unsold == 0, "Mole buys every one of the 561 items")
 	gs.trader_loyalty.vera.level = 4
 	check(is_equal_approx(selling.rate("vera"), 0.64), "each loyalty level adds 3%: Vera pays 64% at LL4")
 

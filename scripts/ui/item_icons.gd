@@ -85,6 +85,10 @@ static func _draw_icon(item: ItemData, color: Color) -> Image:
 			glyph.box(0.45, 0.44, 0.95, 0.56)  # Blade.
 			glyph.box(0.75, 0.56, 0.82, 0.72)  # Teeth.
 			glyph.box(0.87, 0.56, 0.94, 0.68)
+		ItemData.Category.FIGURE:
+			glyph.box(0.14, 0.84, 0.86, 0.98)  # Base.
+			glyph.box(0.32, 0.4, 0.68, 0.84)  # Body.
+			glyph.disc(0.5, 0.24, 0.17, false)  # Head.
 		ItemData.Category.MELEE:
 			glyph.box(0.44, 0.15, 0.56, 0.95)  # Handle.
 			glyph.box(0.2, 0.12, 0.6, 0.38)  # Blade.

@@ -182,7 +182,7 @@
     "id": "shooting_range",
     "name": "Shooting Range",
     "description": "Targets, sandbags and a firing line. PRACTICE takes your gear to the Test Yard with nothing at stake: nothing is lost, nothing is gained, no experience.",
-    "room": [13, 15, 19, 5],
+    "room": [13, 15, 12, 5],
     "levels": [
       {"level": 1, "roubles": 40000, "build_minutes": 10, "requires": [{"item": "bolts", "count": 3}, {"item": "weapon_parts", "count": 1}], "practice": 1},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "build_minutes": 60, "requires": [{"item": "bolts", "count": 5, "fir": true}, {"item": "weapon_parts", "count": 2, "fir": true}, {"item": "light_bulb", "count": 3, "fir": true}], "practice": 2},
@@ -235,6 +235,17 @@
       {"level": 1, "roubles": 25000, "build_minutes": 5, "requires": [{"item": "nails", "count": 3}, {"item": "wires", "count": 2}, {"item": "light_bulb", "count": 2}], "scouting": 1},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "build_minutes": 60, "requires": [{"item": "nails", "count": 5, "fir": true}, {"item": "hex_nuts", "count": 4, "fir": true}, {"item": "wires", "count": 4, "fir": true}, {"item": "aa_battery", "count": 4, "fir": true}], "scouting": 2},
       {"level": 3, "roubles": 100000, "stations": {"generator": 2}, "player_level": 10, "build_minutes": 180, "requires": [{"item": "vhf_radio", "count": 1, "fir": true}, {"item": "military_cable", "count": 1, "fir": true}, {"item": "capacitors", "count": 3, "fir": true}, {"item": "cordless_drill", "count": 1, "fir": true}], "scouting": 3}
+    ]
+  },
+  {
+    "id": "collectors_shelf",
+    "name": "Collectors Shelf",
+    "description": "A lit display shelf for collectible figures. Figures placed on it are kept by the shelf and safe forever, and a set with every figure on display gives its bonus. Each level adds display slots.",
+    "room": [25, 15, 7, 5],
+    "levels": [
+      {"level": 1, "roubles": 60000, "build_minutes": 10, "requires": [{"item": "nails", "count": 4}, {"item": "light_bulb", "count": 2}, {"item": "duct_tape", "count": 1}], "display_slots": 12},
+      {"level": 2, "roubles": 250000, "build_minutes": 90, "requires": [{"item": "screws", "count": 6, "fir": true}, {"item": "light_bulb", "count": 4, "fir": true}, {"item": "wires", "count": 3, "fir": true}, {"item": "epoxy_resin", "count": 1, "fir": true}], "display_slots": 28},
+      {"level": 3, "roubles": 800000, "stations": {"generator": 2}, "player_level": 12, "build_minutes": 240, "requires": [{"item": "cordless_drill", "count": 1, "fir": true}, {"item": "hex_nuts", "count": 8, "fir": true}, {"item": "power_cord", "count": 3, "fir": true}, {"item": "circuit_board", "count": 2, "fir": true}], "display_slots": 56}
     ]
   }
 ]

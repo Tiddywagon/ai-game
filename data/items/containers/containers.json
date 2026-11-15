@@ -5,6 +5,8 @@
    "rarity": "epic", "size": [2, 2], "weight": 0.6, "value": 0, "stats": {"grid": [3, 2], "secure": true}, "loot_weight": 0},
   {"id": "secure_gamma", "name": "Secure container Gamma", "description": "A 3×3 secure container. Bulat hands it over once you've proven you can keep things safe (Safekeeping).", "category": "container",
    "rarity": "epic", "size": [2, 3], "weight": 0.8, "value": 0, "stats": {"grid": [3, 3], "secure": true}, "loot_weight": 0},
-  {"id": "secure_kappa", "name": "Secure container Kappa", "description": "The biggest secure container, 3×4. Auntie Zoya's reward for the Collector's Case.", "category": "container",
-   "rarity": "legendary", "size": [3, 3], "weight": 1.0, "value": 0, "stats": {"grid": [3, 4], "secure": true}, "loot_weight": 0}
+  {"id": "secure_kappa", "name": "Secure container Kappa", "description": "A big secure container, 3×4. Auntie Zoya's reward for the Collector's Case.", "category": "container",
+   "rarity": "legendary", "size": [3, 3], "weight": 1.0, "value": 0, "stats": {"grid": [3, 4], "secure": true}, "loot_weight": 0},
+  {"id": "secure_omega", "name": "Secure container Omega", "description": "The biggest secure container, 4×4. Mole's reward for the last of the Collector quests.", "category": "container",
+   "rarity": "legendary", "size": [3, 3], "weight": 1.2, "value": 0, "stats": {"grid": [4, 4], "secure": true}, "loot_weight": 0}
 ]

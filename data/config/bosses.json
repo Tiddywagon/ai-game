@@ -1,5 +1,5 @@
 {
-  "_comment": "One boss per map (DESIGN.md §4.3), loaded by BossTable (checked on load: BossTable.problems()). chance: odds the boss is in a raid; guards: how many guards (x to y); guard_name and guard_plural (optional, else guard_name + s). boss/guard: weapons (gun id -> its round), armor/helmet (ids, one picked; class 5+ for a boss, 4+ for guards), rig, backpack, sidearm (gun id -> round), melee, meds. loot_focus: POI focus tags (PoiTable.FOCUS) that theme the boss's guaranteed Epic/Legendary loot (data/loot_tables/boss_loot.tres); each needs an Epic/Legendary item there or the unique to match it. unique: the Legendary item (loot_weight 0) only this boss carries, always.",
+  "_comment": "One boss per map (DESIGN.md §4.3), loaded by BossTable (checked on load: BossTable.problems()). chance: odds the boss is in a raid; guards: how many guards (x to y); guard_name and guard_plural (optional, else guard_name + s). boss/guard: weapons (gun id -> its round), armor/helmet (ids, one picked; class 5+ for a boss, 4+ for guards), rig, backpack, sidearm (gun id -> round), melee, meds. loot_focus: POI focus tags (PoiTable.FOCUS) that theme the boss's guaranteed Epic/Legendary loot (data/loot_tables/boss_loot.tres); each needs an Epic/Legendary item there or the unique to match it. unique: the Legendary item (loot_weight 0) only this boss carries, always. figure: the boss's collectible figure (a figure of the Bosses set, DESIGN.md §6.6), on its body in some raids (the \"boss\" source in data/config/figures.json).",
   "maps": {
     "test_yard": {
       "id": "krane",
@@ -11,6 +11,7 @@
       "guard_name": "Instructor",
       "loot_focus": ["intel", "military"],
       "unique": "drillmaster_whistle",
+      "figure": "figure_krane",
       "boss": {
         "weapons": {"sentinel_ar": "ammo_556_epr"},
         "sidearm": {"bastion_45": "ammo_45_match"},
@@ -39,6 +40,7 @@
       "guard_name": "Stoker",
       "loot_focus": ["tools", "electronics"],
       "unique": "furnace_king_wrench",
+      "figure": "figure_matvei",
       "boss": {
         "weapons": {"tempest_s12": "ammo_12ga_flechette"},
         "armor": ["armor_zabralo"],
@@ -69,6 +71,7 @@
       "guard_plural": "Toll men",
       "loot_focus": ["currency", "valuables"],
       "unique": "tollkeeper_cash_brick",
+      "figure": "figure_varga",
       "boss": {
         "weapons": {"grizzly_74": "ammo_545_bt"},
         "sidearm": {"strelka_mp": "ammo_9x18_pbm"},
@@ -97,6 +100,7 @@
       "guard_name": "Trapper",
       "loot_focus": ["weapons", "gear"],
       "unique": "snow_leopard_pelt",
+      "figure": "figure_leshy",
       "boss": {
         "weapons": {"huntsman_700": "ammo_762x51_m62"},
         "sidearm": {"bastion_45": "ammo_45_match"},
@@ -125,6 +129,7 @@
       "guard_name": "Deckhand",
       "loot_focus": ["valuables", "currency"],
       "unique": "undertow_pearl",
+      "figure": "figure_reyes",
       "boss": {
         "weapons": {"halcyon_b5": "ammo_556_epr"},
         "sidearm": {"vektor_p9": "ammo_9x19_ap"},
@@ -153,6 +158,7 @@
       "guard_name": "Custodian",
       "loot_focus": ["intel", "medical", "electronics"],
       "unique": "director_black_box",
+      "figure": "figure_varn",
       "boss": {
         "weapons": {"wasp_pdw": "ammo_9x19_pbp"},
         "sidearm": {"bastion_45": "ammo_45_ap"},

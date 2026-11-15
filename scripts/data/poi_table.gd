@@ -2,13 +2,15 @@ class_name PoiTable
 extends RefCounted
 ## Every map's points of interest (DESIGN.md §5.2), from data/config/pois.json: a named area with a
 ## loot tier (1-3), loot focus tags, an optional requirement (a key, the power on or a lever pulled)
-## and whether it's hidden (not on the map item until you've found it). Map scenes place each one as a
+## and whether it's hidden (not on the map item until you've found it); "original": true marks the POIs
+## written for this game (each has a collectible figure, "figure", DESIGN.md §6.6: FigureTable checks
+## them). Map scenes place each one as a
 ## PointOfInterest by id (its boundary; the containers and loose loot spots inside it are its spawn
 ## points). Checked when it loads: problems().
 
 const PATH := "res://data/config/pois.json"
 const CONFIG: PoiConfig = preload("res://data/config/poi.tres")
-const FIELDS := ["id", "name", "tier", "focus", "hidden", "requires", "spawn_chance", "description"]
+const FIELDS := ["id", "name", "tier", "focus", "hidden", "original", "figure", "requires", "spawn_chance", "description"]
 const REQUIREMENTS := ["key", "power", "lever"]
 ## Fewest POIs a map may have.
 const MIN_POIS := 6
@@ -57,6 +59,17 @@ static func find(map_id: String, id: String) -> Dictionary:
 		if entry.get("id", "") == id:
 			return entry
 	return {}
+
+
+## The original points of interest (DESIGN.md §5.2: the ones written for this game, hidden ones
+## included), as [map id, POI entry] pairs in table order.
+static func originals() -> Array:
+	var result := []
+	for map_id: String in maps():
+		for entry: Dictionary in for_map(map_id):
+			if entry.get("original", false):
+				result.append([map_id, entry])
+	return result
 
 
 ## The rarity multipliers for loot in `entry` (indexed by ItemData.Rarity): its tier's for Rare and up,

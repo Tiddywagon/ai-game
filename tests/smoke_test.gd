@@ -25,7 +25,7 @@ func run() -> void:
 func _items() -> void:
 	section("ItemDB")
 	var all: Array = db.all_items()
-	check(all.size() == 505, "505 items load (got %d)" % all.size())
+	check(all.size() == 561, "561 items load (got %d)" % all.size())
 	var ItemDataScript: GDScript = load("res://scripts/data/item_data.gd")
 	var categories: int = ItemDataScript.Category.size()
 	var bad_category := 0

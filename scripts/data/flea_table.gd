@@ -113,14 +113,15 @@ static func ban_reason(data: ItemData) -> String:
 	return str(_banned.get(data.id, ""))
 
 
-## The ids of every item the market may list, by rarity: worth something, not banned, sorted.
+## The ids of every item the market may list, by rarity: worth something, not banned, sorted. Collectible
+## figures aren't in it: the market lists one now and then by a rule of its own (FigureTable.roll_flea()).
 static func pool(rarity: int) -> Array[String]:
 	if _pools.is_empty():
 		for each in ItemData.RARITY_IDS:
 			var list: Array[String] = []
 			_pools.append(list)
 		for item in ItemDB.all_items():
-			if item.base_value > 0 and not is_banned(item):
+			if item.base_value > 0 and not is_banned(item) and item.category != ItemData.Category.FIGURE:
 				(_pools[item.rarity] as Array[String]).append(item.id)
 		for list: Array[String] in _pools:
 			list.sort()
