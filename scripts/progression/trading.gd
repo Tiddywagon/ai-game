@@ -179,17 +179,19 @@ static func faction_discount(trader_id: String) -> float:
 
 
 ## What `offer` costs from `trader_id` now, in its currency: its price less the trader's loyalty
-## discount (buy_discount()), then the faction discount (faction_discount()) and then `bundle` more
-## (QuickBuy's bundle discount on a quick-buy line), rounded, but never below the offer's resale floor
-## (offer_floor()) unless its own price is. Everything that shows or charges a trader price goes
+## discount (buy_discount()), then the faction discount (faction_discount()), the Collectors Shelf's
+## trader prices bonus (Figures.buy_price_multiplier(): 3% with the Traders set on display) and then
+## `bundle` more (QuickBuy's bundle discount on a quick-buy line), rounded, but never below the offer's
+## resale floor (offer_floor(), which counts the same bonus on what traders pay) unless its own price is. Everything that shows or charges a trader price goes
 ## through it.
 static func price(trader_id: String, offer: Dictionary, bundle := 0.0) -> int:
 	var base := int(offer.get("price", 0))
 	var share := buy_discount(trader_id)
 	var faction := faction_discount(trader_id)
-	if share <= 0.0 and faction <= 0.0 and bundle <= 0.0:
+	var shelf := 1.0 - Figures.buy_price_multiplier()
+	if share <= 0.0 and faction <= 0.0 and bundle <= 0.0 and shelf <= 0.0:
 		return base
-	var cut := roundi(base * (1.0 - share) * (1.0 - faction) * (1.0 - bundle))
+	var cut := roundi(base * (1.0 - share) * (1.0 - faction) * (1.0 - bundle) * (1.0 - shelf))
 	return mini(maxi(cut, offer_floor(offer)), base)
 
 
@@ -208,8 +210,8 @@ static func resale_margin() -> float:
 ## `offer`'s resale floor (resale_floor() of what it gives) in its own currency: dollars at the
 ## exchange's sell rate, rounded up. Kept per offer id.
 static func offer_floor(offer: Dictionary) -> int:
-	var key := str(offer.get("id", ""))
-	var keep: bool = key != "" and not offer.get("used", false)
+	var key := "%s|%s" % [offer.get("id", ""), Figures.sell_rate_multiplier()]  # The floor follows the shelf's bonus.
+	var keep: bool = str(offer.get("id", "")) != "" and not offer.get("used", false)
 	if keep and _floors.has(key):
 		return int(_floors[key])
 	var item := offer_item(offer)

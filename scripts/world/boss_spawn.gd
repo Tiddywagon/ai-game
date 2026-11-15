@@ -43,7 +43,7 @@ func _ready() -> void:
 		rng.randomize()
 	var roll := rng.randf()
 	var forced: Variant = GameState.raid.get("boss")
-	if (forced == null and roll < float(entry.chance)) or (forced != null and bool(forced)):
+	if (forced == null and roll < BossTable.chance(entry)) or (forced != null and bool(forced)):
 		spawn(rng)
 
 

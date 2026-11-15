@@ -178,7 +178,7 @@ func boss_text() -> String:
 		if spawn.entry.is_empty():
 			continue
 		if spawn.boss == null:
-			return "%s not this raid (%d%%)" % [spawn.entry.name, roundi(float(spawn.entry.chance) * 100.0)]
+			return "%s not this raid (%d%%)" % [spawn.entry.name, roundi(BossTable.chance(spawn.entry) * 100.0)]
 		var alive := spawn.guards.filter(func(guard: Bot) -> bool: return not guard.is_dead).size()
 		return "%s (%s, %d of %d guards, %s)" % [spawn.boss.display_name(), "dead" if spawn.boss.is_dead else "alive", alive,
 			spawn.guards.size(), STATE_NAMES[spawn.boss.state] if spawn.boss.state < STATE_NAMES.size() else ""]

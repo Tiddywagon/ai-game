@@ -288,7 +288,7 @@ static func used_durability(trader_id: String) -> Vector2:
 ## ItemInstance.to_dict()), "used": true}.
 static func used_offers_on(trader_id: String, number: int) -> Array[Dictionary]:
 	var level := used_level(trader_id)
-	var key := "%s:%d:%d:%.2f" % [trader_id, number, level, _karma_debt(trader_id)]
+	var key := "%s:%d:%d:%.2f:%s" % [trader_id, number, level, _karma_debt(trader_id), Figures.sell_rate_multiplier()]
 	if _used_cache.has(key):
 		return _used_cache[key]
 	var rules := used_rules()

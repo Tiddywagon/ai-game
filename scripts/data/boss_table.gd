@@ -61,13 +61,19 @@ static func guard_plural(entry: Dictionary) -> String:
 	return plural if plural != "" else "%ss" % entry.get("guard_name", "guard")
 
 
+## The chance `entry`'s boss is in a raid: its "chance" plus the Collectors Shelf's boss chance bonus
+## (Figures.boss_chance(): the Bosses set on display adds 10 points), at most 1.
+static func chance(entry: Dictionary) -> float:
+	return Figures.boss_chance(float(entry.get("chance", 0.0)))
+
+
 ## For the raid setup's map stats: "Iron Matvei, the Furnace King · 35% · 2-4 Stokers" ("None").
 static func summary(map_id: String) -> String:
 	var entry := for_map(map_id)
 	if entry.is_empty():
 		return "None"
 	var guards: Array = entry.guards
-	return "%s · %d%% · %d-%d %s" % [full_name(entry), roundi(float(entry.chance) * 100.0), int(guards[0]), int(guards[1]), guard_plural(entry)]
+	return "%s · %d%% · %d-%d %s" % [full_name(entry), roundi(chance(entry) * 100.0), int(guards[0]), int(guards[1]), guard_plural(entry)]
 
 
 ## A boss's or guard's kit from `spec` (its "boss" or "guard" entry): a gun picked from its weapons,

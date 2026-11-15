@@ -327,6 +327,7 @@ func _track_poi() -> void:
 		var gained := poi_config.xp_discover_hidden if poi.is_hidden() else poi_config.xp_discover
 		if GameState.explored_count(map_key()) == PoiTable.for_map(map_key()).size():
 			gained += poi_config.xp_map_complete
+		gained = Figures.exploration_xp(gained)  # The Landmarks set's bonus.
 		xp += gained
 		xp_parts.exploration += gained
 	poi_entered.emit(poi, first)
@@ -1032,7 +1033,7 @@ func looters() -> int:
 ## friendly when you attacked it (Bot.friendly_when_attacked; a guard, a boss) lowers it, a PMC raises it.
 func _on_kill(target: Actor) -> void:
 	var pmc := target.side == Actor.Side.PMC
-	var gained := config.xp_pmc_kill if pmc else config.xp_scav_kill
+	var gained := Figures.pmc_kill_xp(config.xp_pmc_kill) if pmc else config.xp_scav_kill  # The Factions set's bonus.
 	var role := ""
 	if target is Bot and target.is_boss():
 		role = "boss"

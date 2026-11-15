@@ -3,7 +3,8 @@ extends RefCounted
 ## Searching a container or a body (DESIGN.md §7): what's inside starts hidden and is revealed one
 ## item at a time, in reading order (top row first), while it's open beside your inventory. Each item
 ## takes RaidConfig.search_base_seconds plus search_seconds_per_cell per cell it covers, so small items
-## turn up faster, times the container's search time. Closing pauses the search; what's revealed stays
+## turn up faster, times the container's search time, less the Collectors Shelf's search speed bonus
+## (Figures.search_time_multiplier(): the Raiders set on display). Closing pauses the search; what's revealed stays
 ## revealed. A body's equipment is in plain sight: only what's in its pockets, rig and backpack is
 ## searched.
 
@@ -36,7 +37,7 @@ func hide_all() -> void:
 ## Seconds it takes to reveal `item`.
 func time_for(item: ItemInstance) -> float:
 	var cells := item.data.size.x * item.data.size.y
-	return (_config.search_base_seconds + _config.search_seconds_per_cell * cells) * _time_multiplier
+	return (_config.search_base_seconds + _config.search_seconds_per_cell * cells) * _time_multiplier * Figures.search_time_multiplier()
 
 
 ## The next hidden item, in grid order and reading order, or null when everything is found.

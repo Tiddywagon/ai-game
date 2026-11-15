@@ -73,7 +73,7 @@ func _apply_raid() -> void:
 		_player.set_faction(Factions.of_profile(GameState.faction))
 		Consumables.recover_profile()
 		_player.health.start_metabolism(tuning, GameState.energy, GameState.hydration)
-	_player.health.metabolism_skill = Consumables.skill_multiplier()
+	_player.health.metabolism_skill = Consumables.drain_multiplier()
 	var map := _raid.map
 	if map:
 		_player.health.energy_climate = map.energy_drain_multiplier

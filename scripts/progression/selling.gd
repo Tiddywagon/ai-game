@@ -59,14 +59,16 @@ static func buys(trader_id: String, data: ItemData) -> bool:
 
 
 ## The share of an item's worth `trader_id` pays at your loyalty level with them, less their
-## "karma_penalty" for each point of Scav karma below 0 (Mole; never below MIN_RATE).
+## "karma_penalty" for each point of Scav karma below 0 (Mole; never below MIN_RATE), times the
+## Collectors Shelf's trader prices bonus (Figures.sell_rate_multiplier(): 1.03 with the Traders set on
+## display; best_rate() and best_resale() count it too, so every resale floor rises with it).
 static func rate(trader_id: String) -> float:
 	var level := int(GameState.trader_loyalty.get(trader_id, {}).get("level", 1))
 	var share := float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (level - 1)
 	var penalty := float(rules(trader_id).get("karma_penalty", 0.0))
 	if penalty > 0.0 and GameState.scav_karma < 0.0:
 		share = maxf(share - penalty * -GameState.scav_karma, minf(share, MIN_RATE))
-	return share
+	return share * Figures.sell_rate_multiplier()
 
 
 ## The most any trader pays for items like `data`, as a share of their worth: at each trader's top
@@ -77,7 +79,7 @@ static func best_rate(data: ItemData) -> float:
 	for trader_id in TraderTable.ids():
 		var top := float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (TraderTable.max_loyalty(trader_id) - 1)
 		best = maxf(best, top * multiplier(trader_id, data))
-	return best
+	return best * Figures.sell_rate_multiplier()
 
 
 ## The most any trader would ever pay for `item`, in roubles: each trader at their top loyalty level (no
@@ -107,7 +109,7 @@ static func _top_price(trader_id: String, item: ItemInstance) -> int:
 	if times <= 0.0:
 		return 0
 	var top := float(rules(trader_id).get("rate", 0.0)) + float(rules(trader_id).get("per_level", 0.0)) * (TraderTable.max_loyalty(trader_id) - 1)
-	var roubles := _worth(item) * top * times
+	var roubles := _worth(item) * top * times * Figures.sell_rate_multiplier()
 	if currency(trader_id) == "USD":
 		return floori(roubles / Progression.dollar_rate()) * Trading.exchange_roubles(1, false)
 	return floori(roubles)

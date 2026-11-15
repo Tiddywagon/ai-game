@@ -53,7 +53,7 @@
       "unlock": null,
       "restock_minutes": 60,
       "buy_discount": [0, 0.03, 0.06, 0.09],
-      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"groups": ["Tools", "Household", "Fuel", "Electronics", "Hardware"]}, {"categories": ["junk"], "multiplier": 0.9}, {"categories": ["food", "key", "container"], "multiplier": 0.8}]}
+      "sell": {"rate": 0.5, "per_level": 0.03, "buys": [{"groups": ["Tools", "Household", "Fuel", "Electronics", "Hardware"]}, {"categories": ["junk"], "multiplier": 0.9}, {"categories": ["food", "key", "container"], "multiplier": 0.8}, {"categories": ["figure"]}]}
     },
     {
       "id": "stitch",
@@ -127,7 +127,7 @@
       "unlock": {"quest": "zoya_introduction"},
       "restock_minutes": 60,
       "buy_discount": [0, 0.03, 0.06, 0.09],
-      "sell": {"rate": 0.65, "per_level": 0.03, "buys": [{"categories": ["weapon", "valuable"]}, {"tags": ["valuable"]}]},
+      "sell": {"rate": 0.65, "per_level": 0.03, "buys": [{"categories": ["weapon", "valuable"]}, {"tags": ["valuable"]}, {"categories": ["figure"], "multiplier": 0.9}]},
       "locked_greeting": "I don't believe we've been introduced. Come back when someone I trust has said your name."
     }
   ]

@@ -140,7 +140,7 @@ static func apply(item: ItemInstance, health: BodyHealth, part := -1) -> Diction
 	result.levels = 0
 	if health.metabolism and data.category == ItemData.Category.FOOD:
 		result.levels = train_metabolism(data)
-		health.metabolism_skill = skill_multiplier()
+		health.metabolism_skill = drain_multiplier()
 		if result.levels > 0:
 			result.text += "  ·  Metabolism level %d" % Skills.level(METABOLISM)
 	return result
@@ -325,6 +325,13 @@ static func hideout_recovery_rate() -> float:
 ## Drain × from the Metabolism skill: 1% less per level (by default), up to the config's cap.
 static func skill_multiplier() -> float:
 	return 1.0 - minf(Skills.level(METABOLISM) * CONFIG.drain_reduction_per_level, CONFIG.max_skill_reduction)
+
+
+## What energy and hydration drain is multiplied by in a raid (BodyHealth.metabolism_skill): the
+## Metabolism skill's share and the Collectors Shelf's (Figures.drain_multiplier(): 10% slower with the
+## Wildlife set on display).
+static func drain_multiplier() -> float:
+	return skill_multiplier() * Figures.drain_multiplier()
 
 
 ## Metabolism points one use of `data` is worth: its energy and hydration, either way.

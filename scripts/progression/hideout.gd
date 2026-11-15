@@ -240,7 +240,7 @@ static func scout(map_id: String, rng: RandomNumberGenerator) -> Dictionary:
 	var result := {"map": map_id, "tier": tier}
 	var boss := BossTable.for_map(map_id)
 	if not boss.is_empty():
-		result.boss = rng.randf() < float(boss.chance)
+		result.boss = rng.randf() < BossTable.chance(boss)
 		if tier >= 3 and result.boss:
 			result.guards = rng.randi_range(int(boss.guards[0]), int(boss.guards[1]))
 	if tier >= 2:
