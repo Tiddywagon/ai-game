@@ -320,6 +320,10 @@ func _ready() -> void:
 		inventory = Inventory.pmc_bot(rng, faction, PackedFloat32Array(), gear_tier) if side == Side.PMC else Inventory.scav(rng)
 		if profile and profile.extra_loot:
 			inventory.add_loot(profile.extra_loot, rng)
+		# Now and then a collectible figure in its pockets (DESIGN.md §6.6), rolled on a stream of its own.
+		var figure := FigureTable.roll_body(side == Side.PMC, faction, FigureTable.stream(rng, "body")) if FigureTable.drops_in_raid() else null
+		if figure:
+			inventory.add(figure)
 	kit_cells = inventory.used_cells()
 	_equip_kit_gun()
 	for door in get_tree().get_nodes_in_group("doors"):

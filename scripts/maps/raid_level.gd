@@ -37,6 +37,7 @@ func _ready() -> void:
 	get_tree().call_group("nav_bake_only", "queue_free")
 	CoverSystem.mark_dirty()
 	_apply_raid()
+	FigureTable.place_landmarks(get_tree())  # An original point of interest's figure, some raids.
 	_start_msec = Time.get_ticks_msec()
 	_player.died.connect(_on_player_died)
 	_raid.raid_ended.connect(_on_raid_ended)

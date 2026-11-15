@@ -60,6 +60,10 @@ func roll() -> void:
 	var rolled := container.loot_table.roll_items(rng, MapInfo.find(GameState.raid.get("map", "")), boost, focus)
 	for item in rolled:
 		grid.add(item)
+	# Now and then a collectible figure too (DESIGN.md §6.6), rolled on a stream of its own.
+	var figure := FigureTable.roll_container(container.id, FigureTable.stream(rng, "container")) if FigureTable.drops_in_raid() else null
+	if figure and grid.add(figure):
+		rolled.append(figure)
 	if poi:
 		poi.record(self, "container", true, rolled)
 	search.hide_all()

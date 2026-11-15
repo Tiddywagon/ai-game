@@ -239,6 +239,15 @@ static func listings_on(number: int) -> Array[Dictionary]:
 			result.append({"id": "flea_%d_%d" % [number, result.size() + 1], "item": piece, "posted": posted,
 				"ends": posted + snappedf(rng.randf_range(minutes.x, minutes.y), 1.0) * 60.0, "spread": snappedf(rng.randf_range(spread.x, spread.y), 0.001),
 				"seller": _seller(rng), "rating": snappedf(rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(piece)})
+	# Now and then a collectible figure goes up too (DESIGN.md §6.6), rolled on a stream of its own so
+	# the other listings are what they'd be without it.
+	var figure_rng := RandomNumberGenerator.new()
+	figure_rng.seed = ("flea_figure:%d" % number).hash()
+	var figure := FigureTable.roll_flea(figure_rng)
+	if figure:
+		result.append({"id": "flea_%d_%d" % [number, result.size() + 1], "item": figure, "posted": posted,
+			"ends": posted + snappedf(figure_rng.randf_range(minutes.x, minutes.y), 1.0) * 60.0, "spread": snappedf(figure_rng.randf_range(spread.x, spread.y), 0.001),
+			"seller": _seller(figure_rng), "rating": snappedf(figure_rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(figure)})
 	_batches[number] = result
 	return result
 

@@ -149,7 +149,46 @@ static func table(table_path: String) -> LootTable:
 ## nothing else that `rng` rolls (seeded from its seed and `salt`: the same in a seeded raid).
 static func stream(rng: RandomNumberGenerator, salt: Variant) -> RandomNumberGenerator:
 	var result := RandomNumberGenerator.new()
-	result.seed = hash([rng.seed, "figure", salt])
+	result.seed = hash([rng.seed, rng.state, "figure", salt])
+	return result
+
+
+## False in a Shooting Range practice raid (Hideout.practice_raid()): figures never drop there.
+static func drops_in_raid() -> bool:
+	return not bool(GameState.raid.get("practice", false))
+
+
+## Puts the figure of each original point of interest in the level into one of that POI's containers,
+## in the raids its roll comes up (the landmark source's chance; seeded by the raid and the POI in a
+## seeded raid), hidden until the container is searched. Run once the level is ready (RaidLevel).
+## Returns the figures placed.
+static func place_landmarks(tree: SceneTree) -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	if not drops_in_raid():
+		return result
+	for node in tree.get_nodes_in_group("pois"):
+		var poi := node as PointOfInterest
+		if poi == null or not poi.entry().has("figure"):
+			continue
+		var rng := RandomNumberGenerator.new()
+		if GameState.raid.has("seed"):
+			rng.seed = hash([int(GameState.raid.seed), "landmark", poi.map_id, poi.poi_id])
+		else:
+			rng.randomize()
+		var figure := roll_landmark(poi.entry(), rng)
+		if figure == null:
+			continue
+		var boxes: Array[LootBox] = []
+		for each in tree.get_nodes_in_group("interactables"):
+			var box := each as LootBox
+			if box and not box.sealed and not box.ignore_poi and box.grid and PointOfInterest.at(tree, box.global_position) == poi:
+				boxes.append(box)
+		var first := rng.randi_range(0, maxi(boxes.size() - 1, 0))
+		for index in boxes.size():
+			if boxes[(first + index) % boxes.size()].grid.add(figure):
+				figure.hidden = true
+				result.append(figure)
+				break
 	return result
 
 

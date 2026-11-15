@@ -92,6 +92,10 @@ var quick_buys: Array = []
 ## bought), "listings": your own listings, "next_id": the next one's number, "clock": the market's clock
 ## (unix time it was last brought up to date; it never runs backwards)}.
 var flea: Dictionary = FleaMarket.blank()
+## Collectible figures (DESIGN.md §6.6, Figures): {"shelf": {slot: ItemInstance} (the figures on the
+## Collectors Shelf: kept there, not in the stash), "seen": [figure ids you've owned], "spin": {"day",
+## "used"} (free Drip spins used on which real day)}.
+var figures: Dictionary = Figures.blank()
 ## Scav runs (DESIGN.md §2, ScavRuns): your Scav karma (Mole's standing, -6 to +6), the unix time the
 ## next Scav run is ready (0: ready), and this cooldown cycle's Scav kit (null until it's rolled; used up
 ## when you deploy).
@@ -216,6 +220,7 @@ func _reset(new_faction: Faction) -> void:
 	auto_equip = LoadoutPlanner.clean_options({})
 	quick_buys = []
 	flea = FleaMarket.blank()
+	figures = Figures.blank()
 	scav_karma = ScavRuns.start_karma()
 	scav_ready_at = 0.0
 	scav_kit = null
@@ -256,6 +261,7 @@ func to_dict() -> Dictionary:
 			"auto_equip": auto_equip.duplicate(),
 			"quick_buys": quick_buys.duplicate(true),
 			"flea": FleaMarket.to_save(),
+			"figures": Figures.to_save(),
 			"scav": {"karma": scav_karma, "ready_at": scav_ready_at, "kit": scav_kit.to_dict() if scav_kit else null},
 		},
 		"stash": stash.to_array(),
@@ -279,7 +285,8 @@ static func _counts(saved: Variant) -> Dictionary:
 ## from the Stash's level before its items load (items in the added rows keep their places). Items an
 ## old save had somewhere that's gone (SaveManager.LOOSE_KEY: headsets off helmets) go in the stash; one
 ## with no room waits in insurance_pending (due at once, marked Insurance.FROM_SAVE, no insurer),
-## delivered when there's room.
+## delivered when there's room. So does a figure the Collectors Shelf can't hold any more
+## (Figures.from_save()).
 func from_dict(data: Dictionary) -> void:
 	data = SaveManager.upgrade(data)
 	var profile: Dictionary = data.get("profile", {})
@@ -356,6 +363,7 @@ func from_dict(data: Dictionary) -> void:
 	auto_equip = LoadoutPlanner.clean_options(profile.get("auto_equip", {}))
 	quick_buys = QuickBuy.sanitize(profile.get("quick_buys", []))
 	flea = FleaMarket.from_save(profile.get("flea"))
+	figures = Figures.from_save(profile.get("figures"))  # After the hideout: the shelf's level says how many it holds.
 
 	stash.resize(Hideout.stash_size())
 	stash.load_array(data.get("stash", []))
@@ -363,5 +371,10 @@ func from_dict(data: Dictionary) -> void:
 		var item := ItemInstance.from_dict(entry) if entry is Dictionary else null
 		if item and not stash.add(item):
 			insurance_pending.append({"item": item.to_dict(), "due": 0.0, "insurer": "", Insurance.FROM_SAVE: true})
+	for item: ItemInstance in figures.get("loose", []):  # Figures the shelf can't hold any more: never lost.
+		if not stash.add(item):
+			insurance_pending.append({"item": item.to_dict(), "due": 0.0, "insurer": "", Insurance.FROM_SAVE: true})
+	figures.erase("loose")
+	Figures.update_seen()
 	Trading.update_all_loyalty()
 	HideoutWork.update()  # Builds, crafts, fuel and production carry on from the saved clock to now.

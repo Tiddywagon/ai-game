@@ -118,6 +118,7 @@ static func _arm(inventory: Inventory, gun_id: String, ammo: String, slot: Strin
 ## The boss's guaranteed loot: its unique first (it always has room), then boss_loot.tres (Epic and
 ## Legendary only) rolled with the boss's loot_focus, into its pack, rig and pockets; at least one rolled
 ## item always goes in (rolled again until one fits). Then its valuables and stims (boss_body.tres).
+## In some raids (the "boss" source in data/config/figures.json) it carries its collectible figure too.
 ## Returns the guaranteed items: the unique, then the rolled ones.
 static func add_boss_loot(inventory: Inventory, entry: Dictionary, rng: RandomNumberGenerator) -> Array[ItemInstance]:
 	var placed: Array[ItemInstance] = []
@@ -142,6 +143,10 @@ static func add_boss_loot(inventory: Inventory, entry: Dictionary, rng: RandomNu
 			if inventory.add(item):
 				placed.append(item)
 	inventory.add_loot(BODY_LOOT, rng)
+	# Some raids its own collectible figure too (DESIGN.md §6.6), rolled on a stream of its own.
+	var figure := FigureTable.roll_boss(entry, FigureTable.stream(rng, "boss")) if FigureTable.drops_in_raid() else null
+	if figure:
+		inventory.add(figure)
 	return placed
 
 

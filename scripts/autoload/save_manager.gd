@@ -68,7 +68,13 @@ const SAVE_PATH := "user://savegame.json"
 ## they built; they start with nothing handed over, building or crafting (crafts were instant before
 ## version 17), the generator on with no fuel and the clock at the moment they load (nothing to change in
 ## upgrade(): GameState.from_dict() starts the block blank).
-const SAVE_VERSION := 17
+## Version 18 adds collectible figures (DESIGN.md §6.6, Figures): profile "figures" {"shelf": [{"slot",
+## "item"}] (the figures on the Collectors Shelf, each a whole item with its found-in-raid status: they
+## aren't in the stash), "seen": [figure ids you've owned], "spin": {"day", "used"} (free Drip spins used
+## on which real day)}. Older saves start with an empty shelf, nothing seen and no spin used (nothing to
+## change in upgrade(): GameState.from_dict() starts the block blank); a figure a save has on a slot
+## the shelf can't hold goes to the stash.
+const SAVE_VERSION := 18
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"
@@ -130,7 +136,8 @@ func delete_save() -> void:
 ## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
 ## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults).
 ## Version 13 and older: Scav karma 0, no cooldown, no kit. Version 14: nothing to change (no custom
-## quick-buy cards). Versions 15 and 16: nothing to change (no flea market, no hideout state: blank).
+## quick-buy cards). Versions 15 to 17: nothing to change (no flea market, no hideout state, no figures:
+## blank).
 ## Data with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))

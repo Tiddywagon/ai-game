@@ -167,7 +167,7 @@ func _migration() -> void:
 		"hideout": {"stash": 2, "generator": 2, "medstation": 3, "lavatory": 2, "workbench": 1}},
 		"stash": [{"id": "gpu", "x": 0, "y": 0}]}
 	var result: Dictionary = sm.upgrade(old)
-	check(int(result.version) == 17 and sm.SAVE_VERSION == 17, "a version 16 save comes up to version 17")
+	check(int(result.version) == 18 and sm.SAVE_VERSION == 18, "a version 16 save comes up to version 18")
 	work.now_override = NOW + 5.0 * HOUR
 	gs.from_dict(old)
 	check(gs.hideout == {"stash": 2, "generator": 2, "medstation": 3, "lavatory": 2, "workbench": 1}, "every level it built is kept (%s)" % str(gs.hideout))
