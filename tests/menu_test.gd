@@ -149,7 +149,7 @@ func _hideout() -> void:
 	var screen := await _open("HideoutButton")
 	var map: Node = _find(screen, "Map") if screen else null
 	var rooms: Array = hideout.stations().filter(func(station: Dictionary) -> bool: return _find(map, "Room_" + station.id) is Button)
-	check(screen != null and rooms.size() == 13, "HIDEOUT shows the plan with every station as a room")
+	check(screen != null and rooms.size() == 14, "HIDEOUT shows the plan with every station as a room")
 	var room: Button = _find(map, "Room_generator")
 	check("Can be built" in room.text and "Locked" in (_find(map, "Room_bitcoin_farm") as Button).text, "the generator's room says it can be built, the farm's that it's locked")
 	room.pressed.emit()

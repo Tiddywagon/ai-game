@@ -73,7 +73,7 @@ func _data() -> void:
 	section("Every station's data")
 	check(hideout.problems().is_empty(), "the hideout data has no problems (%s)" % str(hideout.problems()))
 	var ids: Array = hideout.stations().map(func(station: Dictionary) -> String: return station.id)
-	check(ids == hideout.ALL_STATIONS and ids.size() == 13, "all 13 stations, in order (%s)" % str(ids))
+	check(ids == hideout.ALL_STATIONS and ids.size() == 14, "all 14 stations, in order (%s)" % str(ids))
 	for station: Dictionary in hideout.stations():
 		var levels: int = station.levels.size()
 		check(levels == (4 if station.id == "stash" else 3), "%s has %d levels" % [station.name, levels])
@@ -128,7 +128,7 @@ func _loader() -> void:
 		["an item named twice", func(all: Array) -> void: all[0].levels[0].requires.append({"item": "fuel_can", "count": 1}), "names fuel_can twice"],
 		["overlapping rooms", func(all: Array) -> void: all[1].room = [1, 1, 3, 3], "overlaps"],
 		["a room off the plan", func(all: Array) -> void: all[0].room = [30, 0, 6, 5], "isn't inside"],
-		["a missing station", func(all: Array) -> void: all.pop_back(), "no security station"],
+		["a missing station", func(all: Array) -> void: all.pop_back(), "no collectors_shelf station"],
 		["a player level that doesn't exist", func(all: Array) -> void: all[0].levels[2].player_level = 999, "player_level 999"],
 		["fuel on another station", func(all: Array) -> void: all[2]["fuel"] = {"fuel_can": 10}, "only the generator has fuel"],
 		["a farm level without card slots", func(all: Array) -> void: _station(all, "bitcoin_farm").levels[1].erase("card_slots"), "needs \"card_slots\""],
@@ -543,7 +543,7 @@ func _screen() -> void:
 	root.add_child(screen)
 	await frames(3)
 	var map: Node = screen.find_child("Map", true, false)
-	check(map.rooms.size() == 13, "the plan has a room for each station")
+	check(map.rooms.size() == 14, "the plan has a room for each station")
 	for station: Dictionary in hideout.stations():
 		(map.rooms[station.id] as Button).pressed.emit()
 		await frames(1)
