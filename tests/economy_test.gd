@@ -291,13 +291,26 @@ func _no_resale() -> void:
 	_no_resale_for(0)
 	_no_resale_for(1)
 	_flea_no_resale()
+	# Again with the Collectors Shelf's Traders set on display: 3% better trader prices both ways, the
+	# resale floors rising with them (DESIGN.md §6.6).
+	_no_resale_for(0, true)
+	_flea_no_resale()
 
 
 ## The sweep for one faction (0: BEAR, 1: USEC): every offer at top loyalty, with the faction discount at
-## the faction's own trader and the quick-buy bundle discount on top.
-func _no_resale_for(faction: int) -> void:
+## the faction's own trader and the quick-buy bundle discount on top. With `figures_on`, the Traders set of
+## figures on the Collectors Shelf too.
+func _no_resale_for(faction: int, figures_on := false) -> void:
 	_profile(faction)
 	_unlock_broker()
+	if figures_on:
+		var figures: GDScript = load("res://scripts/progression/figures.gd")
+		gs.hideout["collectors_shelf"] = 1
+		for data: Resource in load("res://scripts/data/figure_table.gd").in_set("traders"):
+			var figure: RefCounted = item(data.id)
+			gs.stash.add(figure)
+			figures.place(figure, figures.free_slot())
+		check(figures.bonus("trader_prices") == 0.03, "the Traders set is on display: 3% better trader prices")
 	var own: String = gs.FACTION_TRADER[gs.faction]
 	check(trading.faction_discount(own) > 0.0 and trading.faction_discount("bulat" if own == "tinker" else "tinker") == 0.0,
 		"%s: the faction discount is %s's (%.2f), at no one else's" % [["BEAR", "USEC"][faction], own, trading.faction_discount(own)])
@@ -436,7 +449,7 @@ func _barters() -> void:
 	section("Barters")
 	_profile()
 	check(barters.problems().is_empty(), "BarterTable.problems() is empty")
-	check(barters.all().size() == 157, "there are 157 barters, two of them faction-only (%d)" % barters.all().size())
+	check(barters.all().size() == 168, "there are 168 barters (157, a figure from each of the 7 traders and 4 for any spare figures), two of them faction-only (%d)" % barters.all().size())
 	var asked := {}
 	for barter: Dictionary in barters.all():
 		for requirement in barters.requirements(barter):

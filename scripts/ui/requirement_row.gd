@@ -24,7 +24,7 @@ static func create(wanted: Requirement, handed := -1, stash_only := false) -> Re
 	cell.item = wanted.sample()
 	row.add_child(cell)
 	var name := Label.new()
-	name.text = "%s  ×%d" % [wanted.item_data().display_name if wanted.item_data() else wanted.item_id, wanted.count]
+	name.text = "%s  ×%d" % [wanted.title(), wanted.count]
 	name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(name)
 	if wanted.fir:
@@ -43,9 +43,11 @@ static func create(wanted: Requirement, handed := -1, stash_only := false) -> Re
 		count.text = "%d / %d" % [have, wanted.count]
 		count.add_theme_color_override("font_color", MET_COLOR if have >= wanted.count else MISSING_COLOR)
 	count.tooltip_text = "Only items with the found-in-raid checkmark count" if wanted.fir else "Any of these count (items without the checkmark are used first)"
+	if wanted.is_generic():
+		count.tooltip_text = "Spare figures only: never one on the Collectors Shelf, never the last of a kind. " + count.tooltip_text
 	if stash_only:
 		var data := wanted.item_data()
-		var partial := data != null and (Consumables.is_consumable(data) or Keys.is_key(data))
+		var partial := data != null and not wanted.is_generic() and (Consumables.is_consumable(data) or Keys.is_key(data))
 		count.tooltip_text = "In your stash%s. %s" % [", whole ones only (part-used ones don't count)" if partial else "", count.tooltip_text]
 	count.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(count)

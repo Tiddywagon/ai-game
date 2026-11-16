@@ -6,3 +6,4 @@ quickbuy
 flea
 hideout
 faction_perks
+figures

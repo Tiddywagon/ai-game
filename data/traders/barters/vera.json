@@ -31,6 +31,7 @@
     {"id": "vera_barter_three_btg", "trader": "vera", "ll": 3, "requires": [{"item": "gold_coin", "count": 1}], "rewards": [{"item": "three_btg", "count": 1}, {"item": "propital", "count": 1}], "reward_rarity": "ultra_rare", "stock": 2},
     {"id": "vera_barter_propital", "trader": "vera", "ll": 3, "requires": [{"item": "saline_bag", "count": 2}, {"item": "medical_tools", "count": 1}, {"item": "gold_chain", "count": 1}], "rewards": [{"item": "propital", "count": 1}, {"item": "l1_injector", "count": 1}], "reward_rarity": "ultra_rare", "stock": 2, "quest": "sanitary_standards"},
     {"id": "vera_barter_surv12_2", "trader": "vera", "ll": 4, "requires": [{"item": "defibrillator", "count": 1, "fir": true}, {"item": "ophthalmoscope", "count": 1, "fir": true}], "rewards": [{"item": "surv12", "count": 2}], "reward_rarity": "epic", "stock": 1, "quest": "clinic_supplies"},
-    {"id": "vera_barter_adrenaline", "trader": "vera", "ll": 2, "requires": [{"item": "empty_injector", "count": 3}, {"item": "wrist_watch", "count": 1}], "rewards": [{"item": "adrenaline", "count": 1}, {"item": "morphine", "count": 1}], "reward_rarity": "rare", "stock": 2}
+    {"id": "vera_barter_adrenaline", "trader": "vera", "ll": 2, "requires": [{"item": "empty_injector", "count": 3}, {"item": "wrist_watch", "count": 1}], "rewards": [{"item": "adrenaline", "count": 1}, {"item": "morphine", "count": 1}], "reward_rarity": "rare", "stock": 2},
+    {"id": "vera_barter_figure_vera", "trader": "vera", "ll": 2, "requires": [{"item": "hard_drive", "count": 1}, {"item": "silver_ring", "count": 1}], "rewards": [{"item": "figure_vera", "count": 1}], "reward_rarity": "rare", "stock": 1}
   ]
 }

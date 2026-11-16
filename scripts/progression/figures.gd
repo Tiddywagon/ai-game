@@ -349,7 +349,7 @@ static func matches(data: ItemData, filter: Dictionary) -> bool:
 		return false
 	if filter.has("rarity") and ItemData.RARITY_IDS.find(str(filter.rarity)) != data.rarity:
 		return false
-	return not filter.has("set") or str(filter.set) == FigureTable.set_of(data)
+	return not filter.has("set") or str(filter["set"]) == FigureTable.set_of(data)
 
 
 ## The spares passing `filter` (found in raid ones only with `fir_only`), in the order they're taken:
@@ -373,14 +373,61 @@ static func take_spares(filter: Dictionary, amount: int, fir_only := false) -> i
 	for item in matching_spares(filter, fir_only):
 		if taken >= amount:
 			break
-		var holder := GameState.stash.find_holder(item)
-		if holder == null:
-			continue
-		holder.remove(item)
-		if holder != GameState.stash:
-			GameState.stash.changed.emit()
-		taken += 1
+		if take(item):
+			taken += 1
 	return taken
+
+
+## Takes figure `item` out of the stash (or the container in it holding it). False if it isn't there.
+static func take(item: ItemInstance) -> bool:
+	var holder := GameState.stash.find_holder(item) if GameState.stash else null
+	if holder == null:
+		return false
+	holder.remove(item)
+	if holder != GameState.stash:
+		GameState.stash.changed.emit()
+	return true
+
+
+## The spares that would pay every generic figure requirement among `requirements` (Requirement: the
+## others are left out), each spare used once: {"ok": enough for all, "items": the spares picked}. The
+## strictest requirements pick first (found in raid only, then those filtering by more), so a looser one
+## doesn't take the spare a stricter one needs.
+static func claim(requirements: Array) -> Dictionary:
+	var generic := requirements.filter(func(wanted: Requirement) -> bool: return wanted.is_generic())
+	var picked: Array[ItemInstance] = []
+	if generic.is_empty():
+		return {"ok": true, "items": picked}
+	generic.sort_custom(func(a: Requirement, b: Requirement) -> bool:
+		return a.fir and not b.fir if a.fir != b.fir else a.figures.size() > b.figures.size())
+	var ok := true
+	for wanted: Requirement in generic:
+		var found := 0
+		for spare in matching_spares(wanted.figures, wanted.fir):
+			if found >= wanted.count:
+				break
+			if not spare in picked:
+				picked.append(spare)
+				found += 1
+		ok = ok and found >= wanted.count
+	return {"ok": ok, "items": picked}
+
+
+## What's wrong with figure filter `filter` ("" if nothing): only "rarity" (a rarity id) and "set" (a set
+## id), either or both ({}: any figure), at least one figure passing it.
+static func filter_problem(filter: Variant) -> String:
+	if not filter is Dictionary:
+		return "a figure filter is {\"rarity\", \"set\"}: one, both or neither"
+	for key: String in filter:
+		if not key in ["rarity", "set"]:
+			return "a figure filter has rarity and set only, not \"%s\"" % key
+	if filter.has("rarity") and not str(filter.rarity) in ItemData.RARITY_IDS:
+		return "figure rarity %s doesn't exist" % filter.rarity
+	if filter.has("set") and FigureTable.find_set(str(filter["set"])).is_empty():
+		return "figure set %s doesn't exist" % filter["set"]
+	if cheapest(filter) == null:
+		return "no figure is %s" % filter_text(filter).trim_prefix("Any ")
+	return ""
 
 
 ## What `filter` asks for, as words: "Any figure", "Any Rare figure", "Any Wildlife figure", "Any Epic
@@ -390,7 +437,7 @@ static func filter_text(filter: Dictionary) -> String:
 	if filter.has("rarity"):
 		words.append(Palette.RARITY_NAMES[clampi(ItemData.RARITY_IDS.find(str(filter.rarity)), 0, Palette.RARITY_NAMES.size() - 1)])
 	if filter.has("set"):
-		words.append(FigureTable.set_name(str(filter.set)))
+		words.append(FigureTable.set_title(str(filter["set"])))
 	words.append("figure")
 	return " ".join(words)
 

@@ -20,14 +20,16 @@ extends RefCounted
 ## either), "map" (leave out for any)}: kills in your PMC raids, counted the same way; {"type":
 ## "extract", "count", "map" (leave out for any)}: PMC raids survived (extracted; a Run Through doesn't
 ## count); {"type": "explore", "count", "map"}: points of interest on the map explored, ever (GameState
-## .explored, so points found before the quest count too).
+## .explored, so points found before the quest count too); {"type": "figures", "count", "figures":
+## {"rarity", "set"} (either, both or neither: any figure), "fir"}: any spare figures that fit, handed over like items
+## (Figures.spares(): never one on the Collectors Shelf, never the last of a kind; DESIGN.md §6.6).
 
 ## What a trick-kill objective's filters are called.
 const TARGET_NAMES := {"pmc": "PMCs", "scav": "Scavs"}
 const CLASS_NAMES := {"bolt_action": "a bolt-action rifle", "dmr": "a DMR"}
 ## The objective types (objective_type()); those counted in raids (by record_raid() and
 ## record_trick_kills(), or explore's from the explored points) have no HAND OVER button.
-const OBJECTIVE_TYPES: Array[String] = ["hand_in", "roubles", "trick_kill", "kill", "extract", "explore"]
+const OBJECTIVE_TYPES: Array[String] = ["hand_in", "roubles", "trick_kill", "kill", "extract", "explore", "figures"]
 const RAID_TYPES: Array[String] = ["trick_kill", "kill", "extract", "explore"]
 const QUEST_FIELDS := ["id", "name", "trader", "description", "objectives", "rewards"]
 
@@ -219,10 +221,11 @@ static func hand_in(quest: Dictionary, index: int) -> int:
 		GameState.roubles -= paid
 		GameState.quests[quest.id].progress[index] = progress(quest, index) + paid
 		return paid
-	if objective_type(quest, index) != "hand_in":
+	if not objective_type(quest, index) in ["hand_in", "figures"]:
 		return 0
 	var wanted := objective(quest, index)
-	var handed := ItemSearch.take(wanted.item_id, wanted.count - progress(quest, index), wanted.fir)
+	var handed := Figures.take_spares(wanted.figures, wanted.count - progress(quest, index), wanted.fir) if wanted.is_generic() \
+		else ItemSearch.take(wanted.item_id, wanted.count - progress(quest, index), wanted.fir)
 	GameState.quests[quest.id].progress[index] = progress(quest, index) + handed
 	return handed
 
@@ -310,6 +313,8 @@ static func _objective_problems(where: String, entry: Variant) -> Array[String]:
 		found.append("%s: a %s objective needs a count of 1 or more" % [where, type])
 	if type == "hand_in" and not ItemDB.has_item(str(entry.get("item", ""))):
 		found.append("%s: hand-in item %s doesn't exist" % [where, entry.get("item", "")])
+	if type == "figures" and Figures.filter_problem(entry.get("figures")) != "":
+		found.append("%s: %s" % [where, Figures.filter_problem(entry.get("figures"))])
 	var map_id := str(entry.get("map", ""))
 	if (map_id != "" or type == "explore") and MapInfo.find(map_id) == null:
 		found.append("%s: map %s doesn't exist" % [where, map_id])

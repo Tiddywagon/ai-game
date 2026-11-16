@@ -88,7 +88,8 @@ static func find_set(id: String) -> Dictionary:
 	return {}
 
 
-static func set_name(id: String) -> String:
+## The name of set `id` (not set_name(): that is Resource.set_name() on the script itself).
+static func set_title(id: String) -> String:
 	return str(find_set(id).get("name", id))
 
 

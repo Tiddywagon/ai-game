@@ -3,7 +3,8 @@ extends RefCounted
 ## Trader barters (DESIGN.md §10): items for items, one file per trader in data/traders/barters/
 ## (<trader id>.json: {"barters": [...]}). A barter is {"id" (stable, unique among every trader's buy
 ## offers and barters: limited stock is saved under it), "trader", "ll" (the loyalty level it needs),
-## "requires": [{"item", "count", "fir"}] (fir: only found-in-raid items count), "rewards": [{"item",
+## "requires": [{"item", "count", "fir"}] (fir: only found-in-raid items count; {"figures": {"rarity",
+## "set"}, "count"} instead of an item: any spare figures that fit, Requirement), "rewards": [{"item",
 ## "count", "durability"}] (durability: worn gear, that share of new; guns and armor only),
 ## "reward_rarity" (the rarest reward's rarity id), "stock" (trades each restock, counted by TraderStock;
 ## left out: no limit) and "quest" (a quest that must be completed before it trades)}. Trading makes the
@@ -78,7 +79,8 @@ static func reload() -> void:
 
 
 ## Why `entry` can't be read as a barter ("" if it can): it must be a dictionary whose "requires" and
-## "rewards" are lists of {"item": id, ...} (an empty list is check()'s to report).
+## "rewards" are lists of {"item": id, ...} ("requires" may hold {"figures": filter, ...} too; an empty
+## list is check()'s to report).
 static func _shape_problem(entry: Variant) -> String:
 	if not entry is Dictionary:
 		return "not a {...} entry"
@@ -87,8 +89,8 @@ static func _shape_problem(entry: Variant) -> String:
 		if not list is Array:
 			return "%s isn't a list" % key
 		for part: Variant in list:
-			if not (part is Dictionary and part.get("item") is String):
-				return "%s holds %s, not {\"item\": id, \"count\": n}" % [key, part]
+			if not (part is Dictionary and (part.get("item") is String or (key == "requires" and part.get("figures") is Dictionary))):
+				return "%s holds %s, not {\"item\": id, \"count\": n}%s" % [key, part, " or {\"figures\": filter, \"count\": n}" if key == "requires" else ""]
 	return ""
 
 
@@ -246,7 +248,7 @@ static func min_level(rarity: int) -> int:
 static func value_in(barter: Dictionary) -> int:
 	var total := 0
 	for requirement in requirements(barter):
-		var sample := ItemInstance.create(requirement.item_id) if ItemDB.has_item(requirement.item_id) else null
+		var sample := requirement.sample() if requirement.is_generic() or ItemDB.has_item(requirement.item_id) else null
 		total += Selling.item_value(sample) * requirement.count if sample else 0
 	return total
 
@@ -291,6 +293,17 @@ static func check(barter: Dictionary) -> Array[String]:
 	var top_valuable := -1
 	var asked := {}
 	for entry: Variant in asks:
+		if entry is Dictionary and entry.has("figures"):  # Any n figures passing a filter.
+			var wrong := Figures.filter_problem(entry.figures)
+			if wrong != "" or entry.has("item"):
+				found.append("%s: %s" % [where, wrong if wrong != "" else "a figure requirement names no item"])
+				continue
+			if not _whole(entry.get("count", 1)) or int(entry.get("count", 1)) < 1:
+				found.append("%s: needs a whole count of 1 or more of %s" % [where, Figures.filter_text(entry.figures)])
+			var cheapest := Figures.cheapest(entry.figures)
+			if is_valuable(cheapest):
+				top_valuable = maxi(top_valuable, cheapest.rarity)
+			continue
 		if not entry is Dictionary or not ItemDB.has_item(str(entry.get("item", ""))):
 			found.append("%s: requires an item that doesn't exist (%s)" % [where, entry])
 			continue

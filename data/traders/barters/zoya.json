@@ -25,6 +25,9 @@
     {"id": "zoya_barter_admin_office_key", "trader": "zoya", "ll": 4, "requires": [{"item": "coin_collection", "count": 1}], "rewards": [{"item": "admin_office_key", "count": 1}, {"item": "resort_east_key", "count": 1}, {"item": "resort_west_key", "count": 1}], "reward_rarity": "epic", "stock": 1},
     {"id": "zoya_barter_keycard_black", "trader": "zoya", "ll": 4, "requires": [{"item": "undertow_pearl", "count": 1}], "rewards": [{"item": "keycard_black", "count": 1}], "reward_rarity": "legendary", "stock": 1},
     {"id": "zoya_barter_lodge_key", "trader": "zoya", "ll": 2, "requires": [{"item": "silver_ring", "count": 1}, {"item": "sewing_kit", "count": 1}], "rewards": [{"item": "lodge_key", "count": 1}], "reward_rarity": "rare"},
-    {"id": "zoya_barter_ifak", "trader": "zoya", "ll": 3, "requires": [{"item": "roler", "count": 1}], "rewards": [{"item": "ifak", "count": 2}, {"item": "mre", "count": 2}, {"item": "fuel_conditioner", "count": 1}, {"item": "cordless_drill", "count": 1}], "reward_rarity": "ultra_rare", "stock": 1, "quest": "spin_doctor"}
+    {"id": "zoya_barter_ifak", "trader": "zoya", "ll": 3, "requires": [{"item": "roler", "count": 1}], "rewards": [{"item": "ifak", "count": 2}, {"item": "mre", "count": 2}, {"item": "fuel_conditioner", "count": 1}, {"item": "cordless_drill", "count": 1}], "reward_rarity": "ultra_rare", "stock": 1, "quest": "spin_doctor"},
+    {"id": "zoya_barter_figure_zoya", "trader": "zoya", "ll": 2, "requires": [{"item": "wrist_watch", "count": 1}, {"item": "silver_ring", "count": 1}], "rewards": [{"item": "figure_zoya", "count": 1}], "reward_rarity": "rare", "stock": 1},
+    {"id": "zoya_barter_figures_uncommon", "trader": "zoya", "ll": 1, "requires": [{"figures": {"rarity": "uncommon"}, "count": 3}], "rewards": [{"item": "wrist_watch", "count": 1}, {"item": "silver_coin", "count": 1}], "reward_rarity": "uncommon", "stock": 2},
+    {"id": "zoya_barter_figure_ultra_rare", "trader": "zoya", "ll": 2, "requires": [{"figures": {"rarity": "ultra_rare"}, "count": 1}], "rewards": [{"item": "flash_drive", "count": 1}], "reward_rarity": "rare", "stock": 1}
   ]
 }

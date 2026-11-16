@@ -238,7 +238,7 @@ static func listings_on(number: int) -> Array[Dictionary]:
 			var piece := _roll_item(pool[index], rng)
 			result.append({"id": "flea_%d_%d" % [number, result.size() + 1], "item": piece, "posted": posted,
 				"ends": posted + snappedf(rng.randf_range(minutes.x, minutes.y), 1.0) * 60.0, "spread": snappedf(rng.randf_range(spread.x, spread.y), 0.001),
-				"seller": _seller(rng), "rating": snappedf(rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(piece)})
+				"seller": _seller(rng), "rating": snappedf(rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(piece), "floor_rate": Figures.sell_rate_multiplier()})
 	# Now and then a collectible figure goes up too (DESIGN.md §6.6), rolled on a stream of its own so
 	# the other listings are what they'd be without it.
 	var figure_rng := RandomNumberGenerator.new()
@@ -247,7 +247,7 @@ static func listings_on(number: int) -> Array[Dictionary]:
 	if figure:
 		result.append({"id": "flea_%d_%d" % [number, result.size() + 1], "item": figure, "posted": posted,
 			"ends": posted + snappedf(figure_rng.randf_range(minutes.x, minutes.y), 1.0) * 60.0, "spread": snappedf(figure_rng.randf_range(spread.x, spread.y), 0.001),
-			"seller": _seller(figure_rng), "rating": snappedf(figure_rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(figure)})
+			"seller": _seller(figure_rng), "rating": snappedf(figure_rng.randf_range(rating.x, rating.y), 0.1), "floor": floor_price(figure), "floor_rate": Figures.sell_rate_multiplier()})
 	_batches[number] = result
 	return result
 
@@ -309,9 +309,20 @@ static func _forget_before(number: int) -> void:
 			GameState.flea.bought.erase(id)
 
 
-## What `listing` costs now, in roubles: its item's market price × its spread, never below its floor.
+## What `listing` costs now, in roubles: its item's market price × its spread, never below its floor
+## (listing_floor()).
 static func price(listing: Dictionary) -> int:
-	return maxi(roundi(market_price(listing.item) * float(listing.spread)), int(listing.floor))
+	return maxi(roundi(market_price(listing.item) * float(listing.spread)), listing_floor(listing))
+
+
+## `listing`'s floor now: its "floor" (floor_price() when it went up), moved with the trader sell rates
+## since ("floor_rate": Figures.sell_rate_multiplier() then; the Collectors Shelf's Traders set raises
+## what traders pay, so the floor rises with it).
+static func listing_floor(listing: Dictionary) -> int:
+	var rate := float(listing.get("floor_rate", 1.0))
+	if rate <= 0.0 or is_equal_approx(rate, Figures.sell_rate_multiplier()):
+		return int(listing.floor)
+	return ceili(float(listing.floor) * Figures.sell_rate_multiplier() / rate)
 
 
 ## Seconds until `listing` comes down.

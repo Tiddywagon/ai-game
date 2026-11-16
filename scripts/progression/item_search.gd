@@ -6,7 +6,8 @@ extends RefCounted
 ## containers in it, and only whole items, never food, drink, meds or a key with some of it used up.
 ## Containers with something in them never count, so nothing inside is lost. Requirements marked found
 ## in raid only take items with the FIR checkmark; the others take items without it first, so FIR items
-## are kept for whatever needs them.
+## are kept for whatever needs them. A generic figure requirement ("any 2 Rare figures") counts and
+## takes spare figures only (Figures.claim()).
 
 
 ## How many of item `id` you have (only found-in-raid ones if `fir_only`; only whole ones in the stash
@@ -21,8 +22,12 @@ static func count(id: String, fir_only: bool, barter := false) -> int:
 ## True if you have everything in `requirements` (whole, in the stash if `barter`). Requirements for the
 ## same item add up (found-in-raid ones first).
 static func can_afford(requirements: Array[Requirement], barter := false) -> bool:
+	if not Figures.claim(requirements).ok:  # Generic figure requirements: enough spares for all of them.
+		return false
 	var needed := {}
 	for requirement in requirements:
+		if requirement.is_generic():
+			continue
 		var entry: Dictionary = needed.get_or_add(requirement.item_id, {"fir": 0, "any": 0})
 		entry["fir" if requirement.fir else "any"] += requirement.count
 	for id: String in needed:
@@ -37,21 +42,26 @@ static func can_afford(requirements: Array[Requirement], barter := false) -> boo
 static func pay(requirements: Array[Requirement], barter := false) -> bool:
 	if not can_afford(requirements, barter):
 		return false
+	for spare in Figures.claim(requirements).items:
+		Figures.take(spare)
 	var ordered := requirements.duplicate()
 	ordered.sort_custom(func(a: Requirement, b: Requirement) -> bool: return a.fir and not b.fir)
 	for requirement: Requirement in ordered:
-		take(requirement.item_id, requirement.count, requirement.fir, barter)
+		if not requirement.is_generic():
+			take(requirement.item_id, requirement.count, requirement.fir, barter)
 	return true
 
 
 ## The stacks pay() would use up completely taking `requirements` (whole ones from the stash if
 ## `barter`): what a barter frees room by (Trading). Partly used stacks aren't in it.
 static func used_up(requirements: Array[Requirement], barter := false) -> Array[ItemInstance]:
-	var result: Array[ItemInstance] = []
+	var result: Array[ItemInstance] = Figures.claim(requirements).items
 	var left := {}
 	var ordered := requirements.duplicate()
 	ordered.sort_custom(func(a: Requirement, b: Requirement) -> bool: return a.fir and not b.fir)
 	for requirement: Requirement in ordered:
+		if requirement.is_generic():
+			continue
 		var found := _matches(requirement.item_id, requirement.fir, barter)
 		found.sort_custom(_taken_first)
 		var amount := requirement.count

@@ -324,13 +324,20 @@ func _track_poi() -> void:
 		first = GameState.explore(map_key(), poi.poi_id)
 	if first:
 		discovered_pois.append(poi.poi_id)
-		var gained := poi_config.xp_discover_hidden if poi.is_hidden() else poi_config.xp_discover
-		if GameState.explored_count(map_key()) == PoiTable.for_map(map_key()).size():
-			gained += poi_config.xp_map_complete
-		gained = Figures.exploration_xp(gained)  # The Landmarks set's bonus.
+		var gained := discovery_xp(poi)
 		xp += gained
 		xp_parts.exploration += gained
 	poi_entered.emit(poi, first)
+
+
+## The experience for exploring `poi` for the first time: PoiConfig.xp_discover (xp_discover_hidden for
+## a hidden one), plus xp_map_complete once every point of the map is explored, with the Collectors
+## Shelf's exploration bonus on it (Figures.exploration_xp(): the Landmarks set on display).
+func discovery_xp(poi: PointOfInterest) -> int:
+	var gained := poi_config.xp_discover_hidden if poi.is_hidden() else poi_config.xp_discover
+	if GameState.explored_count(map_key()) == PoiTable.for_map(map_key()).size():
+		gained += poi_config.xp_map_complete
+	return Figures.exploration_xp(gained)
 
 
 # --- Power ---------------------------------------------------------------------------------------

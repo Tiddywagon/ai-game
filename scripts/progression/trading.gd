@@ -416,8 +416,7 @@ static func _missing(requirements: Array[Requirement]) -> Array[String]:
 	for requirement in requirements:
 		var short := requirement.count - requirement.have_in_stash()
 		if short > 0:
-			var data := requirement.item_data()
-			result.append("%s ×%d%s" % [data.display_name if data else requirement.item_id, short, " found in raid" if requirement.fir else ""])
+			result.append("%s ×%d%s" % [requirement.title(), short, " found in raid" if requirement.fir else ""])
 	return result
 
 

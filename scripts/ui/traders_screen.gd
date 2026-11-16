@@ -883,7 +883,11 @@ func _fill_find() -> void:
 	var requirements := BarterTable.requirements(_find_barter)
 	var highlight := {}
 	for wanted in requirements:
-		highlight[wanted.item_id] = wanted.fir
+		if wanted.is_generic():  # Any spare figure that fits lights up.
+			for spare in Figures.matching_spares(wanted.figures, wanted.fir):
+				highlight[spare.data.id] = wanted.fir
+		else:
+			highlight[wanted.item_id] = wanted.fir
 	_find_grid.highlight = highlight
 	(_find_panel.find_child("FindTitle", true, false) as Label).text = "FIND  ·  %s → %s" % [TraderTable.display_name(str(_find_barter.get("trader", ""))),
 		BarterTable.reward_text(_find_barter)]
@@ -958,7 +962,7 @@ func _build_tasks(trader: Dictionary) -> void:
 			requirement.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			line.add_child(requirement)
 			if state == "active" and QuestLog.progress(quest, i) < wanted.count:
-				var reason := "" if wanted.have() > 0 else ("No found-in-raid %s" % wanted.item_data().display_name if wanted.fir else "None in your stash")
+				var reason := "" if wanted.have() > 0 else ("No found-in-raid %s" % wanted.title() if wanted.fir else "No spare figures that fit" if wanted.is_generic() else "None in your stash")
 				line.add_child(_action_button("HAND OVER", reason, func() -> String:
 					return "" if QuestLog.hand_in(quest, i) > 0 else "Nothing to hand over"))
 			box.add_child(line)
