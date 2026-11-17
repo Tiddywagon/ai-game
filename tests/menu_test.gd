@@ -1,6 +1,6 @@
 extends "res://tests/test_base.gd"
 ## Menus and raids (needs a display): every screen of the main menu opens and closes through its
-## buttons (LOADOUT with AUTO-EQUIP and UNDO and its QUICK BUY tab buying a card, CHARACTER, HIDEOUT's plan and station panel (a build, fuel, handing over, a craft collected, a cosmetic), TRADERS with every
+## buttons (LOADOUT with AUTO-EQUIP and UNDO and its QUICK BUY tab buying a card, CHARACTER and its COLLECTION, HIDEOUT's plan and station panel (a build, fuel, handing over, a craft collected, a cosmetic), the Collectors Shelf's 3D SHELF (place, move and remove with the mouse, keys, touch and its buttons; zoom and pan) and COLLECTION, TRADERS with every
 ## trader's tabs, a purchase and a sale, FLEA MARKET locked before level 15, then browsing, filtering,
 ## buying, listing, a sale and COLLECT, and opened from TRADERS, ENTER RAID up to the loadout check, SETTINGS), then a seeded PMC
 ## raid on each map and a Scav run joined mid-raid, with the AI on. A Logger counts every error the
@@ -52,6 +52,7 @@ func run() -> void:
 	await _loadout()
 	await _character()
 	await _hideout()
+	await _shelf()
 	await _traders()
 	await _flea()
 	await _raid_setup()
@@ -139,6 +140,14 @@ func _character() -> void:
 	var screen := await _open("CharacterButton")
 	check(screen != null and screen.scene_file_path == "res://ui/character_screen.tscn", "CHARACTER opens")
 	check(_find(screen, "XpBar") != null and _find(screen, "ScavKarma") != null and _find(screen, "StashCount") != null, "it shows experience, karma and the stash")
+	(_find(screen, "CollectionButton") as Button).pressed.emit()
+	await frames(3)
+	var collection: Node = _find(screen, "CollectionScreen")
+	check(collection != null and collection.tab == collection.COLLECTION and not _find(screen, "Margin").visible and _find(collection, "Set_raiders") != null,
+		"COLLECTION opens the figure collection over CHARACTER")
+	(_find(collection, "BackButton") as Button).pressed.emit()
+	await frames(3)
+	check(not is_instance_valid(collection) and _find(screen, "Margin").visible, "and BACK returns to CHARACTER")
 	await _close(screen, "BackButton", "CHARACTER")
 
 
@@ -219,6 +228,118 @@ func _hideout() -> void:
 	check(gs.hideout_state.cosmetics == ["poster_wall"], "DECOR buys the poster wall (%s)" % (_find(screen, "Status") as Label).text)
 	work.now_override = -1.0
 	await _close(screen, "BackButton", "HIDEOUT")
+
+
+## The Collectors Shelf: its panel in HIDEOUT opens the 3D shelf; a figure placed from the stash list,
+## a slot picked with a click, a tap and the arrow keys, MOVE to a clicked slot, REMOVE, the wheel, a
+## pinch and a drag zooming and panning; the COLLECTION tab with a model, a silhouette and set progress.
+func _shelf() -> void:
+	section("COLLECTORS SHELF")
+	var figures: GDScript = load("res://scripts/progression/figures.gd")
+	gs.hideout["collectors_shelf"] = 2
+	var fox: RefCounted = item("figure_fox")
+	gs.stash.add(fox)
+	gs.stash.add(item("figure_rat"))
+	var host := await _open("HideoutButton")
+	(_find(_find(host, "Map"), "Room_collectors_shelf") as Button).pressed.emit()
+	await frames(2)
+	var open: Button = _find(host, "OpenShelf")
+	check(open != null and not open.disabled and _find(host, "OpenCollection") != null, "the Collectors Shelf's panel has SHELF and COLLECTION")
+	open.pressed.emit()
+	await frames(4)
+	var screen: Node = _find(host, "CollectionScreen")
+	check(screen != null and screen.tab == screen.SHELF and _find(screen, "ShelfViewport") is SubViewport and _find(_find(screen, "ShelfWorld"), "Slot_27") != null
+		and _find(_find(screen, "ShelfWorld"), "Slot_28") == null and _find(_find(screen, "ShelfWorld"), "Lamp_1") != null, "SHELF: a lit 3D shelf with 28 slots on two boards at level 2")
+	(_find(screen, "Place_figure_fox") as Button).pressed.emit()
+	await frames(2)
+	check(figures.placed(0) == fox and gs.stash.count_of("figure_fox") == 0 and _find(_find(screen, "ShelfWorld"), "Figure_figure_fox") != null,
+		"picking the fox from the stash list puts it in slot 1, where its model stands")
+	var view: Control = _find(screen, "ShelfView")
+	var click := func(slot: int, touch := false) -> void:
+		var camera: Camera3D = _find(screen, "Camera")
+		var scale := Vector2(_find(screen, "ShelfViewport").size) / view.size
+		var at: Vector2 = camera.unproject_position(screen.slot_position(slot) + Vector3(0.0, 0.18, 0.0)) / scale
+		if touch:
+			var tap := InputEventScreenTouch.new()
+			tap.position = at
+			tap.pressed = true
+			view.gui_input.emit(tap)
+			tap = tap.duplicate()
+			tap.pressed = false
+			view.gui_input.emit(tap)
+		var event := InputEventMouseButton.new()
+		event.button_index = MOUSE_BUTTON_LEFT
+		event.pressed = true
+		event.position = at
+		view.gui_input.emit(event)
+	click.call(5)
+	await frames(2)
+	check(screen.selected == 5 and (_find(screen, "SlotTitle") as Label).text.begins_with("SLOT 6 OF 28"), "a click picks slot 6 (%s)" % (_find(screen, "SlotTitle") as Label).text)
+	click.call(9, true)
+	await frames(2)
+	check(screen.selected == 9, "so does a tap (slot 10)")
+	for action: String in ["ui_right", "ui_down", "ui_left"]:
+		var key := InputEventAction.new()
+		key.action = action
+		key.pressed = true
+		view.gui_input.emit(key)
+	await frames(2)
+	check(screen.selected == 9 + 14, "the arrow keys / d-pad step along a board and down to the next (%d)" % screen.selected)
+	screen.pick_slot(0)
+	await frames(2)
+	(_find(screen, "Move") as Button).pressed.emit()
+	await frames(2)
+	check(screen.moving == 0 and (_find(screen, "Move") as Button).text == "CANCEL MOVE", "MOVE waits for the slot to move to")
+	click.call(12)
+	await frames(2)
+	check(figures.placed(12) == fox and figures.placed(0) == null and screen.moving == -1 and screen.selected == 12, "a click on slot 13 moves the fox there")
+	var zoom: float = screen.zoom
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+	wheel.pressed = true
+	view.gui_input.emit(wheel)
+	check(screen.zoom < zoom, "the wheel zooms in (%.2f from %.2f)" % [screen.zoom, zoom])
+	zoom = screen.zoom
+	for finger in 2:
+		var touch := InputEventScreenTouch.new()
+		touch.index = finger
+		touch.pressed = true
+		touch.position = Vector2(300 + finger * 100, 300)
+		view.gui_input.emit(touch)
+	var spread := InputEventScreenDrag.new()
+	spread.index = 1
+	spread.position = Vector2(600, 300)
+	view.gui_input.emit(spread)
+	check(screen.zoom < zoom, "two fingers spreading apart zoom in (%.2f from %.2f)" % [screen.zoom, zoom])
+	for finger in 2:
+		var lift := InputEventScreenTouch.new()
+		lift.index = finger
+		view.gui_input.emit(lift)
+	var pan: Vector2 = screen.pan
+	var drag := InputEventScreenDrag.new()
+	drag.relative = Vector2(-120, 40)
+	view.gui_input.emit(drag)
+	check(screen.pan != pan, "a one-finger drag pans (%s)" % str(screen.pan))
+	(_find(screen, "Remove") as Button).pressed.emit()
+	await frames(2)
+	check(figures.placed(12) == null and gs.stash.count_of("figure_fox") == 1 and (_find(screen, "Status") as Label).text == "Back in the stash.", "REMOVE puts the fox back in the stash")
+	(_find(screen, "Place_figure_rat") as Button).pressed.emit()
+	await frames(2)
+	(_find(screen, "CollectionTab") as Button).pressed.emit()
+	await frames(4)
+	var rat: Node = _find(screen, "Card_figure_rat")
+	var leshy: Node = _find(screen, "Card_figure_leshy")
+	check(rat != null and _find(rat, "Model") != null and (_find(rat, "Name") as Label).text == "The Rat" and "shown" in (_find(rat, "State") as Label).text,
+		"COLLECTION: the rat in colour, owned and displayed")
+	check(leshy != null and _find(leshy, "Silhouette") != null and (_find(leshy, "Name") as Label).text == "???" and (_find(leshy, "State") as Label).text == "Missing",
+		"a figure never owned is a dark silhouette with its name hidden")
+	check((_find(_find(screen, "Set_raiders"), "Progress") as Label).text == "Raiders  1 / 6  ·  1 displayed" and (_find(_find(screen, "Set_wildlife"), "Progress") as Label).text == "Wildlife  1 / 6  ·  0 displayed",
+		"each set's progress (%s)" % (_find(_find(screen, "Set_raiders"), "Progress") as Label).text)
+	check("on while all 6 are displayed" in (_find(_find(screen, "Set_raiders"), "Bonus") as Label).text, "and its bonus, off")
+	(_find(screen, "BackButton") as Button).pressed.emit()
+	await frames(3)
+	check(not is_instance_valid(screen) and _find(host, "Margin").visible, "BACK returns to the hideout")
+	await _close(host, "BackButton", "HIDEOUT")
 
 
 func _traders() -> void:
@@ -411,11 +532,18 @@ func _practice_raid() -> void:
 	check(controller != null and controller.is_practice() and player != null, "the practice raid starts on the Test Yard")
 	var pickups: Array = root.get_tree().get_nodes_in_group("interactables").filter(func(node: Node) -> bool:
 		return node.get_script() == load("res://scripts/world/loot_pickup.gd") and node.item != null)
-	var carried: int = player.inventory.all_items().size()
-	var picked: RefCounted = pickups[0].item if not pickups.is_empty() else null
+	# Loose loot is rolled unseeded: pick up the first piece the copied gear has room for. Counted by its
+	# id, since a stack of rounds can merge into one already carried.
+	var fits: Array = pickups.filter(func(node: Node) -> bool:
+		return player.inventory.grids().any(func(grid: RefCounted) -> bool: return grid.has_room_for(node.item)))
+	var picked: RefCounted = fits[0].item if not fits.is_empty() else null
+	var held := func(id: String) -> int:
+		return player.inventory.grids().reduce(func(total: int, grid: RefCounted) -> int: return total + grid.count_of(id), 0)
+	var carried: int = held.call(picked.data.id) if picked else 0
+	var amount: int = picked.count if picked else 0
 	if picked:
-		pickups[0].interact(player)
-	check(picked != null and player.inventory.all_items().size() > carried, "loot is picked up (%s)" % (picked.data.display_name if picked else "none on the map"))
+		fits[0].interact(player)
+	check(picked != null and held.call(picked.data.id) == carried + amount, "loot is picked up (%s)" % (picked.data.display_name if picked else "none on the map that fits"))
 	var scav_side: int = load("res://scripts/actors/actor.gd").Side.SCAV
 	var scavs: Array = root.get_tree().get_nodes_in_group("bots").filter(func(bot: Node) -> bool: return not bot.is_dead and bot.side == scav_side)
 	for bot: Node in root.get_tree().get_nodes_in_group("bots"):

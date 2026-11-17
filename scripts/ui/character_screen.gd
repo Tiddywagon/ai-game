@@ -19,6 +19,7 @@ var _stash_count: Label
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
 	%LoadoutButton.pressed.connect(open_loadout)
+	%CollectionButton.pressed.connect(open_collection)
 	_refresh()
 	GameState.stash.changed.connect(_on_stash_changed)  # A sort, an insurance return.
 	var timer := Timer.new()
@@ -42,7 +43,7 @@ func _on_stash_changed() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_inventory") and _loadout_screen == null:
+	if event.is_action_pressed("toggle_inventory") and _loadout_screen == null and not has_node("CollectionScreen"):
 		open_loadout()
 		get_viewport().set_input_as_handled()
 		return
@@ -59,6 +60,18 @@ func open_loadout() -> void:
 	_loadout_screen = LOADOUT_SCENE.instantiate()
 	_loadout_screen.closed.connect(_on_loadout_closed)
 	add_child(_loadout_screen)
+
+
+## Opens the figure collection (CollectionScreen's COLLECTION tab) over this screen, which hides meanwhile.
+func open_collection() -> CollectionScreen:
+	get_viewport().gui_release_focus()
+	$Margin.hide()
+	var screen := CollectionScreen.create(CollectionScreen.COLLECTION)
+	screen.closed.connect(func() -> void:
+		$Margin.show()
+		%CollectionButton.grab_focus.call_deferred())
+	add_child(screen)
+	return screen
 
 
 ## LOADOUT saved as it closed: the stats follow what you wear now.

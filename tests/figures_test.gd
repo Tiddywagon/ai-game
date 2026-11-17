@@ -34,6 +34,7 @@ func run() -> void:
 	_quest_line()
 	_free_spin()
 	_saves()
+	_design_table()
 	work.now_override = -1.0
 	gs.raid = {}
 
@@ -393,6 +394,8 @@ func _bonuses() -> void:
 	var sell_after: int = selling.price("broker", gpu)
 	check(buy_after < buy_before and absi(buy_after - roundi(buy_before * 0.97)) <= 1, "Traders: buying 3%% cheaper (%d, was %d)" % [buy_after, buy_before])
 	check(absi(sell_after - roundi(sell_before * 1.03)) <= 1 and sell_after > sell_before, "and selling 3%% dearer (%d, was %d)" % [sell_after, sell_before])
+	check(trading.discount_text("mole") == "Prices: 3% better both ways (Collectors Shelf)" and trading.discount_text("bulat").ends_with("  ·  3% better both ways (Collectors Shelf)"),
+		"the trader panel says so (%s)" % trading.discount_text("bulat"))
 	figs.remove(figs.slot_of("figure_mole"))
 	check(trading.price("bulat", offer) == buy_before and selling.price("broker", gpu) == sell_before, "off again: the old prices")
 
@@ -604,3 +607,22 @@ func _quest_line() -> void:
 	check(quests.hand_in(first, 0) == 0 and quests.objective(first, 0).have() == 0, "one fox and one hare: no spares, nothing handed over")
 	figs.place(_give("figure_lynx"), 0)
 	check(quests.hand_in(first, 0) == 0 and figs.placed(0) != null, "the shelf's lynx isn't handed over either")
+
+
+## DESIGN.md §6.6's table of every figure, as the data has it: | Set | Figure | Rarity | Value | Weight |.
+## The check fails while DESIGN.md says anything else (the expected table is written to
+## user://figure_table.md to paste in).
+func _design_table() -> void:
+	section("DESIGN.md's table of every figure")
+	var lines: Array[String] = ["| Set | Figure | Rarity | Value | Weight |", "|---|---|---|---|---|"]
+	var money: Callable = load("res://scripts/ui/ui_format.gd").thousands
+	for data: Resource in ft.figures():
+		lines.append("| %s | %s | %s | ₽ %s | %s kg |" % [ft.set_title(ft.set_of(data)), data.display_name, ["Common", "Uncommon", "Rare", "Ultra Rare", "Epic", "Legendary"][data.rarity],
+			money.call(data.base_value), str(snappedf(data.weight_kg, 0.01))])
+	var table := "\n".join(lines)
+	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	if not table in design:
+		var file := FileAccess.open("user://figure_table.md", FileAccess.WRITE)
+		file.store_string(table + "\n")
+		file.close()
+	check(table in design, "DESIGN.md §6.6 has the table of every figure as the data has it (expected: %s)" % ProjectSettings.globalize_path("user://figure_table.md"))

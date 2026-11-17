@@ -54,6 +54,16 @@ custom_minimum_size = Vector2(220, 48)
 layout_mode = 2
 text = "LOADOUT  (Tab)"
 
+[node name="CollectionButton" type="Button" parent="Margin/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 48)
+layout_mode = 2
+text = "COLLECTION"
+
+[node name="CollectionGap" type="Control" parent="Margin/Layout/Header"]
+custom_minimum_size = Vector2(12, 0)
+layout_mode = 2
+
 [node name="ButtonGap" type="Control" parent="Margin/Layout/Header"]
 custom_minimum_size = Vector2(12, 0)
 layout_mode = 2

@@ -241,8 +241,17 @@ static func price_text(trader_id: String, offer: Dictionary) -> String:
 
 
 ## The trader panel's line on buy prices: "Buy prices: 3% off at your LL2 (6% at LL3, 9% at LL4)", and
-## at your faction's trader "  ·  5% more off for BEAR"; "" for a trader with neither (Mole).
+## at your faction's trader "  ·  5% more off for BEAR"; "" for a trader with neither (Mole). With the
+## Collectors Shelf's Traders set on display it adds "3% better both ways (Collectors Shelf)".
 static func discount_text(trader_id: String) -> String:
+	var text := _discount_text(trader_id)
+	if Figures.bonus(Figures.TRADER_PRICES) <= 0.0:
+		return text
+	var shelf := "%d%% better both ways (Collectors Shelf)" % roundi(Figures.bonus(Figures.TRADER_PRICES) * 100.0)
+	return text + "  ·  " + shelf if text != "" else "Prices: " + shelf
+
+
+static func _discount_text(trader_id: String) -> String:
 	var faction := faction_discount(trader_id)
 	var perk := "%d%% %soff for %s" % [roundi(faction * 100.0), "more " if buy_discount(trader_id) > 0.0 else "",
 		Factions.display_name(Factions.of_profile(GameState.faction))] if faction > 0.0 else ""

@@ -14,8 +14,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E7 | Flea market: [E7_flea_market.md](E7_flea_market.md) (suite `tests/flea_test.gd`) | done |
 | E8 | Hideout overhaul: [E8_hideout.md](E8_hideout.md) (suite `tests/hideout_test.gd`) | done |
 | E9 | Faction perks: [E9_faction_perks.md](E9_faction_perks.md) (suite `tests/faction_perks_test.gd`) | done |
-| E10 | Collectible figures, Collectors Shelf, set bonuses, Collector quests: [E10_figures.md](E10_figures.md) | in progress |
-| E11 | Data-driven quest system (more objective types, unlocks, quest log, raid tracker): [E11_quests.md](E11_quests.md) | after E10 |
+| E10 | Collectible figures, Collectors Shelf, set bonuses, Collector quests: [E10_figures.md](E10_figures.md) (suite `tests/figures_test.gd`) | done |
+| E11 | Data-driven quest system (more objective types, unlocks, quest log, raid tracker): [E11_quests.md](E11_quests.md) | next |
 | E12 | At least 60 quests across traders, maps, factions and bosses: [E12_quest_content.md](E12_quest_content.md) | after E11 |
 | E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) | after E12 |
 | E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) | after E13 |
@@ -39,7 +39,7 @@ with E9: `LoadoutPlanner` chooses the rig and backpack again once a run empties 
 - Match the surrounding code: `##` doc comments, tabs, typed GDScript, static helper classes extending
   RefCounted, data in `data/` (JSON or .tres) read by a loader with a `problems()` check that runs when the items
   load. Tunable numbers go in data/config files, not literals.
-- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (17 now) and its comment block list every version.
+- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (18 now) and its comment block list every version.
   New saved state bumps it once per step, with `GameState.from_dict()` / `SaveManager.upgrade()` loading every
   older save without losing progress.
 - Invariants that have bitten before: never lose or create items or rounds; a stack never exceeds its max stack

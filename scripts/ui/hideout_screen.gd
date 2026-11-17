@@ -138,6 +138,8 @@ func _build_station(which: Dictionary) -> void:
 		Hideout.STASH:
 			var cells := GameState.stash.size
 			_note("Your stash: %d × %d" % [cells.x, cells.y]).name = "StashSize"
+	if which.id == FigureTable.station_id():
+		_build_shelf(level)
 	_build_tree(which)
 	if which.id == GearUpgrades.WORKBENCH:
 		_build_gear_upgrades(level)
@@ -353,6 +355,46 @@ func _build_range(level: int) -> void:
 		GameState.raid = raid
 		get_tree().change_scene_to_file.call_deferred(LOADING_SCENE)
 		return ""))
+
+
+## The Collectors Shelf's buttons: the shelf (the 3D view to place, move and remove figures) and the
+## collection, both on the CollectionScreen; the set bonuses on now.
+func _build_shelf(level: int) -> void:
+	%Details.add_child(HSeparator.new())
+	_heading("FIGURES", true)
+	var lines := Figures.active_lines()
+	_note("%d of %d figures on display. Set bonuses on: %s." % [Figures.displayed_count(), FigureTable.figures().size(), ", ".join(lines) if not lines.is_empty() else "none"]).name = "ShelfNote"
+	var row := _row()
+	row.add_child(_open_button("OpenCollection", "COLLECTION", "", CollectionScreen.COLLECTION))
+	row.add_child(_open_button("OpenShelf", "SHELF", "" if level > 0 else "Build the Collectors Shelf first", CollectionScreen.SHELF))
+
+
+## A button that opens the CollectionScreen on tab `which` over this screen.
+func _open_button(id: String, text: String, blocked: String, which: int) -> Button:
+	var button := Button.new()
+	button.name = id
+	button.text = text
+	button.custom_minimum_size = Vector2(170, 44)
+	button.disabled = blocked != ""
+	button.tooltip_text = blocked
+	button.pressed.connect(func() -> void: open_collection(which))
+	return button
+
+
+## Opens the Collectors Shelf screen on tab `which` (CollectionScreen.SHELF or COLLECTION). This screen's
+## content hides meanwhile, so the keyboard and controller focus can't reach it.
+func open_collection(which: int) -> CollectionScreen:
+	get_viewport().gui_release_focus()
+	$Margin.hide()
+	var screen := CollectionScreen.create(which)
+	screen.closed.connect(func() -> void:
+		$Margin.show()
+		_refresh()
+		var back := %Details.find_child("OpenShelf", true, false) as Button
+		if back:
+			back.grab_focus.call_deferred())
+	add_child(screen)
+	return screen
 
 
 ## The Workbench's gear upgrades: every piece of upgradable gear you own, with what the next level
