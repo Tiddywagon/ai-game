@@ -56,7 +56,8 @@ const OWN_KEYS := {"stash_size": STASH, "fuel_slots": GENERATOR, "fuel_efficienc
 const EVERY_LEVEL_KEYS := {GENERATOR: ["fuel_slots", "fuel_efficiency"], BITCOIN_FARM: ["card_slots", "produces"],
 	WATER_COLLECTOR: ["produces"], GYM: ["training"], SECURITY: ["scouting"], SHOOTING_RANGE: ["practice"],
 	INTELLIGENCE_CENTER: ["scav_cooldown", "insurance_price", "insurance_time"], COLLECTORS_SHELF: ["display_slots"]}
-const RECIPE_KEYS := ["id", "minutes", "inputs", "output"]
+## "quest": a quest that has to be completed before the craft can start (DESIGN.md §11).
+const RECIPE_KEYS := ["id", "minutes", "inputs", "output", "quest"]
 const COSMETIC_KEYS := ["id", "name", "slot", "color", "roubles", "description", "requires"]
 ## Cosmetic slots: one cosmetic each, drawn on the hideout plan (HideoutMap).
 const COSMETIC_SLOTS := ["lighting", "walls", "floor", "posters"]

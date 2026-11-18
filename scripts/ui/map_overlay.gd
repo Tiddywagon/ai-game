@@ -8,7 +8,9 @@ extends CanvasLayer
 ## needs (amber). Scav areas and high-value loot rooms are marked too, and the map's points of interest
 ## (DESIGN.md §5.2) with their names, outlined by tier, the ones you've explored ticked; hidden ones
 ## only once you've found them. The legend lists them with how much of the map you've explored. It
-## doesn't show where you are. M, Esc or CLOSE closes it; the raid goes on underneath.
+## doesn't show where you are. Your active quests' locations on this map (visit, place and mark
+## objectives, DESIGN.md §11) show as gold diamonds with the objective, ticked once done, and are listed
+## in the legend. M, Esc or CLOSE closes it; the raid goes on underneath.
 
 const PAPER := Color(0.13, 0.14, 0.13, 0.97)
 const INK := Color(0.82, 0.8, 0.72)
@@ -23,6 +25,8 @@ const LOOT := Color(1.0, 0.8, 0.3)
 ## Point of interest outlines by tier (1, 2, 3).
 const POI_COLORS := [Color(0.7, 0.75, 0.7, 0.8), Color(0.55, 0.8, 0.95, 0.9), Color(1.0, 0.8, 0.3, 0.95)]
 const MARGIN := 40.0
+const QUEST := Color(1.0, 0.82, 0.3)
+const QUEST_DONE := Color(0.55, 0.9, 0.55)
 
 var layout: MapLayout
 var map: MapInfo
@@ -176,6 +180,36 @@ func shown_pois() -> Array:
 	return layout.pois.filter(func(entry: Dictionary) -> bool: return not entry.hidden or is_explored(entry.id))
 
 
+## The active quests' locations on this map: [{"at": Vector2 (x, z), "name", "text" (the objective),
+## "done"}]: a point of interest's centre or a quest spot's place (QuestLog.spot()), live progress in a raid.
+func quest_locations() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for quest in QuestLog.shown():
+		if not QuestLog.state(quest) in ["active", "ready"]:
+			continue
+		for i in quest.objectives.size():
+			var where := QuestLog.location(quest, i)
+			if where.is_empty() or str(where.map) != map_id():
+				continue
+			var at := Vector2.INF
+			if where.has("spot"):
+				var position: Array = QuestLog.spot(map_id(), str(where.spot)).get("position", [])
+				if position.size() == 3:
+					at = Vector2(float(position[0]), float(position[2]))
+			else:
+				for entry: Dictionary in layout.pois:
+					if entry.id == where.poi:
+						var sum := Vector2.ZERO
+						for point: Vector2 in entry.points:
+							sum += point
+						at = sum / maxf(entry.points.size(), 1.0)
+			if at == Vector2.INF:
+				continue
+			var done := (raid.quest_raid.progress(quest, i) if raid and raid.quest_raid else QuestLog.progress(quest, i)) >= QuestLog.objective_count(quest, i)
+			result.append({"at": at, "name": quest.name, "text": QuestLog.objective_text(quest, i), "done": done})
+	return result
+
+
 func is_explored(poi_id: String) -> bool:
 	return poi_id in GameState.explored.get(map_id(), [])
 
@@ -196,6 +230,11 @@ func _fill_legend() -> void:
 			var detail := "Tier %d%s%s" % [entry.tier, "  ·  explored" if is_explored(entry.id) else "",
 				"  ·  " + entry.requirement if entry.requirement != "" else ""]
 			lines.append([entry.name, detail, POI_COLORS[clampi(int(entry.tier), 1, 3) - 1]])
+	var quest_spots := quest_locations()
+	if not quest_spots.is_empty():
+		lines.append(["QUEST LOCATIONS", "%d for your active quests" % quest_spots.size(), QUEST])
+		for spot: Dictionary in quest_spots:
+			lines.append([spot.name, spot.text + ("  ·  done" if spot.done else ""), QUEST_DONE if spot.done else QUEST])
 	if _legend.get_child_count() == lines.size() * 2:
 		for i in lines.size():
 			_legend.get_child(i * 2 + 1).text = lines[i][1]
@@ -289,6 +328,15 @@ func _draw_map() -> void:
 		var width := font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
 		_canvas.draw_string_outline(font, at + Vector2(-width / 2.0, -radius - 6.0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 4, Color(0, 0, 0, 0.85))
 		_canvas.draw_string(font, at + Vector2(-width / 2.0, -radius - 6.0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, color)
+	for spot: Dictionary in quest_locations():
+		var at := to_canvas(spot.at)
+		var color: Color = QUEST_DONE if spot.done else QUEST
+		var diamond := PackedVector2Array([at + Vector2(0, -11), at + Vector2(11, 0), at + Vector2(0, 11), at + Vector2(-11, 0)])
+		_canvas.draw_colored_polygon(diamond, Color(color, 0.85))
+		_canvas.draw_polyline(diamond + PackedVector2Array([diamond[0]]), Color.BLACK, 2.0)
+		var label: String = ("✓ " if spot.done else "! ") + spot.name
+		_canvas.draw_string_outline(font, at + Vector2(14, 5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, 4, Color(0, 0, 0, 0.85))
+		_canvas.draw_string(font, at + Vector2(14, 5), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, color)
 	var compass := Vector2(_canvas.size.x - 30.0, 34.0)
 	_canvas.draw_line(compass + Vector2(0, 14), compass + Vector2(0, -14), INK, 2.0)
 	_canvas.draw_string(font, compass + Vector2(-5, -18), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, INK)

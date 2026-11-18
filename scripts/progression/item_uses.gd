@@ -31,7 +31,7 @@ static func of(id: String) -> Array[Dictionary]:
 		if QuestLog.state(quest) == "completed":
 			continue
 		for objective: Dictionary in quest.get("objectives", []):
-			if objective.get("type", "") == "hand_in" and objective.get("item", "") == id:
+			if objective.get("type", "") in QuestLog.ITEM_TYPES and objective.get("item", "") == id:
 				result.append(_use("quest", "%s (%s)" % [quest.name, TraderTable.display_name(str(quest.get("trader", "")))], objective))
 	for station in Hideout.stations():
 		for entry: Dictionary in station.levels:
@@ -137,7 +137,7 @@ static func still_needed(id: String) -> Array[Dictionary]:
 		var objectives: Array = quest.get("objectives", [])
 		for index in objectives.size():
 			var objective: Dictionary = objectives[index]
-			if objective.get("type", "") == "hand_in" and objective.get("item", "") == id:
+			if objective.get("type", "") in QuestLog.ITEM_TYPES and objective.get("item", "") == id:
 				var more := int(objective.get("count", 1)) - QuestLog.progress(quest, index)
 				if more > 0:
 					result.append({"kind": "quest", "name": "%s (%s)" % [quest.name, TraderTable.display_name(str(quest.get("trader", "")))],
@@ -205,7 +205,7 @@ static func _all_markers() -> Dictionary:
 				named[str(requirement.get("item", ""))] = true
 	for quest in QuestLog.shown():
 		for objective: Dictionary in quest.get("objectives", []):
-			if objective.get("type", "") == "hand_in":
+			if objective.get("type", "") in QuestLog.ITEM_TYPES:
 				named[str(objective.get("item", ""))] = true
 	for id: String in named:
 		if not still_needed(id).is_empty():

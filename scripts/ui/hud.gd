@@ -22,6 +22,10 @@ extends CanvasLayer
 ## a few seconds near the top, with its tier and focus, and "NEW AREA" with the experience and how much of
 ## the map you've explored the first time ever ("HIDDEN AREA FOUND" for a hidden one). Raid events
 ## (airdrops, supply trucks, weapon caches) are announced in the same place (announce()).
+## Quests (DESIGN.md §11): the tracked quests' objectives for this map top-right under the clock
+## (QuestTracker, live from the raid's QuestRaid), a toast when an objective moves or completes ("Kill
+## Scavs: 3 / 5", "Objective complete: ..."), and while placing a quest item a PLACING countdown with a
+## gold ring round you.
 ## HUD scale, opacity, units and reticle come from Settings.
 
 const NORMAL_COLOR := Color(0.85, 0.85, 0.75)
@@ -58,7 +62,16 @@ const BLUR_SHADER := preload("res://assets/shaders/depleted_blur.gdshader")
 ## The player whose status is shown.
 @export var player: Player
 
+## How long the quest toast stays up, in seconds.
+const QUEST_TOAST_TIME := 3.0
+const QUEST_COLOR := Color(1.0, 0.82, 0.3)
+const QUEST_DONE_COLOR := Color(0.55, 0.9, 0.55)
+
 var _message_time := 0.0
+var _quest_toast: Label
+var _quest_toast_left := 0.0
+var _tracker: VBoxContainer
+var _tracker_left := 0.0
 var _raid: RaidController
 var _raid_line := ""
 var _prompt: Label
@@ -127,6 +140,9 @@ func _ready() -> void:
 	add_child(_sting)
 	_build_banner()
 	_build_poi_label()
+	_quest_toast = _add_center_label(-610.0, 26, QUEST_COLOR)
+	_quest_toast.name = "QuestToast"
+	_build_tracker()
 	_connect_raid.call_deferred()
 	_build_consumables()
 	_extract_ring = Control.new()
@@ -189,6 +205,78 @@ func _connect_raid() -> void:
 		_raid = get_tree().get_first_node_in_group("raid_controller") as RaidController
 	if _raid and not _raid.poi_entered.is_connected(_on_poi_entered):
 		_raid.poi_entered.connect(_on_poi_entered)
+	if _raid and _raid.quest_raid and not _raid.quest_raid.progressed.is_connected(show_quest_toast):
+		_raid.quest_raid.progressed.connect(show_quest_toast)
+
+
+## The quest toast: `text` for QUEST_TOAST_TIME seconds, green once the objective is complete.
+func show_quest_toast(text: String, done: bool) -> void:
+	_quest_toast.text = text
+	_quest_toast.add_theme_color_override("font_color", QUEST_DONE_COLOR if done else QUEST_COLOR)
+	_quest_toast.show()
+	_quest_toast_left = QUEST_TOAST_TIME
+	_update_tracker()
+
+
+func _build_tracker() -> void:
+	_tracker = VBoxContainer.new()
+	_tracker.name = "QuestTracker"
+	_tracker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tracker.add_theme_constant_override("separation", 2)
+	_tracker.anchor_left = 1.0
+	_tracker.anchor_right = 1.0
+	_tracker.offset_left = -470.0
+	_tracker.offset_right = -24.0
+	_tracker.offset_top = 210.0
+	_root.add_child(_tracker)
+
+
+## The tracker's lines: each tracked quest's name, then its objectives on this map (or on any map) with
+## their live progress: [[text, color], ...].
+func tracker_lines() -> Array:
+	var lines := []
+	var raid := _raid.quest_raid if _raid else null
+	var map_id := _raid.map_key() if _raid else ""
+	for id in QuestLog.tracked():
+		var quest := QuestLog.find(id)
+		var rows := []
+		for i in quest.objectives.size():
+			var entry: Dictionary = quest.objectives[i]
+			if str(entry.get("map", map_id)) != map_id:
+				continue
+			var count := QuestLog.objective_count(quest, i)
+			var done := raid.progress(quest, i) if raid else QuestLog.progress(quest, i)
+			rows.append(["  %s  %d / %d" % [QuestLog.objective_text(quest, i), done, count], QUEST_DONE_COLOR if done >= count else Color(0.92, 0.9, 0.8)])
+		if not rows.is_empty():
+			lines.append([quest.name.to_upper(), QUEST_COLOR])
+			lines.append_array(rows)
+	return lines
+
+
+func _update_tracker() -> void:
+	var lines := tracker_lines()
+	for child in _tracker.get_children():
+		_tracker.remove_child(child)
+		child.queue_free()
+	for line: Array in lines:
+		var label := Label.new()
+		label.text = line[0]
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		label.add_theme_font_size_override("font_size", 17)
+		label.add_theme_color_override("font_color", line[1])
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_constant_override("outline_size", 5)
+		_tracker.add_child(label)
+	_tracker.visible = not lines.is_empty()
+
+
+## The quest site being placed at (QuestSite.held running), or null.
+func placing_site() -> QuestSite:
+	for site in get_tree().get_nodes_in_group("quest_sites"):
+		if site is QuestSite and site.held >= 0.0:
+			return site
+	return null
 
 
 func _on_poi_entered(poi: PointOfInterest, first_time: bool) -> void:
@@ -287,11 +375,15 @@ func _update_raid_prompts() -> void:
 		_prompt.text = target.interact_text()
 	var left := _raid.extract_remaining() if _raid else -1.0
 	var blocked := _raid.extract_block() if _raid else ""
-	_extract.visible = left >= 0.0 or blocked != ""
-	_extract_ring.visible = left >= 0.0 and not player.is_dead
+	var site := placing_site()
+	_extract.visible = left >= 0.0 or blocked != "" or site != null
+	_extract_ring.visible = (left >= 0.0 or site != null) and not player.is_dead
 	if _extract_ring.visible:
 		_extract_ring.queue_redraw()
-	if left >= 0.0:
+	if site:
+		_extract.text = "PLACING  %.1f" % maxf(site.seconds() - site.held, 0.0)
+		_extract.add_theme_color_override("font_color", QUEST_COLOR)
+	elif left >= 0.0:
 		_extract.text = "EXTRACTING  %.1f" % left
 		_extract.add_theme_color_override("font_color", EXTRACT_COLOR)
 	elif blocked != "":
@@ -306,11 +398,13 @@ func _draw_extract_ring() -> void:
 	if camera == null or player == null or _raid == null:
 		return
 	var centre := camera.unproject_position(player.global_position + Vector3.UP * 0.9)
-	var progress := _raid.extract_progress()
+	var site := placing_site()
+	var progress := site.place_progress() if site else _raid.extract_progress()
+	var color := QUEST_COLOR if site else EXTRACT_COLOR
 	_extract_ring.draw_arc(centre, RING_RADIUS, 0.0, TAU, 64, Color(0, 0, 0, 0.55), RING_WIDTH + 4.0, true)
-	_extract_ring.draw_arc(centre, RING_RADIUS, 0.0, TAU, 64, Color(EXTRACT_COLOR, 0.25), RING_WIDTH, true)
+	_extract_ring.draw_arc(centre, RING_RADIUS, 0.0, TAU, 64, Color(color, 0.25), RING_WIDTH, true)
 	if progress > 0.0:
-		_extract_ring.draw_arc(centre, RING_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * progress, 64, EXTRACT_COLOR, RING_WIDTH, true)
+		_extract_ring.draw_arc(centre, RING_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * progress, 64, color, RING_WIDTH, true)
 
 
 func _on_trick_shot_ready() -> void:
@@ -584,6 +678,12 @@ func _process(delta: float) -> void:
 	%BottomRight.pivot_offset = %BottomRight.size
 	_message_time -= delta
 	_message.visible = _message_time > 0.0
+	_quest_toast_left -= delta
+	_quest_toast.visible = _quest_toast_left > 0.0
+	_tracker_left -= delta
+	if _tracker_left <= 0.0:
+		_tracker_left = 0.5
+		_update_tracker()
 	_extract_list_left = maxf(_extract_list_left - delta, 0.0)
 	_update_raid_clock()
 	if player == null:

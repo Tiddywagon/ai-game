@@ -19,7 +19,7 @@ const REBINDABLE := [
 	["move_right", "Move right"], ["sprint", "Sprint"], ["crouch", "Crouch"], ["roll", "Combat roll"],
 	["take_cover", "Take cover"], ["aim", "Aim / peek"], ["shoot", "Shoot"], ["reload", "Reload"],
 	["interact", "Interact"], ["melee", "Melee (hold: parry stance)"], ["use_item", "Use item"],
-	["toggle_inventory", "Inventory"], ["map_view", "Map"], ["show_extracts", "Show extracts"],
+	["toggle_inventory", "Inventory"], ["map_view", "Map"], ["show_extracts", "Show extracts"], ["quest_log", "Quest log"],
 	["hotkey_1", "Hotkey 1"], ["hotkey_2", "Hotkey 2"], ["hotkey_3", "Hotkey 3"], ["hotkey_4", "Hotkey 4"],
 	["hotkey_5", "Hotkey 5"], ["hotkey_wheel", "Hotkey wheel (hold)"], ["flashlight", "Flashlight"],
 	["binoculars", "Binoculars"],

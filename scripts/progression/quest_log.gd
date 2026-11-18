@@ -489,9 +489,33 @@ static func accept_block_reason(quest: Dictionary) -> String:
 static func gives(quest: Dictionary) -> Array[ItemInstance]:
 	var result: Array[ItemInstance] = []
 	for entry: Dictionary in quest.get("gives", []):
-		var item := FoundInRaid.make(str(entry.get("item", "")), int(entry.get("count", 1)), FoundInRaid.Source.QUEST_REWARD)
-		if item:
-			result.append(item)
+		result.append_array(pieces(str(entry.get("item", "")), int(entry.get("count", 1))))
+	return result
+
+
+## `count` of item `id` as stacks no bigger than its max stack (one each for an item that doesn't
+## stack), from a quest: never found in raid.
+static func pieces(id: String, count: int) -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	var first := FoundInRaid.make(id, count, FoundInRaid.Source.QUEST_REWARD)
+	if first == null:
+		return result
+	if first.data.max_stack <= 1:
+		first.count = 1
+		result.append(first)
+		for i in count - 1:
+			result.append(FoundInRaid.make(id, 1, FoundInRaid.Source.QUEST_REWARD))
+		return result
+	result.append(first)
+	result.append_array(first.split_excess())
+	return result
+
+
+## The reward items of `quest` as stacks (pieces()).
+static func reward_items(quest: Dictionary) -> Array[ItemInstance]:
+	var result: Array[ItemInstance] = []
+	for reward: Dictionary in quest.get("rewards", {}).get("items", []):
+		result.append_array(pieces(str(reward.get("item", "")), int(reward.get("count", 1))))
 	return result
 
 
@@ -504,7 +528,8 @@ static func accept(quest: Dictionary) -> bool:
 	GameState.quests[quest.id] = {"state": "active", "progress": counts}
 	for given in gives(quest):
 		GameState.stash.add(given)
-		GameState.quests[quest.id].given = int(GameState.quests[quest.id].get("given", 0)) + 1
+	if not quest.get("gives", []).is_empty():
+		GameState.quests[quest.id].given = 1
 	return true
 
 
@@ -557,9 +582,8 @@ static func hand_in(quest: Dictionary, index: int) -> int:
 static func complete_block_reason(quest: Dictionary) -> String:
 	if state(quest) != "ready":
 		return "Finish every objective first"
-	for reward in quest.get("rewards", {}).get("items", []):
-		var item := ItemInstance.create(str(reward.item), int(reward.get("count", 1)))
-		if item and not GameState.stash.has_room_for(item):
+	for item in reward_items(quest):
+		if not GameState.stash.has_room_for(item):
 			return "No room in the stash for the rewards"
 	return ""
 
@@ -583,8 +607,8 @@ static func complete(quest: Dictionary) -> String:
 	for id: String in reputation:
 		if GameState.trader_loyalty.has(id):
 			GameState.trader_loyalty[id].reputation = Progression.add_reputation(float(GameState.trader_loyalty[id].reputation), reputation[id])
-	for reward in rewards.get("items", []):
-		GameState.stash.add(FoundInRaid.make(str(reward.item), int(reward.get("count", 1)), FoundInRaid.Source.QUEST_REWARD))
+	for item in reward_items(quest):
+		GameState.stash.add(item)
 	for given: Dictionary in quest.get("gives", []):
 		var id := str(given.get("item", ""))
 		if ItemDB.has_item(id) and ItemDB.get_item(id).base_value == 0:

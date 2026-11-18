@@ -54,6 +54,7 @@ func run() -> void:
 	await _hideout()
 	await _shelf()
 	await _traders()
+	await _quests()
 	await _flea()
 	await _raid_setup()
 	await _settings()
@@ -87,6 +88,62 @@ func _close(screen: Node, button_name: String, what: String) -> void:
 	await frames(3)
 	check(not is_instance_valid(screen) and _find(menu, "ScreenHost").get_child_count() == 0 and _find(menu, "Menu").visible,
 		"%s closes back to the menu" % what)
+
+
+## QUESTS (DESIGN.md §11): the tabs, a quest accepted and tracked through its buttons, the trader filter,
+## the chain line, and the log opened from TRADERS too.
+func _quests() -> void:
+	section("QUESTS")
+	var quests: GDScript = load("res://scripts/progression/quest_log.gd")
+	var screen := await _open("QuestsButton")
+	check(screen != null and screen.name == "QuestsScreen", "QUESTS opens the quest log")
+	if screen == null:
+		return
+	(_find(screen, "AvailableTab") as Button).pressed.emit()
+	await frames(2)
+	var row := _find(screen, "Quest_scrap_run") as Button
+	check(row != null, "AVAILABLE lists Scrap Run")
+	if row:
+		row.pressed.emit()
+		await frames(2)
+	check((_find(screen, "QuestTitle") as Label).text == "SCRAP RUN", "picking it shows it")
+	(_find(screen, "AcceptButton") as Button).pressed.emit()
+	await frames(2)
+	check(quests.state(quests.find("scrap_run")) == "active" and screen.tab == 0 and screen.selected == "scrap_run", "ACCEPT: it's active, the log follows it to ACTIVE")
+	(_find(screen, "TrackButton") as Button).pressed.emit()
+	await frames(2)
+	check(quests.is_tracked(quests.find("scrap_run")) and (_find(screen, "TrackButton") as Button).text == "UNTRACK", "TRACK tracks it")
+	var filter := _find(screen, "TraderFilter") as OptionButton
+	for i in filter.item_count:
+		if str(filter.get_item_metadata(i)) == "vera":
+			filter.select(i)
+			filter.item_selected.emit(i)
+	await frames(2)
+	check(screen.quests_on(0).is_empty() and screen.quests_on(1).all(func(quest: Dictionary) -> bool: return quest.trader == "vera"), "the trader filter shows Doc Vera's quests only")
+	filter.select(0)
+	filter.item_selected.emit(0)
+	(_find(screen, "AvailableTab") as Button).pressed.emit()
+	await frames(2)
+	var safekeeping := _find(screen, "Quest_safekeeping") as Button
+	if safekeeping:
+		safekeeping.pressed.emit()
+		await frames(2)
+	var chain := _find(screen, "Chain") as Label
+	check(chain != null and "after Scrap Run ✗" in chain.text, "a locked quest shows its chain (%s)" % (chain.text if chain else "none"))
+	(_find(screen, "CompletedTab") as Button).pressed.emit()
+	await frames(2)
+	check(_find(screen, "Quest_zoya_introduction") != null, "COMPLETED lists A Word in His Ear")
+	await _close(screen, "BackButton", "QUESTS")
+	var traders := await _open("TradersButton")
+	(_find(traders, "QuestsButton") as Button).pressed.emit()
+	await frames(3)
+	var log := _find(traders, "QuestsScreen")
+	check(log != null and log.trader_filter == "bulat", "TRADERS opens the quest log on the trader shown")
+	if log:
+		(_find(log, "BackButton") as Button).pressed.emit()
+		await frames(3)
+	check(_find(traders, "QuestsScreen") == null, "and closes back to TRADERS")
+	await _close(traders, "BackButton", "TRADERS")
 
 
 ## The inventory and stash as text, the stash in cell order.
@@ -597,3 +654,25 @@ func _raid(raid: Dictionary, scene: String, seconds: float) -> void:
 	await wait(RENDERED)
 	check(current_scene != null and current_scene.scene_file_path == scene, "it is still running after %d s" % seconds)
 	check(counter.errors == errors, "no errors in %d s of %s%s" % [seconds, what, "" if counter.errors == errors else ": %d, first %s" % [counter.errors - errors, counter.first]])
+	if raid.side == "pmc" and raid.map == "test_yard":
+		await _raid_quest_log()
+
+
+## In a raid: the HUD tracker lists the tracked quest, and the pause menu's QUESTS opens the log
+## read-only (no ACCEPT or TURN IN), live progress shown.
+func _raid_quest_log() -> void:
+	var hud := _find(current_scene, "QuestTracker") as VBoxContainer
+	await wait(0.6)
+	check(hud != null and hud.visible and hud.get_children().any(func(label: Node) -> bool: return label.text == "SCRAP RUN"),
+		"the HUD tracker shows the tracked Scrap Run")
+	var pause := _find(current_scene, "PauseMenu")
+	pause.open()
+	(_find(pause, "QuestsButton") as Button).pressed.emit()
+	await frames(3)
+	var log := _find(pause, "QuestsScreen")
+	check(log != null and log.raid != null and _find(log, "AcceptButton") == null and _find(log, "TurnInButton") == null,
+		"the pause menu's QUESTS opens the log, read-only in a raid")
+	if log:
+		(_find(log, "BackButton") as Button).pressed.emit()
+		await frames(3)
+	pause.close()

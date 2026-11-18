@@ -2,7 +2,7 @@ class_name Trading
 extends RefCounted
 ## Buying, bartering and changing money with traders (DESIGN.md §10). The traders are in TraderTable;
 ## what they sell lives in data/traders/offers.json, by trader id: "buy" [{id, item, count, price,
-## currency, ll, stock}]; their barters in data/traders/barters/ (BarterTable). An offer with "ll" needs
+## currency, ll, stock, quest (a quest to complete first: DESIGN.md §11)}]; their barters in data/traders/barters/ (BarterTable). An offer with "ll" needs
 ## that loyalty level with the trader (cheap rounds at LL1, AP rounds at LL3-4), at least the level its
 ## item's rarity needs (min_loyalty in data/config/trading.json: Rare LL2, Ultra Rare LL3, Epic LL4,
 ## Legendary never for money; problems() checks it); the BUY tab shows only what your level reaches and
@@ -349,6 +349,8 @@ static func buy_block_reason(offer: Dictionary, trader_id := "") -> String:
 	var loyalty := loyalty_block_reason(trader_id, offer)
 	if loyalty != "":
 		return loyalty
+	if str(offer.get("quest", "")) != "" and not QuestLog.is_completed(str(offer.quest)):
+		return "Unlocks after %s" % str(QuestLog.find(str(offer.quest)).get("name", offer.quest))
 	if offer.get("used", false) and not TraderStock.used_offers(trader_id).any(func(each: Dictionary) -> bool: return each.id == offer.get("id")):
 		return "Gone: %s has restocked" % TraderTable.display_name(trader_id)  # A row drawn before the restock.
 	if trader_id != "" and TraderStock.left(trader_id, offer) == 0:

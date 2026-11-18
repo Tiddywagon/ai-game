@@ -437,8 +437,7 @@ static func _run(inventory: Inventory, stash: InventoryGrid, options: Dictionary
 	for slot in GUN_SLOTS:
 		_fill_gun_slot(ctx, slot)
 	var packing: int = ctx.lines.size()
-	_pack_meds(ctx)
-	_pack_spare_rounds(ctx)
+	_pack_meds_and_spares(ctx)
 	# A rig or backpack in the stash only becomes a candidate once it's empty: when the steps above emptied
 	# one (its rounds, meds, magazine or gun taken out), the rig and backpack are chosen again, and if that
 	# changes anything the meds and spares are packed again (their earlier warnings replaced), so one run
@@ -457,8 +456,7 @@ static func _run(inventory: Inventory, stash: InventoryGrid, options: Dictionary
 			break
 		ctx.lines = ctx.lines.filter(func(line: Dictionary) -> bool: return not stale.any(func(old: Dictionary) -> bool: return is_same(old, line)))
 		packing = ctx.lines.size()
-		_pack_meds(ctx)
-		_pack_spare_rounds(ctx)
+		_pack_meds_and_spares(ctx)
 	_closing_lines(ctx)
 	for grid in inventory.grids():
 		grid.changed.emit()
@@ -1026,6 +1024,21 @@ static func _restore(gun: ItemInstance, snapshot: Array, missing := {}) -> void:
 ## One med of each kind (med_kinds()) in the pockets or rig, unless you carry that kind there already: the
 ## best you own in the stash (rarest, then the most uses or HP left), else a smaller one that fits. The
 ## summary lists what went in first, then (in kind order) what wasn't there or had no room.
+## The meds, then the spare rounds. Sending worse rounds back to the stash can free the pocket cell a med
+## had no room for: then the meds are packed again (their warnings replaced), so one run ends where a
+## second would.
+static func _pack_meds_and_spares(ctx: Dictionary) -> void:
+	var before: int = ctx.lines.size()
+	_pack_meds(ctx)
+	var med_warnings: Array = ctx.lines.slice(before).filter(func(line: Dictionary) -> bool: return line.tone == WARNING)
+	var changes: int = ctx.changes
+	_pack_spare_rounds(ctx)
+	if ctx.changes == changes or not med_warnings.any(func(line: Dictionary) -> bool: return str(line.text).begins_with("No room for a")):
+		return
+	ctx.lines = ctx.lines.filter(func(line: Dictionary) -> bool: return not med_warnings.any(func(old: Dictionary) -> bool: return is_same(old, line)))
+	_pack_meds(ctx)
+
+
 static func _pack_meds(ctx: Dictionary) -> void:
 	var targets := _worn_grids(ctx.inventory, MED_GRIDS)
 	var added := {}

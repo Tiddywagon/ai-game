@@ -1,5 +1,5 @@
 {
-  "_comment": "What each trader sells for money (buy), by trader id (data/traders/traders.json). Mole, the fence, has nothing here: his used gear is rolled each restock (data/config/trading.json, used_stock). A buy offer: id (stable and unique among every offer and barter: saves keep how many were bought this restock under it), item, count, price, currency (RUB or USD), ll and stock. \"ll\": the loyalty level with that trader an offer needs (1 if left out); at least the level its item's rarity needs (min_loyalty in data/config/trading.json: Rare LL2, Ultra Rare LL3, Epic LL4, Legendary never for money): cheap rounds at LL1, soft and tracer rounds at LL2, AP rounds at LL3-4; the best AP rounds aren't sold (loot, the Workbench and LL4 barters). \"stock\": how many you can buy each restock (left out: no limit); given to the rare and strong offers (Rare and better guns, armor class 4 and up, AP ammo packs, stims, the best scopes, visors and headsets). Barters are in data/traders/barters/ (BarterTable). Nothing bought is ever found in raid.",
+  "_comment": "What each trader sells for money (buy), by trader id (data/traders/traders.json). Mole, the fence, has nothing here: his used gear is rolled each restock (data/config/trading.json, used_stock). A buy offer: id (stable and unique among every offer and barter: saves keep how many were bought this restock under it), item, count, price, currency (RUB or USD), ll and stock, and optionally quest (a quest to complete before it can be bought: DESIGN.md §11). \"ll\": the loyalty level with that trader an offer needs (1 if left out); at least the level its item's rarity needs (min_loyalty in data/config/trading.json: Rare LL2, Ultra Rare LL3, Epic LL4, Legendary never for money): cheap rounds at LL1, soft and tracer rounds at LL2, AP rounds at LL3-4; the best AP rounds aren't sold (loot, the Workbench and LL4 barters). \"stock\": how many you can buy each restock (left out: no limit); given to the rare and strong offers (Rare and better guns, armor class 4 and up, AP ammo packs, stims, the best scopes, visors and headsets). Barters are in data/traders/barters/ (BarterTable). Nothing bought is ever found in raid.",
   "bulat": {
     "buy": [
       {"id": "bulat_ak_74n", "item": "ak_74n", "price": 41000, "currency": "RUB", "ll": 2, "stock": 2},
@@ -101,7 +101,8 @@
       {"id": "vera_coagulant_pen", "item": "coagulant_pen", "price": 20000, "currency": "RUB", "ll": 2, "stock": 3},
       {"id": "vera_bonelock", "item": "bonelock", "price": 24000, "currency": "RUB", "ll": 2, "stock": 3},
       {"id": "vera_empty_injector", "item": "empty_injector", "price": 9000, "currency": "RUB"},
-      {"id": "vera_saline_bag", "item": "saline_bag", "price": 31000, "currency": "RUB", "ll": 2}
+      {"id": "vera_saline_bag", "item": "saline_bag", "price": 31000, "currency": "RUB", "ll": 2},
+      {"id": "vera_hawkeye", "item": "hawkeye", "price": 47000, "currency": "RUB", "ll": 2, "stock": 2, "quest": "trusted_hands"}
     ]
   },
   "zoya": {

@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## In-raid pause menu (DESIGN.md §16.5): Esc or Start pauses the game and frees the mouse.
-## Resume, Settings, Leave raid (asks first) and Quit game (asks first). Beside them, your extracts
-## (DESIGN.md §5), each marked Open, Unknown, Closed or with what it still needs.
+## Resume, Quests (the quest log, DESIGN.md §11: QuestsScreen with the raid's live progress; the quest
+## log key J opens it straight away), Settings, Leave raid (asks first) and Quit game (asks first). Beside
+## them, your extracts (DESIGN.md §5), each marked Open, Unknown, Closed or with what it still needs.
 
 const MAIN_MENU := "res://ui/main_menu.tscn"
 const SETTINGS_SCENE := preload("res://ui/settings_menu.tscn")
@@ -19,6 +20,7 @@ func _ready() -> void:
 	hide()
 	%ResumeButton.pressed.connect(close)
 	%SettingsButton.pressed.connect(_open_settings)
+	%QuestsButton.pressed.connect(open_quests)
 	%LeaveButton.pressed.connect(_ask.bind(_leave_dialog))
 	%QuitButton.pressed.connect(_ask.bind(_quit_dialog))
 	_leave_dialog.confirmed.connect(_leave_raid)
@@ -27,6 +29,13 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("quest_log") and not visible and _host.get_child_count() == 0:
+		var who := get_tree().get_first_node_in_group("player") as Actor
+		if who and not who.is_dead:
+			open()
+			open_quests()
+			get_viewport().set_input_as_handled()
+		return
 	var toggle := event.is_action_pressed("pause")
 	var back := event.is_action_pressed("ui_cancel") and visible
 	if not (toggle or back) or _host.get_child_count() > 0:
@@ -66,6 +75,18 @@ func _open_settings() -> void:
 		_extracts.get_parent().get_parent().visible = _extracts.text != ""
 		%SettingsButton.grab_focus())
 	_host.add_child(settings)
+
+
+## The quest log over the pause menu, with this raid's live progress.
+func open_quests() -> void:
+	_panel.hide()
+	_extracts.get_parent().get_parent().hide()
+	var screen := QuestsScreen.create(get_tree().get_first_node_in_group("raid_controller") as RaidController)
+	screen.closed.connect(func() -> void:
+		_panel.show()
+		_extracts.get_parent().get_parent().visible = _extracts.text != ""
+		%QuestsButton.grab_focus())
+	_host.add_child(screen)
 
 
 func _ask(dialog: ConfirmationDialog) -> void:

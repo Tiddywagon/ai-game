@@ -239,7 +239,7 @@ func _selling() -> void:
 	for data in db.all_items():
 		if not selling.buys("mole", data):
 			unsold += 1
-	check(unsold == 0, "Mole buys every one of the 561 items")
+	check(unsold == 0, "Mole buys every item")
 	gs.trader_loyalty.vera.level = 4
 	check(is_equal_approx(selling.rate("vera"), 0.64), "each loyalty level adds 3%: Vera pays 64% at LL4")
 
@@ -334,7 +334,7 @@ func _no_resale_for(faction: int, figures_on := false) -> void:
 				tightest = result[0]
 				tightest_name = "%s (%d bought, %d sold to %s)" % [offer.id, result[1], result[2], result[3]]
 	print("    tightest price / best resale: %.4f for %s" % [tightest, tightest_name])
-	check(offers == 262 + trading.buy_list("mole").size(), "262 offers for money plus Mole's shelf are checked (%d)" % offers)
+	check(offers == 263 + trading.buy_list("mole").size(), "263 offers for money (E11: one quest-gated) plus Mole's shelf are checked (%d)" % offers)
 	check(losing == 0, "no offer, at its least (top loyalty, the faction discount and the quick-buy bundle price), sells on to any trader at top loyalty, whole or in parts, for its price or more")
 	var shelf_losing := 0
 	var shelf := 0
@@ -460,7 +460,7 @@ func _barters() -> void:
 	var junk := 0
 	var valuables := 0
 	for data in db.all_items():
-		if data.category == ItemDataScript.Category.JUNK:
+		if data.category == ItemDataScript.Category.JUNK and not "quest_item" in data.tags:  # A quest marker is no barter good.
 			junk += 1
 			if not asked.has(data.id):
 				unused_junk.append(data.id)

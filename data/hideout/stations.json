@@ -118,6 +118,7 @@
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "build_minutes": 60, "requires": [{"item": "bolts", "count": 5, "fir": true}, {"item": "screws", "count": 3, "fir": true}, {"item": "adjustable_wrench", "count": 1, "fir": true}],
         "crafts": [
           {"id": "weapon_parts", "minutes": 10, "inputs": [{"item": "bolts", "count": 3}, {"item": "wires", "count": 2}, {"item": "duct_tape", "count": 1}], "output": {"item": "weapon_parts", "count": 1}},
+          {"id": "weapon_parts_shortcut", "minutes": 20, "inputs": [{"item": "bolts", "count": 2}, {"item": "wires", "count": 2}, {"item": "screws", "count": 1}], "output": {"item": "weapon_parts", "count": 1}, "quest": "bench_time"},
           {"id": "pbp_rounds", "minutes": 60, "inputs": [{"item": "bolts", "count": 2}, {"item": "screws", "count": 2}, {"item": "wires", "count": 1}], "output": {"item": "ammo_9x19_pbp", "count": 30}},
           {"id": "ap20_slugs", "minutes": 60, "inputs": [{"item": "bolts", "count": 3}, {"item": "duct_tape", "count": 1}], "output": {"item": "ammo_12ga_ap20", "count": 10}},
           {"id": "bp_rounds", "minutes": 60, "inputs": [{"item": "bolts", "count": 3}, {"item": "screws", "count": 2}, {"item": "weapon_parts", "count": 1}], "output": {"item": "ammo_762x39_bp", "count": 30}},

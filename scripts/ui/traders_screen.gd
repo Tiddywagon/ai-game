@@ -73,6 +73,14 @@ var _find_index := 0
 
 func _ready() -> void:
 	%BackButton.pressed.connect(close)
+	var quests := Button.new()
+	quests.name = "QuestsButton"
+	quests.text = "QUESTS"
+	quests.custom_minimum_size = Vector2(160, 48)
+	quests.tooltip_text = "The quest log: every trader's quests, their chains and progress"
+	%BackButton.add_sibling(quests)
+	%BackButton.get_parent().move_child(quests, %BackButton.get_index())
+	quests.pressed.connect(_open_quests)
 	%FleaButton.disabled = not FleaMarket.is_unlocked()
 	%FleaButton.text = "FLEA MARKET" if FleaMarket.is_unlocked() else "FLEA MARKET  ·  %s" % FleaMarket.lock_text()
 	%FleaButton.tooltip_text = FleaMarket.lock_reason()
@@ -931,6 +939,15 @@ func _close_find() -> void:
 		(%Tabs as TabContainer).get_tab_bar().grab_focus()
 
 
+## The quest log over this screen, filtered to the trader shown; their tabs are drawn again after.
+func _open_quests() -> void:
+	var screen := QuestsScreen.create(null, str(_trader.get("id", "")))
+	screen.closed.connect(func() -> void:
+		_refresh()
+		(find_child("QuestsButton", true, false) as Button).grab_focus())
+	add_child(screen)
+
+
 func _build_tasks(trader: Dictionary) -> void:
 	var rows := _add_tab("TASKS")
 	for quest in QuestLog.for_trader(trader.id):
@@ -949,7 +966,7 @@ func _build_tasks(trader: Dictionary) -> void:
 			continue
 		box.add_child(_note(quest.get("description", "")))
 		for i in quest.objectives.size():
-			if QuestLog.objective_type(quest, i) in QuestLog.RAID_TYPES:
+			if not QuestLog.objective_type(quest, i) in QuestLog.HAND_TYPES:
 				box.add_child(_raid_objective(quest, i, state))
 				continue
 			if QuestLog.objective_type(quest, i) == "roubles":
@@ -979,9 +996,13 @@ func _build_tasks(trader: Dictionary) -> void:
 				" (%s only)" % Factions.display_name(QuestLog.faction_of(quest)) if QuestLog.faction_of(quest) != &"" else "", BarterTable.reward_text(barter)]))
 		for unlocked: Dictionary in _traders.filter(func(each: Dictionary) -> bool: return TraderTable.unlock_quest(each.id) == quest.id):
 			box.add_child(_note("Unlocks %s: %s" % [unlocked.name, str(unlocked.specialty).to_lower()]))
+		for unlock: Dictionary in QuestLog.unlocks(quest).filter(func(each: Dictionary) -> bool: return each.kind in ["offer", "craft", "quick_buy"]):
+			box.add_child(_note("Unlocks %s" % unlock.text))
+		if QuestLog.can_retake_marker(quest):
+			box.add_child(_action_button("TAKE MARKER AGAIN", "", func() -> String: return QuestLog.retake_marker(quest)))
 		match state:
 			"available":
-				box.add_child(_action_button("ACCEPT", "", func() -> String: return "" if QuestLog.accept(quest) else "Can't accept"))
+				box.add_child(_action_button("ACCEPT", QuestLog.accept_block_reason(quest), func() -> String: return "" if QuestLog.accept(quest) else "Can't accept"))
 			"ready":
 				box.add_child(_action_button("TURN IN", QuestLog.complete_block_reason(quest), func() -> String: return QuestLog.complete(quest)))
 		rows.add_child(box)
@@ -1147,11 +1168,21 @@ func _money_objective(quest: Dictionary, index: int, state: String) -> Control:
 
 ## What an objective counted in raids shows: its badge, its colour (white: none) and its tooltip.
 const RAID_OBJECTIVES := {
-	"trick_kill": ["360", Player.TRICK_COLOR, "Counted at the end of each raid, whether you survive or not: spin a full 360° with a bolt-action rifle or DMR, then kill with the first shot"],
-	"kill": ["KILL", Color.WHITE, "Counted at the end of each PMC raid, whether you survive or not"],
+	"trick_kill": ["360", Player.TRICK_COLOR, "Counted the moment it happens in a PMC raid, and kept if you die: spin a full 360° with a bolt-action rifle or DMR, then kill with the first shot"],
+	"kill": ["KILL", Color.WHITE, "Counted the moment it happens in a PMC raid, and kept if you die"],
+	"visit": ["GO", Color.WHITE, "Counted when you reach the place in a PMC raid"],
+	"place": ["PLACE", Color.WHITE, "Stand at the place in a PMC raid and hold the interact key: the item leaves your inventory"],
+	"mark": ["MARK", Color.WHITE, "Stand at the place in a PMC raid and hold the interact key to set the quest's marker"],
 	"extract": ["EXIT", Color.WHITE, "Counted when you extract from a PMC raid (a Run Through doesn't count)"],
+	"extract_with": ["CARRY", Color.WHITE, "Counted when you extract from a PMC raid with the item on you; you keep it"],
 	"explore": ["MAP", Color.WHITE, "Points of interest explored on the map, ever: those found before you took the task count too"],
+	"craft": ["CRAFT", Color.WHITE, "Counted when you collect the craft at the hideout"],
+	"upgrade": ["BUILD", Color.WHITE, "Done once the station is at that level (already built counts)"],
+	"level": ["LEVEL", Color.WHITE, "Done once you reach that player level"],
+	"loyalty": ["LL", Color.WHITE, "Done once you reach that loyalty level with the trader"],
 }
+## Survive-only objectives say so after their tooltip.
+const SURVIVE_NOTE := ". Survive-only: a raid's progress counts only if you extract"
 
 
 ## An objective counted in raids (trick kills, kills, extracts, exploring): what it asks for and how many
@@ -1168,16 +1199,18 @@ func _raid_objective(quest: Dictionary, index: int, state: String) -> Control:
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	line.add_child(badge)
 	var label := Label.new()
-	label.text = "%s  ×%d" % [QuestLog.objective_text(quest, index), QuestLog.objective_count(quest, index)]
+	label.text = QuestLog.objective_text(quest, index) + ("" if type in ["visit", "upgrade", "level", "loyalty"] else "  ×%d" % QuestLog.objective_count(quest, index))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(label)
 	if state != "available":
 		var done := QuestLog.progress(quest, index)
 		var count := Label.new()
-		count.text = "%d / %d %s" % [done, QuestLog.objective_count(quest, index), "explored" if type == "explore" else "in raids"]
+		count.text = "%d / %d %s" % [done, QuestLog.objective_count(quest, index), {"explore": "explored", "craft": "crafted", "upgrade": "level", "level": "level",
+			"loyalty": "LL"}.get(type, "in raids")]
 		count.add_theme_color_override("font_color", RequirementRow.MET_COLOR if done >= QuestLog.objective_count(quest, index) else Color(1, 1, 1, 0.7))
 		line.add_child(count)
-	line.tooltip_text = look[2]
+	line.tooltip_text = look[2] + (SURVIVE_NOTE if quest.objectives[index].get("survive", false) else "")
 	return line
 
 

@@ -336,6 +336,8 @@ static func seconds_until_done(station: Dictionary, index: int) -> float:
 static func craft_block_reason(station: Dictionary, recipe: Dictionary) -> String:
 	if recipe not in Hideout.crafts(station):
 		return "Upgrade the station first"
+	if str(recipe.get("quest", "")) != "" and not QuestLog.is_completed(str(recipe.quest)):
+		return "Unlocks after %s" % str(QuestLog.find(str(recipe.quest)).get("name", recipe.quest))
 	update()
 	if queue(station).size() >= Hideout.craft_queue_size():
 		return "The queue is full (%d)" % Hideout.craft_queue_size()
@@ -371,6 +373,7 @@ static func collect(station: Dictionary) -> String:
 		var output: Dictionary = waiting[0].output
 		if not _put_in_stash(str(output.item), int(output.count)):
 			return "No room in the stash"
+		QuestLog.record_craft(str(station.id), str(waiting[0].get("id", "")), str(output.item))  # Craft objectives (DESIGN.md §11).
 		waiting.pop_front()
 	GameState.hideout_state.ready.erase(station.id)
 	return ""

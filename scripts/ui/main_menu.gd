@@ -1,6 +1,6 @@
 extends Node
 ## Main menu (DESIGN.md §16): a slowly panning dusk scene with ambient music, the title top-left,
-## the main buttons stacked on the left (ENTER RAID, LOADOUT, HIDEOUT, CHARACTER, TRADERS, FLEA MARKET (locked with "Level 15"
+## the main buttons stacked on the left (ENTER RAID, LOADOUT, HIDEOUT, CHARACTER, TRADERS, QUESTS (the quest log: QuestsScreen), FLEA MARKET (locked with "Level 15"
 ## before then: FleaMarket), QUIT), the profile top-right (faction, "LEVEL 10 · 36,250 / 39,500
 ## XP" with a thin bar toward the next level, money) and Settings bottom-right.
 ## Each button opens a screen on top of the menu; screens emit `closed` when the player backs out.
@@ -57,6 +57,7 @@ func _ready() -> void:
 	%CharacterButton.pressed.connect(_open.bind(CHARACTER_SCENE, %CharacterButton))
 	%TradersButton.pressed.connect(_open.bind(TRADERS_SCENE, %TradersButton))
 	%FleaButton.pressed.connect(_open.bind(FLEA_SCENE, %FleaButton))
+	%QuestsButton.pressed.connect(func() -> void: _open_screen(QuestsScreen.create(), %QuestsButton))
 	%SettingsButton.pressed.connect(_open.bind(SETTINGS_SCENE, %SettingsButton))
 	%QuitButton.pressed.connect(_ask_quit)
 	_quit_dialog.confirmed.connect(get_tree().quit)
@@ -185,9 +186,13 @@ func _check_insurance(delta: float) -> void:
 
 
 func _open(scene: PackedScene, from: Control) -> void:
+	_open_screen(scene.instantiate(), from)
+
+
+## Shows `screen` (a MenuScreen) over the menu; `from` gets the focus back when it closes.
+func _open_screen(screen: Control, from: Control) -> void:
 	_return_focus = from
 	_menu.hide()
-	var screen := scene.instantiate()
 	screen.closed.connect(_on_screen_closed)
 	_host.add_child(screen)
 

@@ -39,9 +39,10 @@ static func value_band(rarity: int) -> Vector2i:
 	return Vector2i(int(band[0]), int(band[1]))
 
 
-## True for items that need a group, tags and a value in their band: barter goods and valuables.
+## True for items that need a group, tags and a value in their band: barter goods and valuables (not
+## quest items, tagged "quest_item": a quest's marker, worth nothing, DESIGN.md §11).
 static func applies_to(data: ItemData) -> bool:
-	return data.category in [ItemData.Category.JUNK, ItemData.Category.VALUABLE]
+	return data.category in [ItemData.Category.JUNK, ItemData.Category.VALUABLE] and not "quest_item" in data.tags
 
 
 ## Problems with `data`'s group, tags or value, as messages ("" each when fine).

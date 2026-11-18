@@ -1,0 +1,162 @@
+[
+  {
+    "id": "yard_sweep",
+    "name": "Yard Sweep",
+    "trader": "bulat",
+    "requires": ["scrap_run"],
+    "description": "The yard is crawling with Scavs again. Thin them out, five of them, and walk back out so I know you can.",
+    "success": "Quieter already. My drivers thank you, in their way.",
+    "objectives": [
+      {"type": "kill", "target": "scav", "map": "test_yard", "count": 5},
+      {"type": "extract", "map": "test_yard", "count": 1}
+    ],
+    "rewards": {"roubles": 30000, "xp": 2000, "reputation": 0.03, "items": [{"item": "ammo_545_ps", "count": 60}]}
+  },
+  {
+    "id": "clean_shot",
+    "name": "Clean Shot",
+    "trader": "bulat",
+    "requires": ["yard_sweep"],
+    "level": 5,
+    "description": "Spraying is for conscripts. Three Scavs on the yard, each dropped by a shot to the head. Then we talk.",
+    "success": "Three for three. Keep that hand steady.",
+    "objectives": [
+      {"type": "kill", "target": "scav", "map": "test_yard", "body_part": "head", "count": 3}
+    ],
+    "rewards": {"roubles": 45000, "xp": 3000, "reputation": 0.03, "items": [{"item": "ammo_545_bt", "count": 30}]}
+  },
+  {
+    "id": "krane_yard",
+    "name": "Krane's Yard",
+    "trader": "bulat",
+    "requires": ["clean_shot"],
+    "level": 10,
+    "description": "Krane thinks the yard is his. Put him down, and one of his guards with him, and get out alive to tell me.",
+    "success": "So the crane finally fell. The yard is ours again.",
+    "objectives": [
+      {"type": "kill", "boss": "krane", "map": "test_yard", "count": 1, "survive": true},
+      {"type": "kill", "target": "guard", "map": "test_yard", "count": 1, "survive": true}
+    ],
+    "rewards": {"roubles": 90000, "xp": 6000, "reputation": 0.05, "reputation_with": {"zoya": 0.02}, "items": [{"item": "frag_grenade", "count": 2}]}
+  },
+  {
+    "id": "signal_check",
+    "name": "Signal Check",
+    "trader": "tinker",
+    "requires": ["gunsmith_0"],
+    "gives": [{"item": "quest_marker", "count": 1}],
+    "description": "Take this beacon and set it in the signal hut on the yard. Hold it in place till it locks on. Then walk the crossroads so I can calibrate.",
+    "success": "Clean signal. Your beacon's still pinging, good work.",
+    "objectives": [
+      {"type": "mark", "map": "test_yard", "poi": "signal_hut", "seconds": 4},
+      {"type": "visit", "map": "test_yard", "spot": "yard_crossroads"}
+    ],
+    "rewards": {"roubles": 35000, "xp": 2200, "reputation": 0.03, "items": [{"item": "wires", "count": 2}]}
+  },
+  {
+    "id": "dead_drop",
+    "name": "Dead Drop",
+    "trader": "zoya",
+    "requires": ["safe_harbour"],
+    "description": "A friend at the factory smokes my brand. Leave a pack of cigarettes at the west yard gate, and don't let anyone see you do it.",
+    "success": "He says thank you. He also says you walk loud.",
+    "objectives": [
+      {"type": "place", "item": "cigarettes", "map": "factory", "spot": "west_yard_gate", "seconds": 5}
+    ],
+    "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.03}
+  },
+  {
+    "id": "factory_walk",
+    "name": "Factory Walk",
+    "trader": "vera",
+    "requires": ["shortage"],
+    "description": "Before I send nurses to the factory I want to know two rooms are still standing: the med bay and the overseer's office. Then leave by Gate 3, it's the way they'll come.",
+    "success": "Still standing. Good. Fewer surprises for my people.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "med_bay"},
+      {"type": "visit", "map": "factory", "poi": "overseers_office"},
+      {"type": "extract", "map": "factory", "extract": "gate_3", "count": 1}
+    ],
+    "rewards": {"roubles": 40000, "xp": 2500, "reputation": 0.03, "items": [{"item": "ai2_medkit", "count": 1}]}
+  },
+  {
+    "id": "carry_out",
+    "name": "Carry Out",
+    "trader": "vera",
+    "requires": ["factory_walk"],
+    "level": 5,
+    "description": "Find a Salewa out there and bring it back out of the factory on you. Keep it, I only need proof they're still on the shelves.",
+    "success": "Sealed and dated. Someone's still stocking that place.",
+    "objectives": [
+      {"type": "extract_with", "item": "salewa", "map": "factory", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 50000, "xp": 3000, "reputation": 0.03}
+  },
+  {
+    "id": "trusted_hands",
+    "name": "Trusted Hands",
+    "trader": "vera",
+    "requires": ["carry_out"],
+    "description": "Earn my trust, then show me you can work: a surgical kit from your own Medstation.",
+    "success": "Neat stitches on the packaging. You'll do. My suppliers will sell you Hawkeye now.",
+    "objectives": [
+      {"type": "loyalty", "trader": "vera", "level": 2},
+      {"type": "craft", "item": "surgical_kit", "count": 1}
+    ],
+    "rewards": {"roubles": 60000, "xp": 4000, "reputation": 0.04}
+  },
+  {
+    "id": "bench_time",
+    "name": "Bench Time",
+    "trader": "tinker",
+    "requires": ["gunsmith_0"],
+    "description": "A real workshop needs a real bench. Build yours to level 2 and make me one set of weapon parts on it.",
+    "success": "Proper bench, proper parts. I'll show you a shortcut for those.",
+    "objectives": [
+      {"type": "upgrade", "station": "workbench", "level": 2},
+      {"type": "craft", "recipe": "weapon_parts", "count": 1}
+    ],
+    "rewards": {"roubles": 50000, "xp": 3500, "reputation": 0.04, "items": [{"item": "screws", "count": 2}]}
+  },
+  {
+    "id": "range_day",
+    "name": "Range Day",
+    "trader": "tinker",
+    "requires": ["bench_time"],
+    "level": 8,
+    "description": "I tuned an AK-74N for a client and he wants proof it shoots. Five kills with one, any map, and stand back a bit for two of them: twenty metres.",
+    "success": "Groups like a dream. The client will pay double.",
+    "objectives": [
+      {"type": "kill", "weapon": "ak_74n", "count": 5},
+      {"type": "kill", "weapon": "ak_74n", "min_distance": 20, "count": 2}
+    ],
+    "rewards": {"roubles": 70000, "xp": 4500, "reputation": 0.04, "items": [{"item": "foregrip", "count": 1}]}
+  },
+  {
+    "id": "night_shift",
+    "name": "Night Shift",
+    "trader": "stitch",
+    "requires": ["textile"],
+    "description": "Run your lavatory for me: two batches of anything from it. And grow up a little first, I don't trade with rookies.",
+    "success": "Smells like work. Good.",
+    "objectives": [
+      {"type": "craft", "station": "lavatory", "count": 2},
+      {"type": "level", "level": 8}
+    ],
+    "rewards": {"roubles": 35000, "xp": 2500, "reputation": 0.03, "items": [{"item": "duct_tape", "count": 2}]}
+  },
+  {
+    "id": "long_watch",
+    "name": "Long Watch",
+    "trader": "zoya",
+    "requires": ["dead_drop"],
+    "level": 15,
+    "loyalty": {"zoya": 2},
+    "description": "Three PMCs at the factory, taken from thirty metres or more, and you get out with the story intact. I sell the tapes, you see.",
+    "success": "The tape is beautiful. Grainy, but beautiful.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "map": "factory", "min_distance": 30, "count": 3, "survive": true}
+    ],
+    "rewards": {"roubles": 110000, "xp": 7000, "reputation": 0.05, "drip": 30, "items": [{"item": "scope_2_4", "count": 1}]}
+  }
+]

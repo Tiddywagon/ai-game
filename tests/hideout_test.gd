@@ -112,7 +112,7 @@ func _data() -> void:
 	var crafts := 0
 	for station: Dictionary in hideout.stations():
 		crafts += hideout.all_crafts(station).size()
-	check(crafts == 59 and hideout.all_crafts(hideout.find("lavatory")).size() == 7, "all 57 earlier crafts and the Lavatory's two new ones (%d)" % crafts)
+	check(crafts == 60 and hideout.all_crafts(hideout.find("lavatory")).size() == 7, "all 57 earlier crafts and the Lavatory's two new ones, and the Workbench's quest-gated one from E11 (%d)" % crafts)
 	check(hideout.cosmetics().size() == 4 and hideout.plan_size() == Vector2i(32, 20) and hideout.craft_queue_size() == 3,
 		"four cosmetics, a 32 x 20 plan, three crafts queued a station")
 
@@ -167,7 +167,7 @@ func _migration() -> void:
 		"hideout": {"stash": 2, "generator": 2, "medstation": 3, "lavatory": 2, "workbench": 1}},
 		"stash": [{"id": "gpu", "x": 0, "y": 0}]}
 	var result: Dictionary = sm.upgrade(old)
-	check(int(result.version) == 18 and sm.SAVE_VERSION == 18, "a version 16 save comes up to version 18")
+	check(int(result.version) == sm.SAVE_VERSION and sm.SAVE_VERSION >= 18, "a version 16 save comes up to the current version")
 	work.now_override = NOW + 5.0 * HOUR
 	gs.from_dict(old)
 	check(gs.hideout == {"stash": 2, "generator": 2, "medstation": 3, "lavatory": 2, "workbench": 1}, "every level it built is kept (%s)" % str(gs.hideout))

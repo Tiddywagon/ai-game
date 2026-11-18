@@ -13,9 +13,9 @@ extends RefCounted
 ##   Scavs killed, PMCs killed, extracting, with others) go to your Scav karma, however it ended
 ##   (ScavRuns.apply(), which also sets Mole's loyalty level).
 ## - Raid experience (none for a Run Through; GameState.add_xp(), which may raise the level), Drip and
-##   360 trick-shot stats are added to the profile either way (and trick-shot kills count toward
-##   quests; in a PMC raid so do kills, and extracting, toward kill and extract objectives:
-##   QuestLog.record_raid()), then the game is saved.
+##   360 trick-shot stats are added to the profile either way; in a PMC raid the raid's quest progress
+##   (QuestRaid, counted live) is settled: survive-only progress and extract objectives count only when
+##   you SURVIVED (DESIGN.md §11). Then the game is saved.
 
 enum Status { SURVIVED, RUN_THROUGH, KILLED, MIA }
 
@@ -35,6 +35,8 @@ var xp_parts := {}
 var kills := 0
 ## Who you killed: [{"name", "side": "pmc" or "scav", "faction" (a PMC's), "role" (a boss's or guard's)}].
 var kill_list: Array = []
+## The summary's quest lines (QuestRaid.summary_lines()): what moved this raid.
+var quest_lines: Array[String] = []
 ## The extract you left through ("" if you didn't).
 var extract_name := ""
 ## Loot: what you picked up this raid and still carried at the end, and its base value (kept if you
@@ -205,8 +207,12 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	GameState.drip += outcome.drip
 	GameState.trick_shots.hits += outcome.trick_hits
 	GameState.trick_shots.kills += outcome.trick_kills
-	QuestLog.record_trick_kills(trick_kill_list)
-	if raid_side == "pmc":
+	var quest_raid: QuestRaid = details.get("quest_raid")
+	if quest_raid:
+		quest_raid.settle(end == Status.SURVIVED, str(details.get("extract_id", "")), inventory)
+		outcome.quest_lines = quest_raid.summary_lines()
+	elif raid_side == "pmc":  # Settled without a raid's live count: the kill list all at once.
+		QuestLog.record_trick_kills(trick_kill_list)
 		QuestLog.record_raid(outcome.kill_list, end == Status.SURVIVED, str(details.get("map", "")))
 	SaveManager.save_game()
 	return outcome

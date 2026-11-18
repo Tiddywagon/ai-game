@@ -79,6 +79,10 @@ var outcome: RaidOutcome
 var extract_zone: ExtractZone
 var extract_time := 0.0
 var extracted_at := ""
+## The id of the extract the player left through ("" if they didn't): extract objectives can name one.
+var extracted_id := ""
+## Quest progress this raid (DESIGN.md §11): counted live, only in a PMC raid that goes to the profile.
+var quest_raid: QuestRaid
 ## Where the raid started (null: the player's place in the scene).
 var spawn_point: SpawnPoint
 ## AI that left through an extract: [{"name", "side": "pmc" or "scav", "faction", "extract", "time" (raid
@@ -128,6 +132,7 @@ func _ready() -> void:
 	elapsed = start_offset
 	time_left = raid_seconds() - start_offset
 	karma_start = ScavRuns.karma()
+	quest_raid = QuestRaid.new(map.id if map else map_id, counts_for_profile() and side() == "pmc")
 	if GameState.raid.has("seed"):
 		rng.seed = int(GameState.raid.seed)
 		_join_rng.seed = hash([int(GameState.raid.seed), "mid_raid"])
@@ -151,6 +156,7 @@ func _ready() -> void:
 			_join_mid_raid.call_deferred()
 		elif not pmc_schedule.is_empty():
 			_spawn_ai_pmcs.call_deferred()
+	_place_quest_sites.call_deferred()
 	if scav_waves:
 		next_wave = rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
 
@@ -171,6 +177,7 @@ func _physics_process(delta: float) -> void:
 		_confirm_timer = 0.25
 		_confirm_extracts()
 		_track_poi()
+		quest_raid.on_position(player.global_position, get_tree())
 	elapsed += delta
 	time_left = maxf(time_left - delta, 0.0)
 	if next_wave >= 0.0 and elapsed >= next_wave:
@@ -184,6 +191,7 @@ func _physics_process(delta: float) -> void:
 		extract_time += delta
 		if extract_time >= config.extract_seconds:
 			extracted_at = extract_zone.extract_name
+			extracted_id = extract_zone.extract_id
 			extract_zone.use_up_item(player)
 			end_raid(RaidOutcome.extract_status(own_seconds(), xp, config, run_through_seconds()))
 	else:
@@ -1020,7 +1028,8 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 	outcome = RaidOutcome.settle(status, side(), player.inventory, own_seconds(), xp,
 		player.kills, counts_for_profile(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
 		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
-			"faction": String(player.faction), "karma": karma_changes.duplicate(true), "map": map_key()})
+			"faction": String(player.faction), "karma": karma_changes.duplicate(true), "map": map_key(),
+			"quest_raid": quest_raid, "extract_id": extracted_id})
 	raid_ended.emit(outcome)
 	return outcome
 
@@ -1057,6 +1066,39 @@ func _on_kill(target: Actor) -> void:
 		entry.role = role
 	kill_list.append(entry)
 	_karma_for_kill(target)
+	if quest_raid and player:
+		quest_raid.on_kill(kill_event(target, role))
+
+
+## What a quest's kill objective looks at for the player's kill of `target` (QuestLog.kill_fits()): its
+## side, faction and role, the boss's id, the gun (item id and class), where the killing hit landed and
+## from how far, and whether it was a 360 trick shot.
+func kill_event(target: Actor, role := "") -> Dictionary:
+	var event := {"side": "pmc" if target.side == Actor.Side.PMC else "scav", "faction": String(target.faction), "role": role,
+		"part": int(player.last_hit.get("part", -1)),
+		"distance": player.global_position.distance_to(target.global_position), "trick": player.weapon.firing_trick_shot}
+	if player.weapon.item:
+		event.weapon = player.weapon.item.id
+	if player.weapon.data:
+		event.weapon_class = player.weapon.data.weapon_class
+	if role == "boss" and target is Bot and (target as Bot).boss_spawn:
+		event.boss = str((target as Bot).boss_spawn.entry.get("id", ""))
+	return event
+
+
+## A QuestSite at each active place / mark objective's location on this map (QuestRaid.placements()).
+func _place_quest_sites() -> void:
+	for pair: Array in quest_raid.placements():
+		var place := quest_raid.place_of(pair[0], pair[1], get_tree())
+		if place.is_empty():
+			continue
+		var site := QuestSite.new()
+		site.raid = self
+		site.quest = pair[0]
+		site.index = pair[1]
+		site.radius = minf(float(place.radius), QuestSite.MAX_REACH)
+		add_child(site)
+		site.global_position = place.position
 
 
 ## A bot the player hurt last died of its wounds (a bleed: Bot.die()), `by` its last attacker: if that

@@ -1,0 +1,3 @@
+[
+  {"id": "quest_marker", "name": "Quest marker", "category": "junk", "rarity": "common", "weight": 0.2, "value": 0, "loot_weight": 0, "tags": ["quest_item"], "description": "A small radio beacon a trader handed you for a task. Place it where they asked (stand there and hold F). Worth nothing to anyone else; a lost one can be taken again from the trader."}
+]

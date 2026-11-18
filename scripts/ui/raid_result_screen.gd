@@ -75,7 +75,7 @@ func show_outcome(outcome: RaidOutcome, raid: RaidController) -> void:
 
 
 ## The summary rows, [name, value]: map, side, time, kills, loot, experience (and where it came from),
-## the level if it went up, gear and insurance.
+## the level if it went up, quest progress made, gear and insurance.
 static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> Array:
 	var lines := []
 	var map := raid.map if raid else MapInfo.find(GameState.raid.get("map", ""))
@@ -101,6 +101,8 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 				lines.append(["    " + XP_PART_NAMES[part], "+%s" % UiFormat.thousands(amount)])
 	if outcome.level_after > outcome.level_before:
 		lines.append(["Level", "%d → %d" % [outcome.level_before, outcome.level_after]])
+	for i in outcome.quest_lines.size():  # Quest progress made (QuestRaid.summary_lines()).
+		lines.append(["Quests" if i == 0 else "", outcome.quest_lines[i]])
 	if outcome.trick_hits > 0:
 		lines.append(["Trick shots", "%d hits, %d kills  ·  +%d Drip" % [outcome.trick_hits, outcome.trick_kills, outcome.drip]])
 	if outcome.side == "scav":

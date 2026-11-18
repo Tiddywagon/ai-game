@@ -38,7 +38,7 @@ const TOUCH_NAMES := {
 	"melee": "Melee", "use_item": "Quick item", "toggle_inventory": "Inventory", "map_view": "Map",
 	"hotkey_wheel": "Hotkeys", "hotkey_1": "Hotkeys", "hotkey_2": "Hotkeys", "hotkey_3": "Hotkeys", "hotkey_4": "Hotkeys",
 	"hotkey_5": "Hotkeys", "flashlight": "Hotkeys", "binoculars": "Hotkeys", "show_extracts": "Hotkeys",
-	"take_cover": "Cover", "pause": "Menu", "sprint": "Move stick (push all the way)",
+	"take_cover": "Cover", "pause": "Menu", "quest_log": "Menu", "sprint": "Move stick (push all the way)",
 }
 ## Actions on the hotkey wheel: a controller reaches them there when they have no button of their own.
 const WHEEL_ACTIONS := ["hotkey_1", "hotkey_2", "hotkey_3", "hotkey_4", "hotkey_5", "flashlight", "binoculars", "show_extracts"]
