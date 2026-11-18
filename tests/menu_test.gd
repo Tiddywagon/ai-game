@@ -592,13 +592,14 @@ func _practice_raid() -> void:
 	check(controller != null and controller.is_practice() and player != null, "the practice raid starts on the Test Yard")
 	var pickups: Array = root.get_tree().get_nodes_in_group("interactables").filter(func(node: Node) -> bool:
 		return node.get_script() == load("res://scripts/world/loot_pickup.gd") and node.item != null)
-	# Loose loot is rolled unseeded: pick up the first piece the copied gear has room for. Counted by its
-	# id, since a stack of rounds can merge into one already carried.
+	# Loose loot is rolled unseeded: pick up the first piece the copied gear has room for where a pickup
+	# goes (Inventory.add() fills ammo_grids(): never the secure container). Counted by its id, since a
+	# stack of rounds can merge into one already carried.
 	var fits: Array = pickups.filter(func(node: Node) -> bool:
-		return player.inventory.grids().any(func(grid: RefCounted) -> bool: return grid.has_room_for(node.item)))
+		return player.inventory.ammo_grids().any(func(grid: RefCounted) -> bool: return grid.has_room_for(node.item)))
 	var picked: RefCounted = fits[0].item if not fits.is_empty() else null
 	var held := func(id: String) -> int:
-		return player.inventory.grids().reduce(func(total: int, grid: RefCounted) -> int: return total + grid.count_of(id), 0)
+		return player.inventory.ammo_grids().reduce(func(total: int, grid: RefCounted) -> int: return total + grid.count_of(id), 0)
 	var carried: int = held.call(picked.data.id) if picked else 0
 	var amount: int = picked.count if picked else 0
 	if picked:
