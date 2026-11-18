@@ -279,7 +279,7 @@ static func objective_text(quest: Dictionary, index: int) -> String:
 				return "Hand over %s%s" % [item_name, " (found in raid)" if entry.get("fir", false) else ""]
 			return "Extract%s carrying %s%s" % [" from %s" % map.display_name if map else "", item_name, " (found in raid)" if entry.get("fir", false) else ""]
 		"figures":
-			return "Hand over spare figures"
+			return "Hand over %s (spare)" % Requirement.from_dict(entry).title()
 		"roubles":
 			return "Hand over roubles"
 		"kill":
@@ -333,10 +333,10 @@ static func _kill_conditions(entry: Dictionary) -> String:
 	elif entry.has("weapon_class"):
 		parts.append("with %s" % str(CLASS_NAMES.get(str(entry.weapon_class), "a " + str(entry.weapon_class).replace("_", " "))))
 	if entry.has("body_part"):
-		parts.append("a headshot" if entry.body_part == "head" else "hits to the %s" % str(entry.body_part).replace("_", " "))
+		parts.append("with a headshot" if entry.body_part == "head" else "with a hit to the %s" % str(entry.body_part).replace("_", " "))
 	if entry.has("min_distance"):
 		parts.append("from %d m or more" % int(entry.min_distance))
-	return (", " + ", ".join(parts)) if not parts.is_empty() else ""
+	return (" " + " ".join(parts)) if not parts.is_empty() else ""
 
 
 ## The boss entry (data/config/bosses.json) with id `boss_id`, and its map as "map".

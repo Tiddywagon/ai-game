@@ -146,8 +146,8 @@
     "rewards": {"roubles": 35000, "xp": 2500, "reputation": 0.03, "items": [{"item": "duct_tape", "count": 2}]}
   },
   {
-    "id": "long_watch",
-    "name": "Long Watch",
+    "id": "distant_tapes",
+    "name": "Distant Tapes",
     "trader": "zoya",
     "requires": ["dead_drop"],
     "level": 15,

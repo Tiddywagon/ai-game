@@ -144,6 +144,9 @@ func _quests() -> void:
 		await frames(3)
 	check(_find(traders, "QuestsScreen") == null, "and closes back to TRADERS")
 	await _close(traders, "BackButton", "TRADERS")
+	gs.quests["scrap_run"] = {"state": "completed", "progress": [3, 2]}  # For the raid's tracker: a quest with raid objectives.
+	quests.accept(quests.find("yard_sweep"))
+	quests.set_tracked(quests.find("yard_sweep"), true)
 
 
 ## The inventory and stash as text, the stash in cell order.
@@ -663,8 +666,8 @@ func _raid(raid: Dictionary, scene: String, seconds: float) -> void:
 func _raid_quest_log() -> void:
 	var hud := _find(current_scene, "QuestTracker") as VBoxContainer
 	await wait(0.6)
-	check(hud != null and hud.visible and hud.get_children().any(func(label: Node) -> bool: return label.text == "SCRAP RUN"),
-		"the HUD tracker shows the tracked Scrap Run")
+	check(hud != null and hud.visible and hud.get_children().any(func(label: Node) -> bool: return label.text == "YARD SWEEP"),
+		"the HUD tracker shows the tracked Yard Sweep's raid objectives")
 	var pause := _find(current_scene, "PauseMenu")
 	pause.open()
 	(_find(pause, "QuestsButton") as Button).pressed.emit()

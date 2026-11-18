@@ -22,7 +22,7 @@ extends CanvasLayer
 ## a few seconds near the top, with its tier and focus, and "NEW AREA" with the experience and how much of
 ## the map you've explored the first time ever ("HIDDEN AREA FOUND" for a hidden one). Raid events
 ## (airdrops, supply trucks, weapon caches) are announced in the same place (announce()).
-## Quests (DESIGN.md §11): the tracked quests' objectives for this map top-right under the clock
+## Quests (DESIGN.md §11): the tracked quests' raid objectives for this map top-right under the clock
 ## (QuestTracker, live from the raid's QuestRaid), a toast when an objective moves or completes ("Kill
 ## Scavs: 3 / 5", "Objective complete: ..."), and while placing a quest item a PLACING countdown with a
 ## gold ring round you.
@@ -140,7 +140,7 @@ func _ready() -> void:
 	add_child(_sting)
 	_build_banner()
 	_build_poi_label()
-	_quest_toast = _add_center_label(-610.0, 26, QUEST_COLOR)
+	_quest_toast = _add_center_label(-800.0, 26, QUEST_COLOR)  # Under the area name, clear of the player.
 	_quest_toast.name = "QuestToast"
 	_build_tracker()
 	_connect_raid.call_deferred()
@@ -242,8 +242,8 @@ func tracker_lines() -> Array:
 		var rows := []
 		for i in quest.objectives.size():
 			var entry: Dictionary = quest.objectives[i]
-			if str(entry.get("map", map_id)) != map_id:
-				continue
+			if str(entry.get("map", map_id)) != map_id or not QuestLog.objective_type(quest, i) in QuestLog.RAID_TYPES:
+				continue  # Another map's, or one done out of raid.
 			var count := QuestLog.objective_count(quest, i)
 			var done := raid.progress(quest, i) if raid else QuestLog.progress(quest, i)
 			rows.append(["  %s  %d / %d" % [QuestLog.objective_text(quest, i), done, count], QUEST_DONE_COLOR if done >= count else Color(0.92, 0.9, 0.8)])

@@ -526,7 +526,7 @@ func _design_table() -> void:
 			objectives.append(text)
 		var rewards: Array = quests.reward_lines(quest)
 		for unlock: Dictionary in quests.unlocks(quest):
-			rewards.append("unlocks " + str(unlock.text).substr(0, 1).to_lower() + str(unlock.text).substr(1))
+			rewards.append("unlocks: " + str(unlock.text))
 		var name: String = quest.name + (" (%s)" % str(quest.faction).to_upper() if quest.has("faction") else "")
 		lines.append("| %s | %s | %s | %s | %s |" % [name, load("res://scripts/data/trader_table.gd").display_name(quest.trader),
 			", ".join(needs) if not needs.is_empty() else "—", "; ".join(objectives), ", ".join(rewards)])
