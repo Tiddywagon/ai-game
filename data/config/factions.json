@@ -71,7 +71,7 @@
     }
   },
   "perks": {
-    "_comment": "Faction perks (DESIGN.md §3, §10): your faction's trader (BEAR: Bulat, USEC: Tinker; GameState.FACTION_TRADER) sells to you trader_discount (a share, 0-0.15) cheaper on top of loyalty prices (Trading.price()), never below the resale floor. Each faction also has its own quest line from that trader (data/quests/faction_lines.json).",
+    "_comment": "Faction perks (DESIGN.md §3, §10): your faction's trader (BEAR: Bulat, USEC: Tinker; GameState.FACTION_TRADER) sells to you trader_discount (a share, 0-0.15) cheaper on top of loyalty prices (Trading.price()), never below the resale floor. Each faction also has its own quest line from that trader (data/quests/09_faction_lines.json).",
     "trader_discount": 0.05
   },
   "squads": {

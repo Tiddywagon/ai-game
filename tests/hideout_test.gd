@@ -509,7 +509,8 @@ func _icon() -> void:
 	var uses: GDScript = load("res://scripts/progression/item_uses.gd")
 	var draw: GDScript = load("res://scripts/ui/inventory/item_draw.gd")
 	await process_frame
-	check(uses.marker("pressure_gauge") == uses.Marker.NEEDED and uses.marker("matches") == uses.Marker.USED, "a hideout level needs pressure gauges; only crafts and barters take matches")
+	check(uses.marker("pressure_gauge") == uses.Marker.NEEDED and uses.marker("pliers") == uses.Marker.USED and uses.marker("matches") == uses.Marker.NEEDED,
+		"a hideout level needs pressure gauges; only crafts and barters take pliers; Market Day needs matches (E12)")
 	var unused := ""
 	for data: Resource in db.all_items():
 		if uses.of(data.id).is_empty():

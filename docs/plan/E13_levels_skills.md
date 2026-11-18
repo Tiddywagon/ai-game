@@ -42,3 +42,15 @@ CHARACTER screen with stats and skills.
   §15, §18; README. Suite `tests/skills_test.gd`: the level curve to 60 and old saves, each skill gaining from its
   real action and its bonus changing the real effect, caps and fatigue, the Gym, stats counted from raids and
   menus, the screen, save round trip.
+
+## Notes from E12 for the level curve
+
+- Quest XP is a formula, written into each quest's `rewards.xp`: 400 + 60 × the player level the quest really
+  needs (its `level`, its loyalty levels' player levels, its chain's), rounded to 100, ×1.5 for boss hunts,
+  late-game quests and the loyalty-gated faction finales, ×3 for The Six. 119 quests give about 183,000 XP per
+  profile on every map (about 105,000 on the Test Yard and Factory). If the curve changes, rescale the quests'
+  XP the same way rather than by hand.
+- `tests/quest_content_test.gd` models raids of 2,000 XP with every quest done as soon as it can be and checks
+  DESIGN §2.2's table row by row (`| level | total XP | raids today | raids every map |`), and that the quests
+  stay under 40% of the top level's XP: it fails until the table is updated with the new curve.
+- Quest level gates go up to 40 (The Six, Leviathan, Final Offer) and loyalty gates to LL4 (player level 35).
