@@ -38,3 +38,39 @@ Built on the E11 quest system (every objective type, rewards and unlocks, chains
   factions' lines hidden from the other, every objective type is used, no chain blocked by an unplayable map,
   reward sanity (Epic/Legendary only late), every quest has flavor text, and a played-through chain per trader on
   the playable maps.
+
+## Notes from E11 for quest authors (the system as built)
+
+- **File order matters.** Files in `data/quests/` load in name order, and `requires` must name a quest listed
+  earlier (same file or an earlier file). Current files: collector, faction_lines, quests, raid_work,
+  trick_shots. Name new files so their prerequisites load first (or put dependent quests later in one file).
+- **Quest shape:** `{"id","name","trader","description","success"?,"requires"?:[ids],"level"?,
+  "loyalty"?:{trader:LL},"faction"?:"bear"|"usec","gives"?:[{"item","count"}],"objectives":[…],"rewards":{…}}`.
+  Unknown keys are errors. `success` is the trader's turn-in line.
+- **Objectives** (any may also take `"text"` to override its line; unknown keys are errors):
+  - `{"type":"hand_in","item","count","fir"}`, `{"type":"figures","figures":{"rarity"?,"set"?},"count","fir"}`,
+    `{"type":"roubles","count"}`
+  - `{"type":"kill","count","target"?:"any|scav|pmc|boss|guard","faction"?,"boss"?:"krane|matvei|varga|leshy|reyes|varn","map"?,"weapon"?:gun id,"weapon_class"?,"body_part"?:"head|thorax|stomach|arms|legs|torso|left_arm|…","min_distance"?,"survive"?}`
+    (`faction` needs target pmc; `boss` needs target boss or none, and the map must be that boss's map)
+  - `{"type":"trick_kill","count","target"?:"scav|pmc","weapon_class"?,"map"?,"survive"?}`
+  - `{"type":"visit","map","poi"|"spot","survive"?}` (no count)
+  - `{"type":"place","item","count","map","poi"|"spot","seconds"?,"survive"?}`; `{"type":"mark",…}` is place
+    with the quest's first `gives` item unless `item` is set
+  - `{"type":"extract","count","map"?,"extract"?}` (an extract id needs the map),
+    `{"type":"extract_with","item","count","fir"?,"map"?}`, `{"type":"explore","count","map"}` (count ≤ the
+    map's points of interest)
+  - `{"type":"craft","count", exactly one of "recipe"|"item"|"station"}`
+  - `{"type":"upgrade","station","level"}`, `{"type":"level","level"≥2}`, `{"type":"loyalty","trader","level"≥2}`
+    (no count on these three)
+- **Rewards:** `{"roubles","dollars","xp","reputation" (the giver),"reputation_with":{trader:amount},"drip",
+  "items":[{"item","count"}]}` — never found in raid.
+- **Unlocks go on the thing unlocked:** barter `"quest"` (data/traders/barters/*.json), buy offer `"quest"`
+  (data/traders/offers.json), craft `"quest"` on a recipe (data/hideout/stations.json), extract `"quest"`
+  (data/config/extracts.json), quick-buy card `"unlock":{"quests":[…]}`, trader `"unlock":{"quest"}`
+  (traders.json). `QuestLog.unlocks(quest)` lists them on the quest.
+- **Places:** points of interest in data/config/pois.json; quest spots in data/config/quest_spots.json as
+  `{name, position:[x,y,z] in the map scene, radius}`. Only test_yard and factory have scenes.
+- **Watch out:** a quest name must not equal a quick-buy card name (the quickbuy suite's DESIGN lookup); quest
+  markers are items worth 0 tagged `quest_item`; the hideout and economy suites pin craft and offer counts;
+  after any data change paste the regenerated table into DESIGN §11 — the quests suite writes the expected
+  table to `<AI_GAME_TESTS>/xdg_<tag>/godot/app_userdata/AI Game/quest_table.md`.
