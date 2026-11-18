@@ -54,8 +54,11 @@ var inventory := Inventory.new()
 ## Skill id -> {"level": int, "progress": 0-1 toward the next level}.
 var skills: Dictionary = {}
 ## Quest id -> {"state": "active" or "completed", "progress": [handed over so far, per objective]}.
-## Quests not in here haven't been accepted (DESIGN.md §11, QuestLog).
+## Quests not in here haven't been accepted (DESIGN.md §11, QuestLog). An entry may also have "given":
+## how many times the quest's items (a marker) were handed out (accepting, and each free retake).
 var quests: Dictionary = {}
+## The quests tracked on the HUD (ids, at most QuestLog.MAX_TRACKED; QuestLog.set_tracked()).
+var quest_tracked: Array[String] = []
 ## Hideout station id -> level built (DESIGN.md §9, Hideout). Missing: not built. The Stash starts at
 ## level 1 (Hideout.starting_levels()).
 var hideout: Dictionary = {}
@@ -212,6 +215,7 @@ func _reset(new_faction: Faction) -> void:
 	TraderStock.refresh_all()  # Full stock, restocks a period from now.
 	inventory = Inventory.new()
 	quests = {}
+	quest_tracked = []
 	insurance_pending = []
 	insurer = DEFAULT_INSURER
 	hotkeys = DEFAULT_HOTKEYS.duplicate()
@@ -250,6 +254,7 @@ func to_dict() -> Dictionary:
 			"inventory": inventory.to_dict(),
 			"skills": skills.duplicate(true),
 			"quests": quests.duplicate(true),
+			"quest_tracked": quest_tracked.duplicate(),
 			"hideout": hideout.duplicate(),
 			"hideout_state": HideoutWork.to_save(),
 			"metabolism": {"energy": snappedf(energy, 0.01), "hydration": snappedf(hydration, 0.01), "time": metabolism_time},
@@ -337,6 +342,12 @@ func from_dict(data: Dictionary) -> void:
 		var entry: Dictionary = saved_quests[quest]
 		quests[quest] = {"state": str(entry.get("state", "active")),
 			"progress": entry.get("progress", []).map(func(n: Variant) -> int: return int(n))}
+		if int(entry.get("given", 0)) > 0:
+			quests[quest].given = int(entry.given)
+	quest_tracked = []
+	for id: Variant in profile.get("quest_tracked", []):
+		if quest_tracked.size() < QuestLog.MAX_TRACKED and not str(id) in quest_tracked:
+			quest_tracked.append(str(id))
 	insurance_pending = profile.get("insurance_pending", []).duplicate(true)
 	insurer = str(profile.get("insurer", DEFAULT_INSURER))
 	var saved_hotkeys: Array = profile.get("hotkeys", DEFAULT_HOTKEYS)

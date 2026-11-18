@@ -468,7 +468,7 @@ func _free_spin() -> void:
 
 func _saves() -> void:
 	section("Saves (version 18)")
-	check(sm.SAVE_VERSION == 18, "the save version is 18")
+	check(sm.SAVE_VERSION >= 18, "the save version is 18 or later (19: E11 quests)")
 	_profile(2)
 	figs.place(_give("figure_lynx", true), 20)
 	figs.place(_give("figure_chad"), 2)
@@ -489,7 +489,7 @@ func _saves() -> void:
 	var old := {"version": 17, "profile": {"faction": "BEAR", "level": 9, "xp": 30000, "roubles": 250000, "hideout": {"stash": 1}},
 		"stash": [{"id": "figure_scav", "x": 0, "y": 0}]}
 	var upgraded: Dictionary = sm.upgrade(old)
-	check(int(upgraded.version) == 18, "a version 17 save comes up to 18")
+	check(int(upgraded.version) == sm.SAVE_VERSION, "a version 17 save comes up to the current version")
 	gs.from_dict(upgraded)
 	check(figs.displayed_count() == 0 and gs.level == 9 and gs.stash.count_of("figure_scav") == 1, "and loads with an empty shelf, progress kept")
 	check(figs.is_seen("figure_scav") and gs.figures.spin.day == -1, "what it owns counts as seen; no spin used")

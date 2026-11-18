@@ -1,0 +1,11 @@
+{
+  "_comment": "Named quest spots (DESIGN.md §11): places in a map that aren't points of interest, for visit, place and mark objectives ({\"map\", \"spot\"}). By map id: {spot id: {\"name\", \"position\": [x, y, z] in the map scene, \"radius\" in metres}}. QuestLog.problems() checks them.",
+  "maps": {
+    "test_yard": {
+      "yard_crossroads": {"name": "the yard crossroads", "position": [-1.0, 0.0, -6.0], "radius": 2.5}
+    },
+    "factory": {
+      "west_yard_gate": {"name": "the west yard gate", "position": [-22.0, 0.0, -6.0], "radius": 3.0}
+    }
+  }
+}
