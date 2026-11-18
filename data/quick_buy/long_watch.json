@@ -2,7 +2,7 @@
   "id": "long_watch",
   "name": "Long Watch",
   "description": "An SVD with a prism sight and a muzzle brake, soft-point rounds, a PM for when they get close, a plate carrier and a shemagh against the dust.",
-  "unlock": {"loyalty": {"bulat": 2, "stitch": 2, "tinker": 2, "vera": 2}, "tasks": 8, "quests": []},
+  "unlock": {"loyalty": {"bulat": 2, "stitch": 2, "tinker": 2, "vera": 2}, "tasks": 15, "quests": []},
   "gear": {
     "helmet": {"item": "ssh68_helmet", "trader": "stitch"},
     "face_cover": {"item": "shemagh", "trader": "stitch"},

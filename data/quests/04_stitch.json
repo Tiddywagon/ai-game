@@ -18,11 +18,11 @@
     "trader": "stitch",
     "chain": "intro",
     "requires": ["textile"],
-    "description": "I can't fit a man I haven't seen move. Go to the factory locker rooms, where the workers changed, and get out again. I'll watch how you come back through the door.",
+    "description": "I can't fit a man I haven't seen move. Walk to the workshop on the Test Yard, where I cut my first carrier, and get out again. I'll watch how you come back through the door.",
     "success": "You favour the left shoulder. I'll set the straps for it.",
     "objectives": [
-      {"type": "visit", "map": "factory", "poi": "locker_rooms"},
-      {"type": "extract", "count": 1, "map": "factory"}
+      {"type": "visit", "map": "test_yard", "poi": "yard_workshop"},
+      {"type": "extract", "count": 1, "map": "test_yard"}
     ],
     "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "tactical_rig", "count": 1}]}
   },
@@ -169,12 +169,13 @@
     "requires": ["hard_plates"],
     "level": 30,
     "loyalty": {"stitch": 3},
-    "description": "For the heavy set I need a sink that runs hot, two sewing kits off it, and two lots of ceramic shards found in the field. It will take time. It always does.",
+    "description": "For the heavy set I need a sink that runs hot, two sewing kits off it, and two lots of ceramic shards and a tin of resin found in the field. It will take time. It always does.",
     "success": "Heavy and true. Wear it with the straps the way I set them.",
     "objectives": [
       {"type": "upgrade", "station": "lavatory", "level": 3},
       {"type": "craft", "count": 2, "recipe": "sewing_kit"},
-      {"type": "hand_in", "item": "ceramic_shards", "count": 2, "fir": true}
+      {"type": "hand_in", "item": "ceramic_shards", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "epoxy_resin", "count": 1, "fir": true}
     ],
     "rewards": {"roubles": 120000, "xp": 3300, "reputation": 0.03, "items": [{"item": "armor_zabralo", "count": 1}]}
   },

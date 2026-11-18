@@ -2,7 +2,7 @@
   "id": "workhorse",
   "name": "Workhorse",
   "description": "An AK-74N on a rail handguard with a foregrip and a red dot, class 4 armor and helmet, a roomy chest rig and a pack. Good at everything, best at coming home.",
-  "unlock": {"loyalty": {"bulat": 2, "stitch": 2, "tinker": 2, "vera": 2}, "tasks": 6, "quests": []},
+  "unlock": {"loyalty": {"bulat": 2, "stitch": 2, "tinker": 2, "vera": 2}, "tasks": 12, "quests": []},
   "gear": {
     "helmet": {"item": "zsh_helmet", "trader": "stitch"},
     "headset": {"item": "headset_sordin", "trader": "stitch"},

@@ -2,7 +2,7 @@
   "id": "quiet_hours",
   "name": "Quiet Hours",
   "description": "A Strelka machine pistol with a 9x18 can, a hatchet, a balaclava and good ears. In and out before anyone looks up.",
-  "unlock": {"loyalty": {"bulat": 2, "tinker": 2}, "tasks": 4, "quests": []},
+  "unlock": {"loyalty": {"bulat": 2, "tinker": 2}, "tasks": 8, "quests": []},
   "gear": {
     "headset": {"item": "headset_sordin", "trader": "stitch"},
     "face_cover": {"item": "balaclava", "trader": "stitch"},

@@ -3,7 +3,7 @@
   "name": "Contract Work",
   "description": "USEC issue: a Sentinel AR with a holographic sight on an M-LOK handguard, M856 tracers, a Vektor P9, a FAST helmet and a Western plate carrier. Mostly paid in dollars.",
   "faction": "usec",
-  "unlock": {"loyalty": {"broker": 3, "stitch": 2, "vera": 2}, "tasks": 10, "quests": ["zoya_introduction"]},
+  "unlock": {"loyalty": {"broker": 3, "stitch": 2, "vera": 2}, "tasks": 20, "quests": ["zoya_introduction"]},
   "gear": {
     "helmet": {"item": "fast_helmet", "trader": "broker"},
     "headset": {"item": "headset_comtac", "trader": "stitch"},

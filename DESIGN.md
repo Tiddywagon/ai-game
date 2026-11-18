@@ -67,18 +67,22 @@ Game time runs 24× real time for insurance: a game day is a real minute. When y
 
 Experience from raids (above) and quests (Section 11) adds up to a **player level**, 1 to 50. `GameState.add_xp()` is the one place experience is added: it raises the level as the total crosses each threshold (several levels at once if need be, with one `level_changed(old, new)` signal), never lowers it, and checks every trader's loyalty again (Section 10). The main menu profile shows "LEVEL 11 · 41,000 / 46,000 XP" with a thin bar toward the next level, the Character screen the level, the XP toward the next one and a bar, and the raid summary "Level 11 → 12" when a raid took you up. Trader loyalty levels 2–4 need player level 15, 25 and 35 (Section 10).
 
-The curve is 33,000 × ((level − 1) / 9)^1.68, rounded. It is calibrated on the real sources: a typical extracted raid earns 1,000–3,000 XP (a few Scav kills at 100, a PMC at 300, 20–40 items looted at 10, 300 for extracting, a point of interest or two; a boss 1,000 more), and the quests add about 97,000 over a profile. With about 2,000 XP a raid and the quests done as they come:
+The curve is 33,000 × ((level − 1) / 9)^1.68, rounded. It is calibrated on the real sources: a typical extracted raid earns 1,000–3,000 XP (a few Scav kills at 100, a PMC at 300, 20–40 items looted at 10, 300 for extracting, a point of interest or two; a boss 1,000 more), and the quests (Section 11) add 183,000 over a profile on every map (BEAR 183,000, USEC 183,500), 104,000–106,000 of it on the maps open today (Test Yard and Factory; the rest waits for its map). A quest gives 400 + 60 × the player level it really needs (its own, the one its loyalty levels need and its chain's), rounded to 100, half as much again for boss hunts, late-game quests and the faction lines' loyalty-gated last quests and three times for The Six: 500 for a first quest, 1,000 at level 10, 2,200 at level 30, 3,300 for a level-30 late-game one. With about 2,000 XP a raid and every quest done as soon as its level and chain allow (`tests/quest_content_test.gd` works this table out from the data, BEAR's line, and checks it):
 
-| Level | Total XP | About |
-|---|---|---|
-| 2 | 800 | the first raid |
-| 5 | 8,450 | 3 good raids |
-| 10 | 33,000 | 10 good raids |
-| 15 | 69,500 | 20 raids (loyalty level 2) |
-| 20 | 116,000 | 33 raids |
-| 25 | 171,000 | 50 raids (LL3) |
-| 35 | 308,000 | 100 raids (LL4) |
-| 50 | 569,000 | 250 raids: a long-term goal |
+| Level | Total XP | Raids, today's maps | Raids, every map |
+|---|---|---|---|
+| 2 | 800 | 1 | 1 |
+| 5 | 8,450 | 1 | 1 |
+| 10 | 33,000 | 7 | 7 |
+| 15 | 69,500 | 18 | 17 |
+| 20 | 116,000 | 34 | 25 |
+| 25 | 171,000 | 61 | 44 |
+| 30 | 236,000 | 93 | 67 |
+| 35 | 308,000 | 114 | 83 |
+| 40 | 388,000 | 147 | 111 |
+| 50 | 569,000 | 233 | 193 |
+
+Loyalty levels 2–4 need player level 15, 25 and 35 (Section 10). The model is generous: hand-ins need finds, so a real profile takes longer than it says, most of all at the start (level 5 "within the first raid" is two dozen intro quests done at once). Quests stay under a third of the XP to level 50.
 
 Saves keep the experience and the level; loading works the level out again from the experience and keeps the higher of the two, so old profiles that earned XP at level 1 get their level.
 
@@ -1676,7 +1680,7 @@ Generated from the data (the quests suite checks this table matches it).
 | Favours Owed | Auntie Zoya | Late game | Distant Tapes, level 30, Auntie Zoya LL3 | Hand over Antique icon (found in raid); Hand over Vintage rangefinder camera (found in raid) ×2; Hand over roubles (150,000 ₽) | 120,000 ₽, 3,300 XP, +0.03 Auntie Zoya, Attack 2 raid backpack |
 | The Collector's Case | Auntie Zoya | Late game | Favours Owed, level 35, Auntie Zoya LL4 | Hand over Roler Submariner gold wrist watch (found in raid); Hand over Imperial jeweled egg (found in raid); Hand over Rare coin collection (found in raid); Hand over Diamond necklace (found in raid) | 150,000 ₽, 3,800 XP, +0.10 Auntie Zoya, Secure container Kappa, unlocks: A barter with Auntie Zoya: Marked room key |
 | Textile | Stitch | Intro | — | Hand over Duct tape ×2; Hand over Toilet paper (found in raid) | 15,000 ₽, 500 XP, +0.05 Stitch, Sling bag |
-| Measurements | Stitch | Intro | Textile | Reach Locker rooms on Factory; Survive and extract from Factory | 19,000 ₽, 500 XP, +0.02 Stitch, Tactical chest rig |
+| Measurements | Stitch | Intro | Textile | Reach Yard workshop on Test Yard; Survive and extract from Test Yard | 19,000 ₽, 500 XP, +0.02 Stitch, Tactical chest rig |
 | One Lamp | Stitch | Intro | Measurements | Build the Lavatory to level 1; Craft Duct tape ×2 | 19,000 ₽, 500 XP, +0.02 Stitch, 2× Paracord, 2× Ripstop fabric |
 | Patchwork | Stitch | Intro | One Lamp | Hand over Sewing kit (found in raid) ×2; Hand over Paracord (found in raid) ×2; Hand over Ripstop fabric ×2 | 45,000 ₽, 500 XP, +0.08 Stitch, Patrol armored vest, unlocks: A barter with Stitch: 6B23-1 body armor |
 | Night Shift | Stitch | Mid-game | Patchwork | Craft anything at the Lavatory ×2; Reach player level 8 | 35,000 ₽, 500 XP, +0.03 Stitch, 2× Duct tape |
@@ -1686,7 +1690,7 @@ Generated from the data (the quests suite checks this table matches it).
 | Army Surplus | Stitch | Mid-game | Rebar and Canvas, level 19, map not open yet (Woodland) | Reach Old army checkpoint on Woodland; Kill PMCs on Woodland ×3; Survive and extract from Woodland | 91,000 ₽, 1,500 XP, +0.01 Stitch, Triton chest rig |
 | Resort Linen | Stitch | Mid-game | Army Surplus, level 22, map not open yet (Shoreline Resort) | Reach Resort west wing on Shoreline Resort; Extract from Shoreline Resort carrying Aramid fabric (found in raid) ×2 | 103,000 ₽, 1,700 XP, +0.01 Stitch, MMAC plate carrier |
 | Lab Coats | Stitch | Mid-game | Resort Linen, level 28, map not open yet (Lab Zero) | Kill boss guards on Lab Zero ×3 (survive); Survive and extract from Lab Zero | 127,000 ₽, 2,100 XP, +0.01 Stitch, Gzhel-K body armor |
-| Heavy Set | Stitch | Late game | Hard Plates, level 30, Stitch LL3 | Build the Lavatory to level 3; Craft Sewing kit ×2; Hand over Ceramic plate shards (found in raid) ×2 | 120,000 ₽, 3,300 XP, +0.03 Stitch, Zabralo-Sh body armor |
+| Heavy Set | Stitch | Late game | Hard Plates, level 30, Stitch LL3 | Build the Lavatory to level 3; Craft Sewing kit ×2; Hand over Ceramic plate shards (found in raid) ×2; Hand over Epoxy resin (found in raid) | 120,000 ₽, 3,300 XP, +0.03 Stitch, Zabralo-Sh body armor |
 | Masterwork | Stitch | Late game | Heavy Set, level 35, Stitch LL4 | Hand over Ceramic plate shards (found in raid) ×2; Hand over Epoxy resin (found in raid) ×3; Hand over Aramid fabric (found in raid) ×4 | 150,000 ₽, 3,800 XP, +0.03 Stitch, Atlas heavy assault armor |
 | Gunsmith, Part 0 | Tinker | Intro | — | Hand over Weapon parts (found in raid); Hand over Wires ×2 | 40,000 ₽, 500 XP, +0.07 Tinker, Vertical foregrip, unlocks: A barter with Tinker: AK quad-rail handguard, AK modern stock, AK tactical grip, RPK-74 45-round magazine |
 | Bench Time | Tinker | Intro | Gunsmith, Part 0 | Build the Workbench to level 2; Craft Weapon parts | 50,000 ₽, 500 XP, +0.04 Tinker, 2× Screw nuts, unlocks: A craft at the Workbench: Weapon parts |
@@ -1700,7 +1704,7 @@ Generated from the data (the quests suite checks this table matches it).
 | Weather Station | Tinker | Mid-game | Radio Tower, level 22, map not open yet (Shoreline Resort) | Reach Weather station on Shoreline Resort; Reach Power station on Shoreline Resort; Survive and extract from Shoreline Resort | 103,000 ₽, 1,700 XP, +0.01 Tinker, Electric motor |
 | Server Hall | Tinker | Mid-game | Weather Station, level 28, map not open yet (Lab Zero) | Reach Server hall on Lab Zero; Extract from Lab Zero carrying Server blade (found in raid) | 127,000 ₽, 2,100 XP, +0.01 Tinker, AR 18in match barrel |
 | Masterpiece | Tinker | Late game | Long Barrel, Server Room, level 30, Tinker LL3 | Build the Workbench to level 3; Craft Server blade; Hand over Graphics card (found in raid) | 120,000 ₽, 3,300 XP, +0.03 Tinker, Longbow DMR, 6-8x scope |
-| Leviathan | Tinker | Late game | Masterpiece, level 40, Tinker LL4 | Kill PMCs with a bolt-action rifle from 50 m or more ×5; Hand over Military gyroscope (found in raid) ×2 | 150,000 ₽, 4,200 XP, +0.03 Tinker, Leviathan .338, 30× .338 Lapua AP |
+| Leviathan | Tinker | Late game | Masterpiece, level 40, Tinker LL4 | Kill PMCs with a bolt-action rifle from 50 m or more ×5; Hand over Military gyroscope (found in raid) ×2; Hand over Military power cable (found in raid) ×2 | 150,000 ₽, 4,200 XP, +0.03 Tinker, Leviathan .338, 30× .338 Lapua AP |
 | Around the World | Tinker | Trick shots | Showboat | 360 trick-shot kills with a bolt-action rifle ×3 | 90,000 ₽, 500 XP, +0.08 Tinker, 50 Drip, 2-4x scope, unlocks: A barter with Tinker: 5-25x precision scope, Leviathan 27in match barrel, AK competition brake |
 | No Questions | Mole | Intro | — | Hand over Light bulb ×2; Hand over Bleach | 19,000 ₽, 500 XP, +0.02 Mole, Battle belt, 2× Bandage |
 | Under the Floor | Mole | Intro | No Questions | Reach Stash under the floorboards on Test Yard; Survive and extract from Test Yard | 19,000 ₽, 500 XP, +0.02 Mole, Forester's cellar key |
@@ -2535,14 +2539,14 @@ Not yet: a gun that has a magazine never gets a bigger one from the stash (only 
 |---|---|---|---|---|
 | Last Resort | PM pistol, 50 × 9x18 P, Scav vest; 3 bandages, a tourniquet | Nothing | ₽ 28,620 | ₽ 26,044 |
 | Doorkicker | Warden 870 with a modified choke, 40 × 12ga buckshot; Kolpak helmet, Zhuk-3 press vest (class 3), tactical chest rig; 2 bandages, an AI-2 | 1 task | ₽ 123,030 | ₽ 112,313 |
-| Room Sweeper | Brigand 45 with a mini reflex sight, stubby foregrip and laser, 80 × .45 HP; Kiver-M helmet, GSSh-01 headset, Zhuk-3, tactical chest rig; 2 army bandages, a CAT tourniquet, a car first aid kit | Bulat LL2, Doc Vera LL2, 3 tasks | ₽ 221,753 | ₽ 204,179 |
-| Quiet Hours | Strelka MP with the 9x18 suppressor, 100 × 9x18 PSt, a hatchet; Sordin headset, balaclava, Patrol armored vest (class 2), sling bag; 2 bandages, a tourniquet, an AI-2 | Bulat LL2, Tinker LL2, 4 tasks | ₽ 146,423 | ₽ 135,654 |
-| Workhorse | AK-74N with a rail handguard, vertical foregrip and red dot, 120 × 5.45x39 PS; ZSh-1-2M helmet (class 4), Sordin, 6B23-1 (class 4), Triton chest rig, MBSS backpack; a Salewa, a CAT, 2 army bandages | Bulat, Stitch, Tinker and Doc Vera LL2, 6 tasks | ₽ 361,599 | ₽ 339,233 |
-| Long Watch | SVD with a prism sight and muzzle brake, 60 × 7.62x54R SP; PM pistol with 50 × 9x18 PSt; SSh-68 helmet, shemagh, MMAC plate carrier (class 3), Triton, Daypack; a Salewa, 2 bandages | Bulat, Stitch, Tinker and Doc Vera LL2, 8 tasks | ₽ 386,827 | ₽ 362,900 |
-| Taiga Patrol (BEAR only) | Tundra 47 with a 40-round magazine, 7.62x39 compensator and modern stock, 160 × 7.62x39 PS; ZSh-1-2M, GSSh-01, 6B23-1, Bear assault rig, Pilgrim backpack; 2 AI-2s, 2 army bandages, a tourniquet, a splint | Bulat LL2, Stitch LL3, Tinker LL2, 8 tasks | ₽ 458,782 | ₽ 440,191 |
-| Contract Work (USEC only) | Sentinel AR with an M-LOK handguard, holographic sight and 5.56 compensator, 120 × 5.56 M856; Vektor P9 with 50 × 9x19 FMJ; FAST helmet (class 4), ComTac headset, MMAC, Triton, Trizip backpack; a Salewa, 2 CATs, 2 army bandages. The guns, their parts and rounds and the FAST are The Broker's, in dollars | The Broker LL3 (*A Word in His Ear*), Stitch LL2, Doc Vera LL2, 10 tasks | ₽ 297,172 + $ 1,782 | ₽ 278,790 + $ 1,724 |
-| Lifeline | Partisan with a 7.62x39 compensator, 80 × 7.62x39 PS; Kiver-M, Sordin, 6B5 armored rig (class 3), Trizip; a CMS surgical kit, 2 IFAKs, 2 Salewas, 2 CALOK-Bs, 2 aluminium splints, 2 CATs, 4 army bandages, ibuprofen | Doc Vera LL3, Stitch LL2, 10 tasks, *Clinic Supplies* | ₽ 554,289 | ₽ 528,585 |
-| Iron Wall | Grizzly 74 with a quad-rail handguard, angled foregrip and red dot, 120 × 5.45x39 BT; Altyn helmet with its face shield (class 5), Tactical Sport headset, Redut-T5 (class 5, arms too), Blackrock chest rig, Pilgrim; an IFAK, a CALOK-B, an aluminium splint, 2 army bandages | Bulat LL3, Stitch LL4, Tinker LL2, Doc Vera LL3, 14 tasks | ₽ 1,030,048 | ₽ 1,019,903 |
+| Room Sweeper | Brigand 45 with a mini reflex sight, stubby foregrip and laser, 80 × .45 HP; Kiver-M helmet, GSSh-01 headset, Zhuk-3, tactical chest rig; 2 army bandages, a CAT tourniquet, a car first aid kit | Bulat LL2, Doc Vera LL2, 6 tasks | ₽ 221,753 | ₽ 204,179 |
+| Quiet Hours | Strelka MP with the 9x18 suppressor, 100 × 9x18 PSt, a hatchet; Sordin headset, balaclava, Patrol armored vest (class 2), sling bag; 2 bandages, a tourniquet, an AI-2 | Bulat LL2, Tinker LL2, 8 tasks | ₽ 146,423 | ₽ 135,654 |
+| Workhorse | AK-74N with a rail handguard, vertical foregrip and red dot, 120 × 5.45x39 PS; ZSh-1-2M helmet (class 4), Sordin, 6B23-1 (class 4), Triton chest rig, MBSS backpack; a Salewa, a CAT, 2 army bandages | Bulat, Stitch, Tinker and Doc Vera LL2, 12 tasks | ₽ 361,599 | ₽ 339,233 |
+| Long Watch | SVD with a prism sight and muzzle brake, 60 × 7.62x54R SP; PM pistol with 50 × 9x18 PSt; SSh-68 helmet, shemagh, MMAC plate carrier (class 3), Triton, Daypack; a Salewa, 2 bandages | Bulat, Stitch, Tinker and Doc Vera LL2, 15 tasks | ₽ 386,827 | ₽ 362,900 |
+| Taiga Patrol (BEAR only) | Tundra 47 with a 40-round magazine, 7.62x39 compensator and modern stock, 160 × 7.62x39 PS; ZSh-1-2M, GSSh-01, 6B23-1, Bear assault rig, Pilgrim backpack; 2 AI-2s, 2 army bandages, a tourniquet, a splint | Bulat LL2, Stitch LL3, Tinker LL2, 15 tasks | ₽ 458,782 | ₽ 440,191 |
+| Contract Work (USEC only) | Sentinel AR with an M-LOK handguard, holographic sight and 5.56 compensator, 120 × 5.56 M856; Vektor P9 with 50 × 9x19 FMJ; FAST helmet (class 4), ComTac headset, MMAC, Triton, Trizip backpack; a Salewa, 2 CATs, 2 army bandages. The guns, their parts and rounds and the FAST are The Broker's, in dollars | The Broker LL3 (*A Word in His Ear*), Stitch LL2, Doc Vera LL2, 20 tasks | ₽ 297,172 + $ 1,782 | ₽ 278,790 + $ 1,724 |
+| Lifeline | Partisan with a 7.62x39 compensator, 80 × 7.62x39 PS; Kiver-M, Sordin, 6B5 armored rig (class 3), Trizip; a CMS surgical kit, 2 IFAKs, 2 Salewas, 2 CALOK-Bs, 2 aluminium splints, 2 CATs, 4 army bandages, ibuprofen | Doc Vera LL3, Stitch LL2, 20 tasks, *Clinic Supplies* | ₽ 554,289 | ₽ 528,585 |
+| Iron Wall | Grizzly 74 with a quad-rail handguard, angled foregrip and red dot, 120 × 5.45x39 BT; Altyn helmet with its face shield (class 5), Tactical Sport headset, Redut-T5 (class 5, arms too), Blackrock chest rig, Pilgrim; an IFAK, a CALOK-B, an aluminium splint, 2 army bandages | Bulat LL3, Stitch LL4, Tinker LL2, Doc Vera LL3, 28 tasks | ₽ 1,030,048 | ₽ 1,019,903 |
 
 ## 17. Settings
 

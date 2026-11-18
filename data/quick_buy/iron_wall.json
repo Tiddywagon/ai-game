@@ -2,7 +2,7 @@
   "id": "iron_wall",
   "name": "Iron Wall",
   "description": "Class 5 from head to hips: an Altyn with its face shield, Redut-T5 plates, a Grizzly 74 on a quad rail with BT rounds and the best med kit Doc Vera stocks. Slow, loud and very hard to stop.",
-  "unlock": {"loyalty": {"bulat": 3, "stitch": 4, "tinker": 2, "vera": 3}, "tasks": 14, "quests": []},
+  "unlock": {"loyalty": {"bulat": 3, "stitch": 4, "tinker": 2, "vera": 3}, "tasks": 28, "quests": []},
   "gear": {
     "helmet": {"item": "altyn_helmet", "trader": "stitch"},
     "headset": {"item": "headset_tsport", "trader": "stitch"},

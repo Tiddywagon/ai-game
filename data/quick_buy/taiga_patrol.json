@@ -3,7 +3,7 @@
   "name": "Taiga Patrol",
   "description": "BEAR issue: a Tundra 47 with a 40-round magazine and a compensator, 6B23-1 plates, a ZSh helmet, the Bear assault rig and a Pilgrim pack.",
   "faction": "bear",
-  "unlock": {"loyalty": {"bulat": 2, "stitch": 3, "tinker": 2}, "tasks": 8, "quests": []},
+  "unlock": {"loyalty": {"bulat": 2, "stitch": 3, "tinker": 2}, "tasks": 15, "quests": []},
   "gear": {
     "helmet": {"item": "zsh_helmet", "trader": "stitch"},
     "headset": {"item": "headset_gssh", "trader": "stitch"},

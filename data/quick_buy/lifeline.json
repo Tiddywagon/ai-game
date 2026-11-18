@@ -2,7 +2,7 @@
   "id": "lifeline",
   "name": "Lifeline",
   "description": "A Partisan carbine to keep heads down and a pack full of everything Doc Vera sells for holes in people. For the one who brings the squad home.",
-  "unlock": {"loyalty": {"vera": 3, "stitch": 2, "bulat": 1}, "tasks": 10, "quests": ["clinic_supplies"]},
+  "unlock": {"loyalty": {"vera": 3, "stitch": 2, "bulat": 1}, "tasks": 20, "quests": ["clinic_supplies"]},
   "gear": {
     "helmet": {"item": "kiver_helmet", "trader": "stitch"},
     "headset": {"item": "headset_sordin", "trader": "stitch"},

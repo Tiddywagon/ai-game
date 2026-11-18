@@ -188,11 +188,12 @@
     "requires": ["tinker_masterpiece"],
     "level": 40,
     "loyalty": {"tinker": 4},
-    "description": "The Leviathan is the loudest thing I've ever built. Earn it: five PMCs with a bolt-action from fifty metres, and two military gyroscopes, found out there, for the scope mount.",
+    "description": "The Leviathan is the loudest thing I've ever built. Earn it: five PMCs with a bolt-action from fifty metres, and two military gyroscopes and two runs of military cable, found out there, for the scope mount.",
     "success": "She's yours. Clean her every raid. She'll know if you don't.",
     "objectives": [
       {"type": "kill", "target": "pmc", "weapon_class": "bolt_action", "min_distance": 50, "count": 5},
-      {"type": "hand_in", "item": "military_gyroscope", "count": 2, "fir": true}
+      {"type": "hand_in", "item": "military_gyroscope", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "military_cable", "count": 2, "fir": true}
     ],
     "rewards": {"roubles": 150000, "xp": 4200, "reputation": 0.03, "items": [{"item": "leviathan_338", "count": 1}, {"item": "ammo_338_ap", "count": 30}]}
   },

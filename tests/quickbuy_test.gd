@@ -148,18 +148,18 @@ func _factions_and_unlocks() -> void:
 	check(quick.is_unlocked(_card("last_resort")), "Last Resort is open from the start")
 	check(quick.missing(_card("doorkicker")) == ["1 tasks completed (0 so far)"], "Doorkicker needs a task first (%s)" % str(quick.missing(_card("doorkicker"))))
 	var wall: Dictionary = _card("iron_wall")
-	check(quick.missing(wall) == ["Bulat LL3", "Stitch LL4", "Tinker LL2", "Doc Vera LL3", "14 tasks completed (0 so far)"],
+	check(quick.missing(wall) == ["Bulat LL3", "Stitch LL4", "Tinker LL2", "Doc Vera LL3", "28 tasks completed (0 so far)"],
 		"Iron Wall lists every level and the tasks (%s)" % str(quick.missing(wall)))
 	var plan: Dictionary = quick.plan(wall)
 	check(plan.reasons[0].begins_with("Locked: needs Bulat LL3") and quick.buy(plan, gs.inventory, gs.stash).ok == false, "a locked card can't be bought")
 	gs.quests["scrap_run"] = {"state": "completed", "progress": []}
-	check(quick.missing(wall)[-1] == "14 tasks completed (1 so far)", "the tasks count up")
+	check(quick.missing(wall)[-1] == "28 tasks completed (1 so far)", "the tasks count up")
 	var contract: Dictionary = _card("contract_work")
 	_profile(true)
 	_levels(1, contract)
 	check(quick.missing(contract).has("Quest: A Word in His Ear"), "Contract Work needs The Broker's quest (%s)" % str(quick.missing(contract)))
 	_meet(contract)
-	check(quick.is_unlocked(contract), "with the quest, the levels and 10 tasks it's open")
+	check(quick.is_unlocked(contract), "with the quest, the levels and 20 tasks it's open")
 
 
 func _prices() -> void:
