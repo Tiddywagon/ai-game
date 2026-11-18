@@ -28,8 +28,15 @@ market and hideout requests is no longer available either: E7 and E8 are written
 
 ## Known bugs to fix
 
-None open. (Auto-equip improving on a second run when a stash rig or backpack held rounds or meds was fixed
-with E9: `LoadoutPlanner` chooses the rig and backpack again once a run empties one; `tests/gear_test.gd`.)
+(Fixed earlier: auto-equip improving on a second run when a stash rig or backpack held rounds or meds, with E9.)
+
+- The quest log's trader dropdown still reads "All traders" when the list is opened filtered to one trader (from
+  TRADERS). Fix in E13 (it touches the character/quest screens anyway).
+- BEAR's faction reward (the Tundra barter) waits on "Last Word", which now needs Woodland (no scene yet), while
+  USEC's line ends on a playable map: give BEAR's last quest an open-map route (or move the barter's unlock) so
+  both factions can finish their line today. Fix in E13.
+- DESIGN §10's money model cites a `progression_test` suite that no longer exists and the older quest money:
+  update it to the current suites and numbers. Fix in E13.
 
 ## Ground rules for every step
 
