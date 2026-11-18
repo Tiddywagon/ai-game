@@ -14,8 +14,10 @@ var money: Callable
 var quests: GDScript
 var barters: GDScript
 
-const BEAR_LINE := ["bear_old_unit", "bear_contractors", "bear_ground_truth", "bear_radio_silence", "bear_last_word"]
-const USEC_LINE := ["usec_contract_renewal", "usec_hostile_contact", "usec_site_survey", "usec_data_recovery", "usec_clean_exfil"]
+const BEAR_LINE := ["bear_old_unit", "bear_contractors", "bear_ground_truth", "bear_radio_silence", "bear_last_word", "bear_cold_storage",
+	"bear_homecoming", "bear_red_star"]
+const USEC_LINE := ["usec_contract_renewal", "usec_hostile_contact", "usec_site_survey", "usec_data_recovery", "usec_clean_exfil",
+	"usec_after_action", "usec_extraction_team", "usec_company_man"]
 
 
 func run() -> void:
@@ -184,7 +186,7 @@ func _hidden() -> void:
 		var name: String = ["BEAR", "USEC"][faction]
 		var listed: Array = _ids(quests.for_trader(trader))
 		check(own.all(func(id: String) -> bool: return id in listed) and _ids(quests.for_trader(trader)).filter(func(id: String) -> bool: return id in own) == own,
-			"%s: %s lists the five %s quests, in chain order" % [name, trader, name])
+			"%s: %s lists the eight %s quests, in chain order" % [name, trader, name])
 		var everywhere: Array = []
 		for each: String in load("res://scripts/data/trader_table.gd").ids():
 			everywhere.append_array(_ids(quests.for_trader(each)))
@@ -314,8 +316,8 @@ func _counts() -> void:
 	section("Quest counts go by the quests you can see")
 	_profile(0)
 	var everyone: int = quests.all().filter(func(quest: Dictionary) -> bool: return quests.faction_of(quest) == &"").size()
-	check(quests.shown().size() == everyone + 5 and quests.shown(&"usec").size() == everyone + 5 and quests.all().size() == everyone + 10,
-		"%d quests for everyone, five more for each faction" % everyone)
+	check(quests.shown().size() == everyone + 8 and quests.shown(&"usec").size() == everyone + 8 and quests.all().size() == everyone + 16,
+		"%d quests for everyone, eight more for each faction" % everyone)
 	for id: String in USEC_LINE:
 		_complete(id)  # A save edited by hand: the other line marked done.
 	check(quick.tasks_completed() == 0, "the other faction's completed quests don't count toward quick-buy tasks")
@@ -367,9 +369,9 @@ func _validator() -> void:
 	for key: String in contractors.keys():
 		contractors.erase(key)
 	contractors.merge(keep)
-	var everyone: Dictionary = quests.find("scrap_run")
+	var everyone: Dictionary = quests.find("krane_yard")  # Listed after the faction lines.
 	everyone.requires = ["bear_old_unit"]
-	check(quests.problems().any(func(problem: String) -> bool: return "quest scrap_run: requires bear_old_unit, a quest for bear only" in problem), "a quest for everyone can't wait for a faction's")
+	check(quests.problems().any(func(problem: String) -> bool: return "quest krane_yard: requires bear_old_unit, a quest for bear only" in problem), "a quest for everyone can't wait for a faction's")
 	everyone.erase("requires")
 	check(quests.problems().is_empty() and all.size() == quests.all().size(), "the real data is back without problems")
 

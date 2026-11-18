@@ -1,0 +1,210 @@
+[
+  {
+    "id": "shortage",
+    "name": "Shortage",
+    "trader": "vera",
+    "chain": "intro",
+    "description": "The clinic is out of dressings. Bring me some from the field, sealed and clean.",
+    "success": "Sealed, clean, not a speck of grit. You'd be amazed how rare that is.",
+    "objectives": [
+      {"type": "hand_in", "item": "bandage", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "tourniquet", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 30000, "xp": 500, "reputation": 0.06, "items": [{"item": "ai2_medkit", "count": 2}]}
+  },
+  {
+    "id": "factory_walk",
+    "name": "Factory Walk",
+    "trader": "vera",
+    "chain": "intro",
+    "requires": ["shortage"],
+    "description": "Before I send nurses to the factory I want to know two rooms are still standing: the med bay and the overseer's office. Then leave by Gate 3, it's the way they'll come.",
+    "success": "Still standing. Good. Fewer surprises for my people.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "med_bay"},
+      {"type": "visit", "map": "factory", "poi": "overseers_office"},
+      {"type": "extract", "map": "factory", "extract": "gate_3", "count": 1}
+    ],
+    "rewards": {"roubles": 40000, "xp": 500, "reputation": 0.03, "items": [{"item": "ai2_medkit", "count": 1}]}
+  },
+  {
+    "id": "vera_clean_hands",
+    "name": "Clean Hands",
+    "trader": "vera",
+    "chain": "intro",
+    "requires": ["factory_walk"],
+    "description": "Bringing me bandages is a start. Making your own is better. Set up a Medstation in your hideout and put together two AI-2 kits on it. Clean hands, mind.",
+    "success": "Two kits, properly packed. Now you waste less of mine.",
+    "objectives": [
+      {"type": "upgrade", "station": "medstation", "level": 1},
+      {"type": "craft", "count": 2, "recipe": "medkit"}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "bandage", "count": 3}]}
+  },
+  {
+    "id": "carry_out",
+    "name": "Carry Out",
+    "trader": "vera",
+    "chain": "intro",
+    "requires": ["vera_clean_hands"],
+    "level": 5,
+    "description": "Find a Salewa out there and bring it back out of the factory on you. Keep it, I only need proof they're still on the shelves.",
+    "success": "Sealed and dated. Someone's still stocking that place.",
+    "objectives": [
+      {"type": "extract_with", "item": "salewa", "map": "factory", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 50000, "xp": 700, "reputation": 0.03}
+  },
+  {
+    "id": "sanitary_standards",
+    "name": "Sanitary Standards",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["carry_out"],
+    "description": "Proper surgical kits, found on site, not bought from Auntie Zoya's cousins.",
+    "success": "A real surgical kit. I could cry, if I had the time.",
+    "objectives": [
+      {"type": "hand_in", "item": "surgical_kit", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 60000, "xp": 700, "reputation": 0.09, "items": [{"item": "propital", "count": 1}]}
+  },
+  {
+    "id": "vera_house_calls",
+    "name": "House Calls",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["sanitary_standards"],
+    "level": 10,
+    "description": "There's a field clinic on the Test Yard that used to be mine. Leave a first-aid kit on its table for whoever stumbles in next, and come back out so I don't have to patch you too.",
+    "success": "Someone used it already. A Scav, probably. A patched Scav is still a patched person.",
+    "objectives": [
+      {"type": "visit", "map": "test_yard", "poi": "field_clinic"},
+      {"type": "place", "item": "ai2_medkit", "count": 1, "map": "test_yard", "poi": "field_clinic", "seconds": 4},
+      {"type": "extract", "count": 1, "map": "test_yard"}
+    ],
+    "rewards": {"roubles": 55000, "xp": 1000, "reputation": 0.02, "items": [{"item": "car_medkit", "count": 1}]}
+  },
+  {
+    "id": "clinic_supplies",
+    "name": "Clinic Supplies",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["vera_house_calls"],
+    "description": "The field clinic runs on whatever you bring. IV sets and a working eye scope, found out there, sealed.",
+    "success": "Blood sets and a scope. The clinic will run another month on this.",
+    "objectives": [
+      {"type": "hand_in", "item": "blood_set", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "ophthalmoscope", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 90000, "xp": 1000, "reputation": 0.1, "items": [{"item": "salewa", "count": 1}]}
+  },
+  {
+    "id": "trusted_hands",
+    "name": "Trusted Hands",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["clinic_supplies"],
+    "description": "Earn my trust, then show me you can work: a surgical kit from your own Medstation.",
+    "success": "Neat stitches on the packaging. You'll do. My suppliers will sell you Hawkeye now.",
+    "objectives": [
+      {"type": "loyalty", "trader": "vera", "level": 2},
+      {"type": "craft", "item": "surgical_kit", "count": 1}
+    ],
+    "rewards": {"roubles": 60000, "xp": 1000, "reputation": 0.04}
+  },
+  {
+    "id": "vera_dorm_pharmacy",
+    "name": "Dorm Pharmacy",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["clinic_supplies"],
+    "level": 15,
+    "description": "The customs dorms had a nurse's cupboard on every floor. Go through the dorms and carry one morphine out with you, found there, so I know the cupboards aren't empty yet.",
+    "success": "Morphine, still in date. Somebody up there still thinks ahead.",
+    "objectives": [
+      {"type": "visit", "map": "customs_yard", "poi": "dorms"},
+      {"type": "extract_with", "item": "morphine", "count": 1, "fir": true, "map": "customs_yard"}
+    ],
+    "rewards": {"roubles": 75000, "xp": 1300, "reputation": 0.01, "items": [{"item": "morphine", "count": 1}]}
+  },
+  {
+    "id": "vera_crash_site",
+    "name": "Crash Site",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["vera_dorm_pharmacy"],
+    "level": 18,
+    "description": "A medevac helicopter went down in the woods with a full kit on board. Reach the wreck, bring me back medical tools found there, and leave the bodies. I've seen enough of them.",
+    "success": "Tools from the wreck. They'll save someone. They didn't save the crew.",
+    "objectives": [
+      {"type": "visit", "map": "woodland", "poi": "downed_helicopter"},
+      {"type": "extract_with", "item": "medical_tools", "count": 1, "fir": true, "map": "woodland"}
+    ],
+    "rewards": {"roubles": 87000, "xp": 1500, "reputation": 0.01, "items": [{"item": "salewa", "count": 1}]}
+  },
+  {
+    "id": "vera_east_wing",
+    "name": "East Wing",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["vera_crash_site"],
+    "level": 22,
+    "description": "The resort's east wing was a hospital for a week before it was a battlefield. Walk it, clear four Scavs out of my way and get off that shore alive. I'll send nurses when you say it's safe.",
+    "success": "Safe is a strong word. Safer will do.",
+    "objectives": [
+      {"type": "visit", "map": "shoreline", "poi": "resort_east"},
+      {"type": "kill", "target": "scav", "map": "shoreline", "count": 4},
+      {"type": "extract", "count": 1, "map": "shoreline"}
+    ],
+    "rewards": {"roubles": 103000, "xp": 1700, "reputation": 0.01, "items": [{"item": "ifak", "count": 1}]}
+  },
+  {
+    "id": "vera_specimens",
+    "name": "Specimens",
+    "trader": "vera",
+    "chain": "mid",
+    "requires": ["vera_east_wing"],
+    "level": 28,
+    "description": "Whatever they did in Lab Zero's research wing, they kept samples in the vault below it. I want to know both rooms are still sealed. Look, don't touch, and come back up.",
+    "success": "Sealed. Good. Some doors should stay shut.",
+    "objectives": [
+      {"type": "visit", "map": "labs", "poi": "research_wing"},
+      {"type": "visit", "map": "labs", "poi": "specimen_vault"},
+      {"type": "extract", "count": 1, "map": "labs"}
+    ],
+    "rewards": {"roubles": 127000, "xp": 2100, "reputation": 0.01, "items": [{"item": "three_btg", "count": 1}]}
+  },
+  {
+    "id": "vera_field_hospital",
+    "name": "Field Hospital",
+    "trader": "vera",
+    "chain": "late",
+    "requires": ["trusted_hands"],
+    "level": 30,
+    "loyalty": {"vera": 3},
+    "description": "I'm opening a proper ward. I need a Medstation that can make real kits, two AFAKs off it to prove it, and a defibrillator found out there. Then I'll trust you with my best.",
+    "success": "A ward with a working defibrillator. I'd forgotten the sound it makes.",
+    "objectives": [
+      {"type": "upgrade", "station": "medstation", "level": 3},
+      {"type": "craft", "count": 2, "recipe": "afak"},
+      {"type": "hand_in", "item": "defibrillator", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 130000, "xp": 3300, "reputation": 0.03, "items": [{"item": "surv12", "count": 2}]}
+  },
+  {
+    "id": "vera_last_ward",
+    "name": "The Last Ward",
+    "trader": "vera",
+    "chain": "late",
+    "requires": ["vera_field_hospital"],
+    "level": 35,
+    "loyalty": {"vera": 4},
+    "description": "One more thing and the ward is finished: a LEDX and two ophthalmoscopes, found in the field, sealed. Do this and you'll have the one injector I keep for the day everything goes wrong.",
+    "success": "The ward is finished. Here. Use it on the day, not before.",
+    "objectives": [
+      {"type": "hand_in", "item": "ledx", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "ophthalmoscope", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 150000, "xp": 3800, "reputation": 0.03, "items": [{"item": "phoenix", "count": 1}]}
+  }
+]

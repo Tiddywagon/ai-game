@@ -1,0 +1,196 @@
+[
+  {
+    "id": "krane_yard",
+    "name": "Krane's Yard",
+    "trader": "bulat",
+    "chain": "boss",
+    "requires": ["clean_shot"],
+    "level": 10,
+    "description": "Krane thinks the yard is his. Put him down, and one of his guards with him, and get out alive to tell me.",
+    "success": "So the crane finally fell. The yard is ours again.",
+    "objectives": [
+      {"type": "kill", "boss": "krane", "map": "test_yard", "count": 1, "survive": true},
+      {"type": "kill", "target": "guard", "map": "test_yard", "count": 1, "survive": true}
+    ],
+    "rewards": {"roubles": 90000, "xp": 1500, "reputation": 0.05, "reputation_with": {"zoya": 0.02}, "items": [{"item": "frag_grenade", "count": 2}]}
+  },
+  {
+    "id": "krane_drill",
+    "name": "Drill and Ceremony",
+    "trader": "bulat",
+    "chain": "boss",
+    "requires": ["krane_yard"],
+    "level": 15,
+    "description": "Krane is back on the yard, calling cadence like nothing happened. This time I want it clean: one shot to the head, and you walk out to tell me about it.",
+    "success": "Clean. He'll stay down this time. Take his helmet, he won't need it.",
+    "objectives": [
+      {"type": "kill", "boss": "krane", "map": "test_yard", "body_part": "head", "survive": true, "count": 1},
+      {"type": "kill", "target": "guard", "map": "test_yard", "count": 2}
+    ],
+    "rewards": {"roubles": 98000, "xp": 2000, "reputation": 0.02, "items": [{"item": "sentry_helmet", "count": 1}]}
+  },
+  {
+    "id": "matvei_furnace",
+    "name": "Banked Fires",
+    "trader": "tinker",
+    "chain": "boss",
+    "requires": ["bench_time"],
+    "level": 15,
+    "description": "Iron Matvei sits in the boiler house of the factory with a shotgun and a hatchet, and he's cracked every tool I've lent that place. Find his boiler house, put him down, and come back.",
+    "success": "The fires are out. His shotgun is a brute. I'll tune it anyway.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "boiler_house"},
+      {"type": "kill", "boss": "matvei", "map": "factory", "survive": true, "count": 1}
+    ],
+    "rewards": {"roubles": 98000, "xp": 2000, "reputation": 0.02, "items": [{"item": "tempest_s12", "count": 1}, {"item": "ammo_12ga_flechette", "count": 40}]}
+  },
+  {
+    "id": "matvei_stokers",
+    "name": "Stokers",
+    "trader": "tinker",
+    "chain": "boss",
+    "requires": ["matvei_furnace"],
+    "level": 18,
+    "description": "His Stokers keep relighting the furnace. Four of them, with a shotgun, the way they like to settle things. I want to see if my chokes hold up.",
+    "success": "Chokes held. Stokers didn't. Good data.",
+    "objectives": [
+      {"type": "kill", "target": "guard", "map": "factory", "weapon_class": "shotgun", "count": 4}
+    ],
+    "rewards": {"roubles": 113000, "xp": 2200, "reputation": 0.02, "items": [{"item": "pack_trizip", "count": 1}, {"item": "ammo_12ga_magnum", "count": 40}]}
+  },
+  {
+    "id": "varga_toll",
+    "name": "Toll Unpaid",
+    "trader": "mole",
+    "chain": "boss",
+    "requires": ["mole_pest_control"],
+    "level": 22,
+    "description": "Varga charges a toll on the customs yard, even on Scavs. Even on mine. Put the Tollkeeper down and walk out. I'll tell the Scavs the road is free. They won't believe me.",
+    "success": "No more toll. The Scavs are suspicious. They always are when things go well.",
+    "objectives": [
+      {"type": "kill", "boss": "varga", "map": "customs_yard", "survive": true, "count": 1}
+    ],
+    "rewards": {"roubles": 134000, "xp": 2600, "reputation": 0.01, "items": [{"item": "armor_redut", "count": 1}]}
+  },
+  {
+    "id": "varga_toll_men",
+    "name": "Toll Men",
+    "trader": "mole",
+    "chain": "boss",
+    "requires": ["varga_toll"],
+    "level": 24,
+    "description": "His toll men are still standing at the barrier out of habit. Four of them, from thirty metres, so they don't see you coming. Then leave the yard. Not through the barrier.",
+    "success": "The barrier's down. Somebody stole it already. Probably one of mine.",
+    "objectives": [
+      {"type": "kill", "target": "guard", "map": "customs_yard", "min_distance": 30, "count": 4},
+      {"type": "extract", "count": 1, "map": "customs_yard"}
+    ],
+    "rewards": {"roubles": 144000, "xp": 2800, "reputation": 0.01, "items": [{"item": "grizzly_74", "count": 1}, {"item": "ammo_12ga_slug", "count": 40}]}
+  },
+  {
+    "id": "leshy_trapper",
+    "name": "Old Man of the Woods",
+    "trader": "stitch",
+    "chain": "boss",
+    "requires": ["stitch_bad_seams"],
+    "level": 28,
+    "description": "Old Leshy wears a snow leopard over his shoulders and laughs at bullets. I don't want the pelt. I want him gone from the woods, and you back with your skin whole.",
+    "success": "Gone. The woods are quieter. I don't like how quiet.",
+    "objectives": [
+      {"type": "kill", "boss": "leshy", "map": "woodland", "survive": true, "count": 1}
+    ],
+    "rewards": {"roubles": 165000, "xp": 3100, "reputation": 0.01, "items": [{"item": "huntsman_700", "count": 1}]}
+  },
+  {
+    "id": "leshy_traps",
+    "name": "Trappers",
+    "trader": "stitch",
+    "chain": "boss",
+    "requires": ["leshy_trapper"],
+    "level": 30,
+    "description": "His trappers still set snares on every path. Four of them, and walk out of the woods by the road, not through the trees.",
+    "success": "No snares on the road. Here, a helmet that fits. I adjusted the liner.",
+    "objectives": [
+      {"type": "kill", "target": "guard", "map": "woodland", "count": 4},
+      {"type": "extract", "count": 1, "map": "woodland"}
+    ],
+    "rewards": {"roubles": 176000, "xp": 3300, "reputation": 0.01, "items": [{"item": "lynx_helmet", "count": 1}]}
+  },
+  {
+    "id": "reyes_undertow",
+    "name": "Undertow",
+    "trader": "zoya",
+    "chain": "boss",
+    "requires": ["dead_drop"],
+    "level": 30,
+    "description": "Captain Reyes thinks the resort pier is her harbour and charges my boatman for the water. Sink her, dear. Come back on dry land, and her rifle is yours.",
+    "success": "My boatman sends his love. He's never sent anything before.",
+    "objectives": [
+      {"type": "kill", "boss": "reyes", "map": "shoreline", "survive": true, "count": 1}
+    ],
+    "rewards": {"roubles": 176000, "xp": 3300, "reputation": 0.01, "items": [{"item": "halcyon_b5", "count": 1}]}
+  },
+  {
+    "id": "reyes_deckhands",
+    "name": "Deckhands",
+    "trader": "zoya",
+    "chain": "boss",
+    "requires": ["reyes_undertow"],
+    "level": 32,
+    "description": "Her deckhands still man the pier. Four of them from thirty metres, then take the pier boat home like you own it. You will, more or less.",
+    "success": "The pier is mine again. Well, the boatman's. Well, mine.",
+    "objectives": [
+      {"type": "kill", "target": "guard", "map": "shoreline", "min_distance": 30, "count": 4},
+      {"type": "extract", "count": 1, "map": "shoreline", "extract": "pier_boat"}
+    ],
+    "rewards": {"roubles": 186000, "xp": 3500, "reputation": 0.01, "items": [{"item": "armor_hexgrid", "count": 1}]}
+  },
+  {
+    "id": "varn_director",
+    "name": "The Director",
+    "trader": "vera",
+    "chain": "boss",
+    "requires": ["trusted_hands"],
+    "level": 35,
+    "description": "Director Varn ran the research wing in Lab Zero. I have seen what came out of it, and I have stitched it. Go down there and end her work. Come back up so I know it's over.",
+    "success": "Over. I thought I'd feel better. I'll settle for feeling less.",
+    "objectives": [
+      {"type": "kill", "boss": "varn", "map": "labs", "survive": true, "count": 1}
+    ],
+    "rewards": {"roubles": 202000, "xp": 3800, "reputation": 0.01, "items": [{"item": "wasp_pdw", "count": 1}]}
+  },
+  {
+    "id": "varn_custodians",
+    "name": "Custodians",
+    "trader": "vera",
+    "chain": "boss",
+    "requires": ["varn_director"],
+    "level": 37,
+    "description": "Her custodians still guard the vault, waiting for orders that won't come. Four of them, cleanly, in the head; they've suffered enough. Then come up the main elevator.",
+    "success": "Clean. Thank you for that. Wear this, it stopped worse than anything they had.",
+    "objectives": [
+      {"type": "kill", "target": "guard", "map": "labs", "body_part": "head", "count": 4},
+      {"type": "extract", "count": 1, "map": "labs", "extract": "main_elevator"}
+    ],
+    "rewards": {"roubles": 212000, "xp": 3900, "reputation": 0.01, "items": [{"item": "armor_zabralo", "count": 1}]}
+  },
+  {
+    "id": "boss_the_six",
+    "name": "The Six",
+    "trader": "bulat",
+    "chain": "boss",
+    "requires": ["krane_drill", "matvei_stokers", "varga_toll_men", "leshy_traps", "reyes_deckhands", "varn_custodians"],
+    "level": 40,
+    "description": "Six names in my ledger with a line through five of them is not a finished page. Krane, Matvei, Varga, Leshy, Reyes and Varn: each one, and you come back from every raid. Then the page is closed.",
+    "success": "Six lines. The page is closed. I've never closed a page before. Take this. You'll be the only one wearing it.",
+    "objectives": [
+      {"type": "kill", "boss": "krane", "map": "test_yard", "survive": true, "count": 1},
+      {"type": "kill", "boss": "matvei", "map": "factory", "survive": true, "count": 1},
+      {"type": "kill", "boss": "varga", "map": "customs_yard", "survive": true, "count": 1},
+      {"type": "kill", "boss": "leshy", "map": "woodland", "survive": true, "count": 1},
+      {"type": "kill", "boss": "reyes", "map": "shoreline", "survive": true, "count": 1},
+      {"type": "kill", "boss": "varn", "map": "labs", "survive": true, "count": 1}
+    ],
+    "rewards": {"roubles": 400000, "xp": 8400, "reputation": 0.01, "reputation_with": {"vera": 0.02, "zoya": 0.02, "stitch": 0.02, "tinker": 0.02, "broker": 0.02}, "drip": 150, "items": [{"item": "vulkan_helmet", "count": 1}]}
+  }
+]

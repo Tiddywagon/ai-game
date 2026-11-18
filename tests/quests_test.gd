@@ -97,6 +97,7 @@ func _loader() -> void:
 		[{"objectives": [{"type": "loyalty", "trader": "bulat", "level": 7}]}, "loyalty bulat LL7"],
 		[{"objectives": [{"type": "trick_kill", "target": "boss"}]}, "trick-kill target"],
 		[{"objectives": [{"type": "upgrade", "station": "workbench", "level": 2, "count": 2}]}, "has no count"],
+		[{"chain": "side"}, "chain side isn't one of"],
 	]
 	for case: Array in cases:
 		var broken: Dictionary = base.duplicate(true)
@@ -120,6 +121,40 @@ func _loader() -> void:
 	list.clear()
 	list.append_array([usec, after])
 	check(quests.problems().any(func(line: String) -> bool: return "a quest for usec only" in line), "a prerequisite for the other faction is caught")
+	# Nothing on an open map waits for a map without a scene (E12): Customs Yard and Woodland aren't built.
+	var closed: Dictionary = base.duplicate(true)
+	closed.id = "probe_closed"
+	closed.objectives = [{"type": "explore", "map": "customs_yard", "count": 2}]
+	var closed_next: Dictionary = base.duplicate(true)
+	closed_next.id = "probe_closed_next"
+	closed_next.requires = ["probe_closed"]
+	closed_next.objectives = [{"type": "visit", "map": "woodland", "poi": "sawmill"}]
+	var open_after: Dictionary = base.duplicate(true)
+	open_after.id = "probe_open_after"
+	open_after.requires = ["probe_closed_next"]
+	open_after.objectives = [{"type": "extract", "map": "test_yard", "count": 1}]
+	check(quests.map_note(closed) == "Map not open yet: Customs Yard" and quests.map_note(open_after) == "" and quests.map_note(base) == "",
+		"a quest on Customs Yard says \"%s\"; one on the Test Yard or on no map says nothing" % quests.map_note(closed))
+	list.clear()
+	list.append_array([closed, closed_next])
+	check(not quests.problems().any(func(line: String) -> bool: return "waits for a map" in line), "a closed-map quest may follow another (%s)" % str(quests.problems().slice(0, 2)))
+	list.append(open_after)
+	check(quests.problems().any(func(line: String) -> bool: return "quest probe_open_after: requires probe_closed_next, which waits for a map that isn't open yet" in line),
+		"an open-map quest two links after a Customs Yard one is caught")
+	var boss_only: Dictionary = base.duplicate(true)
+	boss_only.id = "probe_boss"
+	boss_only.objectives = [{"type": "kill", "boss": "varga"}]
+	var brick: Dictionary = base.duplicate(true)
+	brick.id = "probe_brick"
+	brick.objectives = [{"type": "hand_in", "item": "tollkeeper_cash_brick", "count": 1, "fir": true}]
+	check(", ".join(quests.closed_maps(boss_only)) == "customs_yard" and ", ".join(quests.closed_maps(brick)) == "customs_yard" and quests.closed_maps(quests.find("krane_yard")).is_empty(),
+		"Varga's kill and his cash brick are on Customs Yard; Krane's Yard is open")
+	var after_boss: Dictionary = base.duplicate(true)
+	after_boss.id = "probe_after_boss"
+	after_boss.requires = ["probe_boss"]
+	list.clear()
+	list.append_array([boss_only, after_boss])
+	check(quests.problems().any(func(line: String) -> bool: return "quest probe_after_boss: requires probe_boss, which waits" in line), "so is one waiting for a boss on a closed map")
 	list.clear()
 	list.append_array(original)
 	check(quests.problems().is_empty(), "the files are clean again")
@@ -500,13 +535,13 @@ func _saves() -> void:
 	quests.reload()
 
 
-## DESIGN.md §11's table of every quest, as the data has it: | Quest | Trader | Needs | Objectives |
-## Rewards |. The check fails while DESIGN.md says anything else (the expected table is written to
+## DESIGN.md §11's table of every quest, as the data has it: | Quest | Trader | Chain | Needs |
+## Objectives | Rewards |. The check fails while DESIGN.md says anything else (the expected table is written to
 ## user://quest_table.md to paste in).
 func _design_table() -> void:
 	section("DESIGN.md's quest table")
 	fresh_profile()
-	var lines: Array[String] = ["| Quest | Trader | Needs | Objectives | Rewards and unlocks |", "|---|---|---|---|---|"]
+	var lines: Array[String] = ["| Quest | Trader | Chain | Needs | Objectives | Rewards and unlocks |", "|---|---|---|---|---|---|"]
 	for quest: Dictionary in quests.all():
 		var needs: Array = quest.get("requires", []).map(func(id: String) -> String: return str(quests.find(id).get("name", id)))
 		if int(quest.get("level", 1)) > 1:
@@ -514,6 +549,8 @@ func _design_table() -> void:
 		var loyalty: Dictionary = quest.get("loyalty", {})
 		for trader: String in loyalty:
 			needs.append("%s LL%d" % [load("res://scripts/data/trader_table.gd").display_name(trader), int(loyalty[trader])])
+		if not quests.closed_maps(quest).is_empty():
+			needs.append("map not open yet (%s)" % ", ".join(quests.closed_maps(quest).map(func(map_id: String) -> String: return load("res://scripts/data/map_info.gd").find(map_id).display_name)))
 		var objectives := []
 		for i in quest.objectives.size():
 			var type: String = quests.objective_type(quest, i)
@@ -528,8 +565,8 @@ func _design_table() -> void:
 		for unlock: Dictionary in quests.unlocks(quest):
 			rewards.append("unlocks: " + str(unlock.text))
 		var name: String = quest.name + (" (%s)" % str(quest.faction).to_upper() if quest.has("faction") else "")
-		lines.append("| %s | %s | %s | %s | %s |" % [name, load("res://scripts/data/trader_table.gd").display_name(quest.trader),
-			", ".join(needs) if not needs.is_empty() else "—", "; ".join(objectives), ", ".join(rewards)])
+		lines.append("| %s | %s | %s | %s | %s | %s |" % [name, load("res://scripts/data/trader_table.gd").display_name(quest.trader),
+			quests.CHAINS.get(str(quest.get("chain", "")), "—"), ", ".join(needs) if not needs.is_empty() else "—", "; ".join(objectives), ", ".join(rewards)])
 	var table := "\n".join(lines)
 	var design := FileAccess.get_file_as_string("res://DESIGN.md")
 	if not table in design:

@@ -102,7 +102,7 @@ func _loader() -> void:
 		["The Broker without his quest", func(card: Dictionary) -> void:
 			card.unlock.loyalty.broker = 2
 			card.gear.helmet = {"item": "fast_helmet", "trader": "broker"}, "must list the quest zoya_introduction"],
-		["more tasks than quests", func(card: Dictionary) -> void: card.unlock.tasks = 99, "99 tasks completed can't be reached"],
+		["more tasks than quests", func(card: Dictionary) -> void: card.unlock.tasks = 999, "999 tasks completed can't be reached"],
 		["a quest that doesn't exist", func(card: Dictionary) -> void: card.unlock.quests = ["no_such_quest"], "quests that exist"],
 		["a part that doesn't fit", func(card: Dictionary) -> void: card.parts.primary[0].item = "stanag_30", "doesn't fit"],
 		["parts out of order", func(card: Dictionary) -> void: card.parts.primary = [card.parts.primary[1], card.parts.primary[0], card.parts.primary[2]], "No such slot"],

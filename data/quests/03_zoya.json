@@ -1,0 +1,211 @@
+[
+  {
+    "id": "zoya_market_day",
+    "name": "Market Day",
+    "trader": "zoya",
+    "chain": "intro",
+    "description": "Everybody wants guns, dear, nobody wants soap. That's why soap pays. Bring Auntie a bar of soap, a tube of toothpaste and two boxes of matches you found yourself, and you'll see.",
+    "success": "See? Clean, minty and dry. Half the valley would trade a rifle for that.",
+    "objectives": [
+      {"type": "hand_in", "item": "soap", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "toothpaste", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "matches", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "water_bottle", "count": 2}, {"item": "jerky", "count": 2}]}
+  },
+  {
+    "id": "zoya_shopkeeping",
+    "name": "Shopkeeping",
+    "trader": "zoya",
+    "chain": "intro",
+    "requires": ["zoya_market_day"],
+    "description": "My cousin kept the corner shop on the Test Yard, and his brother-in-law squatted in the west house. Go and look at both for me, and come back out. Family is family, even the useless ones.",
+    "success": "The shop's still standing? Don't tell him, he'll want it back.",
+    "objectives": [
+      {"type": "visit", "map": "test_yard", "poi": "corner_shop"},
+      {"type": "visit", "map": "test_yard", "poi": "west_squat"},
+      {"type": "extract", "count": 1, "map": "test_yard"}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "lighter", "count": 2}, {"item": "duct_tape", "count": 1}]}
+  },
+  {
+    "id": "safe_harbour",
+    "name": "Safe Harbour",
+    "trader": "zoya",
+    "chain": "intro",
+    "requires": ["zoya_shopkeeping"],
+    "description": "The pier boat on the Shoreline runs for people I trust. Two gold chains and a lighter, found out there, and you're on the list.",
+    "success": "Gold, and a lighter that still works. The boatman knows your name now, dear.",
+    "objectives": [
+      {"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "lighter", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 40000, "xp": 500, "reputation": 0.06}
+  },
+  {
+    "id": "dead_drop",
+    "name": "Dead Drop",
+    "trader": "zoya",
+    "chain": "intro",
+    "requires": ["safe_harbour"],
+    "description": "A friend at the factory smokes my brand. Leave a pack of cigarettes at the west yard gate, and don't let anyone see you do it.",
+    "success": "He says thank you. He also says you walk loud.",
+    "objectives": [
+      {"type": "place", "item": "cigarettes", "map": "factory", "spot": "west_yard_gate", "seconds": 5}
+    ],
+    "rewards": {"roubles": 40000, "xp": 500, "reputation": 0.03}
+  },
+  {
+    "id": "zoya_introduction",
+    "name": "A Word in His Ear",
+    "trader": "zoya",
+    "chain": "mid",
+    "level": 10,
+    "description": "There's a man in a hotel suite who sells what my stall never sees. He won't open the door to just anybody: he wants to hear your name from someone he trusts. Bring me something pretty you found out there yourself, and a little for my trouble, and I'll put in a word.",
+    "success": "He'll see you now. Wear a clean shirt, and don't let him talk you into anything you can't pay for.",
+    "objectives": [
+      {"type": "hand_in", "item": "pocket_watch", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "silver_coin", "count": 2, "fir": true},
+      {"type": "roubles", "count": 150000}
+    ],
+    "rewards": {"xp": 1000, "reputation": 0.05}
+  },
+  {
+    "id": "zoya_paper_route",
+    "name": "Paper Route",
+    "trader": "zoya",
+    "chain": "mid",
+    "requires": ["dead_drop"],
+    "level": 12,
+    "description": "The overseer at the factory still keeps office hours, if you can believe it. He likes vodka with his paperwork. Leave a bottle on his desk and look in on the locker rooms on your way.",
+    "success": "He sends his regards and a list. Always a list with that man.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "locker_rooms"},
+      {"type": "place", "item": "vodka", "count": 1, "map": "factory", "poi": "overseers_office", "seconds": 5}
+    ],
+    "rewards": {"roubles": 63000, "xp": 1100, "reputation": 0.02, "items": [{"item": "silver_coin", "count": 1}]}
+  },
+  {
+    "id": "distant_tapes",
+    "name": "Distant Tapes",
+    "trader": "zoya",
+    "chain": "mid",
+    "requires": ["dead_drop"],
+    "level": 15,
+    "loyalty": {"zoya": 2},
+    "description": "Three PMCs at the factory, taken from thirty metres or more, and you get out with the story intact. I sell the tapes, you see.",
+    "success": "The tape is beautiful. Grainy, but beautiful.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "map": "factory", "min_distance": 30, "count": 3, "survive": true}
+    ],
+    "rewards": {"roubles": 110000, "xp": 1300, "reputation": 0.05, "drip": 30, "items": [{"item": "scope_2_4", "count": 1}]}
+  },
+  {
+    "id": "spin_doctor",
+    "name": "Spin Doctor",
+    "trader": "zoya",
+    "chain": "trick",
+    "requires": ["showboat"],
+    "description": "PMCs pay for their reputations and I sell the tapes. Two of them, spun and dropped. Style is the product.",
+    "success": "The tapes are flying off the stall. You've got fans, dear. Strange ones.",
+    "objectives": [
+      {"type": "trick_kill", "count": 2, "target": "pmc"}
+    ],
+    "rewards": {"roubles": 120000, "xp": 500, "reputation": 0.07, "drip": 100, "items": [{"item": "combat_scope_3x", "count": 1}]}
+  },
+  {
+    "id": "zoya_trailer_talk",
+    "name": "Trailer Talk",
+    "trader": "zoya",
+    "chain": "mid",
+    "requires": ["zoya_paper_route"],
+    "level": 15,
+    "description": "The trailer park by customs is where the real market is now. Leave two packs of cigarettes there for my contact, so they know Auntie's still in business, and come home.",
+    "success": "They took the cigarettes and asked after my health. Business is good.",
+    "objectives": [
+      {"type": "place", "item": "cigarettes", "count": 2, "map": "customs_yard", "poi": "trailer_park", "seconds": 5},
+      {"type": "extract", "count": 1, "map": "customs_yard"}
+    ],
+    "rewards": {"roubles": 75000, "xp": 1300, "reputation": 0.01, "items": [{"item": "kettle", "count": 1}]}
+  },
+  {
+    "id": "zoya_village_prices",
+    "name": "Village Prices",
+    "trader": "zoya",
+    "chain": "mid",
+    "requires": ["zoya_trailer_talk"],
+    "level": 18,
+    "description": "The old village in the woods still keeps bees. Can you imagine? Walk through, find two jars of honey and carry them out yourself. I want to know what they're charging.",
+    "success": "Real honey. I'm charging double and they'll still thank me.",
+    "objectives": [
+      {"type": "visit", "map": "woodland", "poi": "old_village"},
+      {"type": "extract_with", "item": "honey", "count": 2, "fir": true, "map": "woodland"}
+    ],
+    "rewards": {"roubles": 87000, "xp": 1500, "reputation": 0.01, "items": [{"item": "honey", "count": 1}, {"item": "vodka", "count": 1}]}
+  },
+  {
+    "id": "zoya_yacht_club",
+    "name": "Yacht Club",
+    "trader": "zoya",
+    "chain": "mid",
+    "requires": ["zoya_village_prices"],
+    "level": 22,
+    "description": "A yacht is beached on the resort shore, and its owner owes me. Go aboard, see what's left, and leave on the pier boat like a gentleman.",
+    "success": "The owner is very sorry, he says. Sorry is not a currency, but it's a start.",
+    "objectives": [
+      {"type": "visit", "map": "shoreline", "poi": "beached_yacht"},
+      {"type": "extract", "count": 1, "map": "shoreline", "extract": "pier_boat"}
+    ],
+    "rewards": {"roubles": 103000, "xp": 1700, "reputation": 0.01, "items": [{"item": "gold_chain", "count": 1}]}
+  },
+  {
+    "id": "zoya_staff_canteen",
+    "name": "Staff Canteen",
+    "trader": "zoya",
+    "chain": "mid",
+    "requires": ["zoya_yacht_club"],
+    "level": 28,
+    "description": "The managers in Lab Zero kept gold coins in their desks like other people keep biscuits. Look in on the manager's office and bring out a gold coin. I'll find it a nice home.",
+    "success": "Such a pretty coin. Such a horrible place to keep it.",
+    "objectives": [
+      {"type": "visit", "map": "labs", "poi": "managers_office"},
+      {"type": "extract_with", "item": "gold_coin", "count": 1, "fir": true, "map": "labs"}
+    ],
+    "rewards": {"roubles": 127000, "xp": 2100, "reputation": 0.01, "items": [{"item": "silver_ring", "count": 2}]}
+  },
+  {
+    "id": "zoya_favours",
+    "name": "Favours Owed",
+    "trader": "zoya",
+    "chain": "late",
+    "requires": ["distant_tapes"],
+    "level": 30,
+    "loyalty": {"zoya": 3},
+    "description": "Half the valley owes Auntie a favour, and the other half owes the first half. I'm calling some in. An antique icon, two old cameras found out there, and a little money to grease the wheels.",
+    "success": "Wheels greased, favours called. Here, a bag big enough for what you'll carry next.",
+    "objectives": [
+      {"type": "hand_in", "item": "antique_icon", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "vintage_camera", "count": 2, "fir": true},
+      {"type": "roubles", "count": 150000}
+    ],
+    "rewards": {"roubles": 120000, "xp": 3300, "reputation": 0.03, "items": [{"item": "pack_attack2", "count": 1}]}
+  },
+  {
+    "id": "collectors_case",
+    "name": "The Collector's Case",
+    "trader": "zoya",
+    "chain": "late",
+    "requires": ["zoya_favours"],
+    "level": 35,
+    "loyalty": {"zoya": 4},
+    "description": "A client of mine collects pretty things, and pays in kind. Find them yourself, out there, and the case is yours.",
+    "success": "Every piece, found by your own hand. My client sends the case and his compliments, dear.",
+    "objectives": [
+      {"type": "hand_in", "item": "roler", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "jeweled_egg", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "coin_collection", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "diamond_necklace", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 150000, "xp": 3800, "reputation": 0.1, "items": [{"item": "secure_kappa", "count": 1}]}
+  }
+]

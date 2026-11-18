@@ -1,0 +1,212 @@
+[
+  {
+    "id": "gunsmith_0",
+    "name": "Gunsmith, Part 0",
+    "trader": "tinker",
+    "chain": "intro",
+    "description": "Parts I can trust: off a real rifle, from a real raid. Wires I don't care where from.",
+    "success": "Real parts. Hear that? That's a bolt carrier that remembers being fired.",
+    "objectives": [
+      {"type": "hand_in", "item": "weapon_parts", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "wires", "count": 2, "fir": false}
+    ],
+    "rewards": {"roubles": 40000, "xp": 500, "reputation": 0.07, "items": [{"item": "foregrip", "count": 1}]}
+  },
+  {
+    "id": "bench_time",
+    "name": "Bench Time",
+    "trader": "tinker",
+    "chain": "intro",
+    "requires": ["gunsmith_0"],
+    "description": "A real workshop needs a real bench. Build yours to level 2 and make me one set of weapon parts on it.",
+    "success": "Proper bench, proper parts. I'll show you a shortcut for those.",
+    "objectives": [
+      {"type": "upgrade", "station": "workbench", "level": 2},
+      {"type": "craft", "recipe": "weapon_parts", "count": 1}
+    ],
+    "rewards": {"roubles": 50000, "xp": 500, "reputation": 0.04, "items": [{"item": "screws", "count": 2}]}
+  },
+  {
+    "id": "signal_check",
+    "name": "Signal Check",
+    "trader": "tinker",
+    "chain": "intro",
+    "requires": ["bench_time"],
+    "gives": [{"item": "quest_marker", "count": 1}],
+    "description": "Take this beacon and set it in the signal hut on the yard. Hold it in place till it locks on. Then walk the crossroads so I can calibrate.",
+    "success": "Clean signal. Your beacon's still pinging, good work.",
+    "objectives": [
+      {"type": "mark", "map": "test_yard", "poi": "signal_hut", "seconds": 4},
+      {"type": "visit", "map": "test_yard", "spot": "yard_crossroads"}
+    ],
+    "rewards": {"roubles": 35000, "xp": 500, "reputation": 0.03, "items": [{"item": "wires", "count": 2}]}
+  },
+  {
+    "id": "server_room",
+    "name": "Server Room",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["signal_check"],
+    "description": "I'm building a rig and the shops are empty. Memory, power cords and a drill to get into the racks.",
+    "success": "Memory, power and a drill. The rig hums now. I've named it Margarethe.",
+    "objectives": [
+      {"type": "hand_in", "item": "ram_stick", "count": 3, "fir": true},
+      {"type": "hand_in", "item": "power_cord", "count": 2, "fir": false},
+      {"type": "hand_in", "item": "cordless_drill", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 120000, "xp": 500, "reputation": 0.1, "items": [{"item": "scope_2_4", "count": 1}]}
+  },
+  {
+    "id": "range_day",
+    "name": "Range Day",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["bench_time"],
+    "level": 8,
+    "description": "I tuned an AK-74N for a client and he wants proof it shoots. Five kills with one, any map, and stand back a bit for two of them: twenty metres.",
+    "success": "Groups like a dream. The client will pay double.",
+    "objectives": [
+      {"type": "kill", "weapon": "ak_74n", "count": 5},
+      {"type": "kill", "weapon": "ak_74n", "min_distance": 20, "count": 2}
+    ],
+    "rewards": {"roubles": 70000, "xp": 900, "reputation": 0.04, "items": [{"item": "foregrip", "count": 1}]}
+  },
+  {
+    "id": "tinker_generator",
+    "name": "Generator Bunker",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["signal_check"],
+    "level": 10,
+    "gives": [{"item": "quest_marker", "count": 1}],
+    "description": "The factory's generator bunker is humming at night and nobody's paying the bill. Take this beacon, set it on the generator, hold it till it pairs, and get out before the Stokers notice.",
+    "success": "Paired. I can hear the generator from here. It's out of tune.",
+    "objectives": [
+      {"type": "mark", "map": "factory", "poi": "generator_bunker", "seconds": 5},
+      {"type": "extract", "count": 1, "map": "factory"}
+    ],
+    "rewards": {"roubles": 55000, "xp": 1000, "reputation": 0.02, "items": [{"item": "capacitors", "count": 2}]}
+  },
+  {
+    "id": "tinker_long_barrel",
+    "name": "Long Barrel",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["range_day"],
+    "level": 14,
+    "description": "A DMR is a promise between a barrel and a target. Keep it: three PMCs with a DMR, from forty metres or further. Anywhere you like. Bring the rifle back in one piece.",
+    "success": "Three promises kept. I'll float the barrel for you, she's earned it.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "weapon_class": "dmr", "min_distance": 40, "count": 3}
+    ],
+    "rewards": {"roubles": 71000, "xp": 1200, "reputation": 0.02, "items": [{"item": "combat_scope_3x", "count": 1}]}
+  },
+  {
+    "id": "tinker_customs_office",
+    "name": "Customs Paperwork",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["tinker_generator"],
+    "level": 16,
+    "description": "The customs office scanned every crate that came through. The scanners are scrap, but the boards in them aren't. Go through the office and carry two circuit boards out yourself.",
+    "success": "Two boards. One of them still remembers its last crate. Fascinating.",
+    "objectives": [
+      {"type": "visit", "map": "customs_yard", "poi": "customs_office"},
+      {"type": "extract_with", "item": "circuit_board", "count": 2, "fir": true, "map": "customs_yard"}
+    ],
+    "rewards": {"roubles": 79000, "xp": 1400, "reputation": 0.01, "items": [{"item": "multitool", "count": 1}]}
+  },
+  {
+    "id": "tinker_radio_tower",
+    "name": "Radio Tower",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["tinker_customs_office"],
+    "level": 19,
+    "gives": [{"item": "quest_marker", "count": 1}],
+    "description": "The radio tower in the woods could carry my signal over the ridge. Climb up, set this beacon at its base, hold it till it locks, and get back down in one piece.",
+    "success": "Locked on. I can hear a weather report from somewhere that still has weather reports.",
+    "objectives": [
+      {"type": "mark", "map": "woodland", "poi": "radio_tower", "seconds": 6},
+      {"type": "extract", "count": 1, "map": "woodland"}
+    ],
+    "rewards": {"roubles": 91000, "xp": 1500, "reputation": 0.01, "items": [{"item": "circuit_board", "count": 2}]}
+  },
+  {
+    "id": "tinker_weather_station",
+    "name": "Weather Station",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["tinker_radio_tower"],
+    "level": 22,
+    "description": "The weather station on the coast runs off the power station below it. I want to know both still work. Walk them, and walk out. Don't touch the dials, they're calibrated.",
+    "success": "Both running. Someone's been oiling the turbines. I'd like to meet them.",
+    "objectives": [
+      {"type": "visit", "map": "shoreline", "poi": "weather_station"},
+      {"type": "visit", "map": "shoreline", "poi": "power_station"},
+      {"type": "extract", "count": 1, "map": "shoreline"}
+    ],
+    "rewards": {"roubles": 103000, "xp": 1700, "reputation": 0.01, "items": [{"item": "electric_motor", "count": 1}]}
+  },
+  {
+    "id": "tinker_server_hall",
+    "name": "Server Hall",
+    "trader": "tinker",
+    "chain": "mid",
+    "requires": ["tinker_weather_station"],
+    "level": 28,
+    "description": "Lab Zero's server hall still has blades in its racks. Get in, carry one blade out found there, and don't let the custodians near it. They don't know what it is. I do.",
+    "success": "Look at her. Not a scratch. She'll run my rig for years.",
+    "objectives": [
+      {"type": "visit", "map": "labs", "poi": "server_hall"},
+      {"type": "extract_with", "item": "server_blade", "count": 1, "fir": true, "map": "labs"}
+    ],
+    "rewards": {"roubles": 127000, "xp": 2100, "reputation": 0.01, "items": [{"item": "ar_barrel_18", "count": 1}]}
+  },
+  {
+    "id": "tinker_masterpiece",
+    "name": "Masterpiece",
+    "trader": "tinker",
+    "chain": "late",
+    "requires": ["tinker_long_barrel", "server_room"],
+    "level": 30,
+    "loyalty": {"tinker": 3},
+    "description": "I'm building a rifle worth naming. I need your Workbench at its best, a server blade made on it for the ballistics computer, and a graphics card found out there. Then she's yours.",
+    "success": "Meet Ottilie. She shoots where you look. Be kind to her.",
+    "objectives": [
+      {"type": "upgrade", "station": "workbench", "level": 3},
+      {"type": "craft", "count": 1, "recipe": "server_blade"},
+      {"type": "hand_in", "item": "gpu", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 120000, "xp": 3300, "reputation": 0.03, "items": [{"item": "longbow_dmr", "count": 1}, {"item": "scope_6_8", "count": 1}]}
+  },
+  {
+    "id": "tinker_leviathan",
+    "name": "Leviathan",
+    "trader": "tinker",
+    "chain": "late",
+    "requires": ["tinker_masterpiece"],
+    "level": 40,
+    "loyalty": {"tinker": 4},
+    "description": "The Leviathan is the loudest thing I've ever built. Earn it: five PMCs with a bolt-action from fifty metres, and two military gyroscopes, found out there, for the scope mount.",
+    "success": "She's yours. Clean her every raid. She'll know if you don't.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "weapon_class": "bolt_action", "min_distance": 50, "count": 5},
+      {"type": "hand_in", "item": "military_gyroscope", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 150000, "xp": 4200, "reputation": 0.03, "items": [{"item": "leviathan_338", "count": 1}, {"item": "ammo_338_ap", "count": 30}]}
+  },
+  {
+    "id": "around_the_world",
+    "name": "Around the World",
+    "trader": "tinker",
+    "chain": "trick",
+    "requires": ["showboat"],
+    "description": "A Mosin is more than a museum piece, if the hands are right. Three 360 kills with a bolt-action and the scope is yours.",
+    "success": "Three spins, three drops, one Mosin. The rifle is smiling. I can tell.",
+    "objectives": [
+      {"type": "trick_kill", "count": 3, "weapon_class": "bolt_action"}
+    ],
+    "rewards": {"roubles": 90000, "xp": 500, "reputation": 0.08, "drip": 50, "items": [{"item": "scope_2_4", "count": 1}]}
+  }
+]

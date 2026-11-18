@@ -575,7 +575,8 @@ func _quest_line() -> void:
 	var last: Dictionary = quests.find("collector_the_collector")
 	check(last.rewards.items[0].item == "secure_omega" and item("secure_omega").contents.size == Vector2i(4, 4) and item("secure_kappa").contents.size == Vector2i(3, 4) and db.get_item("secure_omega").stats.secure,
 		"the last gives Secure container Omega: 4×4, bigger than Kappa's 3×4")
-	gs.level = 20
+	check(int(last.get("level", 1)) == 30, "and waits for player level 30: a Legendary reward is late-game (E12)")
+	gs.level = 30
 	var gives := {
 		"collector_shelf_talk": ["figure_scav", "figure_fox", "figure_hare"],
 		"collector_odd_lots": ["figure_rat", "figure_boar", "figure_pool_house", "figure_rat"],

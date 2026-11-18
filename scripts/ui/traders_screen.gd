@@ -959,6 +959,8 @@ func _build_tasks(trader: Dictionary) -> void:
 		title.text = "%s  ·  %s" % [quest.name.to_upper(), {"locked": "LOCKED", "available": "AVAILABLE", "active": "ACTIVE",
 			"ready": "READY TO TURN IN", "completed": "COMPLETED"}[state]]
 		box.add_child(title)
+		if QuestLog.map_note(quest) != "":
+			box.add_child(_note(QuestLog.map_note(quest) + "."))
 		if state == "locked":
 			box.add_child(_note(QuestLog.lock_reason(quest) + "."))
 			rows.add_child(box)

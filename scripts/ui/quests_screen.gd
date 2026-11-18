@@ -208,6 +208,10 @@ func _build_detail(quest: Dictionary) -> void:
 		var line := _line("Chain: " + "  ·  ".join(links), DONE_COLOR if chain.all(func(link: Dictionary) -> bool: return link.done) else LOCKED_COLOR)
 		line.name = "Chain"
 		_detail.add_child(line)
+	if QuestLog.map_note(quest) != "":
+		var note := _line(QuestLog.map_note(quest) + ".", LOCKED_COLOR)
+		note.name = "MapNote"
+		_detail.add_child(note)
 	_detail.add_child(_wrapped(str(quest.get("description", ""))))
 	if state == "completed" and quest.has("success"):
 		_detail.add_child(_wrapped("\"%s\"" % quest.success))

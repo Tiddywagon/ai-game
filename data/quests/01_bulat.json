@@ -1,0 +1,222 @@
+[
+  {
+    "id": "scrap_run",
+    "name": "Scrap Run",
+    "trader": "bulat",
+    "chain": "intro",
+    "description": "My boys need hardware for the checkpoint. Not that shop junk, bring what you find out there.",
+    "success": "Three bolts, two nuts, all counted. It's in the ledger now. So are you.",
+    "objectives": [
+      {"type": "hand_in", "item": "bolts", "count": 3, "fir": true},
+      {"type": "hand_in", "item": "screws", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 25000, "xp": 500, "reputation": 0.05, "items": [{"item": "ammo_545_ps", "count": 60}]}
+  },
+  {
+    "id": "yard_sweep",
+    "name": "Yard Sweep",
+    "trader": "bulat",
+    "chain": "intro",
+    "requires": ["scrap_run"],
+    "description": "The yard is crawling with Scavs again. Thin them out, five of them, and walk back out so I know you can.",
+    "success": "Quieter already. My drivers thank you, in their way.",
+    "objectives": [
+      {"type": "kill", "target": "scav", "map": "test_yard", "count": 5},
+      {"type": "extract", "map": "test_yard", "count": 1}
+    ],
+    "rewards": {"roubles": 30000, "xp": 500, "reputation": 0.03, "items": [{"item": "flashbang_grenade", "count": 2}]}
+  },
+  {
+    "id": "flare_path",
+    "name": "Flare Path",
+    "trader": "bulat",
+    "chain": "intro",
+    "requires": ["yard_sweep"],
+    "description": "My people pick up from a signal point at the back of the Test Yard, but only for those who know how to call them. Bring me a signal flare you found out there and I'll show you the way.",
+    "success": "Red, sealed, still dry. My drivers will know your face at the signal point.",
+    "objectives": [
+      {"type": "hand_in", "item": "signal_flare", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 20000, "xp": 500, "reputation": 0.05, "items": [{"item": "signal_flare", "count": 2}]}
+  },
+  {
+    "id": "bulat_signal_ride",
+    "name": "Last Ride Out",
+    "trader": "bulat",
+    "chain": "intro",
+    "requires": ["flare_path"],
+    "description": "Knowing the signal point and using it are two different things. Go to the yard, fire a flare at the back wall, and ride out with my people. I want to hear the driver complain about you.",
+    "success": "He says you climbed in like a sack of potatoes. Good. Alive potatoes.",
+    "objectives": [
+      {"type": "extract", "count": 1, "map": "test_yard", "extract": "signal_point"}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "signal_flare", "count": 1}, {"item": "ammo_545_ps", "count": 60}]}
+  },
+  {
+    "id": "clean_shot",
+    "name": "Clean Shot",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["yard_sweep"],
+    "level": 5,
+    "description": "Spraying is for conscripts. Three Scavs on the yard, each dropped by a shot to the head. Then we talk.",
+    "success": "Three for three. Keep that hand steady.",
+    "objectives": [
+      {"type": "kill", "target": "scav", "map": "test_yard", "body_part": "head", "count": 3}
+    ],
+    "rewards": {"roubles": 45000, "xp": 700, "reputation": 0.03, "items": [{"item": "ammo_545_bt", "count": 30}]}
+  },
+  {
+    "id": "bulat_armory_count",
+    "name": "Stock Take",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["clean_shot"],
+    "level": 8,
+    "description": "The factory's armory cage used to be my depot. I want to know what's left on its racks. Walk in, count, put down four Scavs who think it's theirs, and walk out the front.",
+    "success": "Four Scavs and an empty rack. I'll write it down as a loss, not a theft.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "armory_cage"},
+      {"type": "kill", "target": "scav", "map": "factory", "count": 4},
+      {"type": "extract", "count": 1, "map": "factory", "extract": "gate_3"}
+    ],
+    "rewards": {"roubles": 47000, "xp": 900, "reputation": 0.02, "items": [{"item": "frag_grenade", "count": 2}, {"item": "ammo_762x39_ps", "count": 60}]}
+  },
+  {
+    "id": "bulat_iron_receipts",
+    "name": "Iron Receipts",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["bulat_armory_count"],
+    "level": 12,
+    "description": "Every round I sell, I can account for. The powder and the cable for my reloading press, I can't. Bring them from the field, sealed. Then we'll talk about a real rifle.",
+    "success": "Receipts in order. The SVD is yours, and it's in the ledger under your name, so don't lose it.",
+    "objectives": [
+      {"type": "hand_in", "item": "gunpowder", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "military_cable", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 63000, "xp": 1100, "reputation": 0.02, "items": [{"item": "svd", "count": 1}]}
+  },
+  {
+    "id": "bulat_toll_road",
+    "name": "Toll Road",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["bulat_iron_receipts"],
+    "level": 15,
+    "description": "My trucks used to cross the customs yard twice a week. Now someone charges a toll. Check the old railway signal bunker, clear five Scavs off the road and leave by the crossroads, the way my trucks will.",
+    "success": "Road's open. Somebody will try to charge again. Somebody always does.",
+    "objectives": [
+      {"type": "visit", "map": "customs_yard", "poi": "signal_bunker"},
+      {"type": "kill", "target": "scav", "map": "customs_yard", "count": 5},
+      {"type": "extract", "count": 1, "map": "customs_yard", "extract": "crossroads"}
+    ],
+    "rewards": {"roubles": 75000, "xp": 1300, "reputation": 0.01, "items": [{"item": "ammo_545_bt", "count": 60}]}
+  },
+  {
+    "id": "bulat_hunting_season",
+    "name": "Hunting Season",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["bulat_toll_road"],
+    "level": 18,
+    "description": "Hunters in the woods have started shooting at men instead of deer. Go to the hunter's lodge, then take three PMCs from forty metres or more, the way hunters do. Come back, or don't bother.",
+    "success": "Three at forty. The lodge can keep its deer.",
+    "objectives": [
+      {"type": "visit", "map": "woodland", "poi": "hunters_lodge"},
+      {"type": "kill", "target": "pmc", "map": "woodland", "min_distance": 40, "survive": true, "count": 3}
+    ],
+    "rewards": {"roubles": 87000, "xp": 1500, "reputation": 0.01, "items": [{"item": "mosin_rifle", "count": 1}, {"item": "ammo_762x54r_lps", "count": 60}]}
+  },
+  {
+    "id": "bulat_coastal_battery",
+    "name": "Coastal Battery",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["bulat_hunting_season"],
+    "level": 22,
+    "description": "There's a bunker on the cliff above the resort with my old crates still in it. Leave two grenades there for my people, hold them in place until the wire's set, and get off that coast.",
+    "success": "Two in the crate, none in you. That's how I like my sums.",
+    "objectives": [
+      {"type": "place", "item": "frag_grenade", "count": 2, "map": "shoreline", "poi": "cliff_bunker", "seconds": 6},
+      {"type": "extract", "count": 1, "map": "shoreline"}
+    ],
+    "rewards": {"roubles": 103000, "xp": 1700, "reputation": 0.01, "items": [{"item": "ammo_556_epr", "count": 60}]}
+  },
+  {
+    "id": "bulat_locked_rack",
+    "name": "Locked Rack",
+    "trader": "bulat",
+    "chain": "mid",
+    "requires": ["bulat_coastal_battery"],
+    "level": 28,
+    "description": "Lab Zero's security armory has racks nobody has counted since the doors sealed. Find it, count it, and come back up the main elevator. I don't send people there twice.",
+    "success": "You came back up. Most don't. I'll count that too.",
+    "objectives": [
+      {"type": "visit", "map": "labs", "poi": "security_armory"},
+      {"type": "kill", "map": "labs", "count": 6},
+      {"type": "extract", "count": 1, "map": "labs", "extract": "main_elevator"}
+    ],
+    "rewards": {"roubles": 127000, "xp": 2100, "reputation": 0.01, "items": [{"item": "ammo_9x19_ap", "count": 60}, {"item": "frag_grenade", "count": 3}]}
+  },
+  {
+    "id": "bulat_old_debts",
+    "name": "Old Debts",
+    "trader": "bulat",
+    "chain": "late",
+    "requires": ["bulat_iron_receipts"],
+    "level": 30,
+    "loyalty": {"bulat": 3},
+    "description": "Some of the PMCs out there owe me for the rifles they took off my trucks. Collect: eight of them. And a gyroscope off a military guidance unit, found out there, to square the books.",
+    "success": "Paid in full. You're the only one in this valley who settles a debt the old way.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "count": 8},
+      {"type": "hand_in", "item": "military_gyroscope", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 140000, "xp": 3300, "reputation": 0.03, "items": [{"item": "ammo_762x54r_snb", "count": 40}]}
+  },
+  {
+    "id": "safekeeping",
+    "name": "Safekeeping",
+    "trader": "bulat",
+    "chain": "late",
+    "requires": ["bulat_old_debts"],
+    "level": 30,
+    "description": "You keep losing things out there. Bring me proof you can hold on to what matters, and I'll give you something that never leaves your side.",
+    "success": "You held on to all of it. Here: this one never leaves your side, whatever happens out there.",
+    "objectives": [
+      {"type": "hand_in", "item": "intel_folder", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "military_hdd", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "gold_chain", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 60000, "xp": 3300, "reputation": 0.1, "items": [{"item": "secure_gamma", "count": 1}]}
+  },
+  {
+    "id": "bulat_full_ledger",
+    "name": "The Full Ledger",
+    "trader": "bulat",
+    "chain": "late",
+    "requires": ["safekeeping"],
+    "level": 35,
+    "loyalty": {"bulat": 4},
+    "description": "My ledger has one page left. I want it filled with something that lasts: two gold bars you found yourself, and a quarter of a million for the depot. In return, the rounds I keep for nobody.",
+    "success": "The last page. You're on it. Use these well, I won't be making more.",
+    "objectives": [
+      {"type": "hand_in", "item": "gold_bar", "count": 2, "fir": true},
+      {"type": "roubles", "count": 250000}
+    ],
+    "rewards": {"roubles": 180000, "xp": 3800, "reputation": 0.03, "items": [{"item": "ammo_545_ppbs", "count": 60}, {"item": "ammo_762x39_mai", "count": 60}]}
+  },
+  {
+    "id": "showboat",
+    "name": "Showboat",
+    "trader": "bulat",
+    "chain": "trick",
+    "description": "Word is you spin around like a circus act before you shoot. Fine. Drop someone with a 360 and I'll stop laughing. Any target, any rifle that can do it.",
+    "success": "Spun like a top and still hit him. I'm not laughing. I'm not clapping either.",
+    "objectives": [
+      {"type": "trick_kill", "count": 1}
+    ],
+    "rewards": {"roubles": 40000, "xp": 500, "reputation": 0.05, "drip": 25, "items": [{"item": "ammo_762x54r_lps", "count": 40}]}
+  }
+]

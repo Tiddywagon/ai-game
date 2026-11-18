@@ -124,9 +124,9 @@ func _quests() -> void:
 	filter.item_selected.emit(0)
 	(_find(screen, "AvailableTab") as Button).pressed.emit()
 	await frames(2)
-	var safekeeping := _find(screen, "Quest_safekeeping") as Button
-	if safekeeping:
-		safekeeping.pressed.emit()
+	var yard_sweep := _find(screen, "Quest_yard_sweep") as Button
+	if yard_sweep:
+		yard_sweep.pressed.emit()
 		await frames(2)
 	var chain := _find(screen, "Chain") as Label
 	check(chain != null and "after Scrap Run ✗" in chain.text, "a locked quest shows its chain (%s)" % (chain.text if chain else "none"))

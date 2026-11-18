@@ -1,0 +1,198 @@
+[
+  {
+    "id": "textile",
+    "name": "Textile",
+    "trader": "stitch",
+    "chain": "intro",
+    "description": "Tape and toilet paper. Don't laugh: the workshop runs on them. Any will do.",
+    "success": "Tape and paper. Thank you. Don't tell anyone what holds a plate carrier together.",
+    "objectives": [
+      {"type": "hand_in", "item": "duct_tape", "count": 2, "fir": false},
+      {"type": "hand_in", "item": "toilet_paper", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 15000, "xp": 500, "reputation": 0.05, "items": [{"item": "sling_bag", "count": 1}]}
+  },
+  {
+    "id": "stitch_measurements",
+    "name": "Measurements",
+    "trader": "stitch",
+    "chain": "intro",
+    "requires": ["textile"],
+    "description": "I can't fit a man I haven't seen move. Go to the factory locker rooms, where the workers changed, and get out again. I'll watch how you come back through the door.",
+    "success": "You favour the left shoulder. I'll set the straps for it.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "locker_rooms"},
+      {"type": "extract", "count": 1, "map": "factory"}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "tactical_rig", "count": 1}]}
+  },
+  {
+    "id": "stitch_one_lamp",
+    "name": "One Lamp",
+    "trader": "stitch",
+    "chain": "intro",
+    "requires": ["stitch_measurements"],
+    "description": "I work by one lamp and one sink. You'll want both. Build a lavatory in your hideout and run two rolls of tape through it. Slowly. Tape is a craft too.",
+    "success": "Even edges. You were patient. That's most of it.",
+    "objectives": [
+      {"type": "upgrade", "station": "lavatory", "level": 1},
+      {"type": "craft", "count": 2, "recipe": "duct_tape"}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "paracord", "count": 2}, {"item": "ripstop_fabric", "count": 2}]}
+  },
+  {
+    "id": "patchwork",
+    "name": "Patchwork",
+    "trader": "stitch",
+    "chain": "intro",
+    "requires": ["stitch_one_lamp"],
+    "description": "A carrier is only as good as its seams. Sewing kits and paracord you found yourself; shop thread frays. Ripstop from anywhere.",
+    "success": "Good thread, good cord. The seams on this one will outlive us both.",
+    "objectives": [
+      {"type": "hand_in", "item": "sewing_kit", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "paracord", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "ripstop_fabric", "count": 2, "fir": false}
+    ],
+    "rewards": {"roubles": 45000, "xp": 500, "reputation": 0.08, "items": [{"item": "rig_patrol", "count": 1}]}
+  },
+  {
+    "id": "night_shift",
+    "name": "Night Shift",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["patchwork"],
+    "description": "Run your lavatory for me: two batches of anything from it. And grow up a little first, I don't trade with rookies.",
+    "success": "Smells like work. Good.",
+    "objectives": [
+      {"type": "craft", "station": "lavatory", "count": 2},
+      {"type": "level", "level": 8}
+    ],
+    "rewards": {"roubles": 35000, "xp": 500, "reputation": 0.03, "items": [{"item": "duct_tape", "count": 2}]}
+  },
+  {
+    "id": "stitch_bad_seams",
+    "name": "Bad Seams",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["night_shift"],
+    "level": 12,
+    "description": "I want to see how other people's armor fails. Three Scavs on the factory floor, hit in the chest, then bring me a PACA you took off someone out there. I'll read the holes.",
+    "success": "Stitched by a machine, cut by a bullet. I'll do better.",
+    "objectives": [
+      {"type": "kill", "target": "scav", "map": "factory", "body_part": "thorax", "count": 3},
+      {"type": "hand_in", "item": "paca_armor", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 63000, "xp": 1100, "reputation": 0.02, "items": [{"item": "aramid_fabric", "count": 2}]}
+  },
+  {
+    "id": "hard_plates",
+    "name": "Hard Plates",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["stitch_bad_seams"],
+    "level": 15,
+    "description": "Aramid and ceramic are the bones of real armor, and resin holds them together. Bring them found in raid. I'll know if they're not.",
+    "success": "Bones and resin. I'll have a carrier for you before the glue sets.",
+    "objectives": [
+      {"type": "hand_in", "item": "aramid_fabric", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "epoxy_resin", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "ceramic_shards", "count": 1, "fir": true}
+    ],
+    "rewards": {"roubles": 120000, "xp": 1300, "reputation": 0.12, "items": [{"item": "armor_korund", "count": 1}]}
+  },
+  {
+    "id": "stitch_rebar",
+    "name": "Rebar and Canvas",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["stitch_bad_seams"],
+    "level": 16,
+    "description": "Builders left rolls of ripstop at the customs construction site, under the rebar. Walk the site and carry three rolls out yourself. No cuts, no burns.",
+    "success": "Clean rolls. I'll line a pack with these.",
+    "objectives": [
+      {"type": "visit", "map": "customs_yard", "poi": "construction_site"},
+      {"type": "extract_with", "item": "ripstop_fabric", "count": 3, "fir": true, "map": "customs_yard"}
+    ],
+    "rewards": {"roubles": 79000, "xp": 1400, "reputation": 0.01, "items": [{"item": "rig_6b5", "count": 1}]}
+  },
+  {
+    "id": "stitch_surplus",
+    "name": "Army Surplus",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["stitch_rebar"],
+    "level": 19,
+    "description": "The old army checkpoint in the woods kept spare kit for a whole platoon. See what's still on the shelves, and three PMCs who came for the same thing won't need theirs.",
+    "success": "Surplus is surplus. They won't miss it.",
+    "objectives": [
+      {"type": "visit", "map": "woodland", "poi": "army_checkpoint"},
+      {"type": "kill", "target": "pmc", "map": "woodland", "count": 3},
+      {"type": "extract", "count": 1, "map": "woodland"}
+    ],
+    "rewards": {"roubles": 91000, "xp": 1500, "reputation": 0.01, "items": [{"item": "rig_triton", "count": 1}]}
+  },
+  {
+    "id": "stitch_linen",
+    "name": "Resort Linen",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["stitch_surplus"],
+    "level": 22,
+    "description": "The resort's west wing had a laundry with aramid sheeting in the supply room. Don't ask why. Go through the west wing and carry two pieces out, found there.",
+    "success": "Hotel aramid. I won't ask either.",
+    "objectives": [
+      {"type": "visit", "map": "shoreline", "poi": "resort_west"},
+      {"type": "extract_with", "item": "aramid_fabric", "count": 2, "fir": true, "map": "shoreline"}
+    ],
+    "rewards": {"roubles": 103000, "xp": 1700, "reputation": 0.01, "items": [{"item": "armor_mmac", "count": 1}]}
+  },
+  {
+    "id": "stitch_lab_coats",
+    "name": "Lab Coats",
+    "trader": "stitch",
+    "chain": "mid",
+    "requires": ["stitch_linen"],
+    "level": 28,
+    "description": "The custodians in Lab Zero wear a weave I've never seen. Take three of them down so I can study the cloth, and come back up with all your own seams intact.",
+    "success": "A tight weave. Too tight. Whoever made it never had to move in it.",
+    "objectives": [
+      {"type": "kill", "target": "guard", "map": "labs", "survive": true, "count": 3},
+      {"type": "extract", "count": 1, "map": "labs"}
+    ],
+    "rewards": {"roubles": 127000, "xp": 2100, "reputation": 0.01, "items": [{"item": "gzhel_armor", "count": 1}]}
+  },
+  {
+    "id": "stitch_heavy_set",
+    "name": "Heavy Set",
+    "trader": "stitch",
+    "chain": "late",
+    "requires": ["hard_plates"],
+    "level": 30,
+    "loyalty": {"stitch": 3},
+    "description": "For the heavy set I need a sink that runs hot, two sewing kits off it, and two lots of ceramic shards found in the field. It will take time. It always does.",
+    "success": "Heavy and true. Wear it with the straps the way I set them.",
+    "objectives": [
+      {"type": "upgrade", "station": "lavatory", "level": 3},
+      {"type": "craft", "count": 2, "recipe": "sewing_kit"},
+      {"type": "hand_in", "item": "ceramic_shards", "count": 2, "fir": true}
+    ],
+    "rewards": {"roubles": 120000, "xp": 3300, "reputation": 0.03, "items": [{"item": "armor_zabralo", "count": 1}]}
+  },
+  {
+    "id": "stitch_masterwork",
+    "name": "Masterwork",
+    "trader": "stitch",
+    "chain": "late",
+    "requires": ["stitch_heavy_set"],
+    "level": 35,
+    "loyalty": {"stitch": 4},
+    "description": "One rig in my life I want to make without cutting a corner. Ceramic, resin and aramid, all found out there, more than you think. I'll measure twice. I'll measure ten times.",
+    "success": "Finished. I unpicked it twice. It's the best thing I've made.",
+    "objectives": [
+      {"type": "hand_in", "item": "ceramic_shards", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "epoxy_resin", "count": 3, "fir": true},
+      {"type": "hand_in", "item": "aramid_fabric", "count": 4, "fir": true}
+    ],
+    "rewards": {"roubles": 150000, "xp": 3800, "reputation": 0.03, "items": [{"item": "armor_atlas", "count": 1}]}
+  }
+]

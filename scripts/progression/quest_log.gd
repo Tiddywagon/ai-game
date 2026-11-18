@@ -6,9 +6,10 @@ extends RefCounted
 ## to the stash and are never found in raid.
 ##
 ## A quest is {"id", "name", "trader" (who gives it), "description" (the briefing), "success" (the
-## trader's line when you turn it in; optional), "requires": [quest ids, every one completed], "level":
-## the player level it needs, "loyalty": {trader id: loyalty level} it needs, "faction": "bear" / "usec"
-## (leave out for both: only that faction sees the quest, visible()), "gives": [{"item", "count"}] (quest
+## trader's line when you turn it in; optional), "chain" (the kind of line it belongs to, CHAINS;
+## optional), "requires": [quest ids, every one completed], "level": the player level it needs,
+## "loyalty": {trader id: loyalty level} it needs, "faction": "bear" / "usec" (leave out for both:
+## only that faction sees the quest, visible()), "gives": [{"item", "count"}] (quest
 ## items put in the stash when you accept: a marker to place; one lost can be taken again for free,
 ## retake_marker()), "objectives": [...], "rewards": {"roubles", "dollars", "xp", "reputation" (with the
 ## giver), "reputation_with": {trader id: amount} (others), "drip", "items": [{"item", "count"}]}}.
@@ -83,8 +84,11 @@ const SURVIVE_TYPES: Array[String] = ["kill", "trick_kill", "visit", "place", "m
 ## Objectives that name an item you need to bring (the needed-for icon, ItemUses).
 const ITEM_TYPES: Array[String] = ["hand_in", "place", "extract_with"]
 const QUEST_FIELDS := ["id", "name", "trader", "description", "objectives", "rewards"]
-const QUEST_KEYS := ["id", "name", "trader", "description", "success", "requires", "level", "loyalty", "faction", "gives",
+const QUEST_KEYS := ["id", "name", "trader", "description", "success", "chain", "requires", "level", "loyalty", "faction", "gives",
 	"objectives", "rewards"]
+## The kinds of quest line ("chain", optional): the name DESIGN.md §11's table gives each.
+const CHAINS := {"intro": "Intro", "mid": "Mid-game", "faction": "Faction", "boss": "Boss hunt", "late": "Late game",
+	"collector": "Collector", "trick": "Trick shots"}
 const REWARD_KEYS := ["roubles", "dollars", "xp", "reputation", "reputation_with", "drip", "items"]
 ## Up to this many quests are tracked on the HUD (track()).
 const MAX_TRACKED := 3
@@ -159,6 +163,44 @@ static func visible(quest: Dictionary, faction: StringName = &"none") -> bool:
 ## unlocks, the items still needed). `faction` as in visible().
 static func shown(faction: StringName = &"none") -> Array[Dictionary]:
 	return all().filter(func(quest: Dictionary) -> bool: return visible(quest, faction))
+
+
+## The maps `quest`'s objectives are on, each once in objective order: an objective's "map", a boss
+## kill's map, and the map of the boss whose unique item a hand-in or extract_with asks for.
+static func maps_of(quest: Dictionary) -> Array[String]:
+	var found: Array[String] = []
+	for entry: Variant in quest.get("objectives", []):
+		if not entry is Dictionary:
+			continue
+		var map_id := str(entry.get("map", ""))
+		if map_id == "" and entry.has("boss"):
+			map_id = str(_boss_entry(str(entry.boss)).get("map", ""))
+		if map_id == "" and str(entry.get("type", "hand_in")) in ["hand_in", "extract_with"]:
+			for boss_map: String in BossTable.maps():
+				if str(BossTable.maps()[boss_map].get("unique", "")) == str(entry.get("item", "")):
+					map_id = boss_map
+		if map_id != "" and not map_id in found:
+			found.append(map_id)
+	return found
+
+
+## The maps `quest` needs that have no playable scene yet (MapInfo.is_playable()).
+static func closed_maps(quest: Dictionary) -> Array[String]:
+	var found: Array[String] = []
+	for map_id in maps_of(quest):
+		var map := MapInfo.find(map_id)
+		if map != null and not map.is_playable():
+			found.append(map_id)
+	return found
+
+
+## "Map not open yet: Customs Yard" for a quest on a map that can't be played yet (the quest log and
+## the TASKS tab show it), else "".
+static func map_note(quest: Dictionary) -> String:
+	var names: Array[String] = []
+	for map_id in closed_maps(quest):
+		names.append(MapInfo.find(map_id).display_name)
+	return "Map not open yet: %s" % ", ".join(names) if not names.is_empty() else ""
 
 
 # --- States ----------------------------------------------------------------------------------------
@@ -714,8 +756,10 @@ static func set_tracked(quest: Dictionary, on: bool) -> String:
 ## trader, item, map, boss, location, station, craft, extract or faction that doesn't exist, objectives
 ## of an unknown type or without what they need, rewards and quest items that aren't items, and the
 ## chain: a required quest must exist, come earlier in the files (so the chain has no loops) and be for
-## the same faction or everyone (a quest for everyone never waits for a faction's). Then the quest
-## spots and every unlock that names a quest (barters, buy offers, crafts, extracts, cards, traders).
+## the same faction or everyone (a quest for everyone never waits for a faction's), and nothing on open
+## maps waits for a quest on a map that can't be played yet (_closed_map_problems()); a chain kind is
+## one of CHAINS. Then the quest spots and every unlock that names a quest (barters, buy offers,
+## crafts, extracts, cards, traders).
 static func problems() -> Array[String]:
 	var found: Array[String] = []
 	var seen := {}
@@ -730,6 +774,8 @@ static func problems() -> Array[String]:
 				found.append("%s: unknown key \"%s\"" % [where, key])
 		if seen.has(id):
 			found.append("%s: the id is used twice" % where)
+		if quest.has("chain") and not CHAINS.has(str(quest.chain)):
+			found.append("%s: chain %s isn't one of %s" % [where, quest.chain, ", ".join(CHAINS.keys())])
 		if not TraderTable.has(str(quest.get("trader", ""))):
 			found.append("%s: trader %s doesn't exist" % [where, quest.get("trader", "")])
 		var faction := faction_of(quest)
@@ -759,7 +805,25 @@ static func problems() -> Array[String]:
 				found.append_array(_objective_problems(where, quest, i))
 		found.append_array(_reward_problems(where, quest.get("rewards", {})))
 		seen[id] = quest
+	found.append_array(_closed_map_problems())
 	found.append_array(_spot_problems())
+	return found
+
+
+## Nothing that can be done today waits for a map that can't be played yet: a quest on open maps (or on
+## none) never requires, however far back its chain goes, a quest on a map without a scene.
+static func _closed_map_problems() -> Array[String]:
+	var found: Array[String] = []
+	var waits := {}  # Quest id -> true when it or a quest before it needs a closed map.
+	for quest in all():
+		var closed := not closed_maps(quest).is_empty()
+		var before := ""
+		for each: Variant in quest.get("requires", []):
+			if waits.get(str(each), false) and before == "":
+				before = str(each)
+		if before != "" and not closed:
+			found.append("quest %s: requires %s, which waits for a map that isn't open yet" % [quest.get("id", ""), before])
+		waits[str(quest.get("id", ""))] = closed or before != ""
 	return found
 
 

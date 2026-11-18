@@ -1,0 +1,87 @@
+[
+  {
+    "id": "mole_no_questions",
+    "name": "No Questions",
+    "trader": "mole",
+    "chain": "intro",
+    "description": "You want to deal with me, you learn how I deal. Bring two light bulbs and a bottle of bleach. Found, bought, borrowed, I don't care. I never ask where.",
+    "success": "See? No questions. That's the whole service.",
+    "objectives": [
+      {"type": "hand_in", "item": "light_bulb", "count": 2, "fir": false},
+      {"type": "hand_in", "item": "bleach", "count": 1, "fir": false}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "rig_belt", "count": 1}, {"item": "bandage", "count": 2}]}
+  },
+  {
+    "id": "mole_under_the_floor",
+    "name": "Under the Floor",
+    "trader": "mole",
+    "chain": "intro",
+    "requires": ["mole_no_questions"],
+    "description": "There's a stash under the floorboards on the Test Yard. Somebody's, once. Find it, take a look and walk back out. Then you'll know where people hide things. Useful.",
+    "success": "Empty or full, doesn't matter. Now you know where to look.",
+    "objectives": [
+      {"type": "visit", "map": "test_yard", "poi": "floor_stash"},
+      {"type": "extract", "count": 1, "map": "test_yard"}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "cellar_key", "count": 1}]}
+  },
+  {
+    "id": "mole_pest_control",
+    "name": "Pest Control",
+    "trader": "mole",
+    "chain": "intro",
+    "requires": ["mole_under_the_floor"],
+    "description": "PMCs on the yard have been shooting my Scavs for sport. My Scavs. Two of those PMCs, and you walk out after, or it doesn't count.",
+    "success": "The Scavs say thank you. They won't say it to your face. Don't take it personally.",
+    "objectives": [
+      {"type": "kill", "target": "pmc", "map": "test_yard", "survive": true, "count": 2}
+    ],
+    "rewards": {"roubles": 19000, "xp": 500, "reputation": 0.02, "items": [{"item": "ai2_medkit", "count": 2}, {"item": "water_bottle", "count": 1}]}
+  },
+  {
+    "id": "mole_foremans_stash",
+    "name": "Foreman's Stash",
+    "trader": "mole",
+    "chain": "mid",
+    "requires": ["mole_pest_control"],
+    "level": 10,
+    "description": "The factory foreman stuffed banknotes under the floor of his hut for years. Find his stash and carry three bundles out. I'll take my cut. You'll take yours. Nobody tells the foreman.",
+    "success": "Three bundles. Smells like machine oil. Money always does, round here.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "foremans_stash"},
+      {"type": "extract_with", "item": "banknotes", "count": 3, "fir": true, "map": "factory"}
+    ],
+    "rewards": {"roubles": 55000, "xp": 1000, "reputation": 0.02, "items": [{"item": "factory_exit_key", "count": 1}]}
+  },
+  {
+    "id": "mole_neighbours",
+    "name": "Neighbours",
+    "trader": "mole",
+    "chain": "mid",
+    "requires": ["mole_foremans_stash"],
+    "level": 15,
+    "description": "The Scav camp in the woods are cousins of mine, more or less. Take them a bottle of vodka, leave it by the fire, and leave. Don't shoot anyone on the way out who doesn't shoot first.",
+    "success": "They drank it already. They'll remember you. That's good, mostly.",
+    "objectives": [
+      {"type": "place", "item": "vodka", "count": 1, "map": "woodland", "poi": "scav_camp", "seconds": 5},
+      {"type": "extract", "count": 1, "map": "woodland"}
+    ],
+    "rewards": {"roubles": 75000, "xp": 1300, "reputation": 0.01, "items": [{"item": "canned_beef", "count": 2}]}
+  },
+  {
+    "id": "mole_crawlspace",
+    "name": "Crawlspace",
+    "trader": "mole",
+    "chain": "mid",
+    "requires": ["mole_neighbours"],
+    "level": 18,
+    "description": "Smugglers on the customs yard used a crawlspace under the old office. They left in a hurry. Get under there and bring out a band of dollars, found there. The Broker pays me in those.",
+    "success": "Real dollars. Not the printed ones. I'm almost impressed.",
+    "objectives": [
+      {"type": "visit", "map": "customs_yard", "poi": "smugglers_crawlspace"},
+      {"type": "extract_with", "item": "dollar_bundle", "count": 1, "fir": true, "map": "customs_yard"}
+    ],
+    "rewards": {"roubles": 87000, "xp": 1500, "reputation": 0.01, "items": [{"item": "dorm_key", "count": 1}]}
+  }
+]

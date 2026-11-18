@@ -1,0 +1,137 @@
+[
+  {
+    "id": "due_diligence",
+    "name": "Due Diligence",
+    "trader": "broker",
+    "chain": "intro",
+    "requires": ["zoya_introduction"],
+    "description": "Before we discuss terms, I need to know you can find what others can't. An encrypted military drive and a secure flash drive, recovered in the field. Copies won't do.",
+    "success": "Genuine, both of them. You'll find I'm generous with people who don't waste my time.",
+    "objectives": [
+      {"type": "hand_in", "item": "military_hdd", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "flash_drive", "count": 1, "fir": true}
+    ],
+    "rewards": {"dollars": 600, "xp": 1000, "reputation": 0.1}
+  },
+  {
+    "id": "broker_discretion",
+    "name": "Discretion",
+    "trader": "broker",
+    "chain": "intro",
+    "requires": ["due_diligence"],
+    "description": "My clients value discretion. Go through the factory offices, remove two PMCs who were asking questions about me, and leave without being seen leaving. Quietly, if you can manage it.",
+    "success": "Two fewer questions. Discretion is a habit. Keep it.",
+    "objectives": [
+      {"type": "visit", "map": "factory", "poi": "offices"},
+      {"type": "kill", "target": "pmc", "map": "factory", "survive": true, "count": 2},
+      {"type": "extract", "count": 1, "map": "factory"}
+    ],
+    "rewards": {"dollars": 250, "xp": 1000, "reputation": 0.02, "items": [{"item": "ammo_9x19_ap", "count": 50}]}
+  },
+  {
+    "id": "broker_samples",
+    "name": "Samples",
+    "trader": "broker",
+    "chain": "intro",
+    "requires": ["broker_discretion"],
+    "description": "A buyer of mine wants to see the quality of what comes out of this valley. Two bands of dollars and a vintage camera, recovered in the field. Samples, you understand. Not a sale.",
+    "success": "Excellent samples. The buyer is pleased, which means I am pleased.",
+    "objectives": [
+      {"type": "hand_in", "item": "dollar_bundle", "count": 2, "fir": true},
+      {"type": "hand_in", "item": "vintage_camera", "count": 1, "fir": true}
+    ],
+    "rewards": {"dollars": 450, "xp": 1000, "reputation": 0.02, "items": [{"item": "fast_helmet", "count": 1}]}
+  },
+  {
+    "id": "fine_print",
+    "name": "Fine Print",
+    "trader": "broker",
+    "chain": "mid",
+    "requires": ["broker_samples"],
+    "level": 20,
+    "description": "A client of mine collects military electronics and pays well above market. A thermal imaging module and an encrypted satellite phone, untouched, found out there. Read the fine print: found, not bought.",
+    "success": "Untouched, as promised. The fine print is satisfied, and so is my client.",
+    "objectives": [
+      {"type": "hand_in", "item": "thermal_module", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "sat_phone", "count": 1, "fir": true}
+    ],
+    "rewards": {"dollars": 1500, "xp": 1600, "reputation": 0.15}
+  },
+  {
+    "id": "broker_marked_room",
+    "name": "The Marked Room",
+    "trader": "broker",
+    "chain": "mid",
+    "requires": ["fine_print"],
+    "level": 22,
+    "description": "There is a room in the customs dorms with a mark on its door. A client left something in it and wants to know it's still there. Look, don't take, and leave by the crossroads.",
+    "success": "Still there. My client sleeps better, and pays better when he sleeps.",
+    "objectives": [
+      {"type": "visit", "map": "customs_yard", "poi": "marked_room"},
+      {"type": "extract", "count": 1, "map": "customs_yard", "extract": "crossroads"}
+    ],
+    "rewards": {"dollars": 350, "xp": 1700, "reputation": 0.01}
+  },
+  {
+    "id": "broker_admin_office",
+    "name": "Admin Office",
+    "trader": "broker",
+    "chain": "mid",
+    "requires": ["broker_marked_room"],
+    "level": 25,
+    "description": "The resort's administrator kept an intelligence folder in his office safe, I'm told. Retrieve it and carry it out yourself. The folder stays with you. The information is for me.",
+    "success": "Thank you. Keep the folder. What was in it is already in my head.",
+    "objectives": [
+      {"type": "visit", "map": "shoreline", "poi": "resort_admin"},
+      {"type": "extract_with", "item": "intel_folder", "count": 1, "fir": true, "map": "shoreline"}
+    ],
+    "rewards": {"dollars": 450, "xp": 1900, "reputation": 0.01}
+  },
+  {
+    "id": "broker_board_meeting",
+    "name": "Board Meeting",
+    "trader": "broker",
+    "chain": "mid",
+    "requires": ["broker_admin_office"],
+    "level": 30,
+    "description": "The board of Lab Zero never adjourned its last meeting. Attend it: the manager's office, then the server hall, and leave by the parking gate as a board member would.",
+    "success": "Minutes taken. A fascinating meeting, I'm sure, for those who survived it.",
+    "objectives": [
+      {"type": "visit", "map": "labs", "poi": "managers_office"},
+      {"type": "visit", "map": "labs", "poi": "server_hall"},
+      {"type": "extract", "count": 1, "map": "labs", "extract": "parking_gate"}
+    ],
+    "rewards": {"dollars": 600, "xp": 2200, "reputation": 0.01}
+  },
+  {
+    "id": "broker_portfolio",
+    "name": "Portfolio",
+    "trader": "broker",
+    "chain": "late",
+    "requires": ["fine_print"],
+    "level": 30,
+    "loyalty": {"broker": 3},
+    "description": "I am rebalancing a client's portfolio away from paper. Two physical bitcoins, recovered in the field. In return, something heavy from my own crates.",
+    "success": "The portfolio thanks you. So does the client, in dollars.",
+    "objectives": [
+      {"type": "hand_in", "item": "bitcoin", "count": 2, "fir": true}
+    ],
+    "rewards": {"dollars": 1500, "xp": 3300, "reputation": 0.03, "items": [{"item": "bulwark_249", "count": 1}]}
+  },
+  {
+    "id": "broker_final_offer",
+    "name": "Final Offer",
+    "trader": "broker",
+    "chain": "late",
+    "requires": ["broker_portfolio"],
+    "level": 40,
+    "loyalty": {"broker": 4},
+    "description": "My final offer to a very old client: an encrypted field transmitter and a diamond necklace, both found out there. In exchange, the best kit I have ever had in this suite. Everything has a price.",
+    "success": "A pleasure doing business. I mean that, which is rare.",
+    "objectives": [
+      {"type": "hand_in", "item": "field_transmitter", "count": 1, "fir": true},
+      {"type": "hand_in", "item": "diamond_necklace", "count": 1, "fir": true}
+    ],
+    "rewards": {"dollars": 2500, "xp": 4200, "reputation": 0.03, "items": [{"item": "pack_blackjack", "count": 1}, {"item": "rig_tsr", "count": 1}]}
+  }
+]
