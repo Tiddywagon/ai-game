@@ -10,7 +10,8 @@ extends Node
 ## show a countdown under the profile and arrive in the stash when due, whatever screen is open (the
 ## stash views redraw; a notice over the screen says what came back). Under it, while the Scav run
 ## cooldown runs, "Scav ready in 12:30" (ScavRuns), and under that what waits on the flea market ("Flea
-## market: 2 sold (₽ 84,000): collect on the FLEA MARKET").
+## market: 2 sold (₽ 84,000): collect on the FLEA MARKET"), and the daily tasks ("Operations: 2 / 3
+## dailies  ·  resets in 5:12:03"; Operations: a reset while the menu is open rolls the new sets and saves).
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")
 const LOADOUT_SCENE := preload("res://ui/loadout_screen.tscn")
@@ -31,6 +32,8 @@ var _insurance_timer: Timer
 var _scav_label: Label
 ## What waits to be collected on the flea market ("" for nothing), with the same timer.
 var _flea_label: Label
+## The daily tasks' line ("Operations: 2 / 3 dailies  ·  resets in 5:12:03"), with the same timer.
+var _ops_label: Label
 var _arrival_text := ""
 var _arrival_left := 0.0
 ## The same arrival line over an open screen, top centre.
@@ -80,6 +83,11 @@ func _ready() -> void:
 	_flea_label.theme_type_variation = &"DimLabel"
 	_flea_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_scav_label.add_sibling(_flea_label)
+	_ops_label = Label.new()
+	_ops_label.name = "OperationsLabel"
+	_ops_label.theme_type_variation = &"DimLabel"
+	_ops_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_flea_label.add_sibling(_ops_label)
 	_notice = PanelContainer.new()
 	_notice.name = "InsuranceNotice"
 	_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -160,8 +168,13 @@ func _check_insurance(delta: float) -> void:
 	if listed > 0 and not FleaMarket.update().is_empty():
 		SaveManager.save_game()  # A listing sold or came back while you were away or in the menu.
 	_flea_label.text = FleaMarket.notice_text() if listed > 0 else ""
+	if GameState.faction != GameState.Faction.NONE and GameState.raid.is_empty() and not Operations.is_current():
+		Operations.update()  # The day or week turned over while the menu was open.
+		SaveManager.save_game()
+	_ops_label.text = Operations.menu_text() if GameState.faction != GameState.Faction.NONE else ""
 	if GameState.faction == GameState.Faction.NONE:
 		_insurance_label.text = ""
+		_fit_labels()
 		return
 	if not GameState.insurance_pending.is_empty():
 		var arrived := Insurance.deliver_due()
@@ -183,6 +196,13 @@ func _check_insurance(delta: float) -> void:
 		_insurance_label.text = "%d item%s from your old save waiting for room in the stash" % [count, "" if count == 1 else "s"]
 	else:
 		_insurance_label.text = ""
+	_fit_labels()
+
+
+## The lines under the profile take room only when they say something, so the next one moves up.
+func _fit_labels() -> void:
+	for label: Label in [_insurance_label, _scav_label, _flea_label, _ops_label]:
+		label.visible = label.text != ""
 
 
 func _open(scene: PackedScene, from: Control) -> void:

@@ -55,6 +55,7 @@ func run() -> void:
 	await _shelf()
 	await _traders()
 	await _quests()
+	await _operations()
 	await _flea()
 	await _raid_setup()
 	await _settings()
@@ -155,6 +156,58 @@ func _quests() -> void:
 	gs.quests["scrap_run"] = {"state": "completed", "progress": [3, 2]}  # For the raid's tracker: a quest with raid objectives.
 	quests.accept(quests.find("yard_sweep"))
 	quests.set_tracked(quests.find("yard_sweep"), true)
+
+
+## OPERATIONS (DESIGN.md §11): the main menu's line, the tab in the quest log with the dailies and
+## weeklies under their resets, a task claimed and a daily re-rolled through the buttons.
+func _operations() -> void:
+	section("OPERATIONS")
+	var ops: GDScript = load("res://scripts/progression/operations.gd")
+	var quests: GDScript = load("res://scripts/progression/quest_log.gd")
+	var line := _find(menu, "OperationsLabel") as Label
+	await wait(1.1)
+	check(line != null and line.text.begins_with("Operations: 0 / 3 dailies  ·  resets in "), "the main menu line: %s" % (line.text if line else "none"))
+	var screen := await _open("QuestsButton")
+	(_find(screen, "OperationsTab") as Button).pressed.emit()
+	await frames(2)
+	check(screen.tab == 3 and _find(screen, "DailyHeader") != null and _find(screen, "WeeklyHeader") != null and (_find(screen, "DailyHeader") as Label).text.begins_with("DAILIES   ·   resets in "),
+		"OPERATIONS lists the dailies and the weeklies under their resets (%s)" % ((_find(screen, "DailyHeader") as Label).text if _find(screen, "DailyHeader") else "none"))
+	check(not (_find(screen, "TraderFilter") as Control).visible, "with no trader filter")
+	var first: Dictionary = ops.tasks("daily")[0]
+	first.progress = [quests.objective_count(first, 0)]
+	var row := _find(screen, "Quest_" + str(first.id)) as Button
+	var listed := row != null  # The list is drawn again once it's pressed.
+	if row:
+		row.pressed.emit()
+		await frames(2)
+	var title := (_find(screen, "QuestTitle") as Label).text
+	var rewards := (_find(screen, "Rewards") as Label).text if _find(screen, "Rewards") else "none"
+	check(listed and title == str(first.name).to_upper() and rewards.contains("15% chance of a rare item"),
+		"picking a daily shows it, its rewards and the rare item's chance (%s; %s)" % [title, rewards])
+	var money: int = gs.roubles
+	var claim := _find(screen, "ClaimButton") as Button
+	check(claim != null and not claim.disabled, "a finished daily has CLAIM")
+	if claim:
+		claim.pressed.emit()
+		await frames(2)
+	check(ops.state(first) == "completed" and gs.roubles == money + int(first.rewards.roubles) and (_find(screen, "Status") as Label).text.begins_with("Claimed: "),
+		"CLAIM pays it (%s)" % (_find(screen, "Status") as Label).text)
+	var second: Dictionary = ops.tasks("daily")[1]
+	(_find(screen, "Quest_" + str(second.id)) as Button).pressed.emit()
+	await frames(2)
+	var reroll := _find(screen, "RerollButton") as Button
+	check(reroll != null and reroll.text == "RE-ROLL  ·  %s" % load("res://scripts/ui/ui_format.gd").money(ops.reroll_fee(second)), "an open daily has RE-ROLL with its fee (%s)" % (reroll.text if reroll else "none"))
+	if reroll:
+		reroll.pressed.emit()
+		await frames(2)
+	var fresh: Dictionary = ops.tasks("daily")[1]
+	check(fresh != second and screen.selected == str(fresh.id) and (_find(screen, "RerollButton") as Button).disabled, "RE-ROLL swaps it and picks the new one, which can't be re-rolled again")
+	(_find(screen, "Quest_" + str(ops.tasks("weekly")[0].id)) as Button).pressed.emit()
+	await frames(2)
+	check(_find(screen, "RerollButton") == null and (_find(screen, "TaskState") as Label).text.begins_with("WEEKLY TASK"), "a weekly has no re-roll")
+	await _close(screen, "BackButton", "QUESTS")
+	await wait(1.1)
+	check(line.text.begins_with("Operations: 1 / 3 dailies"), "the line counts the claimed one: %s" % line.text)
 
 
 ## The inventory and stash as text, the stash in cell order.

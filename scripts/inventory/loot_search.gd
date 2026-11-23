@@ -3,9 +3,11 @@ extends RefCounted
 ## Searching a container or a body (DESIGN.md §7): what's inside starts hidden and is revealed one
 ## item at a time, in reading order (top row first), while it's open beside your inventory. Each item
 ## takes RaidConfig.search_base_seconds plus search_seconds_per_cell per cell it covers, so small items
-## turn up faster, times the container's search time, less the Collectors Shelf's search speed bonus
-## (Figures.search_time_multiplier(): the Raiders set on display); the player's Search skill speeds their
-## searching on top (step() with by_player). Closing pauses the search; what's revealed stays
+## turn up faster, times the container's search time. The player's searching (step() with by_player)
+## goes faster with their Search skill and the Collectors Shelf's search speed bonus
+## (Figures.search_time_multiplier(): the Raiders set on display); an AI bot's never does. Progress is
+## kept in base seconds, so a container one searcher started another can finish. Closing pauses the
+## search; what's revealed stays
 ## revealed. A body's equipment is in plain sight: only what's in its pockets, rig and backpack is
 ## searched.
 
@@ -35,10 +37,12 @@ func hide_all() -> void:
 			item.hidden = true
 
 
-## Seconds it takes to reveal `item`.
-func time_for(item: ItemInstance) -> float:
+## Seconds it takes to reveal `item`: for an AI bot, or with `by_player` for the player, less the
+## Raiders set's bonus (their Search skill comes on top, in step()).
+func time_for(item: ItemInstance, by_player := false) -> float:
 	var cells := item.data.size.x * item.data.size.y
-	return (_config.search_base_seconds + _config.search_seconds_per_cell * cells) * _time_multiplier * Figures.search_time_multiplier()
+	var seconds := (_config.search_base_seconds + _config.search_seconds_per_cell * cells) * _time_multiplier
+	return seconds * Figures.search_time_multiplier() if by_player else seconds
 
 
 ## The next hidden item, in grid order and reading order, or null when everything is found.
@@ -77,7 +81,8 @@ func counts() -> Array[int]:
 ## searching (InventoryScreen), faster with their Search skill, and in a raid what they find trains it.
 func step(delta: float, by_player := false) -> Array[ItemInstance]:
 	var found: Array[ItemInstance] = []
-	var left := delta * (1.0 + Skills.bonus("search", "speed") if by_player else 1.0)
+	# In base seconds: the player's Search skill and the Raiders set make their time go further.
+	var left := delta * ((1.0 + Skills.bonus("search", "speed")) / Figures.search_time_multiplier() if by_player else 1.0)
 	while left > 0.0:
 		var target := next_hidden()
 		if target != current:

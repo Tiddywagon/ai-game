@@ -32,6 +32,7 @@ func run() -> void:
 	_rare_items()
 	_rerolls()
 	_saves()
+	_design()
 	ops.now_override = -1.0
 
 
@@ -564,3 +565,14 @@ func _rerolls() -> void:
 	check(ops.reroll(second) == "Only an unfinished task can be re-rolled", "nor a finished one")
 	gs.roubles = 0
 	check(ops.reroll(ops.tasks("daily")[2]).begins_with("Not enough money"), "nor without the fee")
+
+
+func _design() -> void:
+	section("DESIGN.md")
+	var table: String = ops.design_table()
+	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	if not check(table in design, "DESIGN.md §11 has the task pool table as operations.json has it (expected: %s)" % ProjectSettings.globalize_path("user://operations_table.md")):
+		var out := FileAccess.open("user://operations_table.md", FileAccess.WRITE)
+		out.store_string(table)
+		out.close()
+	check(table.count("\n") == ops.templates().size() + 1, "a row for each of the %d templates" % ops.templates().size())

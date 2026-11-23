@@ -471,6 +471,11 @@ static func update() -> Array[Dictionary]:
 	return paid
 
 
+## True when both sets are the ones the clock says (nothing for update() to do but deliver).
+static func is_current() -> bool:
+	return KINDS.all(func(kind: String) -> bool: return int(GameState.operations.get(kind, {}).get("number", -1)) == period(kind, now()))
+
+
 ## Puts reward items that were waiting for room into the stash, as many as fit. Returns how many went in.
 static func deliver_owed() -> int:
 	var owed: Array = GameState.operations.get_or_add("owed", [])
@@ -651,9 +656,13 @@ static func reward_lines(task: Dictionary) -> Array[String]:
 	return lines
 
 
-## "Resets in 5:12:03" for set `kind`.
+## "Resets in 5:12:03" for set `kind`; a day or more away "Resets in 6 d 4 h".
 static func reset_text(kind: String) -> String:
-	return "Resets in %s" % UiFormat.countdown(seconds_left(kind))
+	var left := seconds_left(kind)
+	if left >= DAY:
+		var hours := ceili(left / 3600.0)
+		return "Resets in %d d %d h" % [hours / 24, hours % 24]
+	return "Resets in %s" % UiFormat.countdown(left)
 
 
 ## The main menu's line: "Operations: 2 / 3 dailies  ·  resets in 5:12:03" ("all 3 dailies done" once
@@ -669,6 +678,65 @@ static func menu_text() -> String:
 static func owed_text() -> String:
 	var count: int = GameState.operations.get("owed", []).size()
 	return "" if count == 0 else "%d reward item%s waiting for room in the stash" % [count, "" if count == 1 else "s"]
+
+
+## The pool as DESIGN.md §11's table (the operations suite checks DESIGN.md has it as the file has it):
+## one row per template with its kind, levels, objective, count range per band, reward and pick weights.
+static func design_table() -> String:
+	var heads: Array[String] = []
+	for entry: Dictionary in bands():
+		heads.append(str(int(entry.get("from", 1))))
+	var lines: Array[String] = ["| Task | Kind | Levels | Objective | Count (levels %s) | Reward | Weight |" % " / ".join(heads), "|---|---|---|---|---|---|---|"]
+	for kind in KINDS:
+		for entry: Dictionary in templates():
+			if str(entry.get("kind", "")) != kind:
+				continue
+			var counts: Array[String] = []
+			for i in bands().size():
+				var range := count_range(entry, i)
+				var low: String = UiFormat.thousands(int(range[0]))
+				counts.append(low if range[0] == range[1] else "%s-%s" % [low, UiFormat.thousands(int(range[1]))])
+			var reward: Variant = entry.get("reward", 1.0)
+			var reward_text := " / ".join((reward as Array).map(func(each: Variant) -> String: return String.num(float(each), 2))) if reward is Array \
+				else String.num(float(reward), 2)
+			var levels: Array = entry.get("levels", [1, Progression.MAX_LEVEL])
+			lines.append("| %s | %s | %d-%d | %s | %s | %s | %s |" % [entry.get("name", ""), kind_name(kind), int(levels[0]), int(levels[1]),
+				_design_objective(entry), " / ".join(counts) if str(entry.objective.get("type", "")) != "visit" else "1", reward_text, String.num(float(entry.get("weight", 1.0)), 2)])
+	return "\n".join(lines)
+
+
+## A template's objective in words for the table: "Kill Scavs with a headshot on a map".
+static func _design_objective(entry: Dictionary) -> String:
+	var objective: Dictionary = entry.get("objective", {})
+	var pick: Dictionary = entry.get("pick", {})
+	var on := " on a map" if pick.has("map") else ""
+	var text := ""
+	match str(objective.get("type", "")):
+		"kill":
+			var who := "the other faction's PMCs" if objective.has("faction") else str(QuestLog.TARGET_NAMES.get(str(objective.get("target", "any")), "enemies"))
+			text = "Kill %s" % who
+			if objective.has("body_part"):
+				text += " with a headshot" if objective.body_part == "head" else " with a hit to the %s" % objective.body_part
+			if pick.has("weapon_class"):
+				text += " with a weapon class you have or can buy"
+			text += on
+		"extract":
+			text = "Survive and extract" + (" from a map" if pick.has("map") else "")
+		"visit":
+			text = "Reach a tier %s point of interest on a map" % "-".join((pick.get("poi_tiers", []) as Array).map(func(tier: Variant) -> String: return str(int(tier))))
+		"search":
+			text = "Search containers" + on
+		"hand_in":
+			var names: Array = (pick.get("item", []) as Array).slice(0, 3).map(func(id: Variant) -> String: return ExtractTable.item_name(str(id)))
+			text = "Hand over found-in-raid items: one of %d (%s, …)" % [(pick.get("item", []) as Array).size(), ", ".join(names)]
+		"sell":
+			text = "Sell found-in-raid loot to traders (roubles)"
+		"craft":
+			text = "Craft at one of %s you've built" % ", ".join((pick.get("station", []) as Array).map(func(id: Variant) -> String:
+				return str(Hideout.find(str(id)).get("name", id))))
+	if objective.get("survive", false):
+		text += " (survive the raid)"
+	return text
 
 
 # --- Checking the file ---------------------------------------------------------------------------

@@ -352,12 +352,27 @@ func _bonuses() -> void:
 	_profile(3)
 	var search: RefCounted = load("res://scripts/inventory/loot_search.gd").new(func() -> Array: return [], 1.0)
 	var scav: RefCounted = item("figure_scav")
-	var base_search: float = search.time_for(scav)
+	var base_search: float = search.time_for(scav, true)
 	_display_set("raiders")
-	check(figs.set_complete("raiders") and is_equal_approx(search.time_for(scav), base_search / 1.05), "Raiders: loot search 5%% faster (%.3f s, was %.3f)" % [search.time_for(scav), base_search])
+	check(figs.set_complete("raiders") and is_equal_approx(search.time_for(scav, true), base_search / 1.05), "Raiders: loot search 5%% faster (%.3f s, was %.3f)" % [search.time_for(scav, true), base_search])
+	# The player's search only (fixed with E14: AI bots searched faster too).
+	check(is_equal_approx(search.time_for(scav), base_search), "an AI bot's search isn't sped up (%.3f s)" % search.time_for(scav))
+	var grid: RefCounted = load("res://scripts/inventory/inventory_grid.gd").new(Vector2i(4, 4), &"loot")
+	grid.add(item("bolts"))
+	var both: Array = []
+	for by_player in [false, true]:
+		var timed: RefCounted = load("res://scripts/inventory/loot_search.gd").new(func() -> Array: return [grid], 1.0)
+		timed.hide_all()
+		var seconds := 0.0
+		while not timed.is_done() and seconds < 60.0:
+			timed.step(0.01, by_player)
+			seconds += 0.01
+		both.append(seconds)
+	var bolts_time: float = load("res://scripts/inventory/loot_search.gd").new(func() -> Array: return [grid], 1.0).time_for(grid.items[0])
+	check(absf(both[0] - bolts_time) < 0.02 and absf(both[1] - bolts_time / 1.05) < 0.02, "with Raiders on display a bot takes %.2f s on bolts (as without), the player %.2f s" % both)
 	check(figs.active_lines() == ["Raiders: +5% loot search speed"], "the active bonus is listed (%s)" % str(figs.active_lines()))
 	figs.remove(figs.slot_of("figure_rat"))
-	check(not figs.set_complete("raiders") and is_equal_approx(search.time_for(scav), base_search) and figs.active_lines().is_empty(), "one taken down: off at once")
+	check(not figs.set_complete("raiders") and is_equal_approx(search.time_for(scav, true), base_search) and figs.active_lines().is_empty(), "one taken down: off at once")
 
 	gs.raid = {"side": "pmc", "map": "test_yard", "seed": 4}
 	var controller: Node = load("res://scripts/raid/raid_controller.gd").new()
