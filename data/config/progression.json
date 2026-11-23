@@ -1,11 +1,12 @@
 {
-  "_comment": "Player levels and trader loyalty (DESIGN.md §10, §15), read by Progression. level_xp: the total experience each level 1-50 needs (index 0 is level 1). The curve is 33,000 x ((level - 1) / 9) ^ 1.68, rounded: an extracted raid earns about 1,000-3,000 XP (raid.tres, poi.tres) and the quests add about 183,000 over a profile (about 105,000 on the maps open today), so with about 2,000 XP a good raid and the quests done as they come level 10 comes after about 7 raids, 15 after about 18, 25 after about 60, 35 after about 115 and 50 after about 230 (DESIGN.md §2.2 has the table; with every map open: 7, 17, 44, 83, 193). loyalty: what each loyalty level above 1 needs with a trader (player level, reputation, roubles spent with them). dollar_rate: roubles a dollar counts as when a dollar purchase adds to money spent. reputation.barter: reputation each barter with a trader adds, up to reputation.barter_cap from barters per trader (quests add the rest; DESIGN.md §10 sums it up per trader).",
+  "_comment": "Player levels and trader loyalty (DESIGN.md §10, §15), read by Progression. level_xp: the total experience each level 1-60 needs (index 0 is level 1). The curve is 33,000 x ((level - 1) / 9) ^ 1.68, rounded (to 50 below 10,000, 500 below 100,000, else 1,000): an extracted raid earns about 1,000-3,000 XP (raid.tres, poi.tres) and the quests add about 183,000 over a profile (about 105,000 on the maps open today), so with about 2,000 XP a good raid and the quests done as they come level 10 comes after about 7 raids, 15 after about 18, 25 after about 60, 35 after about 115, 50 after about 230 and 60 after about 340 (DESIGN.md §2.2 has the table; with every map open: 7, 17, 44, 83, 193, 297). loyalty: what each loyalty level above 1 needs with a trader (player level, reputation, roubles spent with them). dollar_rate: roubles a dollar counts as when a dollar purchase adds to money spent. reputation.barter: reputation each barter with a trader adds, up to reputation.barter_cap from barters per trader (quests add the rest; DESIGN.md §10 sums it up per trader).",
   "level_xp": [
     0, 800, 2650, 5200, 8450, 12500, 16500, 21500, 27000, 33000,
     39500, 46000, 53500, 61000, 69500, 78000, 87000, 96000, 106000, 116000,
     126000, 137000, 148000, 160000, 171000, 184000, 196000, 209000, 222000, 236000,
     249000, 264000, 278000, 293000, 308000, 323000, 339000, 355000, 371000, 388000,
-    404000, 422000, 439000, 457000, 475000, 493000, 511000, 530000, 549000, 569000
+    404000, 422000, 439000, 457000, 475000, 493000, 511000, 530000, 549000, 569000,
+    588000, 608000, 628000, 649000, 670000, 691000, 712000, 733000, 755000, 777000
   ],
   "loyalty": [
     {"level": 2, "player_level": 15, "reputation": 0.20, "spent": 750000},

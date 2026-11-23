@@ -289,7 +289,7 @@ func _raids_to_levels(faction: String, open_only: bool, levels: Array) -> Dictio
 func _xp_curve(config: Dictionary) -> void:
 	section("Quest XP against the level curve (DESIGN §2.2)")
 	var curve: Array = config.level_xp
-	var levels := [2, 5, 10, 15, 20, 25, 30, 35, 40, 50]
+	var levels := [2, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60]
 	var design := FileAccess.get_file_as_string("res://DESIGN.md")
 	for faction in ["bear", "usec"]:
 		var all_xp := 0
@@ -299,7 +299,7 @@ func _xp_curve(config: Dictionary) -> void:
 			if not _waits_closed(quest):
 				open_xp += int(quest.rewards.get("xp", 0))
 		print("  %s: quests give %d XP on every map, %d on the maps open today" % [faction, all_xp, open_xp])
-		check(all_xp <= int(curve[-1]) * 0.4 and open_xp >= 80000, "%s: the quests give %d XP in all (at most 40%% of level 50's %d), %d today" % [faction, all_xp, int(curve[-1]), open_xp])
+		check(all_xp <= int(curve[-1]) * 0.4 and open_xp >= 80000, "%s: the quests give %d XP in all (at most 40%% of the top level's %d), %d today" % [faction, all_xp, int(curve[-1]), open_xp])
 		var today := _raids_to_levels(faction, true, levels)
 		var every := _raids_to_levels(faction, false, levels)
 		print("  %s raids to each level, today: %s, every map: %s" % [faction, today, every])

@@ -541,8 +541,9 @@ func _levels() -> void:
 	_profile()
 	check(progression.level_for_xp(0) == 1 and progression.level_for_xp(799) == 1 and progression.level_for_xp(800) == 2
 		and progression.level_for_xp(2650) == 3, "levels 2 and 3 start at 800 and 2,650 XP")
-	check(progression.max_level() == 50 and progression.level_for_xp(569000) == 50 and progression.level_for_xp(568999) == 49
-		and progression.level_for_xp(99999999) == 50, "level 50 at 569,000 XP is the last")
+	check(progression.level_for_xp(569000) == 50 and progression.level_for_xp(568999) == 49, "level 50 at 569,000 XP")
+	check(progression.max_level() == 60 and progression.level_for_xp(777000) == 60 and progression.level_for_xp(776999) == 59
+		and progression.level_for_xp(99999999) == 60, "level 60 at 777,000 XP is the last")
 	check(progression.xp_for_level(15) == 69500, "level 15 needs 69,500 XP")
 	check(gs.add_xp(799) == 0 and gs.level == 1, "799 XP: still level 1")
 	check(gs.add_xp(1) == 1 and gs.level == 2 and gs.xp == 800, "one more: level 2")

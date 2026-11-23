@@ -65,7 +65,7 @@ Game time runs 24× real time for insurance: a game day is a real minute. When y
 
 ### 2.2 Player Level *(tune: `data/config/progression.json`)*
 
-Experience from raids (above) and quests (Section 11) adds up to a **player level**, 1 to 50. `GameState.add_xp()` is the one place experience is added: it raises the level as the total crosses each threshold (several levels at once if need be, with one `level_changed(old, new)` signal), never lowers it, and checks every trader's loyalty again (Section 10). The main menu profile shows "LEVEL 11 · 41,000 / 46,000 XP" with a thin bar toward the next level, the Character screen the level, the XP toward the next one and a bar, and the raid summary "Level 11 → 12" when a raid took you up. Trader loyalty levels 2–4 need player level 15, 25 and 35 (Section 10).
+Experience from raids (above) and quests (Section 11) adds up to a **player level**, 1 to 60. `GameState.add_xp()` is the one place experience is added: it raises the level as the total crosses each threshold (several levels at once if need be, with one `level_changed(old, new)` signal), never lowers it, and checks every trader's loyalty again (Section 10). The main menu profile shows "LEVEL 11 · 41,000 / 46,000 XP" with a thin bar toward the next level, the Character screen the level, the XP toward the next one and a bar, and the raid summary "Level 11 → 12" when a raid took you up. Trader loyalty levels 2–4 need player level 15, 25 and 35 (Section 10).
 
 The curve is 33,000 × ((level − 1) / 9)^1.68, rounded. It is calibrated on the real sources: a typical extracted raid earns 1,000–3,000 XP (a few Scav kills at 100, a PMC at 300, 20–40 items looted at 10, 300 for extracting, a point of interest or two; a boss 1,000 more), and the quests (Section 11) add 183,000 over a profile on every map (BEAR 183,000, USEC 183,500), 104,000–106,000 of it on the maps open today (Test Yard and Factory; the rest waits for its map). A quest gives 400 + 60 × the player level it really needs (its own, the one its loyalty levels need and its chain's), rounded to 100, half as much again for boss hunts, late-game quests and the faction lines' loyalty-gated last quests and three times for The Six: 500 for a first quest, 1,000 at level 10, 2,200 at level 30, 3,300 for a level-30 late-game one. With about 2,000 XP a raid and every quest done as soon as its level and chain allow (`tests/quest_content_test.gd` works this table out from the data, BEAR's line, and checks it):
 
@@ -81,8 +81,9 @@ The curve is 33,000 × ((level − 1) / 9)^1.68, rounded. It is calibrated on th
 | 35 | 308,000 | 114 | 83 |
 | 40 | 388,000 | 147 | 111 |
 | 50 | 569,000 | 233 | 193 |
+| 60 | 777,000 | 337 | 297 |
 
-Loyalty levels 2–4 need player level 15, 25 and 35 (Section 10). The model is generous: hand-ins need finds, so a real profile takes longer than it says, most of all at the start (level 5 "within the first raid" is two dozen intro quests done at once). Quests stay under a third of the XP to level 50.
+Loyalty levels 2–4 need player level 15, 25 and 35 (Section 10). The model is generous: hand-ins need finds, so a real profile takes longer than it says, most of all at the start (level 5 "within the first raid" is two dozen intro quests done at once). Quests stay under a third of the XP to level 50 and under a quarter of level 60's. Level 60, the top, takes 777,000 XP: about 300 good raids with every map open, nearly 340 today. Nothing opens past level 40 (quest gates stop at 40, loyalty at 35, the flea market and quick-buy cards earlier; only the flea market's listing slots keep growing, one every five levels, 12 at 60), so the last twenty levels are for the long haul and the character screen; the curve is the same formula carried on, so no level up to 50 moved.
 
 Saves keep the experience and the level; loading works the level out again from the experience and keeps the higher of the two, so old profiles that earned XP at level 1 get their level.
 

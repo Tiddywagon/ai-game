@@ -1,14 +1,14 @@
 class_name Progression
 extends RefCounted
 ## Player levels and the numbers behind trader loyalty (DESIGN.md §10, §15), from
-## data/config/progression.json: the total experience each level 1-50 needs (GameState.add_xp() raises
+## data/config/progression.json: the total experience each level 1-60 needs (GameState.add_xp() raises
 ## the level as experience crosses them, several at once if need be), what each loyalty level above 1
 ## needs with a trader (player level, reputation, roubles spent), how many roubles a dollar counts as
 ## toward money spent, and the reputation each barter adds (up to a cap per trader). Checked when it
 ## loads: problems().
 
 const PATH := "res://data/config/progression.json"
-const MAX_LEVEL := 50
+const MAX_LEVEL := 60
 ## Reputation is kept to this step, so that 14 barters (0.01 each) and a 0.06 quest make 0.20, not
 ## 0.19999999999999998 (add_reputation()).
 const REPUTATION_STEP := 0.001
