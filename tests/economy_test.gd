@@ -40,6 +40,7 @@ func run() -> void:
 	_mole()
 	_levels()
 	_hideout()
+	_money_model()
 	stock.now_override = -1.0
 
 
@@ -622,3 +623,109 @@ func _sum(counts: Dictionary) -> int:
 	for key: Variant in counts:
 		total += int(counts[key])
 	return total
+
+
+## DESIGN §10's money model: a typical extracted raid's haul (the loot tables of 10 loose items, a crate,
+## two jackets, a weapon box, a medical bag, a toolbox, a duffle bag, a filing cabinet, a PC and half a
+## safe, averaged over 300 seeded raids) sold to whoever pays most; the money counts toward what's spent
+## with the buyer, then the rest is spent with whoever is still short of LL4's 2.5M. The Broker opens at
+## level 10 (after 7 raids on today's maps, DESIGN §2.2): until then his share goes to the others. Quest
+## money is left out (it only brings the counts forward). Raids until every trader but Mole has spent
+## LL2's, LL3's and LL4's money, with all of each raid's money and with half; DESIGN §10 has the numbers.
+const HAUL := [["loose_loot", 10.0], ["crate", 1.0], ["jacket", 2.0], ["weapon_box", 1.0], ["medical_bag", 1.0], ["toolbox", 1.0],
+	["duffle_bag", 1.0], ["filing_cabinet", 1.0], ["pc", 1.0], ["safe", 0.5]]
+const BROKER_FROM_RAID := 8
+
+
+func _money_model() -> void:
+	section("Money model (DESIGN §10)")
+	_profile()
+	var ids: Array = traders.ids()
+	var volume := {}
+	var early := {}
+	for id: String in ids:
+		volume[id] = 0.0
+		early[id] = 0.0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 13
+	var raids := 300
+	var count := 0
+	for raid in raids:
+		for entry: Array in HAUL:
+			var rolls := int(entry[1]) + (1 if rng.randf() < float(entry[1]) - int(entry[1]) else 0)
+			var table: Resource = load("res://data/loot_tables/%s.tres" % entry[0])
+			for i in rolls:
+				for piece: RefCounted in table.roll_items(rng):
+					count += 1
+					for pair: Array in [[volume, true], [early, false]]:
+						var best := ""
+						var paid := 0.0
+						for id: String in ids:
+							if id == "broker" and not pair[1]:
+								continue
+							var offer: float = float(selling.price(id, piece)) * (float(progression.dollar_rate()) if selling.currency(id) == "USD" else 1.0)
+							if offer > paid:
+								best = id
+								paid = offer
+						if best != "":
+							pair[0][best] += paid / raids
+	var total := 0.0
+	for id: String in ids:
+		total += volume[id]
+	var early_total := 0.0
+	for id: String in ids:
+		early_total += early[id]
+	var shares := ", ".join(ids.filter(func(id: String) -> bool: return volume[id] >= 500.0).map(func(id: String) -> String:
+		return "%s %s" % [traders.display_name(id), _thousands(roundi(volume[id] / 1000.0) * 1000)]))
+	print("  %d items a raid, %s a raid (%s); %s without The Broker" % [count / raids, _thousands(roundi(total)), shares, _thousands(roundi(early_total))])
+	var full := _raids_to_loyalty(volume, early, 1.0)
+	var half := _raids_to_loyalty(volume, early, 0.5)
+	print("  raids to LL2, LL3, LL4 with every trader but Mole: %s; with half the money: %s" % [str(full), str(half)])
+	check(total > 300000.0 and full[2] > 0 and half[2] > full[2], "a haul brings %s a raid; LL4 money with everyone after %d raids (%d with half)" % [_thousands(roundi(total)), full[2], half[2]])
+	check(half[2] < 60, "money comes well before the player levels loyalty needs (LL4: level 35, about 114 raids today)")
+	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	var line := "brings about %s ₽ (%s)" % [_thousands(roundi(total / 1000.0) * 1000), shares]
+	check(line in design, "DESIGN §10 has: %s" % line)
+	var counts := "after about %d raids, LL3's 1.5M after %d and LL4's 2.5M after %d" % full
+	check(counts in design, "DESIGN §10 has: %s" % counts)
+	var halves := "it's %d, %d and %d raids" % half
+	check(halves in design, "DESIGN §10 has: %s" % halves)
+
+
+## Raids until every trader but Mole has 750,000, 1.5M and 2.5M ₽ spent with them: each raid's sales
+## count with the buyer (`early` until The Broker opens), then `share` of the money is spent with whoever
+## is furthest from 2.5M (The Broker once he's open), starting from 500,000 ₽.
+func _raids_to_loyalty(volume: Dictionary, early: Dictionary, share: float) -> Array:
+	var spent := {}
+	for id: String in volume:
+		if id != "mole":
+			spent[id] = 0.0
+	var money := 500000.0
+	var result := [0, 0, 0]
+	for raid in range(1, 200):
+		var sales: Dictionary = early if raid < BROKER_FROM_RAID else volume
+		for id: String in sales:
+			if spent.has(id):
+				spent[id] += sales[id]
+			money += sales[id] * share
+		var open: Array = spent.keys().filter(func(id: String) -> bool: return id != "broker" or raid >= BROKER_FROM_RAID)
+		while money > 1.0:
+			open.sort_custom(func(a: String, b: String) -> bool: return spent[a] < spent[b])
+			if spent[open[0]] >= 2500000.0:
+				break
+			var pay := minf(money, 2500000.0 - spent[open[0]])
+			if open.size() > 1:
+				pay = minf(pay, maxf(spent[open[1]] - spent[open[0]], 0.0) + 1000.0)
+			spent[open[0]] += pay
+			money -= pay
+		var lowest: float = spent.values().min()
+		for i in 3:
+			if result[i] == 0 and lowest >= [750000.0, 1500000.0, 2500000.0][i]:
+				result[i] = raid
+		if result[2] > 0:
+			break
+	return result
+
+
+func _thousands(value: int) -> String:
+	return load("res://scripts/ui/ui_format.gd").thousands(value)
