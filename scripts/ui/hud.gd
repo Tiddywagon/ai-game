@@ -226,9 +226,11 @@ func _exit_tree() -> void:
 		GameState.skill_levelled.disconnect(_on_skill_levelled)
 
 
-## A skill levelled up in the raid: "STRENGTH 12  ·  5.4% less recoil, ..." (its bonuses now).
+## A skill levelled up in the raid: "STRENGTH 12  ·  1.2 kg more before the weight slows you, ..." (its
+## bonuses now).
 func _on_skill_levelled(id: String, _old_level: int, new_level: int) -> void:
-	show_skill_toast("%s %d  ·  %s" % [Skills.display_name(id).to_upper(), new_level, Skills.bonuses_text(id)])
+	var bonuses := RegEx.create_from_string(" \\([^)]*\\)").sub(Skills.bonuses_text(id), "", true)  # Short: no notes in brackets.
+	show_skill_toast("%s %d  ·  %s" % [Skills.display_name(id).to_upper(), new_level, bonuses])
 
 
 ## The skill toast: `text` for SKILL_TOAST_TIME seconds.

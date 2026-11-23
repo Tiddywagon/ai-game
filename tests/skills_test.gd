@@ -506,11 +506,18 @@ func _raid_training() -> void:
 	check(is_equal_approx(player.step_noise_multiplier(), 0.8) and other.step_noise_multiplier() == 1.0, "and your footsteps are 20% quieter (the AI's aren't)")
 	other.state = other.State.IDLE
 	other.target = null
-	# Fatigue and the summary.
+	# The toast, fatigue and the summary.
 	gs.skills.endurance.level = 0
 	gs.skills.endurance.points = 0.0
+	var hud: Node = root.get_tree().current_scene.find_child("HUD", true, false)
+	skills.add("search", 200.0)
+	var toast: Label = hud.find_child("SkillToast", true, false) if hud else null
+	check(toast != null and toast.visible and toast.text.begins_with("SEARCH ") and "faster search" in toast.text, "a skill level in the raid: a toast (%s)" % (toast.text if toast else "no HUD"))
+	_move(player, 3000.0, move.SPRINT)
 	var outcome: RefCounted = controller.end_raid(load("res://scripts/raid/raid_outcome.gd").Status.SURVIVED)
 	check(not skills.in_raid and outcome.skill_gains.has("endurance") and outcome.skill_gains.has(skill), "the raid's skill gains reach its outcome (%s)" % str(outcome.skill_gains.keys()))
+	var lines: Array[String] = load("res://scripts/ui/raid_result_screen.gd").skill_lines(outcome)
+	check(lines.any(func(line: String) -> bool: return line.begins_with("Endurance +") and "tired:" in line and "level" in line), "the summary lists the skill points, the levels and what fatigue held back (%s)" % str(lines))
 
 
 func _practice() -> void:
