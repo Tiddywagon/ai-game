@@ -593,7 +593,7 @@ static func reroll_block_reason(task: Dictionary) -> String:
 	if not GameState.raid.is_empty():
 		return "Re-roll it once you're out of the raid"
 	if int(task.get("rerolls", 0)) <= 0:
-		return "%ss can't be re-rolled" % kind_name(str(task.get("operation", ""))) if int(kind_config(str(task.get("operation", ""))).get("rerolls", 0)) <= 0 \
+		return "%s tasks can't be re-rolled" % kind_name(str(task.get("operation", ""))) if int(kind_config(str(task.get("operation", ""))).get("rerolls", 0)) <= 0 \
 			else "Already re-rolled"
 	if state(task) != "active":
 		return "Only an unfinished task can be re-rolled"
