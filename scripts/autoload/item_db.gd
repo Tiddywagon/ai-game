@@ -7,7 +7,8 @@ extends Node
 ## the trader offers and barters (Trading.problems()) and the hideout stations (Hideout.problems()) are
 ## checked against the items, and so are the Scav kit tiers' pocket items (ScavRuns.item_problems()) and
 ## the quick-buy cards (QuickBuyTable.problems()), the flea market's rules (FleaTable.problems()), the
-## quests (QuestLog.problems()) and the collectible figures (FigureTable.problems()).
+## quests (QuestLog.problems()), the collectible figures (FigureTable.problems()) and the skills (Skills.problems():
+## every gun trains a weapon class skill).
 ## Usage: ItemDB.get_item("bandage").display_name
 
 const ITEMS_DIR := "res://data/items"
@@ -41,6 +42,8 @@ func _ready() -> void:
 		push_warning("QuestLog: " + problem)
 	for problem in FigureTable.problems():
 		push_warning("FigureTable: " + problem)
+	for problem in Skills.problems():
+		push_warning("Skills: " + problem)
 
 
 ## Returns the definition for `id`, or null (with a warning) if no item has that id.

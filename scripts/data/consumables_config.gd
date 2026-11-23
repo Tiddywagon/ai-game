@@ -23,9 +23,7 @@ extends Resource
 @export_range(1.0, 3.0, 0.05) var overweight_drain: float
 ## Bleeding, a fracture or a blacked part.
 @export_range(1.0, 3.0, 0.05) var injured_drain: float
-## Each Metabolism skill level drains this share less (DESIGN.md §12.3), up to max_skill_reduction.
-@export_range(0.0, 0.05, 0.001) var drain_reduction_per_level: float
-@export_range(0.0, 0.9, 0.05) var max_skill_reduction: float
+## (The Metabolism skill's drain bonus and its points per unit are in data/config/skills.json.)
 
 @export_group("Low and empty")
 ## At or below this you're hungry or thirsty: the HUD warns you and stamina recovers slower.
@@ -48,8 +46,6 @@ extends Resource
 @export_range(0.0, 2.0, 0.05) var rest_space_bonus: float
 ## A PMC who dies comes back with at least this much of each.
 @export_range(0.0, 100.0, 1.0) var after_death_minimum: float
-## Metabolism skill points per point of energy or hydration a food or drink gives (or takes).
-@export_range(0.0, 5.0, 0.05) var metabolism_points_per_unit: float
 
 @export_group("Using items")
 ## Walking speed while using an item (an item's "move" stat overrides it, e.g. surgery).

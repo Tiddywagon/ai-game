@@ -83,8 +83,7 @@ static func color(phase: String) -> Color:
 
 ## Side effects last this share of their time: shorter with the Stim resistance skill.
 static func side_effect_multiplier() -> float:
-	var tuning: Dictionary = config().get("resistance", {})
-	return 1.0 - minf(Skills.level(RESISTANCE) * float(tuning.get("per_level", 0.01)), float(tuning.get("max", 0.3)))
+	return 1.0 - Skills.bonus(RESISTANCE, "side_effects")
 
 
 ## Injects stim `data` into `health`: its buffs and side effects start (side effects shortened by
@@ -108,8 +107,7 @@ static func inject(data: ItemData, health: BodyHealth) -> Dictionary:
 		start_overdose(health, health.stim_log.size() - threshold)
 		result.overdose = true
 	if player:
-		var points: Array = config().get("resistance", {}).get("points_by_rarity", [20])
-		result.levels = Skills.add_points(RESISTANCE, float(points[clampi(data.rarity, 0, points.size() - 1)]))
+		result.levels = Skills.train(RESISTANCE, "inject", 1.0, data.rarity)
 	return result
 
 

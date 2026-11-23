@@ -47,10 +47,8 @@ extends Resource
 @export_range(5, 100) var pattern_shots := 30
 
 @export_group("Skills")
-## Recoil (vertical and horizontal) drops this much per level of the gun's weapon skill (assault
-## rifles, pistols) and per level of Strength, up to `max_skill_recoil_reduction` together.
-@export_range(0.0, 0.05, 0.0005) var weapon_skill_recoil_per_level := 0.005
-@export_range(0.0, 0.05, 0.0005) var strength_recoil_per_level := 0.0025
+## The gun's weapon skill and Strength lower recoil (vertical and horizontal; their bonuses per level
+## are in data/config/skills.json), by at most this much together.
 @export_range(0.0, 0.5, 0.01) var max_skill_recoil_reduction := 0.15
 
 @export_group("Limits")

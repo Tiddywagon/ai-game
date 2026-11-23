@@ -8,7 +8,7 @@ extends Resource
 
 ## Ammo with the same `caliber` stat fits, e.g. "5.45x39".
 @export var caliber := ""
-## The weapon skill that trains with it and lowers its recoil (GameState.SKILLS), e.g. "assault_rifles".
+## The weapon skill that trains with it and lowers its recoil (Skills, data/config/skills.json), e.g. "assault_rifles".
 @export var skill := ""
 ## What kind of gun it is (CLASS_NAMES). Bolt-action rifles and DMRs can make 360 trick shots (see
 ## "Trick shot").

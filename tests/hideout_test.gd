@@ -399,11 +399,11 @@ func _gym() -> void:
 	check(work.train("strength") == "Build the Gym first", "no Gym, no training")
 	_built("gym")
 	check(work.train("vitality") == "The Gym trains Strength or Endurance", "only Strength and Endurance")
-	check(work.train("strength") == "" and is_equal_approx(gs.skills.strength.progress, 0.3), "a session: 30 points, 30% of Strength level 1")
+	check(work.train("strength") == "" and is_equal_approx(gs.skills.strength.points, 30.0), "a session: 30 points, 30% of Strength level 1")
 	check(work.train("endurance").begins_with("Rested in 8:00:00"), "the next one is 8 hours away")
 	_later(8.0 * 60.0)
 	gs.hideout.gym = 3
-	check(work.train("endurance") == "" and is_equal_approx(gs.skills.endurance.progress, 0.6), "at level 3 a session gives 60 points")
+	check(work.train("endurance") == "" and is_equal_approx(gs.skills.endurance.points, 60.0), "at level 3 a session gives 60 points")
 	check(work.train("strength").begins_with("Rested in 4:00:00"), "and comes round every 4 hours")
 
 

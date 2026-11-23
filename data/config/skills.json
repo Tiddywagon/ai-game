@@ -1,0 +1,70 @@
+{
+  "_comment": "Player skills (DESIGN.md §12.3), read by Skills (checked when the items load: Skills.problems()). max_level: the top skill level. points: a skill needs base x (1 + growth x level) points from a level to the next (100 for level 0 to 1, 590 for 49 to 50; 17,250 from 0 to 50). fatigue: within one raid, the first fresh points a skill earns count in full; past that each new point counts fresh / (points earned so far this raid), never less than floor (half at 500, a quarter at 1,000, a tenth from 2,500), so a raid spent doing one thing over and over can't farm a skill. Out of a raid (the Gym, crafting, eating in the hideout) there is no fatigue. skills: id, name, trains (what the CHARACTER screen says trains it), actions (points per action: a number, or a list by rarity), rules (numbers the training reads), bonuses (per_level, max: the bonus at a level is per_level x level up to max; unit share or kg; text, with %s for the value). weapon_classes: one skill per weapon class (its id is the weapon's skill in data/weapons), all with the same actions and bonuses.",
+  "max_level": 50,
+  "points": {"base": 100, "growth": 0.1},
+  "fatigue": {"fresh": 250, "floor": 0.1},
+  "skills": [
+    {"id": "strength", "name": "Strength", "trains": "Moving with a load of 10 kg or more (twice as fast over 25 kg), melee hits, throws, the Gym",
+      "actions": {"carry_metre": 0.03, "melee_hit": 5, "throw": 3},
+      "rules": {"carry_from_kg": 10, "heavy_multiplier": 2},
+      "bonuses": {
+        "carry": {"per_level": 0.1, "max": 5, "unit": "kg", "text": "%s more before the weight slows you"},
+        "recoil": {"per_level": 0.0025, "max": 0.125, "text": "%s less recoil (with the weapon skill, up to 15%%)"},
+        "throw": {"per_level": 0.004, "max": 0.2, "text": "%s farther throws"}
+      }},
+    {"id": "endurance", "name": "Endurance", "trains": "Sprinting, the Gym",
+      "actions": {"sprint_metre": 0.1},
+      "bonuses": {
+        "stamina": {"per_level": 0.006, "max": 0.3, "text": "%s more stamina"},
+        "stamina_regen": {"per_level": 0.006, "max": 0.3, "text": "%s faster stamina recovery"}
+      }},
+    {"id": "vitality", "name": "Vitality", "trains": "Damage taken and survived, bleeds and fractures treated",
+      "actions": {"damage": 0.5, "treat": 10},
+      "bonuses": {
+        "bleed": {"per_level": 0.006, "max": 0.3, "text": "%s lower bleed chance"},
+        "fracture": {"per_level": 0.006, "max": 0.3, "text": "%s lower fracture chance"},
+        "regen": {"per_level": 0.004, "max": 0.2, "text": "%s more HP regeneration from stims"}
+      }},
+    {"id": "metabolism", "name": "Metabolism", "trains": "Eating and drinking",
+      "actions": {"energy_hydration": 0.5},
+      "bonuses": {
+        "drain": {"per_level": 0.01, "max": 0.5, "text": "%s slower energy and hydration drain"}
+      }},
+    {"id": "stim_resistance", "name": "Stim resistance", "trains": "Injecting stims",
+      "actions": {"inject": [15, 20, 25, 35, 45, 60]},
+      "bonuses": {
+        "side_effects": {"per_level": 0.01, "max": 0.3, "text": "%s shorter stim side effects"}
+      }},
+    {"id": "search", "name": "Search", "trains": "Items found searching containers and bodies",
+      "actions": {"item_found": 4},
+      "bonuses": {
+        "speed": {"per_level": 0.004, "max": 0.2, "text": "%s faster search"}
+      }},
+    {"id": "covert_movement", "name": "Covert movement", "trains": "Moving crouched or walking within 25 m of an enemy that isn't fighting you",
+      "actions": {"covert_metre": 0.2},
+      "rules": {"near_m": 25},
+      "bonuses": {
+        "noise": {"per_level": 0.004, "max": 0.2, "text": "%s quieter footsteps"},
+        "notice": {"per_level": 0.004, "max": 0.2, "text": "%s slower enemy reactions to you"}
+      }},
+    {"id": "crafting", "name": "Crafting", "trains": "Crafts collected in the hideout (more for longer crafts)",
+      "actions": {"craft": 20, "craft_minute": 0.5},
+      "bonuses": {
+        "time": {"per_level": 0.004, "max": 0.2, "text": "%s shorter craft times"},
+        "extra": {"per_level": 0.002, "max": 0.1, "text": "%s chance of one more of the output"}
+      }}
+  ],
+  "weapon_classes": {
+    "skills": [
+      ["pistols", "Pistols"], ["smgs", "SMGs"], ["shotguns", "Shotguns"], ["assault_rifles", "Assault rifles"],
+      ["marksman_rifles", "Marksman rifles"], ["bolt_action_rifles", "Bolt-action rifles"], ["lmgs", "Machine guns"]
+    ],
+    "trains": "Bullet hits and kills with a gun of the class",
+    "actions": {"hit": 2, "kill": 10},
+    "bonuses": {
+      "recoil": {"per_level": 0.005, "max": 0.15, "text": "%s less recoil (with Strength, up to 15%%)"},
+      "reload": {"per_level": 0.004, "max": 0.2, "text": "%s faster reloads"},
+      "aim": {"per_level": 0.004, "max": 0.2, "text": "%s faster aiming"}
+    }
+  }
+}

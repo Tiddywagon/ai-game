@@ -121,7 +121,8 @@ static func totals(gun: ItemInstance) -> Dictionary:
 # --- The gun -------------------------------------------------------------------------------------
 
 ## The WeaponData `gun` fires with: a copy of its .tres changed by its parts, its weight and (with
-## `skills`, GameState.skills) its holder's skills.
+## `skills`, GameState.skills) its holder's skills: less recoil (the weapon skill and Strength), faster
+## aiming and reloads (the weapon skill).
 static func build(gun: ItemInstance, skills: Dictionary = {}) -> WeaponData:
 	var base := gun.data.weapon
 	var result: WeaponData = base.duplicate()
@@ -155,6 +156,11 @@ static func build(gun: ItemInstance, skills: Dictionary = {}) -> WeaponData:
 	result.muzzle_velocity = roundi(base.muzzle_velocity * result.velocity_multiplier)
 	result.noise_multiplier = clampf(1.0 + sums.noise / 100.0, 0.15, 2.0)
 	result.aim_time_multiplier = clampf(handling / maxf(1.0 + sums.aim_speed / 100.0, 0.1), 0.3, 3.0)
+	if base.skill != "" and not skills.is_empty():  # The weapon skill: faster aiming and reloads.
+		result.aim_time_multiplier *= 1.0 - Skills.bonus(base.skill, "aim", skills)
+		var reload := 1.0 - Skills.bonus(base.skill, "reload", skills)
+		result.reload_time = base.reload_time * reload
+		result.empty_reload_time = base.empty_reload_time * reload
 	result.malfunction_multiplier = clampf(1.0 + sums.malfunction / 100.0, 0.1, 4.0)
 	result.wear_multiplier = clampf(1.0 + sums.durability_loss / 100.0, 0.2, 3.0)
 	result.pellet_spread_multiplier = clampf(1.0 + sums.pellet_spread / 100.0, 0.3, 2.0)
@@ -204,12 +210,11 @@ static func default_weight(gun_data: ItemData) -> float:
 	return _default_weights[gun_data.id]
 
 
-## How much less recoil `skills` (GameState.skills) give with `gun`: its weapon skill and Strength.
+## How much less recoil `skills` (GameState.skills) give with `gun`: its weapon skill's and Strength's
+## recoil bonuses (Skills), up to max_skill_recoil_reduction together.
 static func skill_recoil_reduction(gun: WeaponData, skills: Dictionary) -> float:
-	var weapon_level := int(skills.get(gun.skill, {}).get("level", 0)) if gun.skill != "" else 0
-	var strength := int(skills.get("strength", {}).get("level", 0))
-	return clampf(weapon_level * CONFIG.weapon_skill_recoil_per_level + strength * CONFIG.strength_recoil_per_level,
-		0.0, CONFIG.max_skill_recoil_reduction)
+	var weapon := Skills.bonus(gun.skill, "recoil", skills) if gun.skill != "" else 0.0
+	return clampf(weapon + Skills.bonus("strength", "recoil", skills), 0.0, CONFIG.max_skill_recoil_reduction)
 
 
 # --- Recoil and spread (shared by the Weapon node and the previews) -------------------------------

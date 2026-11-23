@@ -78,7 +78,12 @@ const SAVE_PATH := "user://savegame.json"
 ## to three quest ids tracked on the HUD) and, on a quest's entry, "given" (how many times its quest
 ## items were handed out). Progress stays one number per objective, as before, so older saves keep every
 ## quest's state and progress (nothing to change in upgrade(): GameState.from_dict() tracks none).
-const SAVE_VERSION := 19
+## Version 20 adds skill points and lifetime stats (DESIGN.md §12.3, §16.2): each skill is saved as
+## {"level", "points" (toward the next level)} instead of {"level", "progress" (0-1)}, for the new skills
+## too (Covert movement, Crafting), and profile "stats" holds the lifetime stats (Stats). Older saves keep
+## their XP, level and every skill level, the progress turned into points (Skills.from_save()), and start
+## their stats at 0 (nothing to change in upgrade(): GameState.from_dict() does both).
+const SAVE_VERSION := 20
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"

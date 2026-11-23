@@ -506,8 +506,8 @@ func _raid_not_counted() -> void:
 # --- Saves --------------------------------------------------------------------------------------------
 
 func _saves() -> void:
-	section("Saves (version 19)")
-	check(sm.SAVE_VERSION == 19, "the save version is 19")
+	section("Saves (version 19 and later)")
+	check(sm.SAVE_VERSION >= 19, "the save version is 19 or later (20: E13 skills and stats)")
 	fresh_profile()
 	var scrap: Dictionary = quests.find("scrap_run")
 	quests.accept(scrap)

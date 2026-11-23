@@ -522,6 +522,6 @@ static func train(skill: String) -> String:
 	if reason != "":
 		return reason
 	var training: Dictionary = Hideout.built_value(Hideout.GYM, "training", {})
-	Skills.add_points(skill, float(training.get("points", 0.0)))
+	Skills.add(skill, float(training.get("points", 0.0)))
 	GameState.hideout_state.gym_ready = snappedf(now() + float(training.get("hours", 1.0)) * 3600.0, 1.0)
 	return ""

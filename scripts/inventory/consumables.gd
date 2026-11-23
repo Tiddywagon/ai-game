@@ -324,7 +324,7 @@ static func hideout_recovery_rate() -> float:
 
 ## Drain × from the Metabolism skill: 1% less per level (by default), up to the config's cap.
 static func skill_multiplier() -> float:
-	return 1.0 - minf(Skills.level(METABOLISM) * CONFIG.drain_reduction_per_level, CONFIG.max_skill_reduction)
+	return 1.0 - Skills.bonus(METABOLISM, "drain")
 
 
 ## What energy and hydration drain is multiplied by in a raid (BodyHealth.metabolism_skill): the
@@ -336,12 +336,12 @@ static func drain_multiplier() -> float:
 
 ## Metabolism points one use of `data` is worth: its energy and hydration, either way.
 static func metabolism_points(data: ItemData) -> float:
-	return (absf(float(data.stats.get("energy", 0.0))) + absf(float(data.stats.get("hydration", 0.0)))) * CONFIG.metabolism_points_per_unit
+	return (absf(float(data.stats.get("energy", 0.0))) + absf(float(data.stats.get("hydration", 0.0)))) * Skills.action_points(METABOLISM, "energy_hydration")
 
 
 ## Eating or drinking `data` trains Metabolism. Returns the levels gained.
 static func train_metabolism(data: ItemData) -> int:
-	return Skills.add_points(METABOLISM, metabolism_points(data))
+	return Skills.add(METABOLISM, metabolism_points(data))
 
 
 ## What one use of food or drink `data` would do to energy and hydration now: [["Energy", now, after,

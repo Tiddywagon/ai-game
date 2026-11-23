@@ -5,6 +5,8 @@ extends Node
 
 ## The player's level went up (add_xp()): several levels at once give one signal.
 signal level_changed(old_level: int, new_level: int)
+## Skill `id` went up (Skills.add()): several levels at once give one signal.
+signal skill_levelled(id: String, old_level: int, new_level: int)
 
 enum Faction { NONE, BEAR, USEC }
 
@@ -16,13 +18,6 @@ const FACTION_REP_BONUS := 0.05
 ## Starting money for a new character (DESIGN.md §14).
 const START_ROUBLES := 500_000
 const START_DOLLARS := 0
-## Player skills (DESIGN.md §12.3), with their names.
-const SKILLS := [
-	["strength", "Strength"], ["endurance", "Endurance"], ["vitality", "Vitality"],
-	["metabolism", "Metabolism"], ["search", "Search"], ["assault_rifles", "Assault rifles"], ["pistols", "Pistols"],
-	["bolt_action_rifles", "Bolt-action rifles"], ["marksman_rifles", "Marksman rifles"], ["smgs", "SMGs"],
-	["shotguns", "Shotguns"], ["lmgs", "Machine guns"], ["stim_resistance", "Stim resistance"],
-]
 ## What a new character's hotkeys 1-5 use (item ids; DESIGN.md §17.1).
 const DEFAULT_HOTKEYS := ["bandage", "painkillers", "ai2_medkit", "frag_grenade", "flashbang_grenade"]
 const HOTKEY_COUNT := 5
@@ -51,7 +46,7 @@ var trader_stock: Dictionary = {}
 var stash: InventoryGrid
 ## Equipment, pockets and everything in them.
 var inventory := Inventory.new()
-## Skill id -> {"level": int, "progress": 0-1 toward the next level}.
+## Skill id (Skills) -> {"level": 0-50, "points": toward the next level}.
 var skills: Dictionary = {}
 ## Quest id -> {"state": "active" or "completed", "progress": [handed over so far, per objective]}.
 ## Quests not in here haven't been accepted (DESIGN.md §11, QuestLog). An entry may also have "given":
@@ -228,9 +223,7 @@ func _reset(new_faction: Faction) -> void:
 	scav_karma = ScavRuns.start_karma()
 	scav_ready_at = 0.0
 	scav_kit = null
-	skills = {}
-	for skill in SKILLS:
-		skills[skill[0]] = {"level": 0, "progress": 0.0}
+	skills = Skills.blank()
 
 
 func _give_starter_kit() -> void:
@@ -364,11 +357,7 @@ func from_dict(data: Dictionary) -> void:
 	for station: String in saved_hideout:
 		hideout[station] = maxi(int(saved_hideout[station]), int(hideout.get(station, 0)))
 	hideout_state = HideoutWork.from_save(profile.get("hideout_state"))
-	var saved_skills: Dictionary = profile.get("skills", {})
-	for skill: String in saved_skills:
-		if skills.has(skill):
-			var entry: Dictionary = saved_skills[skill]
-			skills[skill] = {"level": int(entry.get("level", 0)), "progress": float(entry.get("progress", 0.0))}
+	skills = Skills.from_save(profile.get("skills", {}))  # A version 19 save's progress becomes points.
 
 	loadout_presets = LoadoutPresets.sanitize(profile.get("loadout_presets", []))
 	auto_equip = LoadoutPlanner.clean_options(profile.get("auto_equip", {}))

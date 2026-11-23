@@ -1,5 +1,5 @@
 {
-  "_comment": "Stimulant tuning (DESIGN.md §13.8). The stims themselves (buffs, delay, side effects) are items in data/items/meds/stims.json. effects: every effect kind the game knows, with its name and unit (\"\" no value, \"%\" share, \"°\" degrees, \"#\" plain number, \"kg\", \"/min\", \"HP/s\", \"HP/s each part\") and the colour of its HUD icon ring. overdose: injecting `threshold` or more stims within `window` seconds starts an Overdose for `duration` seconds (HP drain from every body part, tremor, blurred vision), each stim past the threshold `extra_per_stim` × worse. resistance: the Stim resistance skill shortens side effects by `per_level` a level up to `max`; injecting a stim earns `points_by_rarity` (Common .. Legendary) skill points. limb_restore_max_hp_loss: share of max HP a limb loses when a stim restores it.",
+  "_comment": "Stimulant tuning (DESIGN.md §13.8). The stims themselves (buffs, delay, side effects) are items in data/items/meds/stims.json. effects: every effect kind the game knows, with its name and unit (\"\" no value, \"%\" share, \"°\" degrees, \"#\" plain number, \"kg\", \"/min\", \"HP/s\", \"HP/s each part\") and the colour of its HUD icon ring. overdose: injecting `threshold` or more stims within `window` seconds starts an Overdose for `duration` seconds (HP drain from every body part, tremor, blurred vision), each stim past the threshold `extra_per_stim` × worse. (The Stim resistance skill, which shortens side effects, is in data/config/skills.json.) limb_restore_max_hp_loss: share of max HP a limb loses when a stim restores it.",
   "effects": {
     "painkiller": {"name": "Painkiller", "unit": "", "about": "No pain; broken or blacked legs can sprint and roll"},
     "regen": {"name": "Regeneration", "unit": "HP/s each part", "about": "Every damaged body part (not blacked ones) heals this much a second"},
@@ -25,7 +25,6 @@
     "hp_drain": {"name": "HP drain", "unit": "HP/s each part", "about": "HP lost a second from every body part (Overdose)"}
   },
   "overdose": {"window": 300, "threshold": 3, "duration": 90, "hp_drain": 0.12, "tremor": 2.0, "blur": 0.6, "extra_per_stim": 0.5},
-  "resistance": {"per_level": 0.01, "max": 0.3, "points_by_rarity": [15, 20, 25, 35, 45, 60]},
   "limb_restore_max_hp_loss": 0.3,
   "colors": {"buff": "#7fe08a", "pending": "#9aa0a6", "side": "#f07060", "overdose": "#ff4040"}
 }

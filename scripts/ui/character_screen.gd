@@ -131,10 +131,10 @@ func _fill_stats() -> void:
 
 func _fill_skills() -> void:
 	var grid: GridContainer = %SkillsGrid
-	for skill in GameState.SKILLS:
-		var data: Dictionary = GameState.skills[skill[0]]
+	for skill in Skills.all():
+		var data: Dictionary = GameState.skills[skill.id]
 		var name := Label.new()
-		name.text = skill[1]
+		name.text = str(skill.name)
 		name.custom_minimum_size.x = 170
 		var level := Label.new()
 		level.theme_type_variation = &"DimLabel"
@@ -143,7 +143,7 @@ func _fill_skills() -> void:
 		bar.custom_minimum_size = Vector2(150, 8)
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bar.show_percentage = false
-		bar.value = data.progress * 100.0
+		bar.value = Skills.progress(str(skill.id)) * 100.0
 		for control: Control in [name, level, bar]:
 			grid.add_child(control)
 

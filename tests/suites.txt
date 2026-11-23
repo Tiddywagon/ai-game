@@ -9,3 +9,4 @@ faction_perks
 figures
 quests
 quest_content
+skills
