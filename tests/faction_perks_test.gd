@@ -274,12 +274,12 @@ func _chain_bear() -> void:
 		"Bulat's BEAR barter shows, waiting for Last Word")
 	gs.level = 20
 	quests.accept(last)
-	check(quests.objective_text(last, 0) == "Kill USEC operators on Woodland", "Last Word: %s" % quests.objective_text(last, 0))
-	quests.record_raid([{"side": "pmc", "faction": "usec"}], true, "factory")
-	check(quests.progress(last, 0) == 0 and quests.progress(last, 1) == 0, "a kill and an extract on Factory count for neither")
-	quests.record_raid([{"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}], true, "woodland")
-	quests.record_raid([{"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}], true, "woodland")
-	check(quests.state(last) == "ready" and quests.complete(last) == "", "six on Woodland and two extracts there: done")
+	check(quests.objective_text(last, 0) == "Kill USEC operators on Factory" and quests.closed_maps(last).is_empty(), "Last Word, on a map open today: %s" % quests.objective_text(last, 0))
+	quests.record_raid([{"side": "pmc", "faction": "usec"}], true, "test_yard")
+	check(quests.progress(last, 0) == 0 and quests.progress(last, 1) == 0, "a kill and an extract on the Test Yard count for neither")
+	quests.record_raid([{"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}], true, "factory")
+	quests.record_raid([{"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}, {"side": "pmc", "faction": "usec"}], true, "factory")
+	check(quests.state(last) == "ready" and quests.complete(last) == "", "six on Factory and two extracts there: done")
 	check(barters.quest_block_reason(kit) == "" and trading.barter_block_reason(kit, "bulat") == "Needs loyalty level 3", "the barter is open, at LL3")
 	gs.trader_loyalty.bulat.level = 3
 	_give_fir("military_medal", 1)

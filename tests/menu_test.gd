@@ -138,7 +138,15 @@ func _quests() -> void:
 	(_find(traders, "QuestsButton") as Button).pressed.emit()
 	await frames(3)
 	var log := _find(traders, "QuestsScreen")
-	check(log != null and log.trader_filter == "bulat", "TRADERS opens the quest log on the trader shown")
+	var dropdown: OptionButton = _find(log, "TraderFilter") if log else null
+	check(log != null and log.trader_filter == "bulat" and dropdown.text == "Bulat" and str(dropdown.get_item_metadata(dropdown.selected)) == "bulat",
+		"TRADERS opens the quest log on the trader shown, the dropdown on them (%s)" % (dropdown.text if dropdown else "none"))
+	if log:
+		log.set_trader("vera")
+		await frames(1)
+		check(dropdown.text == "Doc Vera" and log.quests_on(1).all(func(quest: Dictionary) -> bool: return quest.trader == "vera"), "set to another trader, the dropdown follows")
+		log.set_trader("")
+		check(dropdown.text == "All traders", "and back to all of them")
 	if log:
 		(_find(log, "BackButton") as Button).pressed.emit()
 		await frames(3)

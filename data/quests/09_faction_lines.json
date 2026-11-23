@@ -68,11 +68,11 @@
     "faction": "bear",
     "requires": ["bear_radio_silence"],
     "level": 20,
-    "description": "The woods are theirs now. Make them ours: six of them in the trees, and come back out twice so they know it wasn't luck. Then my old unit's stores are open to you.",
-    "success": "The woods are ours. My unit's stores are open to you, brother.",
+    "description": "The factory is theirs now. Make it ours: six of them between its walls, and come back out of it twice so they know it wasn't luck. Then my old unit's stores are open to you.",
+    "success": "The factory is ours. My unit's stores are open to you, brother.",
     "objectives": [
-      {"type": "kill", "target": "pmc", "faction": "usec", "map": "woodland", "count": 6},
-      {"type": "extract", "map": "woodland", "count": 2}
+      {"type": "kill", "target": "pmc", "faction": "usec", "map": "factory", "count": 6},
+      {"type": "extract", "map": "factory", "count": 2}
     ],
     "rewards": {"roubles": 150000, "xp": 1600, "reputation": 0.1}
   },

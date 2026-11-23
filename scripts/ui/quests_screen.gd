@@ -113,11 +113,10 @@ func _header() -> HBoxContainer:
 	_filter.add_item("All traders")
 	_filter.set_item_metadata(0, "")
 	for id in TraderTable.ids():
-		if not QuestLog.for_trader(id).is_empty():
+		if not QuestLog.for_trader(id).is_empty() or id == trader_filter:
 			_filter.add_item(TraderTable.display_name(id))
 			_filter.set_item_metadata(_filter.item_count - 1, id)
-			if id == trader_filter:
-				_filter.select(_filter.item_count - 1)
+	_sync_filter()
 	_filter.item_selected.connect(func(index: int) -> void: set_trader(str(_filter.get_item_metadata(index))))
 	header.add_child(_filter)
 	var spacer := Control.new()
@@ -141,9 +140,22 @@ func show_tab(which: int) -> void:
 	_refresh()
 
 
+## Filters the log to trader `id` ("" for all of them); the dropdown follows.
 func set_trader(id: String) -> void:
 	trader_filter = id
+	_sync_filter()
 	show_tab(tab)
+
+
+## The trader dropdown shows the filter in use (opened from TRADERS, or set_trader()).
+func _sync_filter() -> void:
+	if _filter == null:
+		return
+	for index in _filter.item_count:
+		if str(_filter.get_item_metadata(index)) == trader_filter:
+			_filter.select(index)
+			return
+	_filter.select(0)
 
 
 ## The quests tab `which` lists, with the trader filter: ACTIVE active and ready ones, AVAILABLE those

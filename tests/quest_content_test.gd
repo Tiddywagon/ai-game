@@ -177,6 +177,13 @@ func _factions() -> void:
 		check(not _for(other).any(func(quest: Dictionary) -> bool: return str(quest.get("faction", "")) == faction) and own.all(func(quest: Dictionary) -> bool: return quest in _for(faction)),
 			"%s's line is shown to %s and hidden from %s" % [faction, faction, other])
 		check(own.any(func(quest: Dictionary) -> bool: return _effective_level(quest) >= 30), "%s's line ends late (level 30+)" % faction)
+		var barters: GDScript = load("res://scripts/data/barter_table.gd")
+		var unlocks: Array = own.filter(func(quest: Dictionary) -> bool: return barters.all().any(func(barter: Dictionary) -> bool: return barters.quest(barter) == quest.id))
+		check(not unlocks.is_empty() and unlocks.all(func(quest: Dictionary) -> bool: return not _waits_closed(quest)),
+			"%s's faction barter unlocks with %s, which can be done on today's maps" % [faction, str(_ids(unlocks))])
+		var open: Array = own.filter(func(quest: Dictionary) -> bool: return not _waits_closed(quest))
+		check(own.size() - open.size() <= 1 and open.any(func(quest: Dictionary) -> bool: return _effective_level(quest) >= 30),
+			"%s's line can be finished on today's maps, its last quest too (only a side branch waits: %s)" % [faction, str(_ids(own.filter(func(quest: Dictionary) -> bool: return _waits_closed(quest))))])
 
 
 func _objective_types() -> void:
