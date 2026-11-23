@@ -282,9 +282,53 @@ static func bonuses_text(id: String, skill_level := -1) -> String:
 
 
 static func _value_text(value: float, unit: String) -> String:
-	var shown := snappedf(value if unit == "kg" else value * 100.0, 0.1)
-	var number := str(roundi(shown)) if is_equal_approx(shown, roundf(shown)) else "%.1f" % shown
+	var shown := snappedf(value if unit == "kg" else value * 100.0, 0.01)
+	var number := str(roundi(shown)) if is_equal_approx(shown, roundf(shown)) else "%.1f" % shown if is_equal_approx(shown * 10.0, roundf(shown * 10.0)) else "%.2f" % shown
 	return number + (" kg" if unit == "kg" else "%")
+
+
+# --- DESIGN.md §12.3's table ------------------------------------------------------------------------
+
+## How DESIGN.md's table names each action (`%s`: its points).
+const ACTION_TEXT := {
+	"carry_metre": "%s a metre moved with 10 kg or more, × the load / 25 kg (×2 over 25 kg)", "melee_hit": "%s a melee hit",
+	"throw": "%s a throw", "sprint_metre": "%s a metre sprinted", "damage": "%s an HP of damage taken and survived",
+	"treat": "%s a bleed or fracture treated", "energy_hydration": "%s a point of energy or hydration eaten or drunk",
+	"inject": "%s a stim (Common to Legendary)", "item_found": "%s an item found searching a container or body",
+	"covert_metre": "%s a metre crouched or walking within 25 m of an enemy that isn't fighting you",
+	"craft": "%s a craft collected", "craft_minute": "%s more a minute of the craft's time", "hit": "%s a bullet hit", "kill": "%s more for a kill",
+}
+
+
+## DESIGN.md §12.3's skill table, worked out from skills.json (the weapon classes share one row):
+## | Skill | Trained by (points) | Each level | Cap |.
+static func design_table() -> String:
+	var lines: Array[String] = ["| Skill | Trained by (points) | Each level | Cap |", "|---|---|---|---|"]
+	var classes: Array[String] = []
+	for skill in all():
+		var id := str(skill.id)
+		if bool(skill.get("weapon_class", false)):
+			classes.append(str(skill.name))
+			if classes.size() > 1:
+				continue
+		var actions: Array[String] = []
+		for action: String in skill.actions:
+			var value: Variant = skill.actions[action]
+			var amount := "%s-%s" % [_number(value[0]), _number(value[-1])] if value is Array else _number(float(value))
+			actions.append(str(ACTION_TEXT.get(action, "%s " + action)) % amount)
+		if id in HideoutWork.GYM_SKILLS:
+			actions.append("a Gym session (30-60)")
+		var each: Array[String] = []
+		var caps: Array[String] = []
+		for name: String in skill.bonuses:
+			each.append(bonus_text(id, name, 1))
+			caps.append("%s at level %d" % [_value_text(float(skill.bonuses[name].max), str(skill.bonuses[name].get("unit", "share"))), cap_level(id, name)])
+		lines.append("| %s | %s | %s | %s |" % ["WEAPON_CLASSES" if bool(skill.get("weapon_class", false)) else str(skill.name), "; ".join(actions), "; ".join(each), "; ".join(caps)])
+	return "\n".join(lines).replace("WEAPON_CLASSES", "Weapon classes (%s)" % ", ".join(classes))
+
+
+static func _number(value: float) -> String:
+	return str(roundi(value)) if is_equal_approx(value, roundf(value)) else String.num(value, 3)
 
 
 # --- Checks ---------------------------------------------------------------------------------------

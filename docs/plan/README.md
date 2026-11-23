@@ -17,8 +17,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E10 | Collectible figures, Collectors Shelf, set bonuses, Collector quests: [E10_figures.md](E10_figures.md) (suite `tests/figures_test.gd`) | done |
 | E11 | Data-driven quest system (more objective types, unlocks, quest log, raid tracker): [E11_quests.md](E11_quests.md) (suite `tests/quests_test.gd`) | done |
 | E12 | At least 60 quests across traders, maps, factions and bosses: [E12_quest_content.md](E12_quest_content.md) (suite `tests/quest_content_test.gd`) | done |
-| E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) | next |
-| E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) | after E13 |
+| E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) (suite `tests/skills_test.gd`) | done |
+| E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) | next |
 | E15 | Drip economy, cosmetic slot machine, skins, Cosmetics tab: [E15_drip_cosmetics.md](E15_drip_cosmetics.md) | after E14 (two parts) |
 | | **The first batch (through E9) is complete**: every step is done and no known bug is open | |
 
@@ -29,14 +29,10 @@ market and hideout requests is no longer available either: E7 and E8 are written
 ## Known bugs to fix
 
 (Fixed earlier: auto-equip improving on a second run when a stash rig or backpack held rounds or meds, with E9.)
+(Fixed with E13: the quest log's trader dropdown not following the filter, BEAR's last faction quest waiting on a
+map with no scene, DESIGN §10's money model citing a suite that no longer existed.)
 
-- The quest log's trader dropdown still reads "All traders" when the list is opened filtered to one trader (from
-  TRADERS). Fix in E13 (it touches the character/quest screens anyway).
-- BEAR's faction reward (the Tundra barter) waits on "Last Word", which now needs Woodland (no scene yet), while
-  USEC's line ends on a playable map: give BEAR's last quest an open-map route (or move the barter's unlock) so
-  both factions can finish their line today. Fix in E13.
-- DESIGN §10's money model cites a `progression_test` suite that no longer exists and the older quest money:
-  update it to the current suites and numbers. Fix in E13.
+No known bug is open.
 
 ## Ground rules for every step
 
@@ -46,7 +42,7 @@ market and hideout requests is no longer available either: E7 and E8 are written
 - Match the surrounding code: `##` doc comments, tabs, typed GDScript, static helper classes extending
   RefCounted, data in `data/` (JSON or .tres) read by a loader with a `problems()` check that runs when the items
   load. Tunable numbers go in data/config files, not literals.
-- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (18 now) and its comment block list every version.
+- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (20 now) and its comment block list every version.
   New saved state bumps it once per step, with `GameState.from_dict()` / `SaveManager.upgrade()` loading every
   older save without losing progress.
 - Invariants that have bitten before: never lose or create items or rounds; a stack never exceeds its max stack

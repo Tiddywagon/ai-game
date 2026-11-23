@@ -78,6 +78,12 @@ func _data() -> void:
 	var found: Array[String] = skills.problems_of(parsed)
 	check(found.size() == 4 and found.any(func(p: String) -> bool: return "recoil" in p) and found.any(func(p: String) -> bool: return "crafting" in p),
 		"a broken copy: four problems (%s)" % str(found))
+	var table: String = skills.design_table()
+	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	if not check(table in design, "DESIGN.md §12.3 has the skill table as skills.json has it (expected: %s)" % ProjectSettings.globalize_path("user://skill_table.md")):
+		var out := FileAccess.open("user://skill_table.md", FileAccess.WRITE)
+		out.store_string(table)
+		out.close()
 	parsed.weapon_classes.skills.remove_at(0)  # Pistols: the pistols train a skill that isn't there.
 	check(skills.problems_of(parsed).any(func(p: String) -> bool: return "trains pistols" in p), "a gun whose skill isn't a weapon class: a problem")
 
