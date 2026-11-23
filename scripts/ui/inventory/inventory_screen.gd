@@ -238,7 +238,7 @@ func _process(delta: float) -> void:
 	if loot_search == null or get_tree().paused:
 		return
 	var was_done := loot_search.is_done()
-	var found := loot_search.step(delta)
+	var found := loot_search.step(delta, true)  # The player's search: the Search skill.
 	for view in _loot_views:
 		if is_instance_valid(view):
 			view.queue_redraw()

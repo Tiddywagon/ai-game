@@ -4,6 +4,9 @@ extends "res://tests/test_base.gd"
 ## each skill gaining from its real action and its bonus changing the real effect, the Gym, lifetime
 ## stats counted from raids and menus, the save round trip.
 
+const MAP := "res://maps/test_level.tscn"
+const HOUR := 3600.0
+
 var skills: GDScript
 var progression: GDScript
 
@@ -18,6 +21,12 @@ func run() -> void:
 	_bonuses()
 	_metabolism_and_stims()
 	_weapon_handling()
+	_vitality_body()
+	_search()
+	_crafting()
+	_gym()
+	await _raid_training()
+	await _practice()
 	_saves()
 
 
@@ -195,3 +204,312 @@ func _saves() -> void:
 	check(skills.level("strength") == 3 and is_equal_approx(skills.points("strength"), 65.0), "a version 19 skill keeps its level; half way to the next becomes 65 points")
 	check(skills.level("metabolism") == 12 and skills.level("crafting") == 0 and skills.level("covert_movement") == 0 and not gs.skills.has("gone_skill"),
 		"other levels kept, the new skills at 0, an unknown one dropped")
+
+
+## The skill's total points (every level's and the ones toward the next).
+func _total(id: String) -> float:
+	return skills.total_points(skills.level(id)) + skills.points(id)
+
+
+func _vitality_body() -> void:
+	section("Vitality: bleeds, fractures, regeneration")
+	fresh_profile()
+	var body_script: GDScript = load("res://scripts/actors/body_health.gd")
+	var config: Resource = load("res://data/config/health.tres")
+	var counts := []
+	for multiplier in [1.0, 0.7]:
+		seed(7)
+		var bleeds := 0
+		var fractures := 0
+		for i in 300:
+			var body: RefCounted = body_script.new(config)
+			body.bleed_multiplier = multiplier
+			body.fracture_multiplier = multiplier
+			body.hit(body_script.Part.LEFT_LEG, 20.0, {})
+			bleeds += 1 if body.bleeds[body_script.Part.LEFT_LEG] != body_script.Bleed.NONE else 0
+			fractures += 1 if body.fractures[body_script.Part.LEFT_LEG] else 0
+		counts.append([bleeds, fractures])
+	check(counts[1][0] < counts[0][0] and counts[1][1] < counts[0][1] and counts[1][0] > 0,
+		"30%% lower chances: fewer bleeds and fractures from the same 300 hits (%s)" % str(counts))
+	var healed := []
+	for multiplier in [1.0, 1.2]:
+		var body: RefCounted = body_script.new(config)
+		body.regen_multiplier = multiplier
+		body.apply_damage(body_script.Part.LEFT_ARM, 30.0, {})
+		body.add_effect("regen", 2.0, 60.0, 0.0, false, "test")
+		var before: float = body.hp[body_script.Part.LEFT_ARM]
+		body.tick(5.0)
+		healed.append(body.hp[body_script.Part.LEFT_ARM] - before)
+	check(healed[0] > 0.0 and is_equal_approx(healed[1], healed[0] * 1.2), "20%% more regeneration from a stim (%s)" % str(healed))
+	gs.skills.vitality.level = 25
+	check(is_equal_approx(1.0 - skills.bonus("vitality", "bleed"), 0.85) and is_equal_approx(1.0 + skills.bonus("vitality", "regen"), 1.1), "Vitality 25: bleeds x0.85, regeneration x1.1")
+	var consumables: GDScript = load("res://scripts/inventory/consumables.gd")
+	var body: RefCounted = body_script.new(config)
+	body.start_metabolism(consumables.CONFIG, 100.0, 100.0)  # The player's body.
+	body.bleeds[body_script.Part.LEFT_ARM] = body_script.Bleed.LIGHT
+	var before := _total("vitality")
+	consumables.apply(item("bandage"), body, body_script.Part.LEFT_ARM)
+	check(is_equal_approx(_total("vitality") - before, 10.0) and body.bleeds[body_script.Part.LEFT_ARM] == body_script.Bleed.NONE, "a bleed treated: 10 Vitality points")
+	var ai_body: RefCounted = body_script.new(config)
+	ai_body.bleeds[body_script.Part.LEFT_ARM] = body_script.Bleed.LIGHT
+	before = _total("vitality")
+	consumables.apply(item("bandage"), ai_body, body_script.Part.LEFT_ARM)
+	check(_total("vitality") == before, "an AI's bandage trains nothing")
+
+
+func _search() -> void:
+	section("Search: items found, faster search")
+	fresh_profile()
+	var grid_script: GDScript = load("res://scripts/inventory/inventory_grid.gd")
+	var search_script: GDScript = load("res://scripts/inventory/loot_search.gd")
+	var times := []
+	for search_level in [0, 50]:
+		gs.skills.search.level = search_level
+		var grid: RefCounted = grid_script.new(Vector2i(6, 6), &"loot")
+		for id in ["bolts", "screws", "bandage", "water_bottle"]:
+			grid.add(item(id))
+		var search: RefCounted = search_script.new(func() -> Array: return [grid])
+		search.hide_all()
+		var seconds := 0.0
+		while not search.is_done() and seconds < 60.0:
+			search.step(0.05, true)
+			seconds += 0.05
+		times.append(seconds)
+	check(times[0] > 1.0 and absf(times[1] - times[0] / 1.2) < 0.11, "Search 50: the same container 20%% faster (%.2f s, %.2f s)" % times)
+	var ai_grid: RefCounted = grid_script.new(Vector2i(6, 6), &"loot")
+	ai_grid.add(item("bolts"))
+	var ai_search: RefCounted = search_script.new(func() -> Array: return [ai_grid])
+	ai_search.hide_all()
+	var slow: float = ai_search.time_for(ai_grid.items[0])
+	check(ai_search.step(slow * 0.9).is_empty(), "a bot's search (not the player's) isn't sped up")
+	gs.skills.search.level = 0
+	skills.begin_raid(true)
+	var grid: RefCounted = grid_script.new(Vector2i(6, 6), &"loot")
+	for id in ["bolts", "screws", "bandage"]:
+		grid.add(item(id))
+	var search: RefCounted = search_script.new(func() -> Array: return [grid])
+	search.hide_all()
+	search.step(60.0, true)
+	var gains: Dictionary = skills.end_raid()
+	check(is_equal_approx(skills.points("search"), 12.0) and is_equal_approx(gains.search.points, 12.0), "three items found in a raid: 12 Search points")
+	search.hide_all()
+	search.step(60.0, true)
+	check(is_equal_approx(skills.points("search"), 12.0), "out of a raid, nothing")
+
+
+func _crafting() -> void:
+	section("Crafting: crafts collected, shorter, sometimes one more")
+	var work: GDScript = load("res://scripts/progression/hideout_work.gd")
+	var hideout: GDScript = load("res://scripts/progression/hideout.gd")
+	fresh_profile()
+	work.now_override = 1_800_000_000.0
+	gs.hideout_state = work.blank()
+	gs.hideout.medstation = 1
+	var medstation: Dictionary = hideout.find("medstation")
+	var recipe: Dictionary = hideout.all_crafts(medstation)[2][1]  # Glucose shot, 5 minutes.
+	check(is_equal_approx(work.craft_seconds(recipe), 300.0), "level 0: the glucose shot takes 5 minutes")
+	gs.skills.crafting.level = 25
+	check(is_equal_approx(work.craft_seconds(recipe), 270.0), "Crafting 25: 10% shorter, 4:30")
+	gs.skills.crafting.level = 0
+	for id in ["empty_injector", "sugar"]:
+		gs.stash.add(item(id, 2))
+	check(work.craft(medstation, recipe) == "" and is_equal_approx(work.queue(medstation)[0].total, 300.0), "queued")
+	work.now_override += HOUR
+	work.update()
+	var before := _total("crafting")
+	check(work.collect(medstation) == "" and is_equal_approx(_total("crafting") - before, 20.0 + 0.5 * 5.0), "collected: 20 points and 0.5 a minute (22.5)")
+	gs.skills.crafting.level = 50
+	var extra := 0
+	for number in 2000:
+		extra += 1 if work.extra_output(recipe, number) else 0
+	check(extra > 140 and extra < 260, "Crafting 50: about one craft in ten makes one more (%d of 2,000)" % extra)
+	gs.skills.crafting.level = 0
+	check(range(2000).all(func(number: int) -> bool: return not work.extra_output(recipe, number)), "level 0: never")
+	gs.skills.crafting.level = 50
+	var number := 1
+	while not work.extra_output(recipe, int(gs.hideout_state.get("crafted", 0)) + 1) and number < 500:
+		gs.hideout_state.crafted = int(gs.hideout_state.get("crafted", 0)) + 1
+		number += 1
+	gs.stash.add(item("empty_injector", 1))
+	gs.stash.add(item("sugar", 1))
+	var shots: int = gs.stash.count_of("glucose_shot")
+	work.craft(medstation, recipe)
+	work.now_override += HOUR
+	work.update()
+	work.collect(medstation)
+	check(gs.stash.count_of("glucose_shot") == shots + 2, "a craft that rolls the extra puts two in the stash")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	var crafted: int = gs.hideout_state.crafted
+	gs.from_dict(saved)
+	check(int(gs.hideout_state.crafted) == crafted, "the craft count is saved (the next roll stays the same)")
+	work.now_override = -1.0
+
+
+func _gym() -> void:
+	section("The Gym")
+	var work: GDScript = load("res://scripts/progression/hideout_work.gd")
+	fresh_profile()
+	work.now_override = 1_800_000_000.0
+	gs.hideout_state = work.blank()
+	gs.hideout.gym = 1
+	check(work.train("strength") == "" and is_equal_approx(skills.points("strength"), 30.0), "a Gym session: 30 Strength points")
+	work.now_override += 9.0 * HOUR
+	check(work.train("endurance") == "" and is_equal_approx(skills.points("endurance"), 30.0), "and later 30 Endurance points, no fatigue (out of a raid)")
+	work.now_override = -1.0
+
+
+## Starts a raid on the Test Yard: the RaidController, its bots' AI off and no Scav waves.
+func _start(extra := {}) -> Node:
+	var raid := {"side": "pmc", "map": "test_yard", "loadout": gs.pmc_loadout(), "seed": 4, "boss": false, "pmcs": 0}
+	raid.merge(extra, true)
+	gs.raid = raid
+	change_scene_to_file(MAP)
+	await frames(3)
+	var controller: Node = root.get_tree().get_first_node_in_group("raid_controller")
+	controller.next_wave = -1.0
+	for bot: Node in root.get_tree().get_nodes_in_group("bots"):
+		bot.ai_enabled = false
+	return controller
+
+
+## The player moves `metres` (in steps of a metre) in `state` (Actor.Move): what training reads.
+func _move(player: Node, metres: float, state: int) -> void:
+	player._train_movement(0.0)
+	var steps := ceili(metres)
+	for i in steps:
+		player.move_state = state
+		player.global_position += Vector3(metres / steps, 0.0, 0.0)
+		player._covert_check = 0.0
+		player._train_movement(0.0)
+
+
+func _raid_training() -> void:
+	section("In a raid: each skill trained by doing it, and its bonus at work")
+	fresh_profile()
+	var controller: Node = await _start()
+	var player: Node = controller.player
+	var move: Dictionary = load("res://scripts/actors/actor.gd").Move
+	check(skills.in_raid and skills.raid_counts, "a PMC raid trains skills")
+	for bot: Node in root.get_tree().get_nodes_in_group("bots"):
+		bot.global_position += Vector3(0.0, 0.0, 400.0)  # Out of the way (Covert movement looks for bots near).
+	_move(player, 100.0, move.SPRINT)
+	check(is_equal_approx(_total("endurance"), 10.0), "100 m sprinted: 10 Endurance points (%.2f)" % _total("endurance"))
+	_move(player, 100.0, move.WALK)
+	check(is_equal_approx(_total("endurance"), 10.0), "walking doesn't train it")
+	var cap0: float = player.stamina_cap()
+	gs.skills.endurance.level = 25
+	check(is_equal_approx(player.stamina_cap(), cap0 + 15.0), "Endurance 25: 15%% more stamina (%.0f from %.0f)" % [player.stamina_cap(), cap0])
+	var recovered := []
+	for endurance_level in [0, 25]:
+		gs.skills.endurance.level = endurance_level
+		player.stamina = 10.0
+		player._regen_cooldown = 0.0
+		player._update_stamina(false, 1.0)
+		recovered.append(player.stamina - 10.0)
+	check(is_equal_approx(recovered[1], recovered[0] * 1.15), "and recovers 15%% faster (%s)" % str(recovered))
+	# Strength: a load.
+	var light: float = player.carried_weight_kg
+	player.debug_extra_weight = maxf(15.0 - light, 0.0)
+	var kg: float = player.carried_weight_kg
+	var before := _total("strength")
+	_move(player, 100.0, move.WALK)
+	check(is_equal_approx(_total("strength") - before, 0.03 * 100.0 * kg / 25.0), "100 m with %.1f kg: %.2f Strength points" % [kg, _total("strength") - before])
+	player.debug_extra_weight = 30.0 - light
+	before = _total("strength")
+	_move(player, 100.0, move.WALK)
+	check(is_equal_approx(_total("strength") - before, 0.03 * 100.0 * 30.0 / 25.0 * 2.0), "with 30 kg (over the heavy threshold) twice as fast")
+	player.debug_extra_weight = 5.0 - light if light < 5.0 else 0.0
+	before = _total("strength")
+	_move(player, 100.0, move.WALK)
+	check(_total("strength") == before or player.carried_weight_kg >= 10.0, "under 10 kg: nothing")
+	player.debug_extra_weight = 30.0 - light
+	var weight_before: float = player.load_weight()
+	gs.skills.strength.level = 30
+	check(is_equal_approx(player.load_weight(), weight_before - 3.0), "Strength 30: 3 kg lighter against the thresholds")
+	var stats_rows: Array = load("res://scripts/inventory/loadout_stats.gd").carry_rows(player.inventory, player.inventory_config, gs.skills)
+	check(str(stats_rows[0].text).contains("43"), "the LOADOUT screen's weight row shows the higher limit (%s)" % stats_rows[0].text)
+	player.debug_extra_weight = 0.0
+	var grenade_script: GDScript = load("res://scripts/combat/thrown_grenade.gd")
+	var far: Vector3 = player.global_position + Vector3(100.0, 0.0, 0.0)
+	gs.skills.strength.level = 0
+	var plain_throw: Node = grenade_script.throw(player, db.get_item("flashbang_grenade"), far)
+	gs.skills.strength.level = 50
+	var strong_throw: Node = grenade_script.throw(player, db.get_item("flashbang_grenade"), far)
+	var flat := func(grenade: Node) -> float: return Vector2(grenade.target.x - player.global_position.x, grenade.target.z - player.global_position.z).length()
+	check(absf(flat.call(strong_throw) / flat.call(plain_throw) - 1.2) < 0.02, "Strength 50: throws 20%% farther (%.1f m, %.1f m)" % [flat.call(plain_throw), flat.call(strong_throw)])
+	plain_throw.queue_free()
+	strong_throw.queue_free()
+	gs.skills.strength.level = 0
+	before = _total("strength")
+	player.inventory.pockets.add(item("flashbang_grenade"))
+	player._throw_cooldown = 0.0
+	var thrown: bool = player.throw_item(player.inventory.pockets.items.filter(func(each: RefCounted) -> bool: return each.data.id == "flashbang_grenade")[0])
+	check(thrown and is_equal_approx(_total("strength") - before, 3.0), "a throw: 3 Strength points (%s, %.2f)" % [thrown, _total("strength") - before])
+	for grenade in root.get_tree().current_scene.get_children().filter(func(node: Node) -> bool: return node.get_script() == grenade_script):
+		grenade.queue_free()
+	# Weapon class: bullet hits and kills.
+	var scav: Node = root.get_tree().get_nodes_in_group("bots")[0]
+	var skill: String = player.weapon.data.skill
+	before = _total(skill)
+	player.on_hit_landed(scav, 10.0, scav.chest_point(), {"damage": 10.0})
+	check(skill != "" and is_equal_approx(_total(skill) - before, 2.0), "a bullet hit with the %s: 2 %s points" % [player.weapon.data.resource_path.get_file(), skill])
+	player.on_hit_landed(scav, 10.0, scav.chest_point(), {})
+	check(is_equal_approx(_total(skill) - before, 2.0), "a grenade or melee hit (no bullet) trains no weapon skill")
+	scav.take_blow(100000.0, player, "melee", "Test", scav.chest_point())
+	player.on_hit_landed(scav, 100000.0, scav.chest_point(), {"damage": 100000.0})
+	check(is_equal_approx(_total(skill) - before, 14.0), "a kill: 2 for the hit and 10 more")
+	var reload_before: float = player.weapon.data.reload_time
+	gs.skills[skill].level = 50
+	player._sync_weapon(true)
+	check(is_equal_approx(player.weapon.data.reload_time, reload_before * 0.8), "level 50, the gun drawn again: reloads 20%% faster (%.2f s)" % player.weapon.data.reload_time)
+	gs.skills[skill].level = 0
+	player._sync_weapon(true)
+	# Vitality: damage taken and survived.
+	before = _total("vitality")
+	player.take_blow(10.0, null, "melee", "Test", player.chest_point())
+	check(is_equal_approx(_total("vitality") - before, 5.0) and not player.is_dead, "10 damage taken and survived: 5 Vitality points")
+	gs.skills.vitality.level = 50
+	player._train_movement(0.0)
+	check(is_equal_approx(player.health.bleed_multiplier, 0.7) and is_equal_approx(player.health.fracture_multiplier, 0.7) and is_equal_approx(player.health.regen_multiplier, 1.2),
+		"Vitality 50: the body's bleed and fracture chances x0.7, regeneration x1.2")
+	gs.skills.vitality.level = 0
+	# Covert movement: near an enemy that isn't fighting you.
+	var other: Node = root.get_tree().get_nodes_in_group("bots").filter(func(bot: Node) -> bool: return not bot.is_dead)[0]
+	other.global_position = player.global_position + Vector3(0.0, 0.0, 15.0)
+	before = _total("covert_movement")
+	_move(player, 10.0, move.CROUCH)
+	check(is_equal_approx(_total("covert_movement") - before, 2.0), "10 m crouched 15 m from an unaware Scav: 2 Covert movement points")
+	_move(player, 10.0, move.SPRINT)
+	check(is_equal_approx(_total("covert_movement") - before, 2.0), "sprinting doesn't count")
+	other.global_position = player.global_position + Vector3(0.0, 0.0, 40.0)
+	_move(player, 10.0, move.WALK)
+	check(is_equal_approx(_total("covert_movement") - before, 2.0), "40 m away doesn't")
+	other.global_position = player.global_position + Vector3(0.0, 0.0, 15.0)
+	other.target = player
+	other.state = other.State.COMBAT
+	_move(player, 10.0, move.WALK)
+	check(is_equal_approx(_total("covert_movement") - before, 2.0), "nor one that's fighting you")
+	var reaction: float = other.reaction_time()
+	gs.skills.covert_movement.level = 50
+	check(is_equal_approx(other.reaction_time(), reaction * 1.2), "Covert movement 50: the Scav reacts 20%% later (%.2f s)" % other.reaction_time())
+	check(is_equal_approx(player.step_noise_multiplier(), 0.8) and other.step_noise_multiplier() == 1.0, "and your footsteps are 20% quieter (the AI's aren't)")
+	other.state = other.State.IDLE
+	other.target = null
+	# Fatigue and the summary.
+	gs.skills.endurance.level = 0
+	gs.skills.endurance.points = 0.0
+	var outcome: RefCounted = controller.end_raid(load("res://scripts/raid/raid_outcome.gd").Status.SURVIVED)
+	check(not skills.in_raid and outcome.skill_gains.has("endurance") and outcome.skill_gains.has(skill), "the raid's skill gains reach its outcome (%s)" % str(outcome.skill_gains.keys()))
+
+
+func _practice() -> void:
+	section("A practice raid trains nothing")
+	fresh_profile()
+	var controller: Node = await _start({"practice": true})
+	var player: Node = controller.player
+	check(skills.in_raid and not skills.raid_counts, "the practice raid doesn't count")
+	_move(player, 100.0, load("res://scripts/actors/actor.gd").Move.SPRINT)
+	check(_total("endurance") == 0.0, "100 m sprinted: no Endurance")
+	change_scene_to_file("res://ui/main_menu.tscn")
+	await frames(3)
+	check(not skills.in_raid, "leaving the raid scene ends the raid for skills")

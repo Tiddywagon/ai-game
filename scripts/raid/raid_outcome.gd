@@ -43,6 +43,9 @@ var extract_name := ""
 ## got out, lost if not).
 var loot_count := 0
 var loot_value := 0
+## What each skill gained this raid (Skills.end_raid()): id -> {"earned", "points", "levels"}; the summary
+## lists them.
+var skill_gains := {}
 ## 360 trick shots this raid: rounds that hit, kills, and the Drip they earned.
 var trick_hits := 0
 var trick_kills := 0
@@ -147,7 +150,8 @@ func insurance_value() -> int:
 ## `to_profile` false (the test level run on its own) only the found-in-raid marks change.
 ## `tricks`: {"hits", "kills": [{"side", "weapon_class"}], "drip"} from the RaidController.
 ## `details`: {"xp_parts", "kill_list", "extract", "looters" (hostile AI alive near the body), "faction"
-## (the player's), "karma" (a Scav run's karma changes), "map" (its id)} from the RaidController, for
+## (the player's), "karma" (a Scav run's karma changes), "map" (its id), "skills" (the skill gains)} from
+## the RaidController, for
 ## the summary, insurance, karma and the quests' kill and extract objectives (a PMC raid's:
 ## QuestLog.record_raid()).
 static func settle(end: Status, raid_side: String, inventory: Inventory, raid_seconds: float, raid_xp: int,
@@ -160,6 +164,7 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	outcome.xp_parts = details.get("xp_parts", {})
 	outcome.kills = raid_kills
 	outcome.kill_list = details.get("kill_list", [])
+	outcome.skill_gains = details.get("skills", {})
 	outcome.extract_name = str(details.get("extract", ""))
 	outcome.faction = str(details.get("faction", "")) if raid_side != "scav" else ""
 	if raid_side == "scav":

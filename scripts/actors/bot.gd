@@ -884,14 +884,22 @@ func shuns(other: Actor) -> bool:
 ## Seconds between first seeing its target and opening fire: its profile's reaction time, × the
 ## same-faction reaction_multiplier while it hesitates at the target, and a Scav's × the karma one
 ## (Player.karma_reaction: slower just under the line, quicker the lower your karma) for a player Scav it
-## turned on for their karma alone.
+## turned on for their karma alone; slower against a player with Covert movement.
 func reaction_time() -> float:
 	var seconds := profile.reaction_time if profile else 0.5
 	if target and hesitates_at(target):
 		seconds *= float(Factions.same_faction().get("reaction_multiplier", 1.0))
 	if target is Player and side == Side.SCAV and target.side == Side.SCAV and target.scavs_hostile and not target in enemies:
 		seconds *= target.karma_reaction
+	if target:
+		seconds *= 1.0 + target.skill_bonus("covert_movement", "notice")  # The player's Covert movement.
 	return seconds
+
+
+## True while it's fighting `other` (in combat with it as its target): Covert movement trains near bots
+## that aren't.
+func notices(other: Actor) -> bool:
+	return state == State.COMBAT and target == other
 
 
 ## Seen by the shared vision rules. In combat the bot keeps turning toward its target, so only the first

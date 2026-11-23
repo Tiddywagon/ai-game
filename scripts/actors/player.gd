@@ -61,6 +61,10 @@ const AIM_ASSIST_RADIUS := 150.0
 const AIM_ASSIST_SPEED := 900.0
 ## Holding melee this long (seconds) raises the parry stance instead of swinging.
 const PARRY_HOLD := 0.25
+## A move of more than this many metres in one tick is a placing, not walking (_train_movement()).
+const TELEPORT := 2.0
+## Seconds between looks for an enemy nearby that hasn't noticed you (Covert movement).
+const COVERT_CHECK_SECONDS := 0.5
 ## Seconds between grenade throws.
 const THROW_COOLDOWN := 0.8
 ## Camera shake strength per hit taken (0-1, scaled by Settings). Each gun sets its own kick per shot.
@@ -145,6 +149,11 @@ var _last_number_damage := 0.0
 ## left and in all.
 var using_item: ItemInstance
 var _use_part := -1
+## Where the player stood last tick (skills trained by moving: _train_movement()), and the Covert
+## movement check: seconds to the next look for an unaware enemy nearby, and what it found.
+var _last_spot := Vector2.INF
+var _covert_check := 0.0
+var _covert_near := false
 var use_time_left := 0.0
 var use_time_total := 0.0
 
@@ -170,11 +179,13 @@ func _ready() -> void:
 	weapon.jam_cleared.connect(_on_jam_cleared)
 	hit_landed.connect(func(_target: Actor, _damage: float, _at: Vector3) -> void: InputHub.pulse("hit"))
 	hurt.connect(func(_damage: float) -> void: InputHub.pulse("damage"))
+	hurt.connect(_train_vitality)
 	parried.connect(func(attacker: Actor) -> void:
 		InputHub.pulse("parry")
 		action_blocked.emit("Parried %s" % attacker.display_name()))
 	health.start_metabolism(Consumables.CONFIG, GameState.energy, GameState.hydration)
 	set_inventory(Inventory.starter())
+	stamina = stamina_cap()  # Endurance's extra stamina, from the start.
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -263,6 +274,7 @@ func _aim_assist(camera: Camera3D, aim_at: Vector2, delta: float) -> Vector2:
 
 
 func _think(delta: float) -> void:
+	_train_movement(delta)
 	_update_focus()
 	_throw_cooldown = maxf(_throw_cooldown - delta, 0.0)
 	if _melee_held >= 0.0:
@@ -311,6 +323,68 @@ func _think(delta: float) -> void:
 				enter_cover(spot)
 			else:
 				action_blocked.emit("No cover nearby")
+
+
+# --- Skills (DESIGN.md §12.3) ---------------------------------------------------------------------
+
+func skill_bonus(id: String, name: String) -> float:
+	return Skills.bonus(id, name)
+
+
+## Skills trained by moving, in a raid (Skills.in_raid): Endurance by metres sprinted, Strength by metres
+## moved with a load (from carry_from_kg, more the heavier, twice over the heavy threshold), Covert
+## movement by metres crouched or walking near an enemy that isn't fighting you. The metres are last
+## tick's (a jump of more than TELEPORT metres, a respawn or a placing, isn't moving).
+func _train_movement(delta: float) -> void:
+	_apply_skill_bonuses()
+	var at := Vector2(global_position.x, global_position.z)
+	var moved := at.distance_to(_last_spot)
+	_last_spot = at
+	_covert_check -= delta
+	if not Skills.in_raid or is_dead or moved <= 0.0 or moved > TELEPORT:
+		return
+	if move_state == Move.SPRINT:
+		Skills.train("endurance", "sprint_metre", moved)
+	if move_state != Move.ROLL and carried_weight_kg >= Skills.rule("strength", "carry_from_kg", 10.0):
+		var heavy := Skills.rule("strength", "heavy_multiplier", 2.0) if carried_weight_kg > inventory_config.encumbered_kg else 1.0
+		Skills.train("strength", "carry_metre", moved * carried_weight_kg / inventory_config.encumbered_kg * heavy)
+	if move_state == Move.CROUCH or move_state == Move.WALK:
+		if _covert_check <= 0.0:
+			_covert_check = COVERT_CHECK_SECONDS
+			_covert_near = unaware_enemy_near()
+		if _covert_near:
+			Skills.train("covert_movement", "covert_metre", moved)
+
+
+## The skill bonuses the body reads (Vitality: bleed and fracture chances, regeneration from stims).
+func _apply_skill_bonuses() -> void:
+	health.bleed_multiplier = 1.0 - Skills.bonus("vitality", "bleed")
+	health.fracture_multiplier = 1.0 - Skills.bonus("vitality", "fracture")
+	health.regen_multiplier = 1.0 + Skills.bonus("vitality", "regen")
+
+
+## A melee swing that lands (not parried) trains Strength.
+func melee_strike() -> Dictionary:
+	var result := super()
+	if Skills.in_raid and result.get("target") != null and not bool(result.get("parried", false)):
+		Skills.train("strength", "melee_hit")
+	return result
+
+
+## Damage taken and survived trains Vitality, in a raid.
+func _train_vitality(damage: float) -> void:
+	if Skills.in_raid and not is_dead and not health.is_dead:
+		Skills.train("vitality", "damage", damage)
+
+
+## True when a hostile bot within Covert movement's near_m isn't fighting you (Bot.notices()).
+func unaware_enemy_near() -> bool:
+	var near := Skills.rule("covert_movement", "near_m", 25.0)
+	for node in get_tree().get_nodes_in_group("bots"):
+		var bot := node as Bot
+		if bot and not bot.is_dead and bot.is_hostile(self) and not bot.notices(self) and bot.global_position.distance_to(global_position) <= near:
+			return true
+	return false
 
 
 func set_flashlight(on: bool) -> void:
@@ -485,6 +559,8 @@ func throw_item(item: ItemInstance) -> bool:
 		inventory.remove_item(item)
 	ThrownGrenade.throw(self, data, aim_point if has_aim else global_position + Vector3(vision_facing().x, 0.0, vision_facing().y) * 8.0)
 	action_blocked.emit("Threw a %s" % data.display_name)
+	if Skills.in_raid:
+		Skills.train("strength", "throw")
 	if voice:
 		voice.say(&"grenade")
 	return true
@@ -815,6 +891,10 @@ func _update_camera_view() -> void:
 
 func on_hit_landed(target: Actor, damage: float, hit_position: Vector3, outcome: Dictionary = {}) -> void:
 	last_hit = outcome
+	if Skills.in_raid and not outcome.is_empty() and weapon.data and weapon.data.skill != "":
+		Skills.train(weapon.data.skill, "hit")  # A bullet (melee and grenades bring no outcome): the gun's skill.
+		if target.is_dead:
+			Skills.train(weapon.data.skill, "kill")
 	if weapon.firing_trick_shot:
 		trick_hits += 1
 		if target.is_dead:

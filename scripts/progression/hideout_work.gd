@@ -32,7 +32,7 @@ static func now() -> float:
 ## fuel, the clock at now.
 static func blank() -> Dictionary:
 	return {"clock": floorf(now()), "handed": {}, "builds": {}, "crafts": {}, "ready": {}, "power_on": true, "fuel": [],
-		"production": {}, "cards": [], "gym_ready": 0.0, "cosmetics": []}
+		"production": {}, "cards": [], "gym_ready": 0.0, "cosmetics": [], "crafted": 0}
 
 
 ## GameState.hideout_state as saved: times in whole seconds, what's left of a craft or a fuel can and
@@ -65,6 +65,7 @@ static func from_save(saved: Variant) -> Dictionary:
 	result.clock = float(saved.get("clock", result.clock))
 	result.power_on = bool(saved.get("power_on", true))
 	result.gym_ready = float(saved.get("gym_ready", 0.0))
+	result.crafted = maxi(int(saved.get("crafted", 0)), 0)
 	var handed: Variant = saved.get("handed")
 	if handed is Dictionary:
 		for station: String in handed:
@@ -96,6 +97,7 @@ static func from_save(saved: Variant) -> Dictionary:
 					if key == "crafts":
 						clean.total = maxf(float(entry.get("total", 0.0)), 0.0)
 						clean.left = clampf(float(entry.get("left", clean.total)), 0.0, clean.total)
+					clean.minutes = maxf(float(entry.get("minutes", float(clean.get("total", 0.0)) / 60.0)), 0.0)  # Crafting skill points.
 					kept.append(clean)
 			if not kept.is_empty():
 				result[key][station] = kept
@@ -171,7 +173,7 @@ static func _advance(seconds: float, powered: bool) -> void:
 				queue.pop_front()
 				if not state.ready.has(id):
 					state.ready[id] = []
-				state.ready[id].append({"id": head.id, "output": head.output})
+				state.ready[id].append({"id": head.id, "output": head.output, "minutes": float(head.get("minutes", 0.0))})
 		if queue.is_empty():
 			state.crafts.erase(id)
 	for id: String in [Hideout.WATER_COLLECTOR, Hideout.BITCOIN_FARM]:
@@ -314,9 +316,16 @@ static func rate(station: Dictionary) -> float:
 	return 1.0 if has_power() else Hideout.unpowered_rate(station)
 
 
-## Real seconds `recipe` takes at full speed.
+## Real seconds `recipe` takes at full speed: its minutes, less the Crafting skill's time bonus.
 static func craft_seconds(recipe: Dictionary) -> float:
-	return float(recipe.get("minutes", 1.0)) * 60.0
+	return float(recipe.get("minutes", 1.0)) * 60.0 * (1.0 - Skills.bonus("crafting", "time"))
+
+
+## Whether the craft queued as the profile's craft number `number` of `recipe` makes one more: a roll
+## against the Crafting skill's extra chance, from a hash (the same every time for the same craft).
+static func extra_output(recipe: Dictionary, number: int) -> bool:
+	var roll := float(hash([str(recipe.get("id", "")), number]) % 10000) / 10000.0
+	return roll < Skills.bonus("crafting", "extra")
 
 
 ## Real seconds until queue entry `index` of `station` is done at the speed it works now (those before
@@ -357,8 +366,10 @@ static func craft(station: Dictionary, recipe: Dictionary) -> String:
 	if not state.crafts.has(station.id):
 		state.crafts[station.id] = []
 	var seconds := craft_seconds(recipe)
-	state.crafts[station.id].append({"id": str(recipe.id), "output": {"item": str(recipe.output.item), "count": int(recipe.output.get("count", 1))},
-		"left": seconds, "total": seconds})
+	state.crafted = int(state.get("crafted", 0)) + 1
+	var count := int(recipe.output.get("count", 1)) + (1 if extra_output(recipe, int(state.crafted)) else 0)
+	state.crafts[station.id].append({"id": str(recipe.id), "output": {"item": str(recipe.output.item), "count": count},
+		"left": seconds, "total": seconds, "minutes": float(recipe.get("minutes", 1.0))})
 	return ""
 
 
@@ -374,6 +385,8 @@ static func collect(station: Dictionary) -> String:
 		if not _put_in_stash(str(output.item), int(output.count)):
 			return "No room in the stash"
 		QuestLog.record_craft(str(station.id), str(waiting[0].get("id", "")), str(output.item))  # Craft objectives (DESIGN.md §11).
+		Skills.train("crafting", "craft")  # Crafting: each craft collected, more for a longer one.
+		Skills.train("crafting", "craft_minute", float(waiting[0].get("minutes", 0.0)))
 		waiting.pop_front()
 	GameState.hideout_state.ready.erase(station.id)
 	return ""

@@ -257,7 +257,7 @@ func _physics_process(delta: float) -> void:
 	_update_facing(delta)
 	weapon.set_stance(speed_ratio(), move_state == Move.SPRINT, is_rolling, aim_blend())
 	_update_firing()
-	noise_radius *= health.noise_multiplier()
+	noise_radius *= health.noise_multiplier() * (1.0 if is_rolling else step_noise_multiplier())
 	_update_footsteps(delta)
 
 
@@ -278,9 +278,10 @@ func is_encumbered() -> bool:
 	return load_weight() > inventory_config.encumbered_kg
 
 
-## The weight that counts against the thresholds: what you carry, less what stims let you carry.
+## The weight that counts against the thresholds: what you carry, less what stims and Strength let you
+## carry.
 func load_weight() -> float:
-	return maxf(carried_weight_kg - health.carry_bonus(), 0.0)
+	return maxf(carried_weight_kg - health.carry_bonus() - skill_bonus("strength", "carry"), 0.0)
 
 
 ## Why a roll isn't possible right now, or "" if it is.
@@ -399,9 +400,20 @@ func metabolism_exertion() -> float:
 	return multiplier
 
 
-## Max stamina right now: more on some stims.
+## Max stamina right now: more with Endurance (the player's) and on some stims.
 func stamina_cap() -> float:
-	return max_stamina + health.stamina_bonus()
+	return max_stamina * (1.0 + skill_bonus("endurance", "stamina")) + health.stamina_bonus()
+
+
+## Footsteps (walking, sprinting, crouching) are this much as loud: quieter with Covert movement.
+func step_noise_multiplier() -> float:
+	return 1.0 - skill_bonus("covert_movement", "noise")
+
+
+## Bonus `name` of skill `id` for this actor (Skills.bonus()): the player's skills (Player); the AI has
+## none.
+func skill_bonus(_id: String, _name: String) -> float:
+	return 0.0
 
 
 ## How fast the actor is moving, 1 = sprint speed.
@@ -888,7 +900,7 @@ func _update_stamina(sprinting: bool, delta: float) -> void:
 	elif _regen_cooldown > 0.0:
 		_regen_cooldown -= delta
 	else:
-		stamina = minf(stamina + regen_rate * health.stamina_regen_multiplier() * delta, stamina_cap())
+		stamina = minf(stamina + regen_rate * health.stamina_regen_multiplier() * (1.0 + skill_bonus("endurance", "stamina_regen")) * delta, stamina_cap())
 		if is_exhausted and stamina >= recover_threshold:
 			is_exhausted = false
 	if stamina == 0.0:

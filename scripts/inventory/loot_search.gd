@@ -4,7 +4,8 @@ extends RefCounted
 ## item at a time, in reading order (top row first), while it's open beside your inventory. Each item
 ## takes RaidConfig.search_base_seconds plus search_seconds_per_cell per cell it covers, so small items
 ## turn up faster, times the container's search time, less the Collectors Shelf's search speed bonus
-## (Figures.search_time_multiplier(): the Raiders set on display). Closing pauses the search; what's revealed stays
+## (Figures.search_time_multiplier(): the Raiders set on display); the player's Search skill speeds their
+## searching on top (step() with by_player). Closing pauses the search; what's revealed stays
 ## revealed. A body's equipment is in plain sight: only what's in its pockets, rig and backpack is
 ## searched.
 
@@ -72,10 +73,11 @@ func counts() -> Array[int]:
 	return [found, total]
 
 
-## Searches for `delta` seconds (while it's open). Returns the items revealed.
-func step(delta: float) -> Array[ItemInstance]:
+## Searches for `delta` seconds (while it's open). Returns the items revealed. `by_player`: the player
+## searching (InventoryScreen), faster with their Search skill, and in a raid what they find trains it.
+func step(delta: float, by_player := false) -> Array[ItemInstance]:
 	var found: Array[ItemInstance] = []
-	var left := delta
+	var left := delta * (1.0 + Skills.bonus("search", "speed") if by_player else 1.0)
 	while left > 0.0:
 		var target := next_hidden()
 		if target != current:
@@ -92,6 +94,8 @@ func step(delta: float) -> Array[ItemInstance]:
 		found.append(current)
 		current = null
 		elapsed = 0.0
+	if by_player and not found.is_empty() and Skills.in_raid:
+		Skills.train("search", "item_found", found.size())
 	return found
 
 

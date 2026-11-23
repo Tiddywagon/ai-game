@@ -73,6 +73,8 @@ var kill_list: Array[Dictionary] = []
 ## "weapon_class"}] (for quests).
 var drip := 0
 var trick_kills: Array[Dictionary] = []
+## What each skill gained this raid (Skills.end_raid(), when it ends): id -> {"earned", "points", "levels"}.
+var skill_gains := {}
 var outcome: RaidOutcome
 ## The extract zone the player is standing in, how long they've stood there able to use it, and the
 ## one they left through.
@@ -127,6 +129,7 @@ var _confirm_timer := 0.0
 
 func _ready() -> void:
 	add_to_group("raid_controller")
+	Skills.begin_raid(counts_for_profile())  # Skills train in a raid that goes to the profile, with fatigue.
 	map = MapInfo.find(GameState.raid.get("map", map_id))
 	start_offset = clampf(float(GameState.raid.get("offset", 0.0)), 0.0, maxf(raid_seconds() - 1.0, 0.0))
 	elapsed = start_offset
@@ -159,6 +162,11 @@ func _ready() -> void:
 	_place_quest_sites.call_deferred()
 	if scav_waves:
 		next_wave = rng.randf_range(config.scav_wave_interval.x, config.scav_wave_interval.y)
+
+
+func _exit_tree() -> void:
+	if outcome == null and Skills.in_raid:
+		Skills.end_raid()  # Left without an ending (quit from the pause menu, a test scene freed).
 
 
 func _physics_process(delta: float) -> void:
@@ -1019,6 +1027,7 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 	elif status == RaidOutcome.Status.SURVIVED and not is_practice():
 		xp_parts.survived = config.xp_survived
 		xp += config.xp_survived
+	skill_gains = Skills.end_raid()
 	if counts_for_profile() and side() == "pmc":
 		RaidOutcome.keep_metabolism(player.health, status == RaidOutcome.Status.KILLED or status == RaidOutcome.Status.MIA)
 	if side() == "scav" and (status == RaidOutcome.Status.SURVIVED or status == RaidOutcome.Status.RUN_THROUGH):
@@ -1029,7 +1038,7 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 		player.kills, counts_for_profile(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
 		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
 			"faction": String(player.faction), "karma": karma_changes.duplicate(true), "map": map_key(),
-			"quest_raid": quest_raid, "extract_id": extracted_id})
+			"quest_raid": quest_raid, "extract_id": extracted_id, "skills": skill_gains})
 	raid_ended.emit(outcome)
 	return outcome
 

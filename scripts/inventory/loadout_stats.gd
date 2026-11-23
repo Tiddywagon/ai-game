@@ -23,7 +23,7 @@ const NONE := "—"
 ## the skills that change a gun's handling (GameState.skills).
 static func rows(gear: Inventory, config: InventoryConfig, skills: Dictionary = {}) -> Array[Dictionary]:
 	var result := armor_rows(gear)
-	result.append_array(carry_rows(gear, config))
+	result.append_array(carry_rows(gear, config, skills))
 	result.append_array(gun_rows(gear, skills))
 	result.append(hearing_row(gear))
 	return result
@@ -60,24 +60,27 @@ static func _durability(piece: ItemInstance) -> String:
 	return "%d / %d" % [roundi(piece.durability), roundi(piece.max_durability)]
 
 
-## Weight (against the thresholds), the weight left before overweight and the room in the pockets, rig
-## and backpack.
-static func carry_rows(gear: Inventory, config: InventoryConfig) -> Array[Dictionary]:
+## Weight (against the thresholds, both raised by Strength's carry bonus with `skills`), the weight left
+## before overweight and the room in the pockets, rig and backpack.
+static func carry_rows(gear: Inventory, config: InventoryConfig, skills: Dictionary = {}) -> Array[Dictionary]:
 	var weight := gear.total_weight()
+	var extra := Skills.bonus("strength", "carry", skills) if not skills.is_empty() else 0.0
+	var heavy_from := config.encumbered_kg + extra
+	var over_from := config.overweight_kg + extra
 	var tone := ""
-	var state := "heavy from %s" % Settings.format_weight(config.encumbered_kg)
-	if weight >= config.overweight_kg:
+	var state := "heavy from %s" % Settings.format_weight(heavy_from)
+	if weight >= over_from:
 		tone = "over"
-		state = "overweight (%d%% speed)" % roundi(config.speed_multiplier(weight) * 100.0)
-	elif weight > config.encumbered_kg:
+		state = "overweight (%d%% speed)" % roundi(config.speed_multiplier(weight - extra) * 100.0)
+	elif weight > heavy_from:
 		tone = "heavy"
-		state = "heavy (%d%% speed)" % roundi(config.speed_multiplier(weight) * 100.0)
+		state = "heavy (%d%% speed)" % roundi(config.speed_multiplier(weight - extra) * 100.0)
 	var room := storage(gear)
 	return [
 		{"key": "weight", "name": "Weight", "text": "%s / %s  ·  %s" % [Settings.format_weight(weight),
-			Settings.format_weight(config.overweight_kg), state], "tone": tone},
-		{"key": "capacity", "name": "Carry limit", "text": "%s before overweight" % Settings.format_weight(maxf(config.overweight_kg - weight, 0.0))
-			if weight < config.overweight_kg else "over by %s" % Settings.format_weight(weight - config.overweight_kg), "tone": tone},
+			Settings.format_weight(over_from), state], "tone": tone},
+		{"key": "capacity", "name": "Carry limit", "text": "%s before overweight" % Settings.format_weight(maxf(over_from - weight, 0.0))
+			if weight < over_from else "over by %s" % Settings.format_weight(weight - over_from), "tone": tone},
 		{"key": "storage", "name": "Storage", "text": "%d of %d cells free  ·  pockets, rig, backpack" % [room.x, room.y],
 			"tone": "heavy" if room.y > 0 and room.x == 0 else ""},
 	]

@@ -30,7 +30,8 @@ var _from := Vector3.ZERO
 var _flight := 0.5
 
 
-## Throws a grenade of `data` from `actor` toward `at` (clamped to MAX_RANGE) and returns it.
+## Throws a grenade of `data` from `actor` toward `at` (clamped to MAX_RANGE, more with the thrower's
+## Strength) and returns it.
 static func throw(actor: Actor, data: ItemData, at: Vector3) -> ThrownGrenade:
 	var grenade := ThrownGrenade.new()
 	grenade.thrower = actor
@@ -41,8 +42,9 @@ static func throw(actor: Actor, data: ItemData, at: Vector3) -> ThrownGrenade:
 	grenade.damage = float(data.stats.get("damage", 140.0))
 	var start := actor.global_position + Vector3.UP * actor.gun_height()
 	var flat := Vector3(at.x - start.x, 0.0, at.z - start.z)
-	if flat.length() > MAX_RANGE:
-		flat = flat.normalized() * MAX_RANGE
+	var reach := MAX_RANGE * (1.0 + actor.skill_bonus("strength", "throw"))  # Strength throws farther.
+	if flat.length() > reach:
+		flat = flat.normalized() * reach
 	grenade.target = Vector3(start.x + flat.x, actor.global_position.y + 0.1, start.z + flat.z)
 	grenade._from = start
 	actor.get_tree().current_scene.add_child(grenade)

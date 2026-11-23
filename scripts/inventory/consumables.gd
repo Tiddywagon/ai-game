@@ -138,6 +138,9 @@ static func apply(item: ItemInstance, health: BodyHealth, part := -1) -> Diction
 		if int(injected.levels) > 0:
 			result.text += "  ·  Stim resistance level %d" % Skills.level(Stims.RESISTANCE)
 	result.levels = 0
+	var treated: int = result.get("fix", []).filter(func(condition: String) -> bool: return condition in ["heavy_bleed", "light_bleed", "fracture"]).size()
+	if health.metabolism and treated > 0 and Skills.train("vitality", "treat", treated) > 0:  # The player's: Vitality.
+		result.text += "  ·  Vitality level %d" % Skills.level("vitality")
 	if health.metabolism and data.category == ItemData.Category.FOOD:
 		result.levels = train_metabolism(data)
 		health.metabolism_skill = drain_multiplier()

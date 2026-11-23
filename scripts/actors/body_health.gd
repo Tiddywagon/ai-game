@@ -58,6 +58,11 @@ var energy_climate := 1.0
 var hydration_climate := 1.0
 ## Drain multiplier from the Metabolism skill (1 = none).
 var metabolism_skill := 1.0
+## The Vitality skill (the player's; Player._apply_skill_bonuses()): bleed and fracture chances ×, and
+## regeneration (stims) ×.
+var bleed_multiplier := 1.0
+var fracture_multiplier := 1.0
+var regen_multiplier := 1.0
 
 ## Cause of the hit that started each part's bleed, for "bled out" death messages.
 var _bleed_causes: Array[Dictionary] = []
@@ -115,12 +120,14 @@ func hit(part: int, damage: float, cause: Dictionary) -> void:
 		heavy = config.heavy_bleed_chance * scale
 	if light < 0.0:
 		light = config.light_bleed_chance * scale
+	heavy *= bleed_multiplier
+	light *= bleed_multiplier
 	if not has_effect("bleed_prevention"):
 		if bleeds[part] != Bleed.HEAVY and randf() < heavy:
 			_start_bleed(part, Bleed.HEAVY, cause)
 		elif bleeds[part] == Bleed.NONE and randf() < light:
 			_start_bleed(part, Bleed.LIGHT, cause)
-	if is_limb(part) and not fractures[part] and not has_effect("fracture_prevention") and randf() < config.fracture_chance * scale:
+	if is_limb(part) and not fractures[part] and not has_effect("fracture_prevention") and randf() < config.fracture_chance * scale * fracture_multiplier:
 		fractures[part] = true
 	changed.emit()
 
@@ -149,7 +156,7 @@ func tick(delta: float) -> void:
 	_tick_effects(delta)
 	var regen := effect_total("regen")
 	if regen > 0.0:
-		_regenerate(regen * delta)
+		_regenerate(regen * regen_multiplier * delta)
 	var drain := effect_total("hp_drain")
 	if drain > 0.0:
 		_drain_every_part(drain * delta, "overdose")
