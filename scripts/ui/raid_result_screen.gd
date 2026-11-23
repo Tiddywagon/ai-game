@@ -101,6 +101,9 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 				lines.append(["    " + XP_PART_NAMES[part], "+%s" % UiFormat.thousands(amount)])
 	if outcome.level_after > outcome.level_before:
 		lines.append(["Level", "%d → %d" % [outcome.level_before, outcome.level_after]])
+	var skill_lines := skill_lines(outcome)
+	for i in skill_lines.size():
+		lines.append(["Skills" if i == 0 else "", skill_lines[i]])
 	for i in outcome.quest_lines.size():  # Quest progress made (QuestRaid.summary_lines()).
 		lines.append(["Quests" if i == 0 else "", outcome.quest_lines[i]])
 	if outcome.trick_hits > 0:
@@ -127,6 +130,23 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 			var taken := outcome.insurance_taken.size()
 			lines.append(["Taken", "%d insured item%s taken off your body: gone for good" % [taken, "" if taken == 1 else "s"]])
 	return lines
+
+
+## The summary's skill lines (RaidOutcome.skill_gains): the most points first, "Endurance +84 points
+## (→ level 6)", and "(tired: 120 of 300 counted)" where fatigue held a skill back.
+static func skill_lines(outcome: RaidOutcome) -> Array[String]:
+	var ids: Array = outcome.skill_gains.keys().filter(func(id: String) -> bool: return float(outcome.skill_gains[id].get("points", 0.0)) >= 0.5)
+	ids.sort_custom(func(a: String, b: String) -> bool: return float(outcome.skill_gains[a].points) > float(outcome.skill_gains[b].points))
+	var result: Array[String] = []
+	for id: String in ids:
+		var gains: Dictionary = outcome.skill_gains[id]
+		var text := "%s +%d points" % [Skills.display_name(id), roundi(float(gains.points))]
+		if int(gains.get("levels", 0)) > 0:
+			text += "  (→ level %d)" % Skills.level(id)
+		if float(gains.get("earned", 0.0)) > float(gains.points) + 0.5:
+			text += "  ·  tired: %d of %d counted" % [roundi(float(gains.points)), roundi(float(gains.earned))]
+		result.append(text)
+	return result
 
 
 func _stat(name: String, value: String) -> void:

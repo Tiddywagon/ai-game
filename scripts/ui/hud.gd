@@ -66,10 +66,18 @@ const BLUR_SHADER := preload("res://assets/shaders/depleted_blur.gdshader")
 const QUEST_TOAST_TIME := 3.0
 const QUEST_COLOR := Color(1.0, 0.82, 0.3)
 const QUEST_DONE_COLOR := Color(0.55, 0.9, 0.55)
+## The skill and level toast (DESIGN.md §12.3, §2.2): how long it stays up, its colour.
+const SKILL_TOAST_TIME := 3.5
+const SKILL_COLOR := Color(0.55, 0.8, 1.0)
 
 var _message_time := 0.0
 var _quest_toast: Label
 var _quest_toast_left := 0.0
+var _skill_toast: Label
+var _skill_toast_left := 0.0
+## The player level the raid's experience so far reaches (the toast says when it goes up).
+var _raid_level := 0
+var _level_check := 0.0
 var _tracker: VBoxContainer
 var _tracker_left := 0.0
 var _raid: RaidController
@@ -142,6 +150,10 @@ func _ready() -> void:
 	_build_poi_label()
 	_quest_toast = _add_center_label(-800.0, 26, QUEST_COLOR)  # Under the area name, clear of the player.
 	_quest_toast.name = "QuestToast"
+	_skill_toast = _add_center_label(-860.0, 24, SKILL_COLOR)
+	_skill_toast.name = "SkillToast"
+	GameState.skill_levelled.connect(_on_skill_levelled)
+	_raid_level = GameState.level
 	_build_tracker()
 	_connect_raid.call_deferred()
 	_build_consumables()
@@ -207,6 +219,36 @@ func _connect_raid() -> void:
 		_raid.poi_entered.connect(_on_poi_entered)
 	if _raid and _raid.quest_raid and not _raid.quest_raid.progressed.is_connected(show_quest_toast):
 		_raid.quest_raid.progressed.connect(show_quest_toast)
+
+
+func _exit_tree() -> void:
+	if GameState.skill_levelled.is_connected(_on_skill_levelled):
+		GameState.skill_levelled.disconnect(_on_skill_levelled)
+
+
+## A skill levelled up in the raid: "STRENGTH 12  ·  5.4% less recoil, ..." (its bonuses now).
+func _on_skill_levelled(id: String, _old_level: int, new_level: int) -> void:
+	show_skill_toast("%s %d  ·  %s" % [Skills.display_name(id).to_upper(), new_level, Skills.bonuses_text(id)])
+
+
+## The skill toast: `text` for SKILL_TOAST_TIME seconds.
+func show_skill_toast(text: String) -> void:
+	_skill_toast.text = text
+	_skill_toast.show()
+	_skill_toast_left = SKILL_TOAST_TIME
+
+
+## The raid's experience so far took the player to a new level: a toast (the level is yours when the raid
+## settles; a Run Through earns none).
+func _check_raid_level(delta: float) -> void:
+	_level_check -= delta
+	if _level_check > 0.0 or _raid == null or not _raid.counts_for_profile():
+		return
+	_level_check = 0.25
+	var reached := Progression.level_for_xp(GameState.xp + _raid.xp)
+	if reached > _raid_level:
+		_raid_level = reached
+		show_skill_toast("LEVEL %d  ·  yours at the end of the raid" % reached)
 
 
 ## The quest toast: `text` for QUEST_TOAST_TIME seconds, green once the objective is complete.
@@ -680,6 +722,9 @@ func _process(delta: float) -> void:
 	_message.visible = _message_time > 0.0
 	_quest_toast_left -= delta
 	_quest_toast.visible = _quest_toast_left > 0.0
+	_check_raid_level(delta)
+	_skill_toast_left -= delta
+	_skill_toast.visible = _skill_toast_left > 0.0
 	_tracker_left -= delta
 	if _tracker_left <= 0.0:
 		_tracker_left = 0.5

@@ -90,7 +90,7 @@ theme_override_constants/separation = 12
 [node name="Title" type="Label" parent="Margin/Layout/Columns/Stats/Rows"]
 layout_mode = 2
 theme_type_variation = &"AccentLabel"
-text = "STATS"
+text = "PROFILE"
 
 [node name="StatsGrid" type="GridContainer" parent="Margin/Layout/Columns/Stats/Rows"]
 unique_name_in_owner = true
@@ -113,20 +113,55 @@ size_flags_horizontal = 3
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Margin/Layout/Columns/Skills/Rows"]
+[node name="Tabs" type="HBoxContainer" parent="Margin/Layout/Columns/Skills/Rows"]
 layout_mode = 2
-theme_type_variation = &"AccentLabel"
+theme_override_constants/separation = 12
+
+[node name="SkillsTab" type="Button" parent="Margin/Layout/Columns/Skills/Rows/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 44)
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
 text = "SKILLS"
 
-[node name="SkillsGrid" type="GridContainer" parent="Margin/Layout/Columns/Skills/Rows"]
+[node name="StatsTab" type="Button" parent="Margin/Layout/Columns/Skills/Rows/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 44)
+layout_mode = 2
+toggle_mode = true
+text = "LIFETIME STATS"
+
+[node name="SkillsScroll" type="ScrollContainer" parent="Margin/Layout/Columns/Skills/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 10
-columns = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="SkillsList" type="VBoxContainer" parent="Margin/Layout/Columns/Skills/Rows/SkillsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="LifetimeScroll" type="ScrollContainer" parent="Margin/Layout/Columns/Skills/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="LifetimeGrid" type="GridContainer" parent="Margin/Layout/Columns/Skills/Rows/LifetimeScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 32
+theme_override_constants/v_separation = 6
+columns = 2
 
 [node name="SkillsHint" type="Label" parent="Margin/Layout/Columns/Skills/Rows"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-text = "Skills level up from what you do in raids."
+text = "Skills level up from what you do. Each level adds a little to its bonus, up to 50; a lot of one skill in a raid slows its gains."
 autowrap_mode = 3

@@ -27,6 +27,8 @@ func run() -> void:
 	_gym()
 	await _raid_training()
 	await _practice()
+	await _raid_stats()
+	_menu_stats()
 	_saves()
 
 
@@ -204,6 +206,15 @@ func _saves() -> void:
 	check(skills.level("strength") == 3 and is_equal_approx(skills.points("strength"), 65.0), "a version 19 skill keeps its level; half way to the next becomes 65 points")
 	check(skills.level("metabolism") == 12 and skills.level("crafting") == 0 and skills.level("covert_movement") == 0 and not gs.skills.has("gone_skill"),
 		"other levels kept, the new skills at 0, an unknown one dropped")
+	var stats: GDScript = load("res://scripts/progression/stats.gd")
+	check(gs.stats == stats.blank(), "and lifetime stats all at 0")
+	gs.stats.kills.pmc = 4
+	gs.stats.longest_kill = 87.5
+	gs.stats.raids.scav.mia = 2
+	var again: Dictionary = JSON.parse_string(JSON.stringify(gs.to_dict()))
+	fresh_profile()
+	gs.from_dict(again)
+	check(int(gs.stats.kills.pmc) == 4 and is_equal_approx(gs.stats.longest_kill, 87.5) and int(gs.stats.raids.scav.mia) == 2, "lifetime stats round-trip")
 
 
 ## The skill's total points (every level's and the ones toward the next).
@@ -513,3 +524,84 @@ func _practice() -> void:
 	change_scene_to_file("res://ui/main_menu.tscn")
 	await frames(3)
 	check(not skills.in_raid, "leaving the raid scene ends the raid for skills")
+
+
+func _raid_stats() -> void:
+	section("Lifetime stats from a raid")
+	fresh_profile()
+	var stats: GDScript = load("res://scripts/progression/stats.gd")
+	var controller: Node = await _start()
+	var player: Node = controller.player
+	var move: Dictionary = load("res://scripts/actors/actor.gd").Move
+	_move(player, 50.0, move.WALK)
+	for i in 5:
+		player._on_round_fired()
+	var bots: Array = root.get_tree().get_nodes_in_group("bots").filter(func(bot: Node) -> bool: return not bot.is_dead)
+	var scav: Node = bots[0]
+	scav.global_position = player.global_position + Vector3(30.0, 0.0, 0.0)
+	player.on_hit_landed(scav, 25.0, scav.chest_point(), {"damage": 25.0, "part": 1})
+	scav.take_blow(100000.0, player, "melee", "Test", scav.chest_point())
+	player.on_hit_landed(scav, 100.0, scav.chest_point(), {"damage": 100.0, "part": 0})  # The head.
+	player.take_blow(12.0, null, "melee", "Test", player.chest_point())
+	controller._on_loot_claimed(items([item("bolts"), item("screws")]))
+	controller.elapsed = 300.0
+	var outcome: RefCounted = controller.end_raid(load("res://scripts/raid/raid_outcome.gd").Status.SURVIVED)
+	var counted: Dictionary = gs.stats
+	check(int(counted.raids.pmc.survived) == 1 and stats.raids() == 1 and is_equal_approx(stats.survival_rate(), 1.0), "one PMC raid, survived: 100% survival")
+	check(int(counted.kills.scav) == 1 and int(counted.headshots) == 1 and absf(float(counted.longest_kill) - 30.0) < 0.2, "a Scav killed, a headshot, 30 m the longest kill (%s m)" % counted.longest_kill)
+	check(int(counted.shots) == 5 and int(counted.hits) == 2 and is_equal_approx(counted.damage_dealt, 125.0) and is_equal_approx(counted.damage_taken, 12.0),
+		"5 rounds fired, 2 hits, 125 damage dealt, 12 taken")
+	check(absf(float(counted.distance) - 50.0) < 0.2 and int(counted.items_looted) == 2 and float(counted.raid_seconds) >= 1.0 and int(counted.best_raid_xp) == outcome.xp,
+		"50 m moved, 2 items looted, the time and the best raid's %d XP" % outcome.xp)
+	check(stats.rows().size() >= 15 and stats.rows().any(func(row: Array) -> bool: return row[1] == "Kills" and str(row[2]).begins_with("1 ")), "the STATS tab's rows (%d)" % stats.rows().size())
+	var practice: Node = await _start({"practice": true})
+	practice.player._on_round_fired()
+	practice.end_raid(load("res://scripts/raid/raid_outcome.gd").Status.SURVIVED)
+	check(stats.raids() == 1 and int(gs.stats.shots) == 5, "a practice raid counts nothing")
+	var second: Node = await _start()
+	second.end_raid(load("res://scripts/raid/raid_outcome.gd").Status.KILLED)
+	check(int(gs.stats.raids.pmc.killed) == 1 and is_equal_approx(stats.survival_rate(), 0.5), "killed in the next: 50% survival")
+	change_scene_to_file("res://ui/main_menu.tscn")
+	await frames(3)
+
+
+func _menu_stats() -> void:
+	section("Lifetime stats from the menus")
+	fresh_profile()
+	var trading: GDScript = load("res://scripts/progression/trading.gd")
+	var selling: GDScript = load("res://scripts/progression/selling.gd")
+	var offer: Dictionary = {}
+	for each: Dictionary in trading.buy_list("bulat"):
+		if each.get("id") == "bulat_ammo_9x18_p":
+			offer = each
+	var roubles: int = gs.roubles
+	check(trading.buy("bulat", offer) == "" and int(gs.stats.roubles_spent) == roubles - gs.roubles, "buying from a trader: roubles spent (%s)" % gs.stats.roubles_spent)
+	var sold := item("ammo_545_ps", 60)
+	gs.stash.add(sold)
+	roubles = gs.roubles
+	check(selling.sell("bulat", [sold]) == "" and int(gs.stats.roubles_earned) == gs.roubles - roubles, "selling: roubles earned (%s)" % gs.stats.roubles_earned)
+	var before: int = int(gs.stats.roubles_spent)
+	gs.quests["zoya_introduction"] = {"state": "completed", "progress": [1, 2, 150000]}  # The Broker, who exchanges.
+	check(trading.buy_dollars(10) == "" and int(gs.stats.roubles_spent) == before, "exchanging money is neither (%s)" % trading.exchange_block_reason(10, true))
+	gs.quests.erase("zoya_introduction")
+	var quests: GDScript = load("res://scripts/progression/quest_log.gd")
+	var first: Dictionary = quests.all().filter(func(quest: Dictionary) -> bool: return quests.state(quest) == "available" and quests.accept_block_reason(quest) == "")[0]
+	quests.accept(first)
+	for index in first.objectives.size():
+		gs.quests[first.id].progress[index] = quests.objective_count(first, index)
+	var earned_before: int = int(gs.stats.roubles_earned)
+	check(quests.complete(first) == "" and int(gs.stats.quests) == 1 and int(gs.stats.roubles_earned) == earned_before + int(first.rewards.get("roubles", 0)) + roundi(int(first.rewards.get("dollars", 0)) * 140),
+		"a quest completed counts, with its money reward (%s)" % first.id)
+	var work: GDScript = load("res://scripts/progression/hideout_work.gd")
+	var hideout: GDScript = load("res://scripts/progression/hideout.gd")
+	work.now_override = 1_800_000_000.0
+	gs.hideout_state = work.blank()
+	gs.hideout.medstation = 1
+	var medstation: Dictionary = hideout.find("medstation")
+	gs.stash.add(item("empty_injector", 1))
+	gs.stash.add(item("sugar", 1))
+	work.craft(medstation, hideout.all_crafts(medstation)[2][1])
+	work.now_override += HOUR
+	work.update()
+	check(work.collect(medstation) == "" and int(gs.stats.crafts) == 1, "a craft collected counts")
+	work.now_override = -1.0

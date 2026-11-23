@@ -387,6 +387,7 @@ static func collect(station: Dictionary) -> String:
 		QuestLog.record_craft(str(station.id), str(waiting[0].get("id", "")), str(output.item))  # Craft objectives (DESIGN.md §11).
 		Skills.train("crafting", "craft")  # Crafting: each craft collected, more for a longer one.
 		Skills.train("crafting", "craft_minute", float(waiting[0].get("minutes", 0.0)))
+		Stats.add("crafts")
 		waiting.pop_front()
 	GameState.hideout_state.ready.erase(station.id)
 	return ""

@@ -146,6 +146,7 @@ func repair() -> String:
 	if GameState.roubles < price:
 		return _say("Not enough roubles to repair (%s)." % UiFormat.money(price))
 	GameState.roubles -= price
+	Stats.spent(price)
 	WeaponStats.repair(gun)
 	_after_change()
 	return _say("Repaired for %s. Max durability is now %.1f." % [UiFormat.money(price), gun.max_durability], true)

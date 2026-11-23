@@ -152,6 +152,9 @@ var _use_part := -1
 ## Where the player stood last tick (skills trained by moving: _train_movement()), and the Covert
 ## movement check: seconds to the next look for an unaware enemy nearby, and what it found.
 var _last_spot := Vector2.INF
+## This raid's lifetime-stat counts (Stats.record_raid()): rounds fired, bullet hits, damage dealt and
+## taken, metres moved.
+var raid_stats := {"shots": 0, "hits": 0, "damage_dealt": 0.0, "damage_taken": 0.0, "distance": 0.0}
 var _covert_check := 0.0
 var _covert_near := false
 var use_time_left := 0.0
@@ -341,7 +344,10 @@ func _train_movement(delta: float) -> void:
 	var moved := at.distance_to(_last_spot)
 	_last_spot = at
 	_covert_check -= delta
-	if not Skills.in_raid or is_dead or moved <= 0.0 or moved > TELEPORT:
+	if is_dead or moved <= 0.0 or moved > TELEPORT:
+		return
+	raid_stats.distance += moved
+	if not Skills.in_raid:
 		return
 	if move_state == Move.SPRINT:
 		Skills.train("endurance", "sprint_metre", moved)
@@ -373,6 +379,7 @@ func melee_strike() -> Dictionary:
 
 ## Damage taken and survived trains Vitality, in a raid.
 func _train_vitality(damage: float) -> void:
+	raid_stats.damage_taken += damage
 	if Skills.in_raid and not is_dead and not health.is_dead:
 		Skills.train("vitality", "damage", damage)
 
@@ -787,6 +794,7 @@ func set_ammo(id: String) -> void:
 
 
 func _on_round_fired() -> void:
+	raid_stats.shots += 1
 	if weapon.firing_trick_shot:
 		trick_window_left = 0.0  # Only the first shot in the window is a trick shot.
 	if _weapon_item:
@@ -891,6 +899,9 @@ func _update_camera_view() -> void:
 
 func on_hit_landed(target: Actor, damage: float, hit_position: Vector3, outcome: Dictionary = {}) -> void:
 	last_hit = outcome
+	raid_stats.damage_dealt += damage
+	if not outcome.is_empty():
+		raid_stats.hits += 1  # A bullet's hit (melee and grenades bring no outcome).
 	if Skills.in_raid and not outcome.is_empty() and weapon.data and weapon.data.skill != "":
 		Skills.train(weapon.data.skill, "hit")  # A bullet (melee and grenades bring no outcome): the gun's skill.
 		if target.is_dead:

@@ -240,6 +240,7 @@ static func upgrade(item: ItemInstance, source: String) -> String:
 	if not ItemSearch.pay(price.requirements):
 		return "Missing items"
 	GameState.roubles -= int(price.roubles)
+	Stats.spent(int(price.roubles))
 	if GameState.trader_loyalty.has(source):
 		GameState.trader_loyalty[source].spent += int(price.roubles)
 		Trading.update_loyalty(source)

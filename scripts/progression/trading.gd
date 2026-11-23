@@ -379,8 +379,10 @@ static func buy(trader_id: String, offer: Dictionary) -> String:
 	var currency := str(offer.get("currency", "RUB"))
 	if currency == "USD":
 		GameState.dollars -= cost
+		Stats.spent(0, cost)
 	else:
 		GameState.roubles -= cost
+		Stats.spent(cost)
 	if GameState.trader_loyalty.has(trader_id):
 		GameState.trader_loyalty[trader_id].spent += spent_value(cost, currency)
 	TraderStock.take(trader_id, offer)

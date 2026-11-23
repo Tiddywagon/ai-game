@@ -381,6 +381,7 @@ static func buy(listing: Dictionary, seen := -1) -> String:
 	if not GameState.stash.add(piece):
 		return "No room in the stash"
 	GameState.roubles -= cost
+	Stats.spent(cost)
 	GameState.flea.bought[str(listing.id)] = true
 	push(piece.data.id, float(FleaTable.pressure().get("buy", 0.0)))
 	update()
@@ -524,6 +525,7 @@ static func put_up(item: ItemInstance, asking: int) -> String:
 	if holder != GameState.stash:
 		GameState.stash.changed.emit()
 	GameState.roubles -= fee
+	Stats.spent(fee)
 	GameState.flea.next_id = number + 1
 	GameState.flea.listings.append(listing)
 	push(item.data.id, -float(FleaTable.pressure().get("sell", 0.0)))
@@ -544,6 +546,7 @@ static func collect(listing: Dictionary) -> String:
 	match str(listing.state):
 		SOLD:
 			GameState.roubles += int(listing.price)
+			Stats.earned(int(listing.price))
 		EXPIRED:
 			var piece := ItemInstance.from_dict(listing.item)
 			if piece and not GameState.stash.add(piece):

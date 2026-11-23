@@ -637,6 +637,7 @@ static func buy(plan: Dictionary, inventory: Inventory, stash: InventoryGrid) ->
 static func _pay(plan: Dictionary) -> void:
 	GameState.roubles -= int(plan.roubles)
 	GameState.dollars -= int(plan.dollars)
+	Stats.spent(int(plan.roubles), int(plan.dollars))
 	var stock := {}
 	for line: Dictionary in plan.lines:
 		if line.left_out:

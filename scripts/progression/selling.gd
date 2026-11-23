@@ -311,8 +311,10 @@ static func sell(trader_id: String, items: Array) -> String:
 		paid += prices[i]
 	if currency(trader_id) == "USD":
 		GameState.dollars += paid
+		Stats.earned(0, paid)
 	else:
 		GameState.roubles += paid
+		Stats.earned(paid)
 	if GameState.trader_loyalty.has(trader_id):
 		GameState.trader_loyalty[trader_id].spent += Trading.spent_value(paid, currency(trader_id))
 	Trading.update_loyalty(trader_id)

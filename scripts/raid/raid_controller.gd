@@ -75,6 +75,11 @@ var drip := 0
 var trick_kills: Array[Dictionary] = []
 ## What each skill gained this raid (Skills.end_raid(), when it ends): id -> {"earned", "points", "levels"}.
 var skill_gains := {}
+## Lifetime-stat counts of the raid's own (raid_stats()): kills with the killing hit to the head, the
+## longest kill (metres) and items picked up.
+var headshots := 0
+var longest_kill := 0.0
+var looted := 0
 var outcome: RaidOutcome
 ## The extract zone the player is standing in, how long they've stood there able to use it, and the
 ## one they left through.
@@ -1038,9 +1043,16 @@ func end_raid(status: RaidOutcome.Status) -> RaidOutcome:
 		player.kills, counts_for_profile(), {"hits": player.trick_hits, "kills": trick_kills, "drip": drip},
 		{"xp_parts": xp_parts.duplicate(), "kill_list": kill_list.duplicate(), "extract": extracted_at, "looters": looters(),
 			"faction": String(player.faction), "karma": karma_changes.duplicate(true), "map": map_key(),
-			"quest_raid": quest_raid, "extract_id": extracted_id, "skills": skill_gains})
+			"quest_raid": quest_raid, "extract_id": extracted_id, "skills": skill_gains, "stats": raid_stats()})
 	raid_ended.emit(outcome)
 	return outcome
+
+
+## The raid's lifetime-stat counts (Stats.record_raid()): the player's (Player.raid_stats) and the raid's.
+func raid_stats() -> Dictionary:
+	var result: Dictionary = player.raid_stats.duplicate() if player else {}
+	result.merge({"headshots": headshots, "longest_kill": longest_kill, "looted": looted}, true)
+	return result
 
 
 ## Hostile AI alive within Insurance's "taken" radius of the player: who could take insured gear off
@@ -1074,6 +1086,10 @@ func _on_kill(target: Actor) -> void:
 	if role != "":
 		entry.role = role
 	kill_list.append(entry)
+	if player:
+		if int(player.last_hit.get("part", -1)) == BodyHealth.Part.HEAD:
+			headshots += 1
+		longest_kill = maxf(longest_kill, player.global_position.distance_to(target.global_position))
 	_karma_for_kill(target)
 	if quest_raid and player:
 		quest_raid.on_kill(kill_event(target, role))
@@ -1144,5 +1160,6 @@ func _on_loot_claimed(items: Array[ItemInstance]) -> void:
 	if outcome:
 		return  # Settling the raid moves things around; that isn't looting.
 	var gained := config.xp_looted_item * items.size()
+	looted += items.size()
 	xp += gained
 	xp_parts.looting += gained

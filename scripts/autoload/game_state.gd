@@ -48,6 +48,8 @@ var stash: InventoryGrid
 var inventory := Inventory.new()
 ## Skill id (Skills) -> {"level": 0-50, "points": toward the next level}.
 var skills: Dictionary = {}
+## Lifetime stats (Stats; DESIGN.md §16.2): raids, kills, shots, damage, loot, money, quests, crafts.
+var stats: Dictionary = {}
 ## Quest id -> {"state": "active" or "completed", "progress": [handed over so far, per objective]}.
 ## Quests not in here haven't been accepted (DESIGN.md §11, QuestLog). An entry may also have "given":
 ## how many times the quest's items (a marker) were handed out (accepting, and each free retake).
@@ -224,6 +226,7 @@ func _reset(new_faction: Faction) -> void:
 	scav_ready_at = 0.0
 	scav_kit = null
 	skills = Skills.blank()
+	stats = Stats.blank()
 
 
 func _give_starter_kit() -> void:
@@ -246,6 +249,7 @@ func to_dict() -> Dictionary:
 			"trader_stock": trader_stock.duplicate(true),
 			"inventory": inventory.to_dict(),
 			"skills": skills.duplicate(true),
+			"stats": stats.duplicate(true),
 			"quests": quests.duplicate(true),
 			"quest_tracked": quest_tracked.duplicate(),
 			"hideout": hideout.duplicate(),
@@ -358,6 +362,7 @@ func from_dict(data: Dictionary) -> void:
 		hideout[station] = maxi(int(saved_hideout[station]), int(hideout.get(station, 0)))
 	hideout_state = HideoutWork.from_save(profile.get("hideout_state"))
 	skills = Skills.from_save(profile.get("skills", {}))  # A version 19 save's progress becomes points.
+	stats = Stats.from_save(profile.get("stats"))  # None before version 20: all 0.
 
 	loadout_presets = LoadoutPresets.sanitize(profile.get("loadout_presets", []))
 	auto_equip = LoadoutPlanner.clean_options(profile.get("auto_equip", {}))

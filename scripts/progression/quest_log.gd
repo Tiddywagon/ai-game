@@ -609,6 +609,7 @@ static func hand_in(quest: Dictionary, index: int) -> int:
 		if paid <= 0:
 			return 0
 		GameState.roubles -= paid
+		Stats.spent(paid)
 		GameState.quests[quest.id].progress[index] = progress(quest, index) + paid
 		return paid
 	if not objective_type(quest, index) in ["hand_in", "figures"]:
@@ -656,6 +657,8 @@ static func complete(quest: Dictionary) -> String:
 		if ItemDB.has_item(id) and ItemDB.get_item(id).base_value == 0:
 			ItemSearch.take(id, ItemSearch.count(id, false), false)
 	GameState.quests[quest.id].state = "completed"
+	Stats.add("quests")
+	Stats.earned(int(rewards.get("roubles", 0)), int(rewards.get("dollars", 0)))
 	GameState.add_xp(int(rewards.get("xp", 0)))
 	for id: String in reputation:
 		Trading.update_loyalty(id)

@@ -291,6 +291,8 @@ func interact(player: Player) -> void:
 		player.action_blocked.emit("Not enough roubles: %s needed" % UiFormat.money(price))
 		return
 	GameState.roubles -= price
+	if GameState.raid.has("side") and not bool(GameState.raid.get("practice", false)):
+		Stats.spent(price)
 	paid = true
 	player.action_blocked.emit("Paid %s: %s" % [UiFormat.money(price), "hold still to extract" if block_reason(player) == "" else block_reason(player)])
 

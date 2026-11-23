@@ -140,6 +140,7 @@ static func insure(items: Array, insurer_id := "") -> String:
 	if GameState.roubles < cost:
 		return "Not enough roubles: %s needed" % UiFormat.money(cost)
 	GameState.roubles -= cost
+	Stats.spent(cost)
 	var by := str(insurer(insurer_id).get("id", ""))
 	for item: ItemInstance in items:
 		item.insured = true

@@ -206,6 +206,8 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 		outcome.insurance_returned = claim.returning
 		outcome.insurance_taken = claim.taken
 		outcome.insurance_seconds = maxf(Insurance.next_due(), 0.0)
+	Stats.record_raid({"side": raid_side, "outcome": ["survived", "run_through", "killed", "mia"][end], "kills": outcome.kill_list, "xp": outcome.xp,
+		"seconds": raid_seconds, "loot_value": outcome.loot_value if outcome.survived() else 0}, details.get("stats", {}))
 	outcome.level_before = GameState.level
 	GameState.add_xp(outcome.xp)
 	outcome.level_after = GameState.level

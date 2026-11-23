@@ -409,6 +409,7 @@ static func upgrade(station: Dictionary) -> String:
 	var next := next_level(station)
 	ItemSearch.pay(outstanding(station))
 	GameState.roubles -= int(next.get("roubles", 0))
+	Stats.spent(int(next.get("roubles", 0)))
 	GameState.hideout_state.handed.erase(station.id)
 	GameState.hideout_state.builds[station.id] = {"level": int(next.level), "ends": snappedf(HideoutWork.now() + build_seconds(next), 1.0)}
 	HideoutWork.update()
@@ -515,6 +516,7 @@ static func buy_cosmetic(id: String) -> String:
 	var entry := find_cosmetic(id)
 	ItemSearch.pay(Requirement.list(entry.get("requires", [])))
 	GameState.roubles -= int(entry.get("roubles", 0))
+	Stats.spent(int(entry.get("roubles", 0)))
 	GameState.hideout_state.cosmetics.append(id)
 	return ""
 
