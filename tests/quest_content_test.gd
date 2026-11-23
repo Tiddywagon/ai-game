@@ -192,6 +192,10 @@ func _objective_types() -> void:
 	for quest: Dictionary in quests.all():
 		for i in quest.objectives.size():
 			used[quests.objective_type(quest, i)] = int(used.get(quests.objective_type(quest, i), 0)) + 1
+	# Search and sell came with the daily and weekly tasks (E14): those count there.
+	for template: Dictionary in load("res://scripts/progression/operations.gd").templates():
+		if str(template.objective.type) in ["search", "sell"]:
+			used[str(template.objective.type)] = int(used.get(str(template.objective.type), 0)) + 1
 	for type: String in quests.OBJECTIVE_TYPES:
 		check(used.has(type), "%s objectives: %d" % [type, int(used.get(type, 0))])
 	var mixed := true

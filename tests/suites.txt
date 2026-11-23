@@ -10,3 +10,4 @@ figures
 quests
 quest_content
 skills
+operations

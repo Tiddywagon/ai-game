@@ -96,6 +96,10 @@ var flea: Dictionary = FleaMarket.blank()
 ## Collectors Shelf: kept there, not in the stash), "seen": [figure ids you've owned], "spin": {"day",
 ## "used"} (free Drip spins used on which real day)}.
 var figures: Dictionary = Figures.blank()
+## Daily and weekly operational tasks (DESIGN.md §11, Operations): {"seed" (the profile's roll seed),
+## "daily": {"number" (the day rolled), "level" (yours at the roll), "tasks", "bonus": {"roubles", "xp",
+## "paid"}}, "weekly": {"number", "level", "tasks"}, "owed": [reward items waiting for room]}.
+var operations: Dictionary = Operations.blank()
 ## Scav runs (DESIGN.md §2, ScavRuns): your Scav karma (Mole's standing, -6 to +6), the unix time the
 ## next Scav run is ready (0: ready), and this cooldown cycle's Scav kit (null until it's rolled; used up
 ## when you deploy).
@@ -119,6 +123,7 @@ func _ready() -> void:
 func new_profile(new_faction: Faction) -> void:
 	_reset(new_faction)
 	_give_starter_kit()
+	Operations.update()  # Today's dailies and this week's weeklies.
 
 
 ## True once the player has picked a faction (or loaded a save).
@@ -222,6 +227,7 @@ func _reset(new_faction: Faction) -> void:
 	quick_buys = []
 	flea = FleaMarket.blank()
 	figures = Figures.blank()
+	operations = Operations.blank()
 	scav_karma = ScavRuns.start_karma()
 	scav_ready_at = 0.0
 	scav_kit = null
@@ -264,6 +270,7 @@ func to_dict() -> Dictionary:
 			"quick_buys": quick_buys.duplicate(true),
 			"flea": FleaMarket.to_save(),
 			"figures": Figures.to_save(),
+			"operations": Operations.to_save(),
 			"scav": {"karma": scav_karma, "ready_at": scav_ready_at, "kit": scav_kit.to_dict() if scav_kit else null},
 		},
 		"stash": stash.to_array(),
@@ -383,3 +390,8 @@ func from_dict(data: Dictionary) -> void:
 	Figures.update_seen()
 	Trading.update_all_loyalty()
 	HideoutWork.update()  # Builds, crafts, fuel and production carry on from the saved clock to now.
+	# Before version 21 there were no tasks: the seed comes from the save itself, so reloading the same
+	# old save rolls the same set. Then the sets catch up with the clock (a reset while the game was
+	# closed pays the finished tasks and rolls the new set).
+	operations = Operations.from_save(profile.get("operations"), JSON.stringify(profile).hash())
+	Operations.update()

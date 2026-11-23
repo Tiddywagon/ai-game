@@ -184,7 +184,7 @@ func shown_pois() -> Array:
 ## "done"}]: a point of interest's centre or a quest spot's place (QuestLog.spot()), live progress in a raid.
 func quest_locations() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for quest in QuestLog.shown():
+	for quest in QuestLog.shown() + Operations.all_tasks():
 		if not QuestLog.state(quest) in ["active", "ready"]:
 			continue
 		for i in quest.objectives.size():
@@ -206,7 +206,7 @@ func quest_locations() -> Array[Dictionary]:
 			if at == Vector2.INF:
 				continue
 			var done := (raid.quest_raid.progress(quest, i) if raid and raid.quest_raid else QuestLog.progress(quest, i)) >= QuestLog.objective_count(quest, i)
-			result.append({"at": at, "name": quest.name, "text": QuestLog.objective_text(quest, i), "done": done})
+			result.append({"at": at, "name": QuestLog.title(quest), "text": QuestLog.objective_text(quest, i), "done": done})
 	return result
 
 

@@ -83,7 +83,13 @@ const SAVE_PATH := "user://savegame.json"
 ## too (Covert movement, Crafting), and profile "stats" holds the lifetime stats (Stats). Older saves keep
 ## their XP, level and every skill level, the progress turned into points (Skills.from_save()), and start
 ## their stats at 0 (nothing to change in upgrade(): GameState.from_dict() does both).
-const SAVE_VERSION := 20
+## Version 21 adds the daily and weekly operational tasks (DESIGN.md §11, Operations): profile
+## "operations" {"seed", "daily": {"number" (the day rolled), "level", "tasks", "bonus": {"roubles", "xp",
+## "paid"}}, "weekly": {"number", "level", "tasks"}, "owed": [reward items waiting for room]}, each task
+## with its objective, progress, rewards, re-rolls left and whether it's claimed. Older saves have none:
+## they get a seed worked out from the save itself and today's and this week's sets rolled on load
+## (nothing to change in upgrade(): GameState.from_dict() does it).
+const SAVE_VERSION := 21
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"

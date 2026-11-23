@@ -287,7 +287,8 @@ static func sell_block_reason(trader_id: String, item: ItemInstance) -> String:
 
 ## Sells `items` to `trader_id`: takes them out of the stash or your inventory, pays their price
 ## (quote()) in the trader's currency, counts it toward the money spent with them (Trading.spent_value())
-## and the Wanted ones toward this restock's cap, and checks their loyalty. All or nothing: "" on
+## and the Wanted ones toward this restock's cap, and checks their loyalty; what found-in-raid loot
+## fetched counts toward sell objectives (QuestLog.record_sale()). All or nothing: "" on
 ## success, else why not.
 static func sell(trader_id: String, items: Array) -> String:
 	if items.is_empty():
@@ -302,8 +303,11 @@ static func sell(trader_id: String, items: Array) -> String:
 			return "%s: %s" % [item.data.display_name, reason]
 	var prices := quote(trader_id, items)
 	var paid := 0
+	var loot := 0  # What the found-in-raid loot fetched, in roubles: sell objectives (QuestLog.record_sale()).
 	for i in items.size():
 		var item: ItemInstance = items[i]
+		if Operations.counts_as_loot(item):
+			loot += Trading.spent_value(prices[i], currency(trader_id))
 		var wanted := mini(item.count, TraderStock.wanted_left(trader_id, item.data.id))
 		if wanted > 0:
 			TraderStock.record_wanted(trader_id, item.data.id, wanted)
@@ -318,6 +322,8 @@ static func sell(trader_id: String, items: Array) -> String:
 	if GameState.trader_loyalty.has(trader_id):
 		GameState.trader_loyalty[trader_id].spent += Trading.spent_value(paid, currency(trader_id))
 	Trading.update_loyalty(trader_id)
+	if loot > 0:
+		QuestLog.record_sale(loot)
 	return ""
 
 

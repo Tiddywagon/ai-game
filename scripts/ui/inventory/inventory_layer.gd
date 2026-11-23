@@ -48,6 +48,7 @@ func open(loot: Variant = null, title := "", source: Node3D = null) -> void:
 	_screen.loot = loot
 	_screen.loot_title = title
 	_screen.loot_search = source.get("search") if source else null
+	_screen.loot_box = source as LootBox
 	_loot_source = source
 	if source:
 		source.set_meta(Player.LOOTING_META, true)

@@ -40,6 +40,10 @@ extends RefCounted
 ##   id, a craft's output item, or any craft at a station).
 ## - {"type": "upgrade", "station", "level"}; {"type": "level", "level"}; {"type": "loyalty", "trader",
 ##   "level"}: state checks, already true means already done (progress shows the level so far).
+## - {"type": "search", "count", "map", "survive"}: containers searched to the last item in a raid (a
+##   body doesn't count); {"type": "sell", "count"}: roubles from selling found-in-raid loot to traders
+##   (Operations.counts_as_loot(): nothing bought or made in the hideout). Used by the daily and weekly
+##   tasks (Operations), whose ids and tasks find(), state(), progress() and add_progress() hand on.
 ## Raid objectives count in PMC raids only (not Scav runs, not Shooting Range practice): QuestRaid counts
 ## kills, visits and placements the moment they happen, and they stay if you die; with "survive": true
 ## an objective's progress from a raid only counts if you extract (SURVIVED). problems() checks the files,
@@ -47,7 +51,8 @@ extends RefCounted
 
 ## Kill targets and what the objective line calls them.
 const TARGET_NAMES := {"any": "enemies", "pmc": "PMCs", "scav": "Scavs", "boss": "bosses", "guard": "boss guards"}
-const CLASS_NAMES := {"bolt_action": "a bolt-action rifle", "dmr": "a DMR"}
+const CLASS_NAMES := {"bolt_action": "a bolt-action rifle", "dmr": "a DMR", "assault_rifle": "an assault rifle", "pistol": "a pistol",
+	"smg": "an SMG", "shotgun": "a shotgun", "lmg": "a machine gun"}
 ## Body parts a kill objective can ask for, by name: the BodyHealth parts each covers.
 const BODY_PARTS := {"head": [0], "thorax": [1], "stomach": [2], "left_arm": [3], "right_arm": [4], "left_leg": [5],
 	"right_leg": [6], "arms": [3, 4], "legs": [5, 6], "torso": [1, 2]}
@@ -68,19 +73,21 @@ const OBJECTIVE_KEYS := {
 	"upgrade": ["station", "level"],
 	"level": ["level"],
 	"loyalty": ["trader", "level"],
+	"search": ["count", "map", "survive"],
+	"sell": ["count"],
 }
 ## The objective types (objective_type()), in the order the docs list them.
 const OBJECTIVE_TYPES: Array[String] = ["hand_in", "figures", "roubles", "kill", "trick_kill", "visit", "place", "mark",
-	"extract", "extract_with", "explore", "craft", "upgrade", "level", "loyalty"]
+	"extract", "extract_with", "explore", "craft", "upgrade", "level", "loyalty", "search", "sell"]
 ## Counted in raids (no HAND OVER button): QuestRaid.
-const RAID_TYPES: Array[String] = ["kill", "trick_kill", "visit", "place", "mark", "extract", "extract_with", "explore"]
+const RAID_TYPES: Array[String] = ["kill", "trick_kill", "visit", "place", "mark", "extract", "extract_with", "explore", "search"]
 ## Handed over at the trader (HAND OVER).
 const HAND_TYPES: Array[String] = ["hand_in", "figures", "roubles"]
 ## Worked out from the profile each time (progress() reads the state, nothing is saved).
 const STATE_TYPES: Array[String] = ["explore", "upgrade", "level", "loyalty"]
 ## Raid objectives at a location (a point of interest or a quest spot), and those that may be "survive".
 const LOCATION_TYPES: Array[String] = ["visit", "place", "mark"]
-const SURVIVE_TYPES: Array[String] = ["kill", "trick_kill", "visit", "place", "mark"]
+const SURVIVE_TYPES: Array[String] = ["kill", "trick_kill", "visit", "place", "mark", "search"]
 ## Objectives that name an item you need to bring (the needed-for icon, ItemUses).
 const ITEM_TYPES: Array[String] = ["hand_in", "place", "extract_with"]
 const QUEST_FIELDS := ["id", "name", "trader", "description", "objectives", "rewards"]
@@ -123,6 +130,8 @@ static func reload() -> void:
 
 
 static func find(id: String) -> Dictionary:
+	if id.begins_with(Operations.ID_PREFIX):
+		return Operations.find(id)
 	for quest in all():
 		if quest.id == id:
 			return quest
@@ -207,6 +216,8 @@ static func map_note(quest: Dictionary) -> String:
 
 ## "locked" (lock_reason()), "available", "active", "ready" (every objective done) or "completed".
 static func state(quest: Dictionary) -> String:
+	if quest.has("operation"):
+		return Operations.state(quest)
 	var saved: Dictionary = GameState.quests.get(quest.id, {})
 	if saved.get("state", "") == "completed":
 		return "completed"
@@ -324,6 +335,10 @@ static func objective_text(quest: Dictionary, index: int) -> String:
 			return "Hand over %s (spare)" % Requirement.from_dict(entry).title()
 		"roubles":
 			return "Hand over roubles"
+		"search":
+			return "Search containers%s" % on
+		"sell":
+			return "Sell found-in-raid loot to traders"
 		"kill":
 			return "Kill %s%s%s" % [_kill_who(entry), on, _kill_conditions(entry)]
 		"extract":
@@ -421,12 +436,16 @@ static func progress(quest: Dictionary, index: int) -> int:
 			return mini(GameState.level, count)
 		"loyalty":
 			return mini(Hideout.loyalty(str(entry.get("trader", ""))), count)
+	if quest.has("operation"):
+		return Operations.progress(quest)
 	var saved: Array = GameState.quests.get(quest.id, {}).get("progress", [])
 	return int(saved[index]) if index < saved.size() else 0
 
 
 ## Adds `amount` to objective `index` of an active `quest` (up to its count). Returns how much it moved.
 static func add_progress(quest: Dictionary, index: int, amount: int) -> int:
+	if quest.has("operation"):
+		return Operations.add_progress(quest, amount)
 	if amount <= 0 or str(GameState.quests.get(quest.id, {}).get("state", "")) != "active":
 		return 0
 	var saved: Array = GameState.quests[quest.id].progress
@@ -440,6 +459,33 @@ static func add_progress(quest: Dictionary, index: int, amount: int) -> int:
 ## The active quests you can see.
 static func active() -> Array[Dictionary]:
 	return shown().filter(func(quest: Dictionary) -> bool: return state(quest) == "active")
+
+
+## What progress counts toward: the active quests and the open daily and weekly tasks (Operations),
+## with `with_ready` the ones ready to turn in or claim too.
+static func tracking(with_ready := false) -> Array[Dictionary]:
+	var result := active() + Operations.active()
+	if with_ready:
+		result.append_array(shown().filter(func(quest: Dictionary) -> bool: return state(quest) == "ready"))
+		result.append_array(Operations.all_tasks().filter(func(task: Dictionary) -> bool: return Operations.state(task) == "ready"))
+	return result
+
+
+## What the HUD tracker, toasts and the raid summary call `quest`: its name, or for a task "Daily · Scav
+## Sweep".
+static func title(quest: Dictionary) -> String:
+	return Operations.title(quest) if quest.has("operation") else str(quest.get("name", quest.get("id", "")))
+
+
+## Roubles from selling found-in-raid loot to traders (Selling.sell()): toward every open sell
+## objective. Returns the objectives that moved.
+static func record_sale(roubles: int) -> int:
+	var moved := 0
+	for quest in tracking():
+		for i in quest.objectives.size():
+			if objective_type(quest, i) == "sell":
+				moved += signi(add_progress(quest, i, roubles))
+	return moved
 
 
 ## True when objective `entry` fits `kill`: {"side": "pmc" / "scav", "faction", "role": "boss" /
@@ -501,7 +547,7 @@ static func record_raid(kills: Array, extracted: bool, map_id: String) -> void:
 ## it fits (`recipe_id` at `station_id`, making `item_id`). Returns the objectives that moved.
 static func record_craft(station_id: String, recipe_id: String, item_id: String) -> int:
 	var moved := 0
-	for quest in active():
+	for quest in tracking():
 		for i in quest.objectives.size():
 			var entry: Dictionary = quest.objectives[i]
 			if objective_type(quest, i) != "craft":
@@ -610,15 +656,22 @@ static func hand_in(quest: Dictionary, index: int) -> int:
 			return 0
 		GameState.roubles -= paid
 		Stats.spent(paid)
-		GameState.quests[quest.id].progress[index] = progress(quest, index) + paid
+		_set_progress(quest, index, progress(quest, index) + paid)
 		return paid
 	if not objective_type(quest, index) in ["hand_in", "figures"]:
 		return 0
 	var wanted := objective(quest, index)
 	var handed := Figures.take_spares(wanted.figures, wanted.count - progress(quest, index), wanted.fir) if wanted.is_generic() \
 		else ItemSearch.take(wanted.item_id, wanted.count - progress(quest, index), wanted.fir)
-	GameState.quests[quest.id].progress[index] = progress(quest, index) + handed
+	_set_progress(quest, index, progress(quest, index) + handed)
 	return handed
+
+
+static func _set_progress(quest: Dictionary, index: int, value: int) -> void:
+	if quest.has("operation"):
+		quest.progress = [value]
+	else:
+		GameState.quests[quest.id].progress[index] = value
 
 
 ## Why `quest` can't be turned in yet, or "".

@@ -22,7 +22,7 @@ extends CanvasLayer
 ## a few seconds near the top, with its tier and focus, and "NEW AREA" with the experience and how much of
 ## the map you've explored the first time ever ("HIDDEN AREA FOUND" for a hidden one). Raid events
 ## (airdrops, supply trucks, weapon caches) are announced in the same place (announce()).
-## Quests (DESIGN.md §11): the tracked quests' raid objectives for this map top-right under the clock
+## Quests (DESIGN.md §11): the tracked quests' (and daily and weekly tasks') raid objectives for this map top-right under the clock
 ## (QuestTracker, live from the raid's QuestRaid), a toast when an objective moves or completes ("Kill
 ## Scavs: 3 / 5", "Objective complete: ..."), and while placing a quest item a PLACING countdown with a
 ## gold ring round you.
@@ -292,7 +292,7 @@ func tracker_lines() -> Array:
 			var done := raid.progress(quest, i) if raid else QuestLog.progress(quest, i)
 			rows.append(["  %s  %d / %d" % [QuestLog.objective_text(quest, i), done, count], QUEST_DONE_COLOR if done >= count else Color(0.92, 0.9, 0.8)])
 		if not rows.is_empty():
-			lines.append([quest.name.to_upper(), QUEST_COLOR])
+			lines.append([QuestLog.title(quest).to_upper(), QUEST_COLOR])
 			lines.append_array(rows)
 	return lines
 

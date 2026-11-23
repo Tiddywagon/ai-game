@@ -5,7 +5,8 @@ extends RefCounted
 ## with "survive": true keeps this raid's progress in `pending` until the raid settles, and only a
 ## SURVIVED raid (not a Run Through, not killed or missing) adds it. Extract and extract_with objectives
 ## count when you extract. Only PMC raids that go to the profile count (`counts`): Scav runs and Shooting
-## Range practice count nothing. `progressed` is the HUD's toast.
+## Range practice count nothing. `progressed` is the HUD's toast. The open daily and weekly tasks
+## (Operations) count the same way as the active quests (QuestLog.tracking()).
 
 ## An objective moved: `text` the toast ("Kill Scavs: 3 / 5", "Objective complete: ..."), `done` once
 ## it's complete.
@@ -47,7 +48,7 @@ func _map_for(entry: Dictionary) -> String:
 func on_kill(kill: Dictionary) -> void:
 	if not counts:
 		return
-	for quest in QuestLog.active():
+	for quest in QuestLog.tracking():
 		for i in quest.objectives.size():
 			if QuestLog.kill_fits(quest.objectives[i], kill, _map_for(quest.objectives[i])):
 				count(quest, i, 1)
@@ -79,9 +80,22 @@ func toast_text(quest: Dictionary, index: int) -> String:
 	var text := QuestLog.objective_text(quest, index)
 	var count_text := QuestLog.objective_count(quest, index)
 	var line := "Objective complete: %s" % text if progress(quest, index) >= count_text else "%s: %d / %d" % [text, progress(quest, index), count_text]
+	if quest.has("operation"):
+		line = "%s: %s" % [Operations.kind_name(str(quest.operation)), line]
 	if pending_of(quest, index) > 0:
 		line += " (extract to keep it)"
 	return line
+
+
+## The player searched a container to its last item (InventoryScreen): one toward every open search
+## objective for this map or any.
+func on_search() -> void:
+	if not counts:
+		return
+	for quest in QuestLog.tracking():
+		for i in quest.objectives.size():
+			if QuestLog.objective_type(quest, i) == "search" and str(quest.objectives[i].get("map", map_id)) == _map_for(quest.objectives[i]):
+				count(quest, i, 1)
 
 
 ## The world position and radius of a location objective's place on this map: {"position": Vector3,
@@ -116,7 +130,7 @@ func is_at(quest: Dictionary, index: int, point: Vector3, tree: SceneTree) -> bo
 func on_position(point: Vector3, tree: SceneTree) -> void:
 	if not counts:
 		return
-	for quest in QuestLog.active():
+	for quest in QuestLog.tracking():
 		for i in quest.objectives.size():
 			if QuestLog.objective_type(quest, i) != "visit" or progress(quest, i) >= 1:
 				continue
@@ -127,7 +141,7 @@ func on_position(point: Vector3, tree: SceneTree) -> void:
 ## The active place and mark objectives on this map still to do: [[quest, index], ...].
 func placements() -> Array:
 	var result := []
-	for quest in QuestLog.active():
+	for quest in QuestLog.tracking():
 		for i in quest.objectives.size():
 			if QuestLog.objective_type(quest, i) in ["place", "mark"] and str(quest.objectives[i].get("map", "")) == map_id \
 					and progress(quest, i) < QuestLog.objective_count(quest, i):
@@ -139,7 +153,7 @@ func placements() -> Array:
 ## "index", "type", "name", "position", "radius", "done"}].
 func locations(tree: SceneTree) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for quest in QuestLog.active() + QuestLog.shown().filter(func(each: Dictionary) -> bool: return QuestLog.state(each) == "ready"):
+	for quest in QuestLog.tracking(true):
 		for i in quest.objectives.size():
 			var place := place_of(quest, i, tree)
 			if place.is_empty():
@@ -178,9 +192,11 @@ func settle(survived: bool, extract_id: String, inventory: Inventory) -> void:
 		return
 	for quest_id: String in waiting:
 		var quest := QuestLog.find(quest_id)
+		if quest.is_empty():
+			continue  # Gone (a task from a set that has since reset).
 		for index: int in waiting[quest_id]:
 			QuestLog.add_progress(quest, index, int(waiting[quest_id][index]))
-	for quest in QuestLog.active():
+	for quest in QuestLog.tracking():
 		for i in quest.objectives.size():
 			var entry: Dictionary = quest.objectives[i]
 			if str(entry.get("map", map_id)) != map_id and not any_map:
@@ -203,9 +219,11 @@ func summary_lines() -> Array[String]:
 	var lines: Array[String] = []
 	for quest_id: String in made:
 		var quest := QuestLog.find(quest_id)
+		if quest.is_empty():
+			continue  # Gone (a task from a set that has since reset).
 		for index: int in made[quest_id]:
 			var amount := int(made[quest_id][index])
-			var line := "%s: %s" % [quest.get("name", quest_id), QuestLog.objective_text(quest, index)]
+			var line := "%s: %s" % [QuestLog.title(quest), QuestLog.objective_text(quest, index)]
 			if amount > 0:
 				lines.append("%s +%d (%d / %d)" % [line, amount, QuestLog.progress(quest, index), QuestLog.objective_count(quest, index)])
 			else:

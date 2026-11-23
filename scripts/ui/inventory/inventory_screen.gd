@@ -55,6 +55,9 @@ var loot: Variant
 var loot_title := ""
 ## Searching `loot` (its unsearched items are revealed while this screen is open), or null.
 var loot_search: LootSearch
+## The container being searched (null for a body or the stash): searching it to the last item counts
+## toward search objectives (QuestRaid.on_search()).
+var loot_box: LootBox
 ## In a raid: the player whose inventory this is (items are used on them). Null out of raid.
 var user: Player
 
@@ -242,6 +245,10 @@ func _process(delta: float) -> void:
 	for view in _loot_views:
 		if is_instance_valid(view):
 			view.queue_redraw()
+	if not found.is_empty() and not was_done and loot_search.is_done() and loot_box:
+		var raid := get_tree().get_first_node_in_group("raid_controller") as RaidController
+		if raid and raid.quest_raid:
+			raid.quest_raid.on_search()
 	if not found.is_empty() or was_done != loot_search.is_done():
 		_update_loot_title()
 
