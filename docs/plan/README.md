@@ -34,6 +34,9 @@ map with no scene, DESIGN §10's money model citing a suite that no longer exist
 
 No known bug is open.
 
+- The Raiders figure set's +5% search speed also speeds up AI bots' searches (it should help only the player,
+  like the Search skill). Fix in E14 with a test.
+
 ## Ground rules for every step
 
 - Read the DESIGN.md sections the step touches first (it is large: grep for the section). When behaviour is
