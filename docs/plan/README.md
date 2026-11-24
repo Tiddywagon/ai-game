@@ -33,7 +33,10 @@ market and hideout requests is no longer available either: E7 and E8 are written
 map with no scene, DESIGN §10's money model citing a suite that no longer existed.)
 (Fixed with E14: the Raiders figure set's search speed also speeding up AI bots' searches; `figures_test` checks it.)
 
-No known bug is open.
+- Money shows with two signs: reward lines print "20,000 ₽" while `UiFormat.money()` prints "RUB 165,000" (seen on the
+  OPERATIONS board's "Big Sale · RUB 0 / RUB 165,000"). `UiFormat.currency_sign()` checks only
+  `ThemeDB.fallback_font.has_char(0x20BD)`, which is false, yet labels draw "₽" through the system font fallback.
+  Pick one sign that renders, use it everywhere, and check it in a suite. Fix in E15.
 
 ## Ground rules for every step
 
