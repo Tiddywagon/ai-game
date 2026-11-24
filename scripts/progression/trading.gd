@@ -222,7 +222,7 @@ static func offer_floor(offer: Dictionary) -> int:
 	return floor
 
 
-## The BUY row's price: "₽ 39,770  ·  −3% at your loyalty (was ₽ 41,000)", "−8% at your loyalty and
+## The BUY row's price: "RUB 39,770  ·  −3% at your loyalty (was RUB 41,000)", "−8% at your loyalty and
 ## as BEAR" at your faction's trader ("−5% as BEAR" at LL1), or just the price when nothing comes off
 ## (the share shown is what the price really comes down by: the resale floor can hold it up).
 static func price_text(trader_id: String, offer: Dictionary) -> String:
@@ -485,7 +485,7 @@ static func exchange_block_reason(dollars: int, buying: bool) -> String:
 
 ## Buys `dollars` dollars for roubles. Not counted toward money spent with the exchange trader: the
 ## dollars count when you spend them with him (else buying and selling dollars back would buy loyalty
-## for the 20 ₽ a dollar the round trip loses). "" on success, else why not.
+## for the RUB 20 a dollar the round trip loses). "" on success, else why not.
 static func buy_dollars(dollars: int) -> String:
 	var reason := exchange_block_reason(dollars, true)
 	if reason != "":

@@ -64,8 +64,9 @@ func _pool() -> void:
 	check(is_equal_approx(float(ops.kind_config("daily").rare_chance), 0.15) and is_equal_approx(float(ops.kind_config("weekly").rare_chance), 0.6),
 		"a rare item: 15% for a daily, 60% for a weekly")
 	check(is_equal_approx(float(ops.kind_config("weekly").reward_scale) / float(ops.kind_config("daily").reward_scale), 5.0), "weeklies pay 5× a daily")
-	check(ops.kind_config("daily").has("drip") and int(ops.kind_config("daily").drip) == 0 and int(ops.kind_config("weekly").drip) == 0,
-		"each kind has a per-task Drip reward, 0 for now")
+	# E15 set the Drip: 15 a daily, 60 a weekly (DESIGN.md §6.7; was 0 before the Drip economy).
+	check(ops.kind_config("daily").has("drip") and int(ops.kind_config("daily").drip) == 15 and int(ops.kind_config("weekly").drip) == 60,
+		"each kind has a per-task Drip reward: 15 a daily, 60 a weekly")
 	# Broken copies: each one is caught.
 	var saved: Dictionary = ops.data().duplicate(true)
 	var cases := [
@@ -177,7 +178,8 @@ func _scaling() -> void:
 	var hunt: Dictionary = ops.template("scav_hunt")
 	var weekly_mid: Dictionary = ops.rewards_for(hunt, 30, 25)  # Band 20-29: 26-34 kills, middle 30.
 	check(int(weekly_mid.roubles) == int(bands[2].roubles) * 5 and int(weekly_mid.xp) == int(bands[2].xp) * 5, "a weekly pays 5× a daily (%s ₽ at level 25)" % weekly_mid.roubles)
-	check(int(ops.rewards_for(survivor, 4, 1).drip) == 0, "and no Drip yet")
+	check(int(ops.rewards_for(survivor, 4, 1).drip) == int(ops.kind_config(str(survivor.kind)).drip) and int(ops.rewards_for(hunt, 30, 25).drip) == 60,
+		"and the kind's Drip (%s's %d; 60 for a weekly)" % [survivor.kind, int(ops.rewards_for(survivor, 4, 1).drip)])
 	gs.level = 35
 	gs.xp = load("res://scripts/progression/progression.gd").xp_for_level(35)
 	gs.operations = ops.blank(7)

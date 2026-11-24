@@ -518,6 +518,7 @@ static func put_up(item: ItemInstance, asking: int) -> String:
 	var spread := FleaTable.span(FleaTable.sale(), "spread", Vector2.ONE)
 	var sells := snappedf(now + minutes * 60.0 * rng.randf_range(spread.x, spread.y), 1.0) if minutes >= 0.0 else 0.0
 	var fee := listing_fee(item, asking)
+	Cosmetics.strip(item)  # Its skins go back to the collection before it's listed (DESIGN.md §6.7).
 	var listing := {"id": id, "item": item.to_dict(), "price": asking, "fee": fee, "market": market_price(item), "listed": now,
 		"ends": now + float(FleaTable.sale().get("hours", 12.0)) * 3600.0, "sells": sells, "state": UP}
 	var holder := GameState.stash.find_holder(item)
@@ -600,7 +601,7 @@ static func waiting() -> Dictionary:
 	return result
 
 
-## The main menu's line: "Flea market: 2 sold (₽ 84,000) and 1 item back: collect on the FLEA MARKET"
+## The main menu's line: "Flea market: 2 sold (RUB 84,000) and 1 item back: collect on the FLEA MARKET"
 ## ("" with nothing waiting).
 static func notice_text() -> String:
 	var waits := waiting()

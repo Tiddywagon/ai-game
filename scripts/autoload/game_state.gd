@@ -30,7 +30,9 @@ var level: int = 1
 var xp: int = 0
 var roubles: int = START_ROUBLES
 var dollars: int = START_DOLLARS
-## Drip: style points, earned with 360 trick-shot kills and some quests (DESIGN.md §13.4).
+## Drip: the cosmetic currency (DESIGN.md §6.7): earned from extracts, kills, quests, daily and weekly
+## tasks, levels and 360 trick-shot kills; spent only on the slot machine. Never money: nothing buys,
+## sells or trades it.
 var drip: int = 0
 ## 360 trick shots over the whole profile: rounds that hit, and kills.
 var trick_shots := {"hits": 0, "kills": 0}
@@ -100,6 +102,10 @@ var figures: Dictionary = Figures.blank()
 ## "daily": {"number" (the day rolled), "level" (yours at the roll), "tasks", "bonus": {"roubles", "xp",
 ## "paid"}}, "weekly": {"number", "level", "tasks"}, "owed": [reward items waiting for room]}.
 var operations: Dictionary = Operations.blank()
+## Cosmetic skins and the slot machine (DESIGN.md §6.7, Cosmetics): {"seed", "rolls", "pity", "spins",
+## "owned": {skin id: wear} (the collection), "applied": {skin id: wear} (on your items), "outfits":
+## {faction: skin id}, "last": [the last spin's results]}.
+var cosmetics: Dictionary = Cosmetics.blank()
 ## Scav runs (DESIGN.md §2, ScavRuns): your Scav karma (Mole's standing, -6 to +6), the unix time the
 ## next Scav run is ready (0: ready), and this cooldown cycle's Scav kit (null until it's rolled; used up
 ## when you deploy).
@@ -159,7 +165,8 @@ func hotkey_of(id: String) -> int:
 ## Adds `amount` experience: raid settle (RaidOutcome) and quest turn-in (QuestLog) come through here.
 ## The level rises as experience crosses Progression's thresholds, several levels at once if need be,
 ## and never falls; a level-up emits level_changed and checks every trader's loyalty again
-## (Trading.update_all_loyalty()). Returns how many levels were gained.
+## (Trading.update_all_loyalty()) and pays drip.json's Drip per level gained. Returns how many levels
+## were gained.
 func add_xp(amount: int) -> int:
 	if amount > 0:
 		xp += amount
@@ -167,6 +174,7 @@ func add_xp(amount: int) -> int:
 	level = maxi(level, Progression.level_for_xp(xp))
 	if level == old_level:
 		return 0
+	drip += SkinTable.level_drip() * (level - old_level)  # Drip for every level gained (DESIGN.md §6.7).
 	level_changed.emit(old_level, level)
 	Trading.update_all_loyalty()
 	return level - old_level
@@ -228,6 +236,7 @@ func _reset(new_faction: Faction) -> void:
 	flea = FleaMarket.blank()
 	figures = Figures.blank()
 	operations = Operations.blank()
+	cosmetics = Cosmetics.blank()
 	scav_karma = ScavRuns.start_karma()
 	scav_ready_at = 0.0
 	scav_kit = null
@@ -271,6 +280,7 @@ func to_dict() -> Dictionary:
 			"flea": FleaMarket.to_save(),
 			"figures": Figures.to_save(),
 			"operations": Operations.to_save(),
+			"cosmetics": Cosmetics.to_save(),
 			"scav": {"karma": scav_karma, "ready_at": scav_ready_at, "kit": scav_kit.to_dict() if scav_kit else null},
 		},
 		"stash": stash.to_array(),
@@ -395,3 +405,7 @@ func from_dict(data: Dictionary) -> void:
 	# closed pays the finished tasks and rolls the new set).
 	operations = Operations.from_save(profile.get("operations"), JSON.stringify(profile).hash())
 	Operations.update()
+	# Before version 22 there were no skins: an empty collection (the Drip stays), seeded from the save.
+	# Skins recorded on items that no item carries go back to the collection (never lost outside a raid).
+	cosmetics = Cosmetics.from_save(profile.get("cosmetics"), ("skins:" + JSON.stringify(profile)).hash())
+	Cosmetics.reconcile(false)

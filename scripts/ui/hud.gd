@@ -8,7 +8,7 @@ extends CanvasLayer
 ## Raid (DESIGN.md §2, §5): the time left under the raid name (amber in the last 5 minutes, red in the
 ## last minute); your extracts for a few seconds at raid start and whenever you press O (Show extracts),
 ## each marked Open, Unknown (a random one you haven't seen), Closed or with what it still needs ("Pay
-## 7,000 ₽", "Needs Factory exit key", "No backpack"); an "F  Search ..." prompt when a container, body
+## RUB 7,000", "Needs Factory exit key", "No backpack"); an "F  Search ..." prompt when a container, body
 ## or item is in reach; and while extracting a countdown with a progress ring around you (or why the
 ## extract you're in won't take you yet).
 ## 360 trick shots (DESIGN.md §13.4): "TRICK SHOT READY" while the window is open, a gold hit marker

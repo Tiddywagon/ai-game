@@ -317,7 +317,7 @@ func _update_countdowns() -> void:
 		(entry[0] as Label).text = str(entry[1]).replace("{clock}", clock)
 
 
-## "Loyalty level 2  ·  reputation 0.27 (0.05 from barters)  ·  spent ₽ 812,000", then what the next
+## "Loyalty level 2  ·  reputation 0.27 (0.05 from barters)  ·  spent RUB 812,000", then what the next
 ## level needs. Mole's loyalty is your Scav karma (karma_lines()).
 func _loyalty_lines(trader: Dictionary) -> Array[String]:
 	if TraderTable.follows_karma(trader.id):
@@ -344,7 +344,7 @@ func _loyalty_lines(trader: Dictionary) -> Array[String]:
 
 
 ## A karma trader's loyalty lines (Mole: ScavRuns): "Loyalty level 2  ·  your Scav karma +1.6 (−6 to +6)
-## ·  spent ₽ 40,000", what the next level needs and how karma moves, and below 0 that he pays less and
+## ·  spent RUB 40,000", what the next level needs and how karma moves, and below 0 that he pays less and
 ## charges more.
 static func karma_lines(trader_id: String) -> Array[String]:
 	var loyalty: Dictionary = GameState.trader_loyalty[trader_id]

@@ -108,6 +108,12 @@ static func summary_lines(outcome: RaidOutcome, raid: RaidController = null) -> 
 		lines.append(["Quests" if i == 0 else "", outcome.quest_lines[i]])
 	if outcome.trick_hits > 0:
 		lines.append(["Trick shots", "%d hits, %d kills  ·  +%d Drip" % [outcome.trick_hits, outcome.trick_kills, outcome.drip]])
+	if outcome.drip_total() > 0:
+		lines.append(["Drip", outcome.drip_text()])
+	for entry: Array in [["Skins lost", outcome.skins_lost], ["Skins back", outcome.skins_returned]]:
+		if not (entry[1] as Array).is_empty():
+			lines.append([entry[0], ", ".join((entry[1] as Array).map(func(id: String) -> String: return str(SkinTable.find(id).get("name", id))))
+				+ ("  (bound: back in your collection)" if entry[0] == "Skins back" else "")])
 	if outcome.side == "scav":
 		if outcome.survived():
 			lines.append(["Moved to stash", "%d items" % outcome.moved_to_stash.size()])

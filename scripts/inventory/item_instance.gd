@@ -50,6 +50,9 @@ var charges := 0.0
 ## who insured it (an id from data/config/insurers.json; kept on a returned item to say who sent it).
 var insured := false
 var insurer := ""
+## Cosmetic skins on it (DESIGN.md §6.7, Cosmetics): {slot ("skin", "sticker", "charm"): {"id": a skin id,
+## "wear": 0-1}}. Looks only: nothing that works out a number reads it.
+var cosmetics: Dictionary = {}
 
 
 ## A new instance of item `id` (null if there's no such item), `count` of it (capped to a stack).
@@ -339,6 +342,8 @@ func to_dict() -> Dictionary:
 		result.insured = true
 	if insurer != "":
 		result.insurer = insurer
+	if not cosmetics.is_empty():
+		result.cosmetics = cosmetics.duplicate(true)
 	return result
 
 
@@ -387,6 +392,12 @@ static func from_dict(entry: Dictionary) -> ItemInstance:
 		instance.load_rounds(full_rounds(instance.loaded_ammo, WeaponMods.capacity(instance) if loaded < 0 else loaded))
 	if instance.contents:
 		instance.contents.load_array(entry.get("contents", []))
+	var saved_cosmetics: Variant = entry.get("cosmetics")
+	if saved_cosmetics is Dictionary:  # Skins that are gone, or on a slot the item doesn't have, are dropped.
+		for slot: Variant in saved_cosmetics:
+			var skin: Variant = saved_cosmetics[slot]
+			if skin is Dictionary and str(slot) in SkinTable.item_slots(instance.data) and SkinTable.has(str(skin.get("id", ""))):
+				instance.cosmetics[str(slot)] = {"id": str(skin.id), "wear": clampf(float(skin.get("wear", 0.0)), 0.0, 1.0)}
 	return instance
 
 

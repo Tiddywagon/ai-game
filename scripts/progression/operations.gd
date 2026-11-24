@@ -640,11 +640,11 @@ static func title(task: Dictionary) -> String:
 	return "%s · %s" % [kind_name(str(task.get("operation", ""))), task.get("name", "")]
 
 
-## The reward lines of `task`: "25,000 ₽", "400 XP", "15% chance of a rare item" (or, once claimed,
+## The reward lines of `task`: "RUB 25,000" (UiFormat.money()), "400 XP", "15 Drip", "15% chance of a rare item" (or, once claimed,
 ## what it paid: "Gold chain").
 static func reward_lines(task: Dictionary) -> Array[String]:
 	var rewards: Dictionary = task.get("paid", task.get("rewards", {}))
-	var lines: Array[String] = ["%s ₽" % UiFormat.thousands(int(rewards.get("roubles", 0))), "%s XP" % UiFormat.thousands(int(rewards.get("xp", 0)))]
+	var lines: Array[String] = [UiFormat.money(int(rewards.get("roubles", 0))), "%s XP" % UiFormat.thousands(int(rewards.get("xp", 0)))]
 	if int(rewards.get("drip", 0)) > 0:
 		lines.append("%d Drip" % int(rewards.drip))
 	if task.has("paid"):

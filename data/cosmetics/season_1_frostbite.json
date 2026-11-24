@@ -1,0 +1,17 @@
+{
+  "collection": {"id": "frostbite", "name": "Frostbite", "about": "Snow, ice and the long northern night.", "season": true},
+  "skins": [
+    {"id": "frostbite_snowdrift", "name": "Snowdrift", "rarity": "common", "kind": "weapon", "look": {"base": "#eef2f4", "accent": "#a8b4bc", "pattern": "camo"}},
+    {"id": "frostbite_glacier", "name": "Glacier", "rarity": "uncommon", "kind": "weapon", "class": "assault_rifle", "look": {"base": "#a8d8f0", "accent": "#e8f8ff", "pattern": "hex"}},
+    {"id": "frostbite_permafrost", "name": "Permafrost", "rarity": "rare", "kind": "weapon", "weapon": "svd", "look": {"base": "#2a4a6a", "accent": "#e8f4ff", "pattern": "gradient"}},
+    {"id": "frostbite_northern_lights", "name": "Northern Lights", "rarity": "legendary", "kind": "weapon", "look": {"base": "#0a1420", "accent": "#3affa8", "pattern": "glow"}},
+    {"id": "frostbite_snow_smock", "name": "Snow Smock", "rarity": "common", "kind": "armor", "look": {"base": "#f0f2f4", "accent": "#b8c0c8", "pattern": "camo"}},
+    {"id": "frostbite_ice_crown", "name": "Ice Crown", "rarity": "uncommon", "kind": "helmet", "look": {"base": "#c8e8f8", "accent": "#4a8ab8", "pattern": "hex"}},
+    {"id": "frostbite_sled_pack", "name": "Sled Pack", "rarity": "common", "kind": "backpack", "look": {"base": "#c81e2a", "accent": "#f4f4f4", "pattern": "stripes"}},
+    {"id": "frostbite_frost_web", "name": "Frost Web", "rarity": "uncommon", "kind": "rig", "look": {"base": "#d8e4ec", "accent": "#8aa0b0", "pattern": "solid"}},
+    {"id": "frostbite_yakut_winter", "name": "Yakut Winter", "rarity": "ultra_rare", "kind": "outfit", "faction": "bear", "look": {"base": "#e8ecee", "accent": "#5a6a7a", "pattern": "camo"}},
+    {"id": "frostbite_whiteout", "name": "Whiteout", "rarity": "ultra_rare", "kind": "outfit", "faction": "usec", "look": {"base": "#ffffff", "accent": "#9ab0c4", "pattern": "gradient"}},
+    {"id": "frostbite_icicle", "name": "Icicle", "rarity": "epic", "kind": "knife", "look": {"base": "#c8e8ff", "accent": "#5ac8ff", "pattern": "glow"}},
+    {"id": "frostbite_snowflake", "name": "Snowflake", "rarity": "rare", "kind": "sticker", "look": {"base": "#e8f4ff", "accent": "#4a8ac8", "pattern": "hex"}}
+  ]
+}

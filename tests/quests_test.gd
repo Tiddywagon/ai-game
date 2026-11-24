@@ -215,18 +215,21 @@ func _rewards_and_unlocks() -> void:
 	var quest := _quest("t_rewards", [{"type": "level", "level": 2}], {"rewards": {"roubles": 1000, "dollars": 10, "xp": 500, "reputation": 0.05,
 		"reputation_with": {"vera": 0.03}, "drip": 7, "items": [{"item": "bandage", "count": 2}]}})
 	gs.level = 2
-	var before := {"roubles": gs.roubles, "dollars": gs.dollars, "xp": gs.xp, "drip": gs.drip, "bulat": float(gs.trader_loyalty.bulat.reputation),
+	var before := {"level": gs.level, "roubles": gs.roubles, "dollars": gs.dollars, "xp": gs.xp, "drip": gs.drip, "bulat": float(gs.trader_loyalty.bulat.reputation),
 		"vera": float(gs.trader_loyalty.vera.reputation), "bandages": gs.stash.count_of("bandage")}
 	check(quests.state(quest) == "ready", "a level objective already met: ready at once")
 	check(quests.complete(quest) == "", "turned in")
-	check(gs.roubles - before.roubles == 1000 and gs.dollars - before.dollars == 10 and gs.drip - before.drip == 7, "roubles, dollars and Drip paid")
+	# Since E15 every quest also pays drip.json's "quest" Drip, and each level gained its "level" Drip.
+	var skins: GDScript = load("res://scripts/data/skin_table.gd")
+	var drip_due: int = 7 + skins.quest_drip() + skins.level_drip() * (gs.level - before.level)
+	check(gs.roubles - before.roubles == 1000 and gs.dollars - before.dollars == 10 and gs.drip - before.drip == drip_due, "roubles, dollars and Drip paid (%d Drip)" % drip_due)
 	check(gs.xp != before.xp or gs.level > 2, "experience added")
 	check(is_equal_approx(float(gs.trader_loyalty.bulat.reputation) - before.bulat, 0.05) and is_equal_approx(float(gs.trader_loyalty.vera.reputation) - before.vera, 0.03),
 		"reputation with the giver and with another trader")
 	var plain: int = gs.stash.all_items().filter(func(each: RefCounted) -> bool: return each.data.id == "bandage" and not each.fir).reduce(
 		func(total: int, each: RefCounted) -> int: return total + each.count, 0)
 	check(gs.stash.count_of("bandage") - before.bandages == 2 and plain >= 2, "reward items in the stash, not found in raid")
-	check(quests.reward_lines(quests.find("scrap_run")).has("25,000 ₽"), "reward lines: %s" % str(quests.reward_lines(quests.find("scrap_run"))))
+	check(quests.reward_lines(quests.find("scrap_run")).has("RUB 25,000"), "reward lines: %s" % str(quests.reward_lines(quests.find("scrap_run"))))
 	# Unlock kinds named by existing data.
 	var kinds := {}
 	for each: Dictionary in quests.all():

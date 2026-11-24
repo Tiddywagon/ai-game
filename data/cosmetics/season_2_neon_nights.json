@@ -1,0 +1,17 @@
+{
+  "collection": {"id": "neon_nights", "name": "Neon Nights", "about": "Arcade light, chrome and a city that never sleeps.", "season": true},
+  "skins": [
+    {"id": "neon_nights_synthwave", "name": "Synthwave", "rarity": "common", "kind": "weapon", "look": {"base": "#2a1a4a", "accent": "#ff4ac8", "pattern": "stripes"}},
+    {"id": "neon_nights_arcade", "name": "Arcade", "rarity": "uncommon", "kind": "weapon", "class": "smg", "look": {"base": "#1a1a2a", "accent": "#3ae8ff", "pattern": "hex"}},
+    {"id": "neon_nights_laser_grid", "name": "Laser Grid", "rarity": "rare", "kind": "weapon", "weapon": "kestrel_ar", "look": {"base": "#0a0a14", "accent": "#ff2a8a", "pattern": "hex"}},
+    {"id": "neon_nights_hyperdrive", "name": "Hyperdrive", "rarity": "legendary", "kind": "weapon", "look": {"base": "#08081a", "accent": "#c84aff", "pattern": "glow"}},
+    {"id": "neon_nights_night_club", "name": "Night Club", "rarity": "common", "kind": "armor", "look": {"base": "#1a1a2a", "accent": "#8a4aff", "pattern": "stripes"}},
+    {"id": "neon_nights_pink_visor", "name": "Pink Visor", "rarity": "uncommon", "kind": "helmet", "look": {"base": "#ff6ac8", "accent": "#4a1a6a", "pattern": "gradient"}},
+    {"id": "neon_nights_cassette_pack", "name": "Cassette Pack", "rarity": "common", "kind": "backpack", "look": {"base": "#2a2a3a", "accent": "#e8c83a", "pattern": "hex"}},
+    {"id": "neon_nights_glow_webbing", "name": "Glow Webbing", "rarity": "uncommon", "kind": "rig", "look": {"base": "#14141e", "accent": "#3affe8", "pattern": "glow"}},
+    {"id": "neon_nights_disco_bear", "name": "Disco Bear", "rarity": "ultra_rare", "kind": "outfit", "faction": "bear", "look": {"base": "#3a1a5a", "accent": "#ffd83a", "pattern": "splatter"}},
+    {"id": "neon_nights_neon_runner", "name": "Neon Runner", "rarity": "ultra_rare", "kind": "outfit", "faction": "usec", "look": {"base": "#101018", "accent": "#3affc8", "pattern": "glow"}},
+    {"id": "neon_nights_laser_blade", "name": "Laser Blade", "rarity": "epic", "kind": "knife", "look": {"base": "#14081a", "accent": "#ff2aff", "pattern": "glow"}},
+    {"id": "neon_nights_glowstick", "name": "Glowstick", "rarity": "rare", "kind": "charm", "look": {"base": "#1a2a14", "accent": "#8aff3a", "pattern": "glow"}}
+  ]
+}

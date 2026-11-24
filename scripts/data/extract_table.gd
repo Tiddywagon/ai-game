@@ -59,7 +59,7 @@ static func unlocked_by(quest_id: String) -> Array:
 	return found
 
 
-## What an extract takes, as short phrases: "Factory exit key", "power on", "pay 7,000 ₽", "fire a
+## What an extract takes, as short phrases: "Factory exit key", "power on", "pay RUB 7,000", "fire a
 ## flare", "no backpack", "Scav only", "after Flare Path" (empty for none).
 static func condition_texts(entry: Dictionary) -> PackedStringArray:
 	var texts := PackedStringArray()

@@ -327,8 +327,10 @@ static func sell(trader_id: String, items: Array) -> String:
 	return ""
 
 
-## Takes `item` out of whichever grid of yours holds it, letting the grids (and the inventory) redraw.
+## Takes `item` out of whichever grid of yours holds it, letting the grids (and the inventory) redraw;
+## its skins go back to the collection.
 static func _take(item: ItemInstance) -> void:
+	Cosmetics.strip(item)  # Its skins go back to the collection first (DESIGN.md §6.7).
 	if GameState.inventory.holder_of(item):
 		GameState.inventory.remove_item(item)
 		return
@@ -360,8 +362,8 @@ static func needs_confirm(items: Array) -> bool:
 
 
 ## The question before selling `items` to `trader_id`: "Sell Roler Submariner gold wrist watch (Epic) to
-## The Broker for $ 2,228?", "Sell AK-74N (insured) to Bulat for ₽ 30,500?", or for several "Sell 4
-## items to Mole for ₽ 312,000? Among them: ..." (the valuable and insured ones).
+## The Broker for $ 2,228?", "Sell AK-74N (insured) to Bulat for RUB 30,500?", or for several "Sell 4
+## items to Mole for RUB 312,000? Among them: ..." (the valuable and insured ones).
 static func confirm_text(trader_id: String, items: Array) -> String:
 	var money := UiFormat.money(total(trader_id, items), currency(trader_id))
 	var named: Array[String] = []

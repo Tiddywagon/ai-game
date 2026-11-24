@@ -10,7 +10,7 @@ extends Node
 ## show a countdown under the profile and arrive in the stash when due, whatever screen is open (the
 ## stash views redraw; a notice over the screen says what came back). Under it, while the Scav run
 ## cooldown runs, "Scav ready in 12:30" (ScavRuns), and under that what waits on the flea market ("Flea
-## market: 2 sold (₽ 84,000): collect on the FLEA MARKET"), and the daily tasks ("Operations: 2 / 3
+## market: 2 sold (RUB 84,000): collect on the FLEA MARKET"), and the daily tasks ("Operations: 2 / 3
 ## dailies  ·  resets in 5:12:03"; Operations: a reset while the menu is open rolls the new sets and saves).
 
 const RAID_SETUP_SCENE := preload("res://ui/raid_setup.tscn")

@@ -1,0 +1,27 @@
+{
+  "_comment": "The Drip slot machine (DESIGN.md §6.7, SkinTable, Cosmetics), checked by SkinTable.problems() when the items load. price: Drip for one spin; ten_price: for ten at once. odds: the chance of each rarity a spin rolls (adding up to 1). pity: the spin number `spins` in a row without `rarity` or better rolls that rarity or better (by the odds of those rarities); any spin of it or better starts the count again. season_weight: how many times as likely a skin of the season in the machine is than a core skin of the same rarity. duplicate_drip: the Drip a skin you already own pays back, by rarity. bound_rarities: skins of these rarities are bound (outfits always are): lost with an item, they go back to the collection. wear: the five wear bands from best to worst, each up to `max` (the last ends at 1), with the chance a drop lands in it (adding up to 1); a drop's wear is spread evenly inside its band. seasons: the seasonal collections in the machine, one at a time, each for `days` days from `start` (a Monday, UTC), in `order`, then round again. near_miss: the reels tease a high result on this share of the results below `below` (looks only). item_slots: the cosmetic slots each kind of item has (skin: a skin of the item's kind; sticker; charm).",
+  "price": 100,
+  "ten_price": 900,
+  "odds": {"common": 0.52, "uncommon": 0.27, "rare": 0.13, "ultra_rare": 0.05, "epic": 0.024, "legendary": 0.006},
+  "pity": {"spins": 80, "rarity": "epic"},
+  "season_weight": 2.0,
+  "duplicate_drip": {"common": 10, "uncommon": 20, "rare": 40, "ultra_rare": 80, "epic": 200, "legendary": 500},
+  "bound_rarities": ["epic", "legendary"],
+  "wear": [
+    {"name": "Factory New", "max": 0.07, "chance": 0.1},
+    {"name": "Minimal Wear", "max": 0.15, "chance": 0.22},
+    {"name": "Field-Tested", "max": 0.38, "chance": 0.38},
+    {"name": "Well-Worn", "max": 0.45, "chance": 0.17},
+    {"name": "Battle-Scarred", "max": 1.0, "chance": 0.13}
+  ],
+  "seasons": {"start": "2026-01-05", "days": 28, "order": ["frostbite", "neon_nights", "scorched_earth"]},
+  "near_miss": {"chance": 0.35, "below": "ultra_rare"},
+  "item_slots": {
+    "weapon": ["skin", "sticker", "charm"],
+    "armor": ["skin", "sticker"],
+    "helmet": ["skin", "sticker"],
+    "rig": ["skin"],
+    "backpack": ["skin", "charm"],
+    "knife": ["skin"]
+  }
+}

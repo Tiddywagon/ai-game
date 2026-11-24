@@ -177,7 +177,7 @@ func block_reason(player: Actor) -> String:
 
 ## The mark shown for `player` in the extract lists, on the map and on the sign: "Open", "Unknown" (a
 ## random extract you haven't seen yet), "Closed", or what's still needed ("Needs Factory exit key,
-## needs power", "Pay 7,000 ₽", "Fire a flare", "No backpack").
+## needs power", "Pay RUB 7,000", "Fire a flare", "No backpack").
 func status_for(player: Actor) -> String:
 	if not available:
 		return "Locked"

@@ -230,7 +230,7 @@ func _listing_row(listing: Dictionary) -> Control:
 	return row
 
 
-## "market ₽ 38,100  ·  Bulat ₽ 41,000 (LL2)" under a listing's price (the trader price for the same
+## "market RUB 38,100  ·  Bulat RUB 41,000 (LL2)" under a listing's price (the trader price for the same
 ## count; "no trader sells it" when none does).
 func _compare_text(piece: ItemInstance) -> String:
 	var parts: Array[String] = ["market %s" % UiFormat.money(FleaMarket.market_price(piece))]
@@ -522,7 +522,7 @@ func _fill_mine() -> void:
 		_mine.add_child(nothing)
 
 
-## "Up · 11 h 52 min left", "SOLD: ₽ 576,717 to collect" or "Back unsold: collect it".
+## "Up · 11 h 52 min left", "SOLD: RUB 576,717 to collect" or "Back unsold: collect it".
 func _state_text(listing: Dictionary) -> String:
 	match str(listing.state):
 		FleaMarket.SOLD:

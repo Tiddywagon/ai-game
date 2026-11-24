@@ -333,7 +333,7 @@ func stat_lines(plan: Dictionary) -> Array[String]:
 	return lines
 
 
-## "₽ 361,599  ₽ 401,774 (struck through)  −10%", then "+ $ 1,782 (₽ 258,390 at the exchange)" when
+## "RUB 361,599  RUB 401,774 (struck through)  −10%", then "+ $ 1,782 (RUB 258,390 at the exchange)" when
 ## dollars are involved.
 func price_bbcode(plan: Dictionary) -> String:
 	var text := "[b]%s[/b]" % UiFormat.money(int(plan.roubles))
@@ -526,7 +526,7 @@ func _show(plan: Dictionary, note: String) -> void:
 	(_cancel if _confirm.disabled else _confirm).grab_focus.call_deferred()
 
 
-## "AK-74N  ·  Bulat  ·  ₽ 36,900"; a swap "Tundra 47 instead of AK-74N (sold out at Bulat)  ·  Bulat  ·  ₽ 46,800";
+## "AK-74N  ·  Bulat  ·  RUB 36,900"; a swap "Tundra 47 instead of AK-74N (sold out at Bulat)  ·  Bulat  ·  RUB 46,800";
 ## a left-out line "Left out: Red dot sight (needs Tinker LL2, and nothing like it is for sale)".
 static func line_text(line: Dictionary) -> String:
 	var wanted := ItemDB.get_item(str(line.wanted)) if ItemDB.has_item(str(line.wanted)) else null

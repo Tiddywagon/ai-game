@@ -12,8 +12,10 @@ extends RefCounted
 ##   behind). Dying costs nothing. The raid's karma changes (RaidController.karma_changes: friendly
 ##   Scavs killed, PMCs killed, extracting, with others) go to your Scav karma, however it ended
 ##   (ScavRuns.apply(), which also sets Mole's loyalty level).
-## - Raid experience (none for a Run Through; GameState.add_xp(), which may raise the level), Drip and
-##   360 trick-shot stats are added to the profile either way; in a PMC raid the raid's quest progress
+## - Raid experience (none for a Run Through; GameState.add_xp(), which may raise the level), Drip (360
+##   trick shots, kills, getting out with loot, levels: DESIGN.md §6.7) and 360 trick-shot stats are added
+##   to the profile either way (Drip for getting out only if you SURVIVED). In a PMC raid the skins on
+##   items you no longer have are lost, bound ones back to the collection (Cosmetics.reconcile()); in a PMC raid the raid's quest progress
 ##   (QuestRaid, counted live) is settled: survive-only progress and extract objectives count only when
 ##   you SURVIVED (DESIGN.md §11). Then the game is saved.
 
@@ -50,6 +52,13 @@ var skill_gains := {}
 var trick_hits := 0
 var trick_kills := 0
 var drip := 0
+## The raid's other Drip (DESIGN.md §6.7, drip.json): {"extract", "loot", "kills", "levels"}; drip_total()
+## adds the trick shots' too.
+var drip_parts := {}
+## PMC raids: the skins lost with items you no longer have, and the bound ones that went back to the
+## collection (skin ids; Cosmetics.reconcile()).
+var skins_lost: Array = []
+var skins_returned: Array = []
 ## Items that became found in raid.
 var found: Array[ItemInstance] = []
 ## Scav runs: items that went into the stash, and those that didn't fit.
@@ -89,6 +98,25 @@ static func keep_metabolism(health: BodyHealth, died: bool) -> void:
 	GameState.energy = maxf(health.energy, floor_value)
 	GameState.hydration = maxf(health.hydration, floor_value)
 	GameState.metabolism_time = Time.get_unix_time_from_system()
+
+
+## All the Drip this raid earned: trick shots, getting out (base and loot), kills and levels.
+func drip_total() -> int:
+	var total := drip
+	for part: String in drip_parts:
+		total += int(drip_parts[part])
+	return total
+
+
+## The summary's Drip line: "+93  (extract 20, loot 25, kills 18, trick shots 25, levels 50)".
+func drip_text() -> String:
+	var parts: Array[String] = []
+	for entry: Array in [["extract", "extract"], ["loot", "loot"], ["kills", "kills"], ["levels", "levels"]]:
+		if int(drip_parts.get(entry[0], 0)) > 0:
+			parts.append("%s %d" % [entry[1], int(drip_parts[entry[0]])])
+	if drip > 0:
+		parts.append("trick shots %d" % drip)
+	return "+%s%s" % [UiFormat.thousands(drip_total()), "  (%s)" % ", ".join(parts) if not parts.is_empty() else ""]
 
 
 ## Total base value of the items that became found in raid.
@@ -209,9 +237,16 @@ static func settle(end: Status, raid_side: String, inventory: Inventory, raid_se
 	Stats.record_raid({"side": raid_side, "outcome": ["survived", "run_through", "killed", "mia"][end], "kills": outcome.kill_list, "xp": outcome.xp,
 		"seconds": raid_seconds, "loot_value": outcome.loot_value if outcome.survived() else 0}, details.get("stats", {}))
 	outcome.level_before = GameState.level
-	GameState.add_xp(outcome.xp)
+	GameState.add_xp(outcome.xp)  # Pays the Drip of the levels gained.
 	outcome.level_after = GameState.level
 	GameState.drip += outcome.drip
+	outcome.drip_parts = Cosmetics.raid_drip(end == Status.SURVIVED, outcome.loot_value, outcome.kill_list)
+	GameState.drip += int(outcome.drip_parts.extract) + int(outcome.drip_parts.loot) + int(outcome.drip_parts.kills)
+	outcome.drip_parts.levels = SkinTable.level_drip() * (outcome.level_after - outcome.level_before)
+	if raid_side != "scav":
+		var skins := Cosmetics.reconcile(true)
+		outcome.skins_lost = skins.lost
+		outcome.skins_returned = skins.returned
 	GameState.trick_shots.hits += outcome.trick_hits
 	GameState.trick_shots.kills += outcome.trick_kills
 	var quest_raid: QuestRaid = details.get("quest_raid")

@@ -366,7 +366,7 @@ func _build_task(task: Dictionary) -> void:
 	_detail.add_child(rewards)
 	if kind == "daily":
 		var bonus: Dictionary = GameState.operations.daily.get("bonus", {})
-		var bonus_line := _line("All %d dailies: +%s ₽  ·  +%s XP%s" % [Operations.tasks("daily").size(), UiFormat.thousands(int(bonus.get("roubles", 0))),
+		var bonus_line := _line("All %d dailies: +%s  ·  +%s XP%s" % [Operations.tasks("daily").size(), UiFormat.money(int(bonus.get("roubles", 0))),
 			UiFormat.thousands(int(bonus.get("xp", 0))), "  ·  paid" if Operations.bonus_paid() else "  ·  %d / %d claimed" % [
 			Operations.tasks("daily").filter(func(each: Dictionary) -> bool: return QuestLog.state(each) == "completed").size(), Operations.tasks("daily").size()]],
 			DONE_COLOR if Operations.bonus_paid() else LOCKED_COLOR)

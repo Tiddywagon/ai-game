@@ -694,7 +694,7 @@ static func complete(quest: Dictionary) -> String:
 	var rewards: Dictionary = quest.get("rewards", {})
 	GameState.roubles += int(rewards.get("roubles", 0))
 	GameState.dollars += int(rewards.get("dollars", 0))
-	GameState.drip += int(rewards.get("drip", 0))
+	GameState.drip += int(rewards.get("drip", 0)) + SkinTable.quest_drip()  # Every quest pays drip.json's Drip too.
 	var trader: String = quest.get("trader", "")
 	var reputation := {trader: float(rewards.get("reputation", 0.0))}
 	var others: Dictionary = rewards.get("reputation_with", {})
@@ -718,14 +718,15 @@ static func complete(quest: Dictionary) -> String:
 	return ""
 
 
-## The reward lines of `quest`: "25,000 ₽", "1,500 XP", "+0.05 Bulat", "60× 5.45x39 BS", "25 Drip".
+## The reward lines of `quest`: "RUB 25,000", "1,500 XP", "+0.05 Bulat", "60× 5.45x39 BS", "50 Drip" (its own
+## Drip plus the Drip every quest pays: SkinTable.quest_drip()). Money as UiFormat.money() writes it.
 static func reward_lines(quest: Dictionary) -> Array[String]:
 	var rewards: Dictionary = quest.get("rewards", {})
 	var lines: Array[String] = []
 	if int(rewards.get("roubles", 0)) > 0:
-		lines.append("%s ₽" % UiFormat.thousands(int(rewards.roubles)))
+		lines.append(UiFormat.money(int(rewards.roubles)))
 	if int(rewards.get("dollars", 0)) > 0:
-		lines.append("$%s" % UiFormat.thousands(int(rewards.dollars)))
+		lines.append(UiFormat.money(int(rewards.dollars), "USD"))
 	if int(rewards.get("xp", 0)) > 0:
 		lines.append("%s XP" % UiFormat.thousands(int(rewards.xp)))
 	if float(rewards.get("reputation", 0.0)) > 0.0:
@@ -733,8 +734,8 @@ static func reward_lines(quest: Dictionary) -> Array[String]:
 	var others: Dictionary = rewards.get("reputation_with", {})
 	for other: String in others:
 		lines.append("%+.2f %s" % [float(others[other]), TraderTable.display_name(other)])
-	if int(rewards.get("drip", 0)) > 0:
-		lines.append("%d Drip" % int(rewards.drip))
+	if int(rewards.get("drip", 0)) + SkinTable.quest_drip() > 0:
+		lines.append("%d Drip" % (int(rewards.get("drip", 0)) + SkinTable.quest_drip()))
 	for reward: Dictionary in rewards.get("items", []):
 		var count := int(reward.get("count", 1))
 		lines.append(("%d× %s" % [count, ExtractTable.item_name(str(reward.item))]) if count > 1 else ExtractTable.item_name(str(reward.item)))

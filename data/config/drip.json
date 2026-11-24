@@ -1,0 +1,13 @@
+{
+  "_comment": "Drip earned (DESIGN.md §6.7, Cosmetics), checked by SkinTable.problems(). extract: getting out of a PMC raid or a Scav run (not a Run Through, not practice) pays base plus the highest loot bracket whose value the loot brought out reaches (base value in roubles of what you picked up). kills: per kill by who it was (scav, guard, pmc, boss), in PMC raids and Scav runs, whatever the outcome. quest: per quest completed, on top of its own Drip reward. level: per level gained. Daily and weekly tasks pay their kind's \"drip\" in data/tasks/operations.json; 360 trick-shot kills pay raid.tres drip_trick_kill.",
+  "extract": {"base": 20, "loot": [
+    {"value": 25000, "drip": 10},
+    {"value": 100000, "drip": 25},
+    {"value": 250000, "drip": 45},
+    {"value": 500000, "drip": 70},
+    {"value": 1000000, "drip": 100}
+  ]},
+  "kills": {"scav": 3, "guard": 8, "pmc": 15, "boss": 50},
+  "quest": 25,
+  "level": 50
+}

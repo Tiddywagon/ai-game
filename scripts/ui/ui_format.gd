@@ -14,16 +14,21 @@ static func thousands(value: int) -> String:
 	return ("-" if value < 0 else "") + ",".join(groups)
 
 
-## Money with its currency sign: roubles ("₽ 500,000") or dollars ("$ 250").
+## Money with its currency sign: roubles ("RUB 500,000") or dollars ("$ 250"). Every money amount on
+## screen goes through here, so there is one sign for roubles everywhere (DESIGN.md §14).
 static func money(amount: int, currency := "RUB") -> String:
 	return "%s %s" % [currency_sign(currency), thousands(amount)]
 
 
-## "₽" or "$". Falls back to "RUB" if the UI font has no rouble sign.
+## "RUB" or "$". The rouble sign (₽) isn't used: the UI font has no glyph for it, and a system font that
+## does isn't there on every platform, so it could show as a box.
 static func currency_sign(currency: String) -> String:
-	if currency == "USD":
-		return "$"
-	return "₽" if ThemeDB.fallback_font.has_char(0x20BD) else "RUB"
+	return "$" if currency == "USD" else "RUB"
+
+
+## Drip with its name: "1,250 Drip".
+static func drip(amount: int) -> String:
+	return "%s Drip" % thousands(amount)
 
 
 ## A length of time in words: "3 h", "2 h 30 min", "45 min", "30 s" (seconds rounded up to a minute

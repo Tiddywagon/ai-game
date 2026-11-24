@@ -79,7 +79,7 @@ static func used_up(requirements: Array[Requirement], barter := false) -> Array[
 
 
 ## Takes up to `amount` of item `id` (only found-in-raid ones if `fir_only`; only whole ones from the
-## stash if `barter`). Returns how many.
+## stash if `barter`). Returns how many. An item taken whole gives its skins back to the collection.
 static func take(id: String, amount: int, fir_only: bool, barter := false) -> int:
 	var found := _matches(id, fir_only, barter)
 	found.sort_custom(_taken_first)
@@ -97,8 +97,10 @@ static func take(id: String, amount: int, fir_only: bool, barter := false) -> in
 			else:
 				GameState.inventory.changed.emit()
 		elif entry.grid:
+			Cosmetics.strip(item)  # A skinned item's skins go back to the collection first (DESIGN.md §6.7).
 			(entry.grid as InventoryGrid).remove(item)
 		else:
+			Cosmetics.strip(item)
 			GameState.inventory.unequip(entry.slot)
 	return taken
 

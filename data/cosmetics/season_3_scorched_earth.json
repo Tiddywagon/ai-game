@@ -1,0 +1,17 @@
+{
+  "collection": {"id": "scorched_earth", "name": "Scorched Earth", "about": "Sun, sand and the smell of burning oil.", "season": true},
+  "skins": [
+    {"id": "scorched_earth_dune", "name": "Dune", "rarity": "common", "kind": "weapon", "look": {"base": "#d8b884", "accent": "#a8885a", "pattern": "camo"}},
+    {"id": "scorched_earth_sun_bleached", "name": "Sun Bleached", "rarity": "uncommon", "kind": "weapon", "class": "pistol", "look": {"base": "#f0e0c0", "accent": "#a8906a", "pattern": "gradient"}},
+    {"id": "scorched_earth_dust_devil", "name": "Dust Devil", "rarity": "rare", "kind": "weapon", "weapon": "mosin_rifle", "look": {"base": "#a8784a", "accent": "#e8d0a8", "pattern": "splatter"}},
+    {"id": "scorched_earth_inferno", "name": "Inferno", "rarity": "legendary", "kind": "weapon", "look": {"base": "#1a0a04", "accent": "#ff7a0a", "pattern": "glow"}},
+    {"id": "scorched_earth_ash_plate", "name": "Ash Plate", "rarity": "common", "kind": "armor", "look": {"base": "#5a5652", "accent": "#2a2826", "pattern": "splatter"}},
+    {"id": "scorched_earth_mirage", "name": "Mirage", "rarity": "uncommon", "kind": "helmet", "look": {"base": "#e8c88a", "accent": "#6ab8d8", "pattern": "gradient"}},
+    {"id": "scorched_earth_nomad_pack", "name": "Nomad Pack", "rarity": "common", "kind": "backpack", "look": {"base": "#a85a2a", "accent": "#e8d0a0", "pattern": "stripes"}},
+    {"id": "scorched_earth_cinder_web", "name": "Cinder Web", "rarity": "uncommon", "kind": "rig", "look": {"base": "#2a2420", "accent": "#c85a2a", "pattern": "hex"}},
+    {"id": "scorched_earth_steppe_wolf", "name": "Steppe Wolf", "rarity": "ultra_rare", "kind": "outfit", "faction": "bear", "look": {"base": "#a89a7a", "accent": "#5a4a3a", "pattern": "camo"}},
+    {"id": "scorched_earth_sun_scorched", "name": "Sun Scorched", "rarity": "ultra_rare", "kind": "outfit", "faction": "usec", "look": {"base": "#e8c88a", "accent": "#8a3a1a", "pattern": "gradient"}},
+    {"id": "scorched_earth_obsidian", "name": "Obsidian", "rarity": "epic", "kind": "knife", "look": {"base": "#0a0a0c", "accent": "#8a3aff", "pattern": "hex"}},
+    {"id": "scorched_earth_cactus", "name": "Cactus", "rarity": "rare", "kind": "sticker", "look": {"base": "#3a8a3a", "accent": "#e8d84a", "pattern": "solid"}}
+  ]
+}

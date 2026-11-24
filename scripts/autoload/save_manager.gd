@@ -89,7 +89,14 @@ const SAVE_PATH := "user://savegame.json"
 ## with its objective, progress, rewards, re-rolls left and whether it's claimed. Older saves have none:
 ## they get a seed worked out from the save itself and today's and this week's sets rolled on load
 ## (nothing to change in upgrade(): GameState.from_dict() does it).
-const SAVE_VERSION := 21
+## Version 22 adds cosmetic skins and the Drip slot machine (DESIGN.md §6.7, Cosmetics): profile
+## "cosmetics" {"seed", "rolls" (spins rolled: the next roll's number), "pity" (spins without an Epic or
+## better), "spins", "owned": {skin id: wear} (the collection), "applied": {skin id: wear} (on your
+## items), "outfits": {faction: skin id}, "last": [the last spin's results]}, and on each item
+## "cosmetics": {slot: {"id", "wear"}}. The free spin's day was already saved with the figures (version
+## 18). Older saves start with an empty collection and keep their Drip (nothing to change in upgrade():
+## GameState.from_dict() starts the block blank, seeded from the save).
+const SAVE_VERSION := 22
 ## Where upgrade() lists items an old save had somewhere that no longer exists (version 12: headsets
 ## taken off helmets), for GameState.from_dict() to put in the stash. Never saved.
 const LOOSE_KEY := "loose_items"
@@ -151,8 +158,8 @@ func delete_save() -> void:
 ## older: the Stash station at level 1. Version 11 and older: headsets off helmets (LOOSE_KEY lists the
 ## ones for the stash). Version 12: nothing to change (no auto-equip options: the defaults).
 ## Version 13 and older: Scav karma 0, no cooldown, no kit. Version 14: nothing to change (no custom
-## quick-buy cards). Versions 15 to 18: nothing to change (no flea market, no hideout state, no figures, no
-## tracked quests: blank).
+## quick-buy cards). Versions 15 to 21: nothing to change (no flea market, no hideout state, no figures, no
+## tracked quests, no lifetime stats, no tasks, no skins: blank).
 ## Data with no version is taken as current.
 func upgrade(data: Dictionary) -> Dictionary:
 	var version := int(data.get("version", SAVE_VERSION))
