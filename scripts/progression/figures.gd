@@ -184,8 +184,27 @@ static func set_complete(id: String) -> bool:
 
 
 ## The bonus of `type` (a FigureTable.BONUS_TYPES key) from the sets on display: the values of every
-## complete set that gives it, added up; 0 with none.
+## complete set that gives it, added up; 0 with none. Worked out once per shelf (what's on it, by its
+## hash) and sets file: every trader price asks for it, and counting the sets each time made a Quick
+## Buy refresh slow.
 static func bonus(type: String) -> float:
+	var shelf_hash := shelf().hash()
+	var config := FigureTable.config()
+	if shelf_hash != _bonus_shelf or not is_same(config, _bonus_config):
+		_bonuses = {}
+		_bonus_shelf = shelf_hash
+		_bonus_config = config
+	if not _bonuses.has(type):
+		_bonuses[type] = _bonus(type)
+	return float(_bonuses[type])
+
+
+static var _bonus_shelf := 0
+static var _bonus_config := {}
+static var _bonuses := {}
+
+
+static func _bonus(type: String) -> float:
 	var total := 0.0
 	for entry in FigureTable.sets():
 		var rule: Variant = entry.get("bonus")
