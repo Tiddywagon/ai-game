@@ -82,7 +82,8 @@ func _new_profiles() -> void:
 			"%s: 60 spare rounds and a bandage in the pockets" % name)
 		check(gs.stash.count_of(kit[0]) == 1 and gs.stash.count_of(kit[1]) == 120 and gs.stash.items.size() == 16,
 			"%s: the starter stash (a spare gun, 120 rounds, 16 items)" % name)
-		check(gs.hideout == {"stash": 1} and gs.stash.size == Vector2i(10, 30), "%s: Stash station level 1, a 10x30 stash" % name)
+		# Since E15 the Slot Machine is there from the start too.
+		check(gs.hideout == {"stash": 1, "slot_machine": 1} and gs.stash.size == Vector2i(10, 30), "%s: Stash station level 1, a 10x30 stash, the Slot Machine" % name)
 		check(is_equal_approx(gs.trader_loyalty[kit[3]].reputation, 0.05), "%s: 0.05 starting reputation with %s" % [name, kit[3]])
 
 
