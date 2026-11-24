@@ -20,8 +20,9 @@ figure set (E10) gives one free spin per day on this machine.
 ## Part a: data and logic
 
 - **Earning Drip** (`data/config/drip.json`): per extract (a base plus brackets by the loot value brought out),
-  per kill (Scav, PMC, boss), per quest completed, per daily and weekly task, per level gained; trick shots as
-  now. PMC raids and Scav runs both pay for extracts; practice pays nothing. The raid summary shows Drip earned.
+  per kill (Scav, PMC, boss), per quest completed, per daily and weekly task (already wired since E14: `"drip"`
+  per kind in `data/tasks/operations.json`, 0 now, paid by `Operations.claim()` and shown on the board), per level
+  gained; trick shots as now. PMC raids and Scav runs both pay for extracts; practice pays nothing. The raid summary shows Drip earned.
 - **Skins** in `data/cosmetics/*.json` (loader with `problems()`): id, name, rarity, kind (weapon, armor, helmet,
   backpack, rig, outfit, knife, sticker, charm), what it fits (one weapon id, a weapon class, or universal; armor
   / helmet / rig / backpack by item or universal; outfits by faction), its collection, whether it is bound, and

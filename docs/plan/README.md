@@ -18,8 +18,8 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E11 | Data-driven quest system (more objective types, unlocks, quest log, raid tracker): [E11_quests.md](E11_quests.md) (suite `tests/quests_test.gd`) | done |
 | E12 | At least 60 quests across traders, maps, factions and bosses: [E12_quest_content.md](E12_quest_content.md) (suite `tests/quest_content_test.gd`) | done |
 | E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) (suite `tests/skills_test.gd`) | done |
-| E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) | next |
-| E15 | Drip economy, cosmetic slot machine, skins, Cosmetics tab: [E15_drip_cosmetics.md](E15_drip_cosmetics.md) | after E14 (two parts) |
+| E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) (suite `tests/operations_test.gd`) | done |
+| E15 | Drip economy, cosmetic slot machine, skins, Cosmetics tab: [E15_drip_cosmetics.md](E15_drip_cosmetics.md) | next (two parts) |
 | | **The first batch (through E9) is complete**: every step is done and no known bug is open | |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
@@ -31,11 +31,9 @@ market and hideout requests is no longer available either: E7 and E8 are written
 (Fixed earlier: auto-equip improving on a second run when a stash rig or backpack held rounds or meds, with E9.)
 (Fixed with E13: the quest log's trader dropdown not following the filter, BEAR's last faction quest waiting on a
 map with no scene, DESIGN §10's money model citing a suite that no longer existed.)
+(Fixed with E14: the Raiders figure set's search speed also speeding up AI bots' searches; `figures_test` checks it.)
 
 No known bug is open.
-
-- The Raiders figure set's +5% search speed also speeds up AI bots' searches (it should help only the player,
-  like the Search skill). Fix in E14 with a test.
 
 ## Ground rules for every step
 
