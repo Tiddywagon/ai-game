@@ -39,11 +39,13 @@ const SECURITY := "security"
 const SHOOTING_RANGE := "shooting_range"
 ## The station that displays collectible figures (DESIGN.md §6.6, Figures): its levels' "display_slots".
 const COLLECTORS_SHELF := "collectors_shelf"
+## The Drip slot machine (DESIGN.md §6.7, SlotMachineScreen): there from the start, nothing to build.
+const SLOT_MACHINE := "slot_machine"
 ## Where the Shooting Range's practice sessions are.
 const PRACTICE_MAP := "test_yard"
 ## Every station the hideout has (DESIGN.md §9), in the order the data lists them.
 const ALL_STATIONS := ["generator", "stash", "medstation", "nutrition_unit", "rest_space", "workbench", "water_collector",
-	"lavatory", "shooting_range", "gym", "intelligence_center", "bitcoin_farm", "security", "collectors_shelf"]
+	"lavatory", "shooting_range", "gym", "intelligence_center", "bitcoin_farm", "security", "collectors_shelf", "slot_machine"]
 const STATION_KEYS := ["id", "name", "description", "start_level", "room", "needs_power", "unpowered_rate", "fuel", "cards", "levels"]
 const LEVEL_KEYS := ["level", "roubles", "stations", "traders", "player_level", "build_minutes", "requires", "crafts", "stash_size",
 	"fuel_slots", "fuel_efficiency", "card_slots", "produces", "training", "scav_cooldown", "insurance_price", "insurance_time",

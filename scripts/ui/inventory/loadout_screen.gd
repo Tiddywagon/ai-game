@@ -20,8 +20,8 @@ extends InventoryScreen
 ## GameState.auto_equip), then shows a summary of every change with UNDO (reverses exactly what it did,
 ## LoadoutPlanner.undo()) and OK. Closing saves; so do AUTO-EQUIP and UNDO.
 ##
-## Two tabs: LOADOUT (all of the above) and QUICK BUY (QuickBuyTab: whole loadouts bought from the
-## traders in one go). Q / E or LB / RB switch them, through _unhandled_input(), and do nothing while a
+## Three tabs: LOADOUT (all of the above), QUICK BUY (QuickBuyTab: whole loadouts bought from the
+## traders in one go) and COSMETICS (CosmeticsTab: skins on your gear and outfits on a turning model). Q / E or LB / RB switch them, through _unhandled_input(), and do nothing while a
 ## text box or the filter bar has the keys, an item is being dragged, or the examine panel, the modding
 ## screen, a container window or any dialog is open (tabs_allowed()).
 
@@ -40,8 +40,9 @@ const SUMMARY_WIDTH := 860.0
 ## The summary's list of changes scrolls past this share of the screen's height.
 const SUMMARY_MAX_HEIGHT := 0.6
 const DIM_COLOR := Color(1, 1, 1, 0.35)
-## The energy and water line's width here (narrower than in a raid: the tabs need the room).
-const TAB_STATUS_WIDTH := 340.0
+## The energy and water line's width and the hint's here (narrower than in a raid: the tabs need the room).
+const TAB_STATUS_WIDTH := 330.0
+const TAB_HINT_WIDTH := 300.0
 const LOADOUT_HINTS := [
 	"Drag to move or onto a filled slot to swap  ·  Hover a stash item: compare  ·  R: turn  ·  Right-click: examine  ·  Ctrl-click: quick move  ·  Double-click: open",
 	"D-pad or left stick: move the cursor (on a stash item: compare)  ·  The buttons below pick up, turn, quick-move and examine",
@@ -69,8 +70,9 @@ var auto_plan: Dictionary = {}
 ## the shade behind it.
 var _summary_shade: ColorRect
 var _summary: PanelContainer
-## The QUICK BUY tab, and the tab shown (0: LOADOUT, 1: QUICK BUY).
+## The QUICK BUY and COSMETICS tabs, and the tab shown (0: LOADOUT, 1: QUICK BUY, 2: COSMETICS).
 var quick_buy: QuickBuyTab
+var cosmetics: CosmeticsTab
 var tab := 0
 var _tab_buttons: Array[Button] = []
 
@@ -111,6 +113,8 @@ func _ready() -> void:
 func _update_hint(device: int) -> void:
 	if tab == 1:
 		%Hint.text = "%s: switch tabs  ·  BUY shows every line before you pay" % ("LB / RB" if device == 1 else "Q / E")
+	elif tab == 2:
+		%Hint.text = "%s: switch tabs  ·  Drag the model to turn it, wheel or pinch to zoom  ·  Skins only change how things look" % ("LB / RB" if device == 1 else "Q / E")
 	else:
 		%Hint.text = LOADOUT_HINTS[device] if device >= 0 and device < LOADOUT_HINTS.size() else LOADOUT_HINTS[0]
 	%CloseButton.text = "CLOSE  (%s)" % Settings.key_label("toggle_inventory")
@@ -147,7 +151,8 @@ func _typing_box() -> LineEdit:
 
 # --- Tabs -----------------------------------------------------------------------------------------
 
-## LOADOUT | QUICK BUY in the header, and the QUICK BUY tab under it (hidden until picked).
+## LOADOUT | QUICK BUY | COSMETICS in the header, and the QUICK BUY and COSMETICS tabs under it (hidden
+## until picked).
 func _build_tabs() -> void:
 	var title := $Margin/Layout/Header/Title as Label
 	title.hide()  # The tabs name the screen.
@@ -158,14 +163,14 @@ func _build_tabs() -> void:
 	header.add_child(strip)
 	header.move_child(strip, title.get_index() + 1)
 	var group := ButtonGroup.new()
-	for entry in [["TabLoadout", "LOADOUT"], ["TabQuickBuy", "QUICK BUY"]]:
+	for entry in [["TabLoadout", "LOADOUT"], ["TabQuickBuy", "QUICK BUY"], ["TabCosmetics", "COSMETICS"]]:
 		var button := Button.new()
 		button.name = entry[0]
 		button.text = entry[1]
 		button.toggle_mode = true
 		button.button_group = group
 		button.custom_minimum_size = Vector2(0, 48)
-		button.add_theme_font_size_override("font_size", 20)
+		button.add_theme_font_size_override("font_size", 18)
 		button.focus_mode = Control.FOCUS_NONE
 		button.tooltip_text = "Q / E or LB / RB: switch tabs"
 		button.pressed.connect(set_tab.bind(_tab_buttons.size()))
@@ -177,24 +182,35 @@ func _build_tabs() -> void:
 	if status:
 		for control: Control in [status] + status.get_children():
 			control.custom_minimum_size.x = TAB_STATUS_WIDTH
+	(header.get_node("Hint") as Control).custom_minimum_size.x = TAB_HINT_WIDTH
 	quick_buy = QuickBuyTab.new()
 	quick_buy.screen = self
 	quick_buy.visible = false
 	var columns := $Margin/Layout/Columns as Control
 	columns.get_parent().add_child(quick_buy)
 	columns.get_parent().move_child(quick_buy, columns.get_index() + 1)
+	cosmetics = CosmeticsTab.new()
+	cosmetics.screen = self
+	cosmetics.visible = false
+	columns.get_parent().add_child(cosmetics)
+	columns.get_parent().move_child(cosmetics, quick_buy.get_index() + 1)
 
 
-## Shows tab `index` (0: LOADOUT, 1: QUICK BUY).
+## Shows tab `index` (0: LOADOUT, 1: QUICK BUY, 2: COSMETICS).
 func set_tab(index: int) -> void:
-	tab = clampi(index, 0, 1)
+	tab = clampi(index, 0, 2)
 	_tab_buttons[tab].button_pressed = true
 	($Margin/Layout/Columns as Control).visible = tab == 0
 	quick_buy.visible = tab == 1
-	if tab == 1:
+	cosmetics.visible = tab == 2
+	if tab != 0:
 		compare_item(null)
+	if tab == 1:
 		quick_buy.refresh(true)
 		quick_buy.focus_first.call_deferred()
+	elif tab == 2:
+		cosmetics.refresh()
+		cosmetics.focus_first.call_deferred()
 	_update_hint(InputHub.device)
 
 
@@ -203,7 +219,8 @@ func set_tab(index: int) -> void:
 func tabs_allowed() -> bool:
 	if _typing_box() != null or (%FilterBar as StashFilterBar).has_focus_inside() or get_viewport().gui_is_dragging():
 		return false
-	if _examine.visible or get_node_or_null("WeaponModScreen") or not _windows.is_empty() or summary_open() or quick_buy.dialog_open():
+	if _examine.visible or get_node_or_null("WeaponModScreen") or not _windows.is_empty() or summary_open() or quick_buy.dialog_open() \
+			or %Overlay.get_node_or_null("SkinsScreen"):
 		return false
 	var upgrade_panel := %Overlay.get_node_or_null("GearUpgradePanel") as GearUpgradePanel
 	return not (upgrade_panel and upgrade_panel.visible)
@@ -213,7 +230,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	var step := -1 if event.is_action_pressed("ui_tab_previous") else (1 if event.is_action_pressed("ui_tab_next") else 0)
 	if step == 0 or not tabs_allowed():
 		return
-	set_tab(posmod(tab + step, 2))
+	set_tab(posmod(tab + step, _tab_buttons.size()))
 	get_viewport().set_input_as_handled()
 
 
@@ -235,6 +252,13 @@ func _input(event: InputEvent) -> void:
 		# The summary has the screen: Esc / B or Tab is OK; its buttons take the rest.
 		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("toggle_inventory"):
 			close_summary()
+			get_viewport().set_input_as_handled()
+		return
+	var skins := %Overlay.get_node_or_null("SkinsScreen") as SkinsScreen
+	if skins:
+		# The skins collection (from COSMETICS) has the screen: Esc / B or Tab closes it.
+		if event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause") or event.is_action_pressed("toggle_inventory"):
+			skins.close()
 			get_viewport().set_input_as_handled()
 		return
 	if quick_buy and quick_buy.dialog_open():

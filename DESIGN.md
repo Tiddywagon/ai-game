@@ -1185,6 +1185,7 @@ Fourteen stations, each a room on the hideout plan: **Generator, Stash, Medstati
 | Collectors Shelf | 1 | 60,000 | Pack of nails ×4, Light bulb ×2, Duct tape ×1 | — | 10 min | 12 display slots for figures |
 | Collectors Shelf | 2 | 250,000 | Screw nuts ×6, Light bulb ×4, Wires ×3, Epoxy resin ×1 | — | 1 h 30 min | 28 display slots for figures |
 | Collectors Shelf | 3 | 800,000 | Cordless drill ×1, Hex nuts ×8, Power cord ×3, Printed circuit board ×2 | Generator 2, player level 12 | 4 h | 56 display slots for figures |
+| Slot Machine | 1 | 0 | — | — | from the start |  |
 
 **The Crafting skill** (Section 12.3): each craft collected trains it (20 points and 0.5 a minute of the craft's time); each level makes crafts queued from then on 0.4% shorter (20% at 50) and gives a 0.2% chance (10% at 50) of one more of the output, rolled when the craft is queued (the queue shows the count it will make).
 

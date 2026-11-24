@@ -6,7 +6,8 @@ extends MenuScreen
 ## with HAND OVER per item (handed / needed), its build time, what it gives and BUILD, or the build's
 ## countdown; the craft list with the queue, timers and COLLECT; the generator's fuel gauge, switch and
 ## ADD FUEL; the farm's cards and coins; the Water Collector's water; the Gym's sessions; the Shooting
-## Range's PRACTICE; the Workbench's gear upgrades. DECOR lists the cosmetics. Every action saves the
+## Range's PRACTICE; the Workbench's gear upgrades; the Slot Machine's Drip, season, free spin and pity,
+## with OPEN THE MACHINE and SKINS. The header shows roubles, dollars and Drip. DECOR lists the cosmetics. Every action saves the
 ## game. A timer brings the hideout up to date every second: countdowns tick, and the panel is drawn
 ## again when something finished (focus stays on the button it was on).
 
@@ -81,7 +82,7 @@ func _state_signature() -> String:
 
 
 func _update_header() -> void:
-	%Money.text = "%s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")]
+	%Money.text = "%s      %s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD"), UiFormat.drip(GameState.drip)]
 	if Hideout.level(Hideout.find(Hideout.GENERATOR)) == 0:
 		%Power.text = "NO POWER  ·  build the Generator"
 	elif HideoutWork.has_power():
@@ -140,6 +141,9 @@ func _build_station(which: Dictionary) -> void:
 			_note("Your stash: %d × %d" % [cells.x, cells.y]).name = "StashSize"
 	if which.id == FigureTable.station_id():
 		_build_shelf(level)
+	if which.id == Hideout.SLOT_MACHINE:
+		_build_slots()
+		return  # Nothing to build or craft.
 	_build_tree(which)
 	if which.id == GearUpgrades.WORKBENCH:
 		_build_gear_upgrades(level)
@@ -367,6 +371,46 @@ func _build_shelf(level: int) -> void:
 	var row := _row()
 	row.add_child(_open_button("OpenCollection", "COLLECTION", "", CollectionScreen.COLLECTION))
 	row.add_child(_open_button("OpenShelf", "SHELF", "" if level > 0 else "Build the Collectors Shelf first", CollectionScreen.SHELF))
+
+
+## The Slot Machine's panel: your Drip, the season in the machine, today's free spin, the pity counter,
+## and OPEN (the SlotMachineScreen) and SKINS (the skins collection, SkinsScreen).
+func _build_slots() -> void:
+	%Details.add_child(HSeparator.new())
+	_heading("DRIP", true)
+	var now := HideoutWork.now()
+	_note("You have %s. A spin costs %s, ten cost %s.  Season: %s (%s left)." % [UiFormat.drip(GameState.drip), UiFormat.drip(SkinTable.price(1)),
+		UiFormat.drip(SkinTable.price(10)), SkinTable.collection(SkinTable.season_at(now)).get("name", "—"), UiFormat.duration(SkinTable.season_ends(now) - now)]).name = "DripNote"
+	_note("%s or better within %d spins.  %s" % [Palette.RARITY_NAMES[SkinTable.pity_rarity()], Cosmetics.pity_left(),
+		"Free spins today: %d (the Oddities figure set)." % Figures.free_spins_left() if Figures.free_spins_a_day() > 0 else "Display the Oddities figure set for a free spin a day."]).name = "PityNote"
+	var row := _row()
+	row.add_child(_screen_button("OpenSlots", "OPEN THE MACHINE", func() -> MenuScreen: return SlotMachineScreen.create()))
+	row.add_child(_screen_button("OpenSkins", "SKINS", func() -> MenuScreen: return SkinsScreen.create()))
+
+
+## A button that opens the screen `make` returns over this screen (its content hidden meanwhile, so the
+## keyboard and controller focus can't reach it); closing it brings the focus back to the button.
+func _screen_button(id: String, text: String, make: Callable) -> Button:
+	var button := Button.new()
+	button.name = id
+	button.text = text
+	button.custom_minimum_size = Vector2(210, 48)
+	button.pressed.connect(func() -> void: open_screen(make.call(), id))
+	return button
+
+
+## Opens `screen` over this one; `back` names the button the focus returns to.
+func open_screen(screen: MenuScreen, back := "") -> MenuScreen:
+	get_viewport().gui_release_focus()
+	$Margin.hide()
+	screen.closed.connect(func() -> void:
+		$Margin.show()
+		_refresh()
+		var button := %Details.find_child(back, true, false) as Button
+		if button:
+			button.grab_focus.call_deferred())
+	add_child(screen)
+	return screen
 
 
 ## A button that opens the CollectionScreen on tab `which` over this screen.

@@ -73,9 +73,12 @@ func _data() -> void:
 	section("Every station's data")
 	check(hideout.problems().is_empty(), "the hideout data has no problems (%s)" % str(hideout.problems()))
 	var ids: Array = hideout.stations().map(func(station: Dictionary) -> String: return station.id)
-	check(ids == hideout.ALL_STATIONS and ids.size() == 14, "all 14 stations, in order (%s)" % str(ids))
+	check(ids == hideout.ALL_STATIONS and ids.size() == 15, "all 15 stations (the Slot Machine since E15), in order (%s)" % str(ids))
 	for station: Dictionary in hideout.stations():
 		var levels: int = station.levels.size()
+		if station.id == hideout.SLOT_MACHINE:  # Since E15: one level, there from the start, nothing to build.
+			check(levels == 1 and hideout.start_level(station) == 1 and hideout.level(station) == 1, "the Slot Machine is there from the start, with nothing to build")
+			continue
 		check(levels == (4 if station.id == "stash" else 3), "%s has %d levels" % [station.name, levels])
 		var times: Array = station.levels.map(func(entry: Dictionary) -> float: return float(entry.build_minutes))
 		var rising := true
@@ -128,7 +131,7 @@ func _loader() -> void:
 		["an item named twice", func(all: Array) -> void: all[0].levels[0].requires.append({"item": "fuel_can", "count": 1}), "names fuel_can twice"],
 		["overlapping rooms", func(all: Array) -> void: all[1].room = [1, 1, 3, 3], "overlaps"],
 		["a room off the plan", func(all: Array) -> void: all[0].room = [30, 0, 6, 5], "isn't inside"],
-		["a missing station", func(all: Array) -> void: all.pop_back(), "no collectors_shelf station"],
+		["a missing station", func(all: Array) -> void: all.pop_back(), "no slot_machine station"],
 		["a player level that doesn't exist", func(all: Array) -> void: all[0].levels[2].player_level = 999, "player_level 999"],
 		["fuel on another station", func(all: Array) -> void: all[2]["fuel"] = {"fuel_can": 10}, "only the generator has fuel"],
 		["a farm level without card slots", func(all: Array) -> void: _station(all, "bitcoin_farm").levels[1].erase("card_slots"), "needs \"card_slots\""],
@@ -170,7 +173,8 @@ func _migration() -> void:
 	check(int(result.version) == sm.SAVE_VERSION and sm.SAVE_VERSION >= 18, "a version 16 save comes up to the current version")
 	work.now_override = NOW + 5.0 * HOUR
 	gs.from_dict(old)
-	check(gs.hideout == {"stash": 2, "generator": 2, "medstation": 3, "lavatory": 2, "workbench": 1}, "every level it built is kept (%s)" % str(gs.hideout))
+	check(gs.hideout == {"stash": 2, "generator": 2, "medstation": 3, "lavatory": 2, "workbench": 1, "slot_machine": 1},
+		"every level it built is kept, and the Slot Machine is there (%s)" % str(gs.hideout))
 	check(gs.stash.size == Vector2i(10, 40) and gs.stash.count_of("gpu") == 1, "the stash keeps its level-2 size and its items")
 	var state: Dictionary = gs.hideout_state
 	check(is_equal_approx(state.clock, NOW + 5.0 * HOUR) and state.builds.is_empty() and state.crafts.is_empty() and state.fuel.is_empty()
@@ -544,11 +548,15 @@ func _screen() -> void:
 	root.add_child(screen)
 	await frames(3)
 	var map: Node = screen.find_child("Map", true, false)
-	check(map.rooms.size() == 14, "the plan has a room for each station")
+	check(map.rooms.size() == 15, "the plan has a room for each station")
 	for station: Dictionary in hideout.stations():
 		(map.rooms[station.id] as Button).pressed.emit()
 		await frames(1)
 		var details: Node = screen.find_child("Details", true, false)
+		if station.id == hideout.SLOT_MACHINE:  # Nothing to build (E15): the machine and the skins collection.
+			check(screen.station() == station and details.find_child("OpenSlots", true, false) != null and details.find_child("OpenSkins", true, false) != null,
+				"Slot Machine: its panel opens the machine and the skins")
+			continue
 		check(screen.station() == station and details.find_child("Level_1", true, false) != null and details.find_child("Build", true, false) != null,
 			"%s: its panel shows the upgrade tree and BUILD" % station.name)
 	(map.rooms["generator"] as Button).pressed.emit()

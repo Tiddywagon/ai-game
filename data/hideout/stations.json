@@ -96,7 +96,7 @@
     "id": "rest_space",
     "name": "Rest Space",
     "description": "Bunks, a heater and a TV. Energy and hydration refill faster between raids with each level.",
-    "room": [22, 0, 10, 5],
+    "room": [22, 0, 5, 5],
     "levels": [
       {"level": 1, "roubles": 30000, "build_minutes": 5, "requires": [{"item": "light_bulb", "count": 2}, {"item": "nails", "count": 3}, {"item": "duct_tape", "count": 1}]},
       {"level": 2, "roubles": 0, "stations": {"generator": 1}, "build_minutes": 60, "requires": [{"item": "rechargeable_battery", "count": 1, "fir": true}, {"item": "light_bulb", "count": 2, "fir": true}, {"item": "soap", "count": 2, "fir": true}]},
@@ -248,5 +248,13 @@
       {"level": 2, "roubles": 250000, "build_minutes": 90, "requires": [{"item": "screws", "count": 6, "fir": true}, {"item": "light_bulb", "count": 4, "fir": true}, {"item": "wires", "count": 3, "fir": true}, {"item": "epoxy_resin", "count": 1, "fir": true}], "display_slots": 28},
       {"level": 3, "roubles": 800000, "stations": {"generator": 2}, "player_level": 12, "build_minutes": 240, "requires": [{"item": "cordless_drill", "count": 1, "fir": true}, {"item": "hex_nuts", "count": 8, "fir": true}, {"item": "power_cord", "count": 3, "fir": true}, {"item": "circuit_board", "count": 2, "fir": true}], "display_slots": 56}
     ]
+  },
+  {
+    "id": "slot_machine",
+    "name": "Slot Machine",
+    "description": "A lit three-reel machine that takes Drip, not roubles. Every spin rolls a cosmetic skin: guns, armor, helmets, rigs, backpacks, knives, outfits, stickers and charms, from the core collection and the season in rotation. Skins only change how things look. There from the start.",
+    "start_level": 1,
+    "room": [27, 0, 5, 5],
+    "levels": [{"level": 1, "roubles": 0, "build_minutes": 0}]
   }
 ]

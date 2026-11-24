@@ -39,6 +39,7 @@ static func draw(canvas: CanvasItem, item: ItemInstance, rect: Rect2, turned: bo
 		canvas.draw_set_transform(Vector2.ZERO)
 	else:
 		canvas.draw_texture_rect(icon, fit, false, Color(1, 1, 1, alpha))
+	SkinLook.draw_icon_mark(canvas, item, rect, alpha)  # A skinned item shows its skin's colours in a corner.
 	canvas.draw_rect(rect, Color(color, alpha), false, 2.0)
 	var font := ThemeDB.fallback_font
 	if canvas is Control:
@@ -126,6 +127,7 @@ static func tooltip(item: ItemInstance) -> String:
 		lines.append(wanted)
 	if item.insured:
 		lines.append("Insured")
+	lines.append_array(SkinLook.tooltip_lines(item))
 	if has_fir_mark(item):
 		lines.append(FoundInRaid.status_text(item))
 	lines.append("Right-click: examine" + ("  ·  Double-click: open" if item.contents else ""))

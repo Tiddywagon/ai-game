@@ -114,8 +114,11 @@ static func state_of(station: Dictionary) -> String:
 
 
 ## The state as the room's last line: "Ready to collect", "Building 12:30", "Crafting 4:10", "Can be
-## built", "Missing 3 / 5 in" (items handed over of all it needs), "Locked: Generator 2", "Fully upgraded".
+## built", "Missing 3 / 5 in" (items handed over of all it needs), "Locked: Generator 2", "Fully upgraded";
+## the Slot Machine's is your Drip, or "FREE SPIN READY".
 static func state_text(station: Dictionary) -> String:
+	if station.get("id") == Hideout.SLOT_MACHINE:  # Nothing to build: what you can spin.
+		return "FREE SPIN READY" if Figures.free_spins_left() > 0 else UiFormat.drip(GameState.drip)
 	match state_of(station):
 		"ready":
 			return "READY TO COLLECT"

@@ -409,6 +409,7 @@ func set_inventory(new_inventory: Inventory) -> void:
 	inventory.changed.connect(_on_inventory_changed)
 	_update_weight()
 	_sync_weapon(true)
+	_dress()
 
 
 func set_binoculars(on: bool) -> void:
@@ -714,6 +715,14 @@ func _on_inventory_changed() -> void:
 		loot_claimed.emit(claimed)
 	_update_weight()
 	_sync_weapon()
+	_dress()
+
+
+## The worn gear and the gun in hand on the body, in their skins, and a PMC's outfit (GearLook: only
+## rebuilt when something worn changed).
+func _dress() -> void:
+	var outfit := Cosmetics.outfit() if side == Side.PMC and GameState.has_profile() else ""
+	GearLook.dress($Body, inventory, _weapon_item, outfit)
 
 
 func _update_weight() -> void:
