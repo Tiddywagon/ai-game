@@ -127,7 +127,7 @@ func refresh(force := false) -> void:
 	if not force and key == _state:
 		return
 	_state = key
-	_money.text = "%s  ·  %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")]
+	_money.text = "%s  ·  %s  ·  %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD"), UiFormat.drip(GameState.drip)]
 	plans.clear()
 	# Built cards are kept while what they show is the same (_view_key()): only changed ones are rebuilt.
 	var old := {}

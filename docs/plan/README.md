@@ -19,7 +19,7 @@ behaves; these files say what is left to build and how the work is done, so the 
 | E12 | At least 60 quests across traders, maps, factions and bosses: [E12_quest_content.md](E12_quest_content.md) (suite `tests/quest_content_test.gd`) | done |
 | E13 | Levels 1-60, skills that grow by use, lifetime stats, character screen: [E13_levels_skills.md](E13_levels_skills.md) (suite `tests/skills_test.gd`) | done |
 | E14 | Daily and weekly operational tasks: [E14_operations.md](E14_operations.md) (suite `tests/operations_test.gd`) | done |
-| E15 | Drip economy, cosmetic slot machine, skins, Cosmetics tab: [E15_drip_cosmetics.md](E15_drip_cosmetics.md) | next (two parts) |
+| E15 | Drip economy, cosmetic slot machine, skins, Cosmetics tab: [E15_drip_cosmetics.md](E15_drip_cosmetics.md) (suite `tests/cosmetics_test.gd`) | done |
 | | **The first batch (through E9) is complete**: every step is done and no known bug is open | |
 
 The tables the original requests referred to ("the 6 loadouts from the table", the barter table) never came
@@ -32,11 +32,9 @@ market and hideout requests is no longer available either: E7 and E8 are written
 (Fixed with E13: the quest log's trader dropdown not following the filter, BEAR's last faction quest waiting on a
 map with no scene, DESIGN §10's money model citing a suite that no longer existed.)
 (Fixed with E14: the Raiders figure set's search speed also speeding up AI bots' searches; `figures_test` checks it.)
+(Fixed with E15: money showing with two signs, "20,000 ₽" in reward lines and "RUB 165,000" elsewhere: one sign, "RUB",
+through `UiFormat.money()` everywhere; `cosmetics_test` checks it. No known bug is open.)
 
-- Money shows with two signs: reward lines print "20,000 ₽" while `UiFormat.money()` prints "RUB 165,000" (seen on the
-  OPERATIONS board's "Big Sale · RUB 0 / RUB 165,000"). `UiFormat.currency_sign()` checks only
-  `ThemeDB.fallback_font.has_char(0x20BD)`, which is false, yet labels draw "₽" through the system font fallback.
-  Pick one sign that renders, use it everywhere, and check it in a suite. Fix in E15.
 
 ## Ground rules for every step
 
@@ -46,7 +44,7 @@ map with no scene, DESIGN §10's money model citing a suite that no longer exist
 - Match the surrounding code: `##` doc comments, tabs, typed GDScript, static helper classes extending
   RefCounted, data in `data/` (JSON or .tres) read by a loader with a `problems()` check that runs when the items
   load. Tunable numbers go in data/config files, not literals.
-- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (20 now) and its comment block list every version.
+- Saves: `scripts/autoload/save_manager.gd` `SAVE_VERSION` (22 now) and its comment block list every version.
   New saved state bumps it once per step, with `GameState.from_dict()` / `SaveManager.upgrade()` loading every
   older save without losing progress.
 - Invariants that have bitten before: never lose or create items or rounds; a stack never exceeds its max stack

@@ -151,7 +151,7 @@ func _refresh_profile() -> void:
 	%LevelLabel.text = "LEVEL %d   ·   %s" % [GameState.level, Progression.xp_text(GameState.xp, GameState.level)] if has_profile else ""
 	%XpBar.value = Progression.level_progress(GameState.xp, GameState.level) * 100.0
 	%XpBar.visible = has_profile
-	%MoneyLabel.text = "%s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD")] if has_profile else ""
+	%MoneyLabel.text = "%s      %s      %s" % [UiFormat.money(GameState.roubles), UiFormat.money(GameState.dollars, "USD"), UiFormat.drip(GameState.drip)] if has_profile else ""
 	var flea := %FleaButton as Button
 	flea.disabled = has_profile and not FleaMarket.is_unlocked()
 	flea.text = "FLEA MARKET" if not flea.disabled else "FLEA MARKET   ·   %s" % FleaMarket.lock_text()

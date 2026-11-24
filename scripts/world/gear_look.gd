@@ -9,8 +9,8 @@ extends RefCounted
 ## Where each worn piece sits on the 1.8 m capsule (the body's local space; forward is -Z).
 const PIECES := {
 	"helmet": {"mesh": "helmet", "at": Vector3(0, 1.58, 0)},
-	"armor": {"mesh": "band", "at": Vector3(0, 1.18, 0), "size": Vector3(0.375, 0.46, 0)},
-	"rig": {"mesh": "band", "at": Vector3(0, 0.98, 0), "size": Vector3(0.385, 0.26, 0)},
+	"armor": {"mesh": "band", "at": Vector3(0, 1.18, 0), "size": Vector3(0.4, 0.46, 0)},
+	"rig": {"mesh": "band", "at": Vector3(0, 0.98, 0), "size": Vector3(0.415, 0.26, 0)},
 	"backpack": {"mesh": "box", "at": Vector3(0, 1.15, 0.42), "size": Vector3(0.48, 0.58, 0.24)},
 	"melee": {"mesh": "box", "at": Vector3(-0.37, 0.82, 0.05), "size": Vector3(0.04, 0.32, 0.07)},
 }

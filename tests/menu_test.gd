@@ -52,6 +52,7 @@ func run() -> void:
 	await _loadout()
 	await _character()
 	await _hideout()
+	await _slot_machine()
 	await _shelf()
 	await _traders()
 	await _quests()
@@ -250,10 +251,88 @@ func _loadout() -> void:
 	check(not (_find(screen, "QuickBuyShade") as Control).visible and gs.inventory.equipment.pistol != null
 		and gs.inventory.equipment.pistol.data.id == "pm_pistol" and gs.roubles < roubles, "CONFIRM buys it: the PM is on, the money paid")
 	gs.roubles = roubles  # The screens below count on the money they started with.
+	await _cosmetics_tab(screen)
 	(_find(screen, "TabLoadout") as Button).pressed.emit()
 	await frames(2)
 	check(_find(screen, "Columns").visible and not tab.visible, "LOADOUT is back")
 	await _close(screen, "CloseButton", "LOADOUT")
+
+
+## LOADOUT's COSMETICS tab (DESIGN.md §6.7): the character and the gear listed, a gun picked, a skin from
+## the collection previewed (not applied), APPLY and REMOVE, a sticker on its own slot, the outfit, the
+## turning model dragged and zoomed, and the skins collection opened from it.
+func _cosmetics_tab(screen: Node) -> void:
+	var cos: GDScript = load("res://scripts/progression/cosmetics.gd")
+	for id in ["core_ash_camo", "core_patrol_green", "core_smiley", "core_taiga_fatigues"]:
+		gs.cosmetics.owned[id] = 0.2
+	(_find(screen, "TabCosmetics") as Button).pressed.emit()
+	await frames(3)
+	var tab: Control = _find(screen, "CosmeticsTab")
+	var targets: Node = _find(tab, "Targets")
+	check(tab.visible and not _find(screen, "Columns").visible and targets.get_child_count() >= 3 and "Character" in (targets.get_child(0) as Button).text,
+		"the COSMETICS tab lists the character and the gear (%d)" % targets.get_child_count())
+	var guns: Array = tab.targets().filter(func(each: Variant) -> bool: return each is RefCounted and each.is_gun() and each.data.id == "ak_74n")
+	var gun: RefCounted = guns[0]
+	var index: int = tab.targets().find(gun)
+	(targets.get_child(index) as Button).pressed.emit()
+	await frames(2)
+	check(_find(tab, "TargetTitle").text == gun.data.display_name.to_upper() and _find(tab, "Slot_sticker") != null and _find(tab, "Slot_charm") != null,
+		"an AK picked: its SKIN, STICKER and CHARM slots")
+	check(_find(tab, "Skin_core_ash_camo") != null and _find(tab, "Skin_core_patrol_green") != null and _find(tab, "Skin_core_smiley") == null,
+		"the skins that fit its skin slot are listed")
+	(_find(tab, "Skin_core_ash_camo") as Button).pressed.emit()
+	(_find(tab, "PreviewButton") as Button).pressed.emit()
+	await frames(2)
+	var model: Node3D = _find(tab, "SkinModel")
+	check(model != null and tab.previewing == "core_ash_camo" and gun.cosmetics.is_empty(), "PREVIEW shows it on the model without applying it")
+	var view: Control = _find(tab, "Preview3D")
+	var yaw: float = tab.yaw
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	view.gui_input.emit(press)
+	var drag := InputEventMouseMotion.new()
+	drag.relative = Vector2(80, 0)
+	drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	view.gui_input.emit(drag)
+	press.pressed = false
+	view.gui_input.emit(press)
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+	wheel.pressed = true
+	var zoom: float = tab.zoom
+	view.gui_input.emit(wheel)
+	check(absf(tab.yaw - yaw) > 0.5 and tab.zoom < zoom, "a drag turns the model, the wheel zooms")
+	(_find(tab, "ApplyButton") as Button).pressed.emit()
+	await frames(2)
+	check(gun.cosmetics.get("skin", {}).get("id", "") == "core_ash_camo" and not cos.in_collection("core_ash_camo"), "APPLY puts Ash Camo on the AK")
+	(_find(tab, "Slot_sticker") as Button).pressed.emit()
+	await frames(1)
+	(_find(tab, "Skin_core_smiley") as Button).pressed.emit()
+	(_find(tab, "ApplyButton") as Button).pressed.emit()
+	await frames(2)
+	check(gun.cosmetics.get("sticker", {}).get("id", "") == "core_smiley", "a sticker on its own slot")
+	(_find(tab, "RemoveButton") as Button).pressed.emit()
+	await frames(2)
+	check(not gun.cosmetics.has("sticker") and cos.in_collection("core_smiley") and gun.cosmetics.has("skin"), "REMOVE takes the sticker off, the skin stays")
+	(targets.get_child(0) as Button).pressed.emit()
+	await frames(2)
+	(_find(tab, "Skin_core_taiga_fatigues") as Button).pressed.emit()
+	(_find(tab, "ApplyButton") as Button).pressed.emit()
+	await frames(2)
+	check(cos.outfit() == "core_taiga_fatigues", "the character wears the BEAR outfit")
+	(_find(tab, "SkinsButton") as Button).pressed.emit()
+	await frames(3)
+	var skins: Node = _find(screen, "SkinsScreen")
+	check(skins != null and _find(skins, "Card_core_ash_camo") != null, "COLLECTION opens the skins collection over it")
+	var cancel := InputEventAction.new()
+	cancel.action = "ui_cancel"
+	cancel.pressed = true
+	Input.parse_input_event(cancel)
+	await frames(3)
+	check(not is_instance_valid(skins) and tab.visible, "Esc closes it back to the tab")
+	cos.remove(gun, "skin")
+	cos.wear_outfit("")
 
 
 func _character() -> void:
@@ -362,6 +441,70 @@ func _hideout() -> void:
 	await frames(3)
 	check(gs.hideout_state.cosmetics == ["poster_wall"], "DECOR buys the poster wall (%s)" % (_find(screen, "Status") as Label).text)
 	work.now_override = -1.0
+	await _close(screen, "BackButton", "HIDEOUT")
+
+
+## The Slot Machine (DESIGN.md §6.7): its room in HIDEOUT, OPEN THE MACHINE, SPIN with the reels turning
+## and SKIP, the result card, SPIN ×10 with its row of ten, ODDS, the pity line, not enough Drip, and the
+## skins collection (SKINS): owned in colour, missing as silhouettes, a kind filter.
+func _slot_machine() -> void:
+	section("SLOT MACHINE")
+	var screen := await _open("HideoutButton")
+	var room: Button = _find(_find(screen, "Map"), "Room_slot_machine")
+	gs.drip = 1500
+	room.pressed.emit()
+	await frames(2)
+	check(room != null and _find(screen, "OpenSlots") != null and _find(screen, "OpenSkins") != null, "the Slot Machine's room opens its panel")
+	(_find(screen, "OpenSlots") as Button).pressed.emit()
+	await frames(3)
+	var machine: Node = _find(screen, "SlotMachineScreen")
+	check(machine != null and (_find(machine, "Drip") as Label).text == "1,500 Drip" and "within 80 spins" in (_find(machine, "Pity") as Label).text,
+		"OPEN THE MACHINE: the Drip and the pity line")
+	(_find(machine, "SpinButton") as Button).pressed.emit()
+	await frames(10)
+	var reel: Control = _find(machine, "Reel3")
+	check(machine.animating and gs.drip == 1400 + int(gs.cosmetics.last[0].drip) and gs.cosmetics.spins == 1 and (_find(machine, "SkipButton") as Button).visible,
+		"SPIN: paid and saved at once, the reels turn")
+	(_find(machine, "SkipButton") as Button).pressed.emit()
+	await frames(3)
+	var first: Dictionary = gs.cosmetics.last[0]
+	check(not machine.animating and (_find(machine, "ResultName") as Label).text == str(load("res://scripts/data/skin_table.gd").find(first.skin).name)
+		and _find(_find(machine, "ResultCard"), "SkinModel") != null and is_equal_approx(reel.reel_at, round(reel.reel_at)), "SKIP lands the reels and shows the result card")
+	(_find(machine, "SpinTenButton") as Button).pressed.emit()
+	await frames(2)
+	(_find(machine, "SkipButton") as Button).pressed.emit()
+	await frames(3)
+	check(_find(machine, "TenRow").get_child_count() == 10 and gs.cosmetics.spins == 11, "SPIN ×10: ten results in a row")
+	(_find(machine, "OddsButton") as Button).pressed.emit()
+	await frames(1)
+	check((_find(machine, "OddsPanel") as Control).visible, "ODDS shows the table")
+	gs.drip = 50
+	machine.refresh()
+	check((_find(machine, "SpinButton") as Button).disabled and (_find(machine, "SpinTenButton") as Button).disabled, "50 Drip: no spin")
+	(_find(machine, "BackButton") as Button).pressed.emit()
+	await frames(3)
+	check(not is_instance_valid(machine) and get_root().gui_get_focus_owner() == _find(screen, "OpenSlots"), "BACK returns to the hideout, focus on the button")
+	(_find(screen, "OpenSkins") as Button).pressed.emit()
+	await frames(3)
+	var skins: Node = _find(screen, "SkinsScreen")
+	var table: GDScript = load("res://scripts/data/skin_table.gd")
+	var owned_id: String = gs.cosmetics.owned.keys()[0]
+	var missing_id: String = table.skins().filter(func(skin: Dictionary) -> bool: return not gs.cosmetics.owned.has(skin.id))[0].id
+	var cards: Array = skins.find_children("Card_*", "PanelContainer", true, false)
+	check(cards.size() == table.skins().size() and _find(_find(skins, "Card_" + owned_id), "Swatch") != null
+		and _find(_find(skins, "Card_" + missing_id), "Silhouette") != null and (_find(_find(skins, "Card_" + missing_id), "State") as Label).text == "Missing",
+		"SKINS: every skin (%d), owned in colour, missing as silhouettes" % cards.size())
+	var filter: OptionButton = _find(skins, "KindFilter")
+	var charm: int = table.KINDS.find("charm") + 1
+	filter.select(charm)
+	filter.item_selected.emit(charm)
+	await frames(2)
+	cards = skins.find_children("Card_*", "PanelContainer", true, false)
+	check(not cards.is_empty() and cards.all(func(card: Node) -> bool: return table.find(str(card.name).trim_prefix("Card_")).kind == "charm"),
+		"the kind filter shows charms only (%d)" % cards.size())
+	(_find(skins, "BackButton") as Button).pressed.emit()
+	await frames(2)
+	gs.drip = 0
 	await _close(screen, "BackButton", "HIDEOUT")
 
 

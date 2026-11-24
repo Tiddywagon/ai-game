@@ -44,6 +44,7 @@ func run() -> void:
 	_no_stats()
 	_saves()
 	_money_sign()
+	_design()
 	work.now_override = -1.0
 
 
@@ -640,3 +641,54 @@ func _scripts(dir: String) -> Array:
 	for sub in DirAccess.get_directories_at(dir):
 		result.append_array(_scripts(dir.path_join(sub)))
 	return result
+
+
+## DESIGN.md §6.7's tables, as the configs and the skin files have them: the machine (odds, duplicates,
+## bound, prices, pity), the wear bands, the Drip earned, and every skin. The check fails while DESIGN.md
+## says anything else (the expected tables are written to user://cosmetics_tables.md to paste in).
+func _design() -> void:
+	section("DESIGN.md's Cosmetics tables")
+	var format: GDScript = load("res://scripts/ui/ui_format.gd")
+	var names := ["Common", "Uncommon", "Rare", "Ultra Rare", "Epic", "Legendary"]
+	var lines: Array[String] = ["| Rarity | Chance a spin | Duplicate pays back | Bound | Core skins | Seasonal skins |", "|---|---|---|---|---|---|"]
+	var odds: Array = skins.odds()
+	for index in 6:
+		var core: int = skins.collection("core").skins.filter(func(skin: Dictionary) -> bool: return skins.rarity(skin) == index).size()
+		var seasonal: int = skins.skins().filter(func(skin: Dictionary) -> bool: return skins.rarity(skin) == index and skin.collection != "core").size()
+		lines.append("| %s | %s%% | %d Drip | %s | %d | %d |" % [names[index], String.num(odds[index] * 100.0, 1), skins.duplicate_drip(index),
+			"yes" if load("res://scripts/data/item_data.gd").RARITY_IDS[index] in skins.config().bound_rarities else "no (outfits always)", core, seasonal])
+	lines.append("")
+	lines.append("| Wear band | Wear | Chance |")
+	lines.append("|---|---|---|")
+	for band: Dictionary in skins.wear_bands():
+		lines.append("| %s | %.2f-%.2f | %s%% |" % [band.name, band.min, band.max, String.num(band.chance * 100.0, 0)])
+	lines.append("")
+	lines.append("| Drip from | Drip |")
+	lines.append("|---|---|")
+	var extract: Dictionary = skins.drip_config().extract
+	lines.append("| Getting out (PMC raid or Scav run; not a Run Through or practice) | %d |" % int(extract.base))
+	for bracket: Dictionary in extract.loot:
+		lines.append("| ... with loot worth %s or more | +%d |" % [format.money(int(bracket.value)), int(bracket.drip)])
+	for who in ["scav", "guard", "pmc", "boss"]:
+		lines.append("| A kill: %s | %d |" % [{"scav": "Scav", "guard": "boss guard", "pmc": "PMC", "boss": "boss"}[who], skins.kill_drip(who)])
+	lines.append("| A quest completed (on top of its own Drip) | %d |" % skins.quest_drip())
+	lines.append("| A daily task claimed | %d |" % int(ops.kind_config("daily").drip))
+	lines.append("| A weekly task claimed | %d |" % int(ops.kind_config("weekly").drip))
+	lines.append("| A level gained | %d |" % skins.level_drip())
+	lines.append("| A 360 trick-shot kill | %d |" % load("res://data/config/raid.tres").drip_trick_kill)
+	lines.append("")
+	lines.append("| Collection | Skin | Kind | Rarity | Fits | Pattern |")
+	lines.append("|---|---|---|---|---|---|")
+	for collection: Dictionary in skins.collections():
+		for skin: Dictionary in collection.skins:
+			lines.append("| %s | %s | %s | %s | %s | %s |" % [collection.name, skin.name, skins.KIND_TITLES[skin.kind], names[skins.rarity(skin)], skins.fits_text(skin),
+				skin.look.pattern])
+	var table := "\n".join(lines)
+	var design := FileAccess.get_file_as_string("res://DESIGN.md")
+	var found := Array(table.split("\n\n")).all(func(part: String) -> bool: return part in design)  # Four tables, prose between them.
+	if not found:
+		var file := FileAccess.open("user://cosmetics_tables.md", FileAccess.WRITE)
+		file.store_string(table + "\n")
+		file.close()
+	check(found, "DESIGN.md §6.7 has the machine, wear, Drip and skin tables as the data has them (expected: %s)" % ProjectSettings.globalize_path("user://cosmetics_tables.md"))
+	check("odds table never came through" in design, "DESIGN.md says the odds are designed here (the request's table never came through)")
